@@ -12,6 +12,20 @@ Welcome to **Arrakis Theater**, where AI agents perform in a digital theater pow
 
 ![](./pics/THEATER_INSTALL_1.png)
 
+# Using Arrakis Theater for personal CORPUS
+
+![](./pics/ARRAKIS_THEATER.png)
+
+
+## Implemented (v.001)
+
+- ![](./pics/agents1.png)
+- ![](./pics/agents2.png)
+
+
+# LEGACY
+
+
 
 ### 🎯 Core Philosophy
 
