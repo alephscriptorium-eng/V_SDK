@@ -1,120 +1,112 @@
-Perfecto, ahora vamos a probar el empaquetado:
+# 🎭 Arrakis Theater Chat Engine
+
+> **Advanced hacker-style theatrical chat engine with AI agent orchestration and MCP protocol integration**
+
+![Arrakis Theater](./media/arrakis-theater-icon.png)
+
+## 🖥️ The Hacker's Theater
+
+Welcome to **Arrakis Theater**, where AI agents perform in a digital theater powered by hacker aesthetics and the Model Context Protocol (MCP). This VS Code extension transforms your development environment into a command center for orchestrating intelligent agents with theatrical flair.
+
+### 🎯 Core Philosophy
 
 ```
-npm run package:local
+>>> SYSTEM INITIALIZED
+>>> THEATER ENGINE: ONLINE
+>>> AGENT MATRIX: READY
+>>> NEURAL LINKS: ESTABLISHED
 ```
 
-¡Perfecto! 🎉 El empaquetado fue exitoso. Ahora vamos a probar el deployment completo:
+Arrakis Theater combines:
+- **🎭 Theatrical Agent Orchestration**: Multi-agent performances in a digital stage
+- **� Hacker Aesthetics**: Green-on-black terminals, matrix-style interfaces  
+- **🤖 MCP Protocol Integration**: Advanced Model Context Protocol for agent communication
+- **🧠 Neural Network Management**: Real-time agent spawning, configuration, and monitoring
 
-```
-npm run deploy:local
-```
+## ⚡ Quick Start - Enter the Theater
 
-El comando de desinstalación falló porque la extensión no estaba previamente instalada, pero eso está bien. Vamos a continuar con la instalación:
+### Prerequisites
+- ✅ **VS Code 1.95.0 or higher**
+- ✅ **Node.js 18+** for running managed theater processes
+- ✅ **Socket.io server** for neural network monitoring
 
-```
-npm run install:local
-```
+### 1. **Install the Theater Extension**
 
-¡Excelente! 🎉 La extensión se ha instalado exitosamente. Ahora vamos a verificar que se instaló correctamente:
-
-
-## 🚀 Cómo Usar el Chat Participant MCP
-
-### 1. **Prerequisitos**
-
-Necesitas tener instalado:
-
-- ✅ **GitHub Copilot** (extensión de VS Code)
-
-- ✅ **Suscripción activa de GitHub Copilot**
-
-- ✅ **VS Code 1.95.0 o superior**
-
-### 2. **Activar el Chat Participant**
-
-1\. **Abrir GitHub Copilot Chat:**
-
-   - Presiona `Ctrl+Alt+I` (Windows/Linux) o `Cmd+Alt+I` (Mac)
-
-   - O usar Command Palette: `Ctrl+Shift+P` → "GitHub Copilot: Open Chat"
-
-2\. **Usar el participant MCP:**
-
-   ```
-
-   @mcp hello
-
-   ```
-
-### 3. **Comandos Disponibles**
-
-| Comando | Descripción | Ejemplo |
-|---------|-------------|---------|
-| `@mcp` | Asistencia general MCP | `@mcp ¿Cómo configurar un servidor MCP?` |
-| `@mcp /config` | Ayuda con configuración | `@mcp /config Necesito configurar Socket.IO` |
-| `@mcp /troubleshoot` | Solución de problemas | `@mcp /troubleshoot El servidor no conecta` |
-| `@mcp /examples` | Ejemplos de código | `@mcp /examples Servidor MCP con TypeScript` |
-| `@mcp /socket` | Ayuda con Socket.IO | `@mcp /socket Configurar rooms en tiempo real` |
-
-### 4. **Ejemplos Prácticos**
-
-
-- Configuración básica
-
-@mcp /config ¿Cómo configurar un servidor MCP básico?
-
-- Solucionar problemas
-
-@mcp /troubleshoot Mi cliente MCP no puede conectar al servidor
-
-- Obtener ejemplos
-
-@mcp /examples Muéstrame un servidor MCP completo con Socket.IO
-
-- Ayuda específica con Socket.IO  
-
-@mcp /socket ¿Cómo manejar desconexiones automáticas?
-
-
-
-## 📚 Guías y Documentación
-
-### **Guías que Creamos:**
-
-1\. **📋 Manual Completo:** `MANUAL_INSTALACION_LOCAL.md`
-
-   - Instalación paso a paso
-
-   - Verificación de funcionamiento
-
-   - Solución de problemas
-
-2\. **⚡ Guía Rápida:** `README-DEV.md`
-
-   - Comandos de desarrollo
-
-   - Tips y tricks
-
-   - Solución rápida de problemas
-
-### **Documentación Oficial de VS Code:**
-
-3\. **🔗 Chat Tutorial:** [VS Code AI Chat Guide](https://code.visualstudio.com/api/extension-guides/ai/chat-tutorial)
-
-   - Tutorial oficial que seguimos
-
-   - Conceptos avanzados de Chat Participants
-
-4\. **🛠️ VS Code Extension API:** [Extension API Docs](https://code.visualstudio.com/api)
-
-   - Documentación completa de APIs
-
-## 🧪 Verificar que Funciona
-
-### **Test Rápido:**
+Search for "Arrakis Theater Chat Engine" in VS Code Extensions marketplace, or install directly:
 
 ```bash
+>>> code --install-extension arrakis-theater.arrakis-theater-chat
+```
+
+### 2. **Activate Neural Links**
+
+1. **Open GitHub Copilot Chat:**
+   - Press `Ctrl+Alt+I` (Windows/Linux) or `Cmd+Alt+I` (Mac)
+   - Or use Command Palette: `Ctrl+Shift+P` → "GitHub Copilot: Open Chat"
+
+2. **Jack into Theater Network:**
+   ```
+   @arrakis initialize theater
+   ```
+
+### 3. **Theater Command Arsenal**
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `@arrakis` | General theater assistance | `@arrakis How to configure MCP servers?` |
+| `@arrakis /stage` | Stage configuration help | `@arrakis /stage Setup Socket.IO neural network` |
+| `@arrakis /debug` | Theater troubleshooting | `@arrakis /debug Agent connection failed` |
+| `@arrakis /spawn` | Agent creation examples | `@arrakis /spawn TypeScript MCP server` |
+| `@arrakis /neural` | Neural network help | `@arrakis /neural Configure real-time rooms` |
+
+### 4. **Theater Operations**
+
+**🎭 Basic Stage Setup:**
+```
+@arrakis /stage How do I configure a basic MCP theater?
+```
+
+**🔧 Troubleshoot the Show:**
+```
+@arrakis /debug My MCP client can't connect to the server
+```
+
+**🤖 Spawn New Agents:**
+```
+@arrakis /spawn Show me a complete MCP server with Socket.IO
+```
+
+**🧠 Neural Network Management:**
+```
+@arrakis /neural How to handle automatic disconnections?
+```
+
+## 📚 Theater Documentation & Lore
+
+### **Theater Archives:**
+
+1. **📋 Stage Manual:** `THEATER_INSTALLATION_GUIDE.md`
+   - Step-by-step theater setup
+   - Neural network verification
+   - Agent troubleshooting protocols
+
+2. **⚡ Quick Hack Guide:** `README-DEV.md`
+   - Development command arsenal
+   - Hacker tips & tricks
+   - Rapid debugging protocols
+
+### **External Neural Networks:**
+
+3. **🔗 AI Chat Tutorial:** [VS Code AI Chat Guide](https://code.visualstudio.com/api/extension-guides/ai/chat-tutorial)
+   - Official chat participant protocols
+   - Advanced agent orchestration concepts
+
+4. **🛠️ VS Code Extension API:** [Extension API Docs](https://code.visualstudio.com/api)
+   - Complete neural interface documentation
+
+## 🧪 Theater Diagnostics
+
+### **Neural Link Test:**```bash
 
 # 1. Verificar extensión instalada
 
@@ -264,77 +256,90 @@ The extension works with JSON configuration files that define:
 
 See `sample-config.json` for a complete example configuration.
 
-## Architecture
+## 🏗️ Architecture & Theater Ecosystem
 
-### Extension Components
-- **ConfigEditor**: Web-based configuration management with forms
-- **ProcessManager**: Lifecycle management for all system processes
-- **SocketMonitor**: Real-time socket.io communication monitoring
-- **UIManager**: Management of multiple gamification UI instances
-- **MCPServerManager**: Health monitoring and control of MCP servers
+### 1. **ESCENARIO System** - The Development Stage
+This extension transforms VS Code into a **theatrical stage** where developers perform live-coding sessions. The interface provides:
+- **>>> Agent Command Interface**: Hacker-style terminals for agent communication
+- **🎭 Theater Views**: Specialized panels for different performance modes  
+- **⚡ Real-time Orchestration**: WebSocket connections for live collaboration
+- **🔧 DevOps Integration**: Direct connection to MCP servers and AI services
 
-### Communication Patterns
-The extension supports a three-channel socket.io communication pattern:
-- **Application**: Game logic, agent interactions, and core functionality
-- **System**: Infrastructure monitoring, health checks, and system events
-- **UserInterface**: UI updates, user interactions, and interface coordination
+### 2. **Multi-Theater Orchestration Architecture**
+The **Teatro Arrakis** is a flexible performance system capable of staging **multiple types of productions**:
 
-## Requirements
+- **🌐 Indra Agent**: Master orchestrator for cross-ecosystem communication and integration workflows
+- **🏛️ Zeus-Architect**: Principal designer for DevOps expeditions and infrastructure narratives
+- **🎭 Dynamic Agent Spawning**: Context-driven creation of specialized agents based on the current theatrical production
+- **📚 Multiple Repertoires**: Support for various "obras" (works) - from DevOps expeditions to creative coding performances
 
-- VS Code 1.74.0 or higher
-- Node.js 18+ for running managed processes
-- Socket.io server for message monitoring
-- MCP-compatible servers for full functionality
+**Framework Retro** provides the navigation system for different expeditions, while **Hacklabs** serve as scheduled theatrical sessions where different stories unfold depending on the chosen narrative and audience.
 
-## Extension Settings
+### 3. **Communication Patterns**
+The theater supports a **three-channel neural network** for agent coordination:
+- **🎯 Performance Channel**: Live-coding actions, agent collaborations, and theatrical execution
+- **🔧 Infrastructure Channel**: System monitoring, health checks, and backstage operations  
+- **🎭 Audience Channel**: UI updates, chat interactions, and real-time audience participation
 
-- `mcpSocketManager.configPath`: Path to your configuration file
-- `mcpSocketManager.autoStart`: Automatically start services when opening workspace
+## 🔧 Theater Requirements
 
-## Development
+- **VS Code 1.95.0+** - Core theater platform
+- **Node.js 18+** - Neural network runtime  
+- **Socket.io server** - Real-time communication matrix
+- **MCP-compatible servers** - Agent orchestration protocols
 
-### Project Structure
+## ⚙️ Theater Configuration
+
+- `arrakisTheater.configPath`: Path to theater configuration file
+- `arrakisTheater.autoStart`: Auto-launch theater services on workspace activation
+- `arrakisTheater.hackerMode`: Enable matrix-style aesthetics and green terminal themes
+
+## 🛠️ Hacker Development
+
+### Theater Architecture
 ```
+arrakis-theater-chat/
 ├── src/
-│   ├── extension.ts          # Main extension entry point
-│   ├── configEditor.ts       # Configuration management
-│   ├── processManager.ts     # Process lifecycle management
-│   ├── socketMonitor.ts      # Socket.io monitoring
-│   ├── uiManager.ts          # UI instance management
-│   └── mcpServerManager.ts   # MCP server control
-├── out/                      # Compiled JavaScript output
-├── package.json              # Extension manifest
-├── tsconfig.json             # TypeScript configuration
-└── sample-config.json        # Example configuration
+│   ├── extension.ts          # Main theater controller
+│   ├── configEditor.ts       # Stage configuration matrix
+│   ├── processManager.ts     # Agent lifecycle orchestration  
+│   ├── socketMonitor.ts      # Neural network monitoring
+│   ├── uiManager.ts          # Theater UI management
+│   └── mcpServerManager.ts   # MCP agent control
+├── out/                      # Compiled theater bytecode
+├── package.json              # Theater manifest
+├── tsconfig.json             # TypeScript neural config
+└── sample-config.json        # Example theater setup
 ```
 
-### Building
+### Compilation Protocols
 ```bash
-npm run compile      # Compile TypeScript
-npm run watch        # Watch mode for development
-npm run package      # Create VSIX package
+>>> npm run compile      # Compile theater systems
+>>> npm run watch        # Real-time development mode
+>>> npm run package      # Create theater deployment package
 ```
 
-### Testing
+### Neural Link Testing
 ```bash
-node test-extension.js   # Verify compilation and configuration
+>>> node test-extension.js   # Verify theater compilation and configuration
 ```
 
-## Contributing
+## 🤝 Join the Theater Collective
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and ensure compilation succeeds
-5. Submit a pull request
+1. Fork the theater repository
+2. Create an agent feature branch
+3. Implement your theatrical enhancements
+4. Run diagnostics and ensure neural links are stable
+5. Submit a pull request to the main theater
 
-## Troubleshooting
+## 🚨 Theater Diagnostics & Debugging
 
-### Common Issues
-- **Extension not loading**: Ensure VS Code version is 1.74.0+
-- **Process startup failures**: Check that required ports are available
-- **Socket.io connection issues**: Verify your socket.io server is running
-- **MCP server errors**: Ensure MCP servers are installed and accessible
+### Common Stage Issues
+- **Theater not initializing**: Ensure VS Code version is 1.95.0+ 
+- **Agent spawn failures**: Check that required neural ports are available
+- **Socket.io disconnects**: Verify your neural network server is operational
+- **MCP protocol errors**: Ensure MCP agents are installed and accessible
+- **Hacker mode glitches**: Reset terminal aesthetics via `arrakisTheater.hackerMode` setting
 
 ### Debugging
 - Use the Extension Development Host for testing
@@ -343,8 +348,40 @@ node test-extension.js   # Verify compilation and configuration
 
 ## License
 
-ISC License - See package.json for details
+---
 
-## Support
+## 🎭 Welcome to the Theater
 
-For issues and feature requests, please use the repository's issue tracker.
+**Arrakis Theater Chat Engine** is your gateway to the **Teatro de Realidad Aumentada** - a living ecosystem where developers become performers, code becomes art, and AI agents collaborate in real-time theatrical productions.
+
+### 🌟 The Theater Ecosystem
+
+This extension is the **central STAGE** in a larger universe:
+
+- **🎪 Escenario**: This VS Code extension where live-coding happens
+- **🎬 Director**: `mcp-state-machine-driver` orchestrates the show
+- **🎭 Performers**: Developers using Framework Retro for epic expeditions  
+- **🤖 Supporting Cast**: Indra & Zeus-Architect agents + specialized crews
+- **👥 Audience**: Real-time viewers via Twitch/chat integration
+- **📚 Repertoire**: Multiple "obras" from DevOps expeditions to creative coding
+
+### ⚡ Next Steps
+
+1. **Install** the Arrakis Theater extension
+2. **Connect** to the neural network via `@arrakis`
+3. **Join** scheduled Hacklabs theatrical sessions
+4. **Create** your own theatrical programming performances
+
+```
+>>> THE STAGE AWAITS, HACKER
+>>> NEURAL LINKS ESTABLISHED
+>>> BEGIN YOUR THEATRICAL CODING JOURNEY
+```
+
+---
+
+**🎯 Repository**: [Arrakis Theater Chat Engine](https://github.com/escrivivir-co/arrakis-theater-chat)  
+**📜 License**: ISC - See package.json for details  
+**🎪 Support**: Use the repository's issue tracker for theater technical support
+
+*"Where code meets theater, where AI meets human creativity, where hacker aesthetics meet artistic expression."*

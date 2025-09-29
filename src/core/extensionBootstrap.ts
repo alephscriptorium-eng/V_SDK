@@ -9,6 +9,11 @@ import { ProcessManager } from '../processManager';
 import { WebViewManager } from '../webViewManager';
 import { CommandPaletteManager } from '../commandPaletteManager';
 import { McpChatParticipant } from '../mcpChatParticipant';
+import { TheatricalChatManager } from '../theatrical/TheatricalChatManager';
+import { TeatroTreeDataProvider } from '../views/TeatroTreeDataProvider';
+import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
+import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
+import { AgentConfigEditorProvider } from '../editors/AgentConfigEditorProvider';
 
 export interface ExtensionContext {
     managers: {
@@ -23,6 +28,11 @@ export interface ExtensionContext {
         aiAssistant: AIAssistantService;
     };
     chatParticipant: McpChatParticipant;
+    theatricalChat: TheatricalChatManager;
+    teatroTreeProvider: TeatroTreeDataProvider;
+    teatroWebViewProvider: TeatroWebViewProvider;
+    agentContentEditor: AgentContentEditorProvider;
+    agentConfigEditor: AgentConfigEditorProvider;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -57,6 +67,17 @@ export class ExtensionBootstrap {
             // Initialize the MCP Chat Participant
             const chatParticipant = new McpChatParticipant(context);
             
+            // Initialize Theatrical Chat Manager (Teatro VS Code)
+            const theatricalChat = new TheatricalChatManager(context);
+            
+            // Initialize Teatro components
+            const teatroTreeProvider = new TeatroTreeDataProvider();
+            const teatroWebViewProvider = new TeatroWebViewProvider(context.extensionUri, teatroTreeProvider);
+            
+            // Initialize Agent Editors
+            const agentContentEditor = new AgentContentEditorProvider(context);
+            const agentConfigEditor = new AgentConfigEditorProvider(context);
+            
             this.extensionContext = {
                 managers: {
                     factory: managers.factory,
@@ -70,11 +91,20 @@ export class ExtensionBootstrap {
                     aiAssistant: managers.aiAssistantService
                 },
                 chatParticipant,
+                theatricalChat,
+                teatroTreeProvider,
+                teatroWebViewProvider,
+                agentContentEditor,
+                agentConfigEditor,
                 logger
             };
 
             // Initialize core services
             await this.initializeCoreServices();
+            
+            // Initialize Theatrical Chat Participants (Teatro VS Code)
+            await this.extensionContext.theatricalChat.initialize();
+            logger.info('🎭 Theatrical Chat Participants initialized');
             
             // Track extension activation
             await this.extensionContext.managers.analytics.trackEvent(
@@ -673,6 +703,383 @@ export class ExtensionBootstrap {
                         LogCategory.EXTENSION
                     );
                 }
+            }),
+
+            // Teatro Commands
+            vscode.commands.registerCommand('alephscript.teatro.refresh', () => {
+                if (!this.extensionContext) return;
+                this.extensionContext.teatroTreeProvider.refresh();
+                vscode.window.showInformationMessage('🎭 Teatro actualizado');
+            }),
+
+            vscode.commands.registerCommand('alephscript.teatro.activateAgent', (agentId: string) => {
+                if (!this.extensionContext) return;
+                this.extensionContext.teatroTreeProvider.activateAgent(agentId);
+            }),
+
+            vscode.commands.registerCommand('alephscript.teatro.deactivateAgent', (agentId: string) => {
+                if (!this.extensionContext) return;
+                this.extensionContext.teatroTreeProvider.deactivateAgent(agentId);
+            }),
+
+            vscode.commands.registerCommand('alephscript.teatro.openChatParticipant', async (agentId: string, command?: string) => {
+                try {
+                    if (!this.extensionContext) return;
+                    
+                    const agent = this.extensionContext.teatroTreeProvider.getAgent(agentId);
+                    if (!agent) {
+                        vscode.window.showErrorMessage(`Agente ${agentId} no encontrado`);
+                        return;
+                    }
+
+                    // Focus chat panel
+                    await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
+                    
+                    // Prepare chat message
+                    const message = command ? `@${agentId} /${command}` : `@${agentId} Hola, estoy listo para trabajar contigo`;
+                    
+                    // Show info about the agent
+                    vscode.window.showInformationMessage(
+                        `🎭 Conectando con ${agent.fullName}`, 
+                        'Abrir Chat'
+                    ).then(selection => {
+                        if (selection === 'Abrir Chat') {
+                            vscode.commands.executeCommand('workbench.action.chat.open', {
+                                query: message
+                            });
+                        }
+                    });
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'teatro.openChatParticipant',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.teatro.showAgentInfo', (agentId: string) => {
+                if (!this.extensionContext) return;
+                
+                if (agentId === 'system') {
+                    const status = this.extensionContext.teatroTreeProvider.getAgentsStatus();
+                    vscode.window.showInformationMessage(
+                        `🎭 Teatro: ${status.active}/${status.total} agentes activos`
+                    );
+                    return;
+                }
+
+                const agent = this.extensionContext.teatroTreeProvider.getAgent(agentId);
+                if (agent) {
+                    const commands = agent.commands.map(cmd => `• /${cmd.name}: ${cmd.description}`).join('\n');
+                    vscode.window.showInformationMessage(
+                        `🎭 ${agent.fullName}\n\n${agent.description}\n\nComandos disponibles:\n${commands}`,
+                        'Abrir Chat'
+                    ).then(selection => {
+                        if (selection === 'Abrir Chat') {
+                            vscode.commands.executeCommand('alephscript.teatro.openChatParticipant', agentId);
+                        }
+                    });
+                } else {
+                    vscode.window.showErrorMessage(`Agente ${agentId} no encontrado`);
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.teatro.openTeatroPanel', async () => {
+                try {
+                    if (!this.extensionContext) return;
+                    
+                    // Create Teatro control panel
+                    const panel = vscode.window.createWebviewPanel(
+                        'teatro-panel',
+                        '🎭 Panel del Teatro',
+                        vscode.ViewColumn.One,
+                        { 
+                            enableScripts: true,
+                            localResourceRoots: [this.vsCodeContext!.extensionUri]
+                        }
+                    );
+                    
+                    // Use the same HTML as our WebView provider
+                    if (this.extensionContext?.teatroWebViewProvider) {
+                        const webview = {
+                            webview: panel.webview,
+                            onDidChangeViewState: panel.onDidChangeViewState,
+                            visible: panel.visible,
+                            viewType: 'teatro-panel'
+                        } as any;
+                        
+                        // Resolve the webview manually
+                        this.extensionContext.teatroWebViewProvider.resolveWebviewView(
+                            webview, 
+                            {} as vscode.WebviewViewResolveContext, 
+                            new vscode.CancellationTokenSource().token
+                        );
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'teatro.openTeatroPanel',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            // Agent Management Commands
+            vscode.commands.registerCommand('alephscript.agents.createNew', async () => {
+                try {
+                    // Ask for agent ID
+                    const agentId = await vscode.window.showInputBox({
+                        prompt: 'Enter Agent ID (e.g., isaac, backend-agent)',
+                        validateInput: (value) => {
+                            if (!value || !/^[a-z][a-z0-9-]*[a-z0-9]$/.test(value)) {
+                                return 'Agent ID must start with a letter, contain only lowercase letters, numbers, and hyphens';
+                            }
+                            return null;
+                        }
+                    });
+
+                    if (!agentId) return;
+
+                    // Ask for agent name
+                    const agentName = await vscode.window.showInputBox({
+                        prompt: 'Enter Agent Display Name (e.g., Isaac - El Marinero)',
+                        value: agentId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                    });
+
+                    if (!agentName) return;
+
+                    // Create agent files
+                    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                    if (!workspaceFolder) {
+                        vscode.window.showErrorMessage('No workspace folder found');
+                        return;
+                    }
+
+                    const theatricalContentPath = vscode.Uri.joinPath(workspaceFolder.uri, 'theatrical-content');
+                    
+                    // Create content file
+                    const contentPath = vscode.Uri.joinPath(theatricalContentPath, 'content', 'agents', `${agentId}.agent.md`);
+                    const contentTemplate = `---
+id: ${agentId}
+name: "${agentName}"
+version: "1.0.0"
+description: "Description for ${agentName}"
+role: "assistant"
+specialization: "General"
+---
+
+# ${agentName}
+
+## Descripción
+Describe aquí las capacidades y propósito de este agente.
+
+## Comandos Disponibles
+- \`/example\`: Comando de ejemplo
+
+## Configuración Especializada
+Detalles específicos sobre cómo configurar y usar este agente.
+
+## Ejemplos de Uso
+\`\`\`
+/example parameter
+\`\`\`
+`;
+
+                    const configPath = vscode.Uri.joinPath(theatricalContentPath, 'configurations', 'agents', `${agentId}.config.json`);
+                    const configTemplate = {
+                        id: agentId,
+                        name: agentName,
+                        description: `Description for ${agentName}`,
+                        role: "assistant",
+                        version: "1.0.0",
+                        enabled: true,
+                        tools: [],
+                        capabilities: [],
+                        commands: [
+                            {
+                                name: "example",
+                                description: "Example command"
+                            }
+                        ],
+                        specialization: "General",
+                        mcp: {
+                            enabled: false,
+                            servers: {}
+                        }
+                    };
+
+                    // Create directories if they don't exist
+                    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(theatricalContentPath, 'content', 'agents'));
+                    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(theatricalContentPath, 'configurations', 'agents'));
+
+                    // Write files
+                    await vscode.workspace.fs.writeFile(contentPath, Buffer.from(contentTemplate, 'utf8'));
+                    await vscode.workspace.fs.writeFile(configPath, Buffer.from(JSON.stringify(configTemplate, null, 2), 'utf8'));
+
+                    // Open content file for editing
+                    const document = await vscode.workspace.openTextDocument(contentPath);
+                    await vscode.window.showTextDocument(document);
+
+                    vscode.window.showInformationMessage(`Agent ${agentName} created successfully!`);
+
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'agents.createNew',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.agents.editContent', async () => {
+                try {
+                    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                    if (!workspaceFolder) {
+                        vscode.window.showErrorMessage('No workspace folder found');
+                        return;
+                    }
+
+                    const agentFiles = await vscode.workspace.findFiles(
+                        new vscode.RelativePattern(workspaceFolder, '**/theatrical-content/content/agents/*.agent.md')
+                    );
+
+                    if (agentFiles.length === 0) {
+                        vscode.window.showInformationMessage('No agent content files found. Create a new agent first.');
+                        return;
+                    }
+
+                    const selected = await vscode.window.showQuickPick(
+                        agentFiles.map(file => ({
+                            label: file.fsPath.split('/').pop()?.replace('.agent.md', '') || 'Unknown',
+                            description: file.fsPath,
+                            uri: file
+                        })),
+                        { placeHolder: 'Select agent to edit content' }
+                    );
+
+                    if (selected) {
+                        const document = await vscode.workspace.openTextDocument(selected.uri);
+                        await vscode.window.showTextDocument(document);
+                    }
+
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'agents.editContent',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.agents.editConfig', async () => {
+                try {
+                    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                    if (!workspaceFolder) {
+                        vscode.window.showErrorMessage('No workspace folder found');
+                        return;
+                    }
+
+                    const configFiles = await vscode.workspace.findFiles(
+                        new vscode.RelativePattern(workspaceFolder, '**/theatrical-content/configurations/agents/*.config.json')
+                    );
+
+                    if (configFiles.length === 0) {
+                        vscode.window.showInformationMessage('No agent configuration files found. Create a new agent first.');
+                        return;
+                    }
+
+                    const selected = await vscode.window.showQuickPick(
+                        configFiles.map(file => ({
+                            label: file.fsPath.split('/').pop()?.replace('.config.json', '') || 'Unknown',
+                            description: file.fsPath,
+                            uri: file
+                        })),
+                        { placeHolder: 'Select agent to edit configuration' }
+                    );
+
+                    if (selected) {
+                        const document = await vscode.workspace.openTextDocument(selected.uri);
+                        await vscode.window.showTextDocument(document);
+                    }
+
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'agents.editConfig',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.agents.validateAll', async () => {
+                try {
+                    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+                    if (!workspaceFolder) {
+                        vscode.window.showErrorMessage('No workspace folder found');
+                        return;
+                    }
+
+                    // Find all agent files
+                    const contentFiles = await vscode.workspace.findFiles(
+                        new vscode.RelativePattern(workspaceFolder, '**/theatrical-content/content/agents/*.agent.md')
+                    );
+                    
+                    const configFiles = await vscode.workspace.findFiles(
+                        new vscode.RelativePattern(workspaceFolder, '**/theatrical-content/configurations/agents/*.config.json')
+                    );
+
+                    const validationResults = [];
+
+                    // Validate that each content file has a corresponding config file
+                    for (const contentFile of contentFiles) {
+                        const agentId = contentFile.fsPath.split('/').pop()?.replace('.agent.md', '');
+                        const correspondingConfig = configFiles.find(config => 
+                            config.fsPath.includes(`${agentId}.config.json`)
+                        );
+
+                        if (!correspondingConfig) {
+                            validationResults.push(`❌ Missing config file for agent: ${agentId}`);
+                        } else {
+                            validationResults.push(`✅ Agent ${agentId} has both content and config files`);
+                        }
+                    }
+
+                    // Show validation results
+                    const panel = vscode.window.createWebviewPanel(
+                        'agent-validation',
+                        'Agent Validation Results',
+                        vscode.ViewColumn.One,
+                        { enableScripts: false }
+                    );
+
+                    panel.webview.html = `
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; }
+                                .result { margin: 8px 0; padding: 8px; border-radius: 4px; }
+                                .success { background: #d4edda; color: #155724; }
+                                .error { background: #f8d7da; color: #721c24; }
+                            </style>
+                        </head>
+                        <body>
+                            <h2>🎭 Agent Validation Results</h2>
+                            <p>Found ${contentFiles.length} content files and ${configFiles.length} config files</p>
+                            ${validationResults.map(result => 
+                                `<div class="result ${result.includes('✅') ? 'success' : 'error'}">${result}</div>`
+                            ).join('')}
+                        </body>
+                        </html>
+                    `;
+
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'agents.validateAll',
+                        LogCategory.EXTENSION
+                    );
+                }
             })
         );
 
@@ -690,9 +1097,60 @@ export class ExtensionBootstrap {
             throw new Error('Extension context not initialized');
         }
 
-        // TreeViews will be implemented separately
-        // This is a placeholder for the TreeView setup
-        this.extensionContext.logger.info('TreeViews setup completed');
+        try {
+            // Register Teatro TreeView
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.teatro', {
+                    treeDataProvider: this.extensionContext.teatroTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
+            // Register Teatro WebView Provider  
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    TeatroWebViewProvider.viewType, 
+                    this.extensionContext.teatroWebViewProvider
+                )
+            );
+
+            // Register Agent Content Editor (for .agent.md files)
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerCustomEditorProvider(
+                    'alephscript.agentContentEditor',
+                    this.extensionContext.agentContentEditor,
+                    {
+                        webviewOptions: {
+                            retainContextWhenHidden: true,
+                            enableFindWidget: true
+                        },
+                        supportsMultipleEditorsPerDocument: false
+                    }
+                )
+            );
+
+            // Register Agent Config Editor (for .config.json files in agent contexts)
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerCustomEditorProvider(
+                    'alephscript.agentConfigEditor',
+                    this.extensionContext.agentConfigEditor,
+                    {
+                        webviewOptions: {
+                            retainContextWhenHidden: true,
+                            enableFindWidget: true
+                        },
+                        supportsMultipleEditorsPerDocument: false
+                    }
+                )
+            );
+
+            this.extensionContext.logger.info('🎭 Teatro TreeViews and WebViews registered successfully');
+            this.extensionContext.logger.info('🔧 Agent Editors registered successfully');
+        } catch (error) {
+            this.extensionContext.logger.error('Failed to setup TreeViews:', error);
+            throw error;
+        }
     }
 
     /**
@@ -935,6 +1393,10 @@ AlephScript Extension Status:
             try {
                 // Dispose chat participant first
                 this.extensionContext.chatParticipant.dispose();
+                
+                // Dispose theatrical chat participants
+                this.extensionContext.theatricalChat.dispose();
+                this.extensionContext.logger.info('🎭 Theatrical Chat Participants disposed');
                 
                 // Then dispose all managers
                 await this.extensionContext.managers.factory.disposeAll();

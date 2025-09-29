@@ -1,0 +1,362 @@
+/* Teatro WebView Styles */
+
+:root {
+    --teatro-primary: #3b82f6;
+    --teatro-secondary: #6366f1;
+    --teatro-success: #10b981;
+    --teatro-warning: #f59e0b;
+    --teatro-danger: #ef4444;
+    --teatro-dark: #1f2937;
+    --teatro-light: #f3f4f6;
+    --teatro-border: #e5e7eb;
+    --teatro-text: var(--vscode-foreground);
+    --teatro-bg: var(--vscode-editor-background);
+    --teatro-surface: var(--vscode-editor-background);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--teatro-text);
+    background-color: var(--teatro-bg);
+    margin: 0;
+    padding: 16px;
+    line-height: 1.5;
+}
+
+.teatro-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Header */
+.teatro-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 24px;
+    background: linear-gradient(135deg, var(--teatro-primary), var(--teatro-secondary));
+    border-radius: 12px;
+    color: white;
+}
+
+.teatro-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.teatro-subtitle {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Status Section */
+.teatro-status {
+    margin-bottom: 32px;
+}
+
+.teatro-status h2 {
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--teatro-border);
+    background-color: var(--teatro-surface);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-card.total {
+    border-left: 4px solid var(--teatro-primary);
+}
+
+.status-card.active {
+    border-left: 4px solid var(--teatro-success);
+}
+
+.status-card.inactive {
+    border-left: 4px solid var(--teatro-warning);
+}
+
+.status-icon {
+    font-size: 2rem;
+    margin-right: 16px;
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.status-label {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* Agents Section */
+.teatro-agents {
+    margin-bottom: 32px;
+}
+
+.teatro-agents h2 {
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.agents-container {
+    display: grid;
+    gap: 16px;
+}
+
+.agent-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--teatro-border);
+    background-color: var(--teatro-surface);
+    transition: all 0.2s;
+}
+
+.agent-card:hover {
+    border-color: var(--teatro-primary);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.agent-card.active {
+    border-left: 4px solid var(--teatro-success);
+}
+
+.agent-card.inactive {
+    border-left: 4px solid var(--teatro-warning);
+    opacity: 0.7;
+}
+
+.agent-info {
+    flex: 1;
+}
+
+.agent-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.agent-description {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin: 0 0 8px 0;
+}
+
+.agent-specialization {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    background-color: var(--teatro-primary);
+    color: white;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.agent-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.agent-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.agent-btn.primary {
+    background-color: var(--teatro-primary);
+    color: white;
+}
+
+.agent-btn.primary:hover {
+    background-color: #2563eb;
+}
+
+.agent-btn.secondary {
+    background-color: var(--teatro-border);
+    color: var(--teatro-text);
+}
+
+.agent-btn.secondary:hover {
+    background-color: #d1d5db;
+}
+
+.agent-btn.success {
+    background-color: var(--teatro-success);
+    color: white;
+}
+
+.agent-btn.success:hover {
+    background-color: #059669;
+}
+
+.agent-btn.warning {
+    background-color: var(--teatro-warning);
+    color: white;
+}
+
+.agent-btn.warning:hover {
+    background-color: #d97706;
+}
+
+/* Actions Section */
+.teatro-actions {
+    margin-bottom: 32px;
+}
+
+.teatro-actions h2 {
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-btn {
+    padding: 16px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.action-btn.primary {
+    background-color: var(--teatro-primary);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+}
+
+.action-btn.secondary {
+    background-color: var(--teatro-secondary);
+    color: white;
+}
+
+.action-btn.secondary:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+}
+
+.action-btn.tertiary {
+    background-color: var(--teatro-border);
+    color: var(--teatro-text);
+}
+
+.action-btn.tertiary:hover {
+    background-color: #d1d5db;
+    transform: translateY(-2px);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.status-indicator.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--teatro-success);
+}
+
+.status-indicator.inactive {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--teatro-warning);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.agent-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .agent-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .agent-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

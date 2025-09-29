@@ -1,28 +1,39 @@
 {
-  "name": "mcp-socket-gamification-manager",
-  "displayName": "MCP Socket.io Gamification Manager",
-  "description": "VS Code extension to manage MCP-Socket.io gamification ecosystem",
-  "version": "0.0.1",
-  "publisher": "mcp-gamification",
+  "name": "arrakis-theater-chat",
+  "displayName": "🎭 Arrakis Theater Chat Engine",
+  "description": "The central STAGE of the Arrakis Theater ecosystem - where live-coding performers orchestrate AI agents with hacker aesthetics. Features Indra & Zeus-Architect agents, Framework Retro integration, and MCP protocol support for theatrical development sessions.",
+  "version": "1.0.0",
+  "publisher": "arrakis-theater",
   "repository": {
     "type": "git",
-    "url": "https://github.com/escrivivir-co/vscode-alephscript-extension.git"
+    "url": "https://github.com/escrivivir-co/arrakis-theater-chat.git"
   },
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
+    "Chat",
+    "AI",
     "Other"
   ],
+  "keywords": [
+    "theater",
+    "arrakis",
+    "chat",
+    "ai",
+    "agents",
+    "mcp",
+    "hacker",
+    "neural-network",
+    "live-coding",
+    "orchestration",
+    "framework-retro",
+    "indra",
+    "zeus-architect"
+  ],
+  "icon": "./media/arrakis-theater-icon.png",
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:mcpSocketManager.activate",
-    "onCommand:mcpSocketManager.openConfigEditor",
-    "onCommand:mcpSocketManager.startLauncher",
-    "onCommand:mcpSocketManager.stopLauncher",
-    "onCommand:mcpSocketManager.openSocketMonitor",
-    "onCommand:mcpSocketManager.manageUIs",
-    "onCommand:mcpSocketManager.manageMCPServers"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -56,6 +67,41 @@
         "command": "mcpSocketManager.manageMCPServers",
         "title": "Manage MCP Servers",
         "category": "MCP Manager"
+      },
+      {
+        "command": "alephscript.teatro.refresh",
+        "title": ">>> Refresh Theater Matrix",
+        "icon": "$(sync)",
+        "category": "🎭 Arrakis Theater"
+      },
+      {
+        "command": "alephscript.teatro.activateAgent",
+        "title": ">>> Jack In Agent",
+        "icon": "$(plug)",
+        "category": "🎭 Arrakis Theater"
+      },
+      {
+        "command": "alephscript.teatro.deactivateAgent",
+        "title": ">>> Disconnect Agent",
+        "icon": "$(debug-disconnect)",
+        "category": "🎭 Arrakis Theater"
+      },
+      {
+        "command": "alephscript.teatro.openChatParticipant",
+        "title": ">>> Open Neural Link",
+        "icon": "$(symbol-method)",
+        "category": "🎭 Arrakis Theater"
+      },
+      {
+        "command": "alephscript.teatro.showAgentInfo",
+        "title": ">>> Scan Agent Data",
+        "icon": "$(search-view-icon)",
+        "category": "🎭 Arrakis Theater"
+      },
+      {
+        "command": "alephscript.teatro.openTeatroPanel",
+        "title": "🎭 >>> Launch Theater Console",
+        "category": "🎭 Arrakis Theater"
       },
       {
         "command": "alephscript.agents.start",
@@ -223,39 +269,39 @@
       },
       {
         "command": "alephscript.showDashboard",
-        "title": "Show AlephScript Dashboard",
-        "category": "AlephScript System",
-        "icon": "$(dashboard)"
+        "title": ">>> Access Main Terminal",
+        "category": "🖥️ Theater System",
+        "icon": "$(terminal)"
       },
       {
         "command": "alephscript.systemStatus",
-        "title": "System Status Overview",
-        "category": "AlephScript System",
+        "title": ">>> System Diagnostics",
+        "category": "🖥️ Theater System",
         "icon": "$(pulse)"
       },
       {
         "command": "alephscript.quickStart",
-        "title": "Quick Start - Launch Everything",
-        "category": "AlephScript Quick Actions",
-        "icon": "$(rocket)"
+        "title": ">>> Initialize All Systems",
+        "category": "⚡ Quick Hack",
+        "icon": "$(zap)"
       },
       {
         "command": "alephscript.emergencyStop",
-        "title": "Emergency Stop - Kill All Processes",
-        "category": "AlephScript Quick Actions",
-        "icon": "$(emergency-stop)"
+        "title": ">>> EMERGENCY: Kill All Processes",
+        "category": "⚡ Quick Hack",
+        "icon": "$(stop-circle)"
       },
       {
         "command": "alephscript.agents.startAll",
-        "title": "Start All Agents",
-        "category": "AlephScript Agents",
+        "title": ">>> Boot All Agents",
+        "category": "🤖 Agent Matrix",
         "icon": "$(play-circle)"
       },
       {
         "command": "alephscript.agents.stopAll",
-        "title": "Stop All Agents",
-        "category": "AlephScript Agents",
-        "icon": "$(stop-circle)"
+        "title": ">>> Shutdown Agent Matrix",
+        "category": "🤖 Agent Matrix",
+        "icon": "$(debug-disconnect)"
       },
       {
         "command": "alephscript.uis.startAll",
@@ -319,38 +365,38 @@
       },
       {
         "command": "alephscript.webview.showDashboard",
-        "title": "WebView Dashboard",
-        "category": "AlephScript WebViews",
+        "title": ">>> Theater Dashboard",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(browser)"
       },
       {
         "command": "alephscript.webview.openWebRTC",
-        "title": "Open WebRTC UI",
-        "category": "AlephScript WebViews",
+        "title": ">>> Open Neural Video Link",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(device-camera-video)"
       },
       {
         "command": "alephscript.webview.openThreeJS",
-        "title": "Open ThreeJS UI",
-        "category": "AlephScript WebViews",
+        "title": ">>> Launch 3D Stage",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(symbol-color)"
       },
       {
         "command": "alephscript.webview.openSocket",
-        "title": "Open Socket WebApp",
-        "category": "AlephScript WebViews",
+        "title": ">>> Neural Network Console",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(radio-tower)"
       },
       {
         "command": "alephscript.webview.openDriver",
-        "title": "Open Driver UI",
-        "category": "AlephScript WebViews",
+        "title": ">>> Stage Driver Interface",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(device-desktop)"
       },
       {
         "command": "alephscript.webview.reloadAll",
-        "title": "Reload All WebViews",
-        "category": "AlephScript WebViews",
+        "title": ">>> Reload All Stages",
+        "category": "🎭 Theater Interfaces",
         "icon": "$(refresh)"
       },
       {
@@ -370,6 +416,30 @@
         "title": "Clear Analytics Data",
         "category": "AlephScript Analytics",
         "icon": "$(trash)"
+      },
+      {
+        "command": "alephscript.agents.createNew",
+        "title": ">>> Spawn New Agent",
+        "category": "🤖 Agent Matrix",
+        "icon": "$(add)"
+      },
+      {
+        "command": "alephscript.agents.editContent",
+        "title": ">>> Edit Agent Neural Net",
+        "category": "🤖 Agent Matrix",
+        "icon": "$(code)"
+      },
+      {
+        "command": "alephscript.agents.editConfig",
+        "title": ">>> Hack Agent Config",
+        "category": "🤖 Agent Matrix", 
+        "icon": "$(circuit-board)"
+      },
+      {
+        "command": "alephscript.agents.validateAll",
+        "title": ">>> Run Agent Diagnostics",
+        "category": "🤖 Agent Matrix",
+        "icon": "$(pulse)"
       }
     ],
     "menus": {
@@ -443,6 +513,26 @@
           "command": "alephscript.configs.reload",
           "when": "view == alephscript.configs && viewItem =~ /^configFile/",
           "group": "navigation@2"
+        },
+        {
+          "command": "alephscript.teatro.activateAgent",
+          "when": "view == alephscript.teatro && viewItem == teatroAgentInactive",
+          "group": "inline@1"
+        },
+        {
+          "command": "alephscript.teatro.deactivateAgent",
+          "when": "view == alephscript.teatro && viewItem == teatroAgentActive",
+          "group": "inline@1"
+        },
+        {
+          "command": "alephscript.teatro.openChatParticipant",
+          "when": "view == alephscript.teatro && viewItem =~ /^teatroAgent/",
+          "group": "inline@2"
+        },
+        {
+          "command": "alephscript.teatro.showAgentInfo",
+          "when": "view == alephscript.teatro && viewItem =~ /^teatroAgent/",
+          "group": "navigation@1"
         }
       ],
       "view/title": [
@@ -495,72 +585,93 @@
           "command": "alephscript.logs.export",
           "when": "view == alephscript.logs",
           "group": "navigation@4"
+        },
+        {
+          "command": "alephscript.teatro.refresh",
+          "when": "view == alephscript.teatro",
+          "group": "navigation@1"
+        },
+        {
+          "command": "alephscript.teatro.openTeatroPanel",
+          "when": "view == alephscript.teatro",
+          "group": "navigation@2"
         }
       ]
     },
     "views": {
-      "mcpSocketManager": [
+      "arrakisTheater": [
+        {
+          "id": "alephscript.teatro",
+          "name": "🎭 Theater Agents",
+          "icon": "$(symbol-operator)",
+          "when": "true"
+        },
         {
           "id": "alephscript.agents",
-          "name": "Agents",
+          "name": "🤖 MCP Servers", 
           "icon": "$(server)",
           "when": "true"
         },
         {
           "id": "alephscript.uis",
-          "name": "Gamification UIs",
-          "icon": "$(game)",
+          "name": "🖥️ Theater UIs",
+          "icon": "$(browser)",
           "when": "true"
         },
         {
           "id": "alephscript.configs",
-          "name": "Configurations",
-          "icon": "$(json)",
+          "name": "⚙️ Engine Configs",
+          "icon": "$(settings-gear)",
           "when": "true"
         },
         {
           "id": "alephscript.sockets",
-          "name": "Socket.IO Monitor",
-          "icon": "$(radio-tower)",
+          "name": "🔌 Neural Networks",
+          "icon": "$(plug)",
           "when": "true"
         },
         {
           "id": "alephscript.logs",
-          "name": "Debug & Logs",
-          "icon": "$(output)",
+          "name": "📡 System Logs",
+          "icon": "$(terminal)",
           "when": "true"
         }
       ],
       "explorer": [
         {
-          "id": "mcpSocketManager",
-          "name": "MCP Socket Manager",
-          "icon": "$(server)",
-          "when": "resourceExtname == .json"
+          "id": "arrakisTheater",
+          "name": "🎭 Theater Engine",
+          "icon": "$(symbol-operator)",
+          "when": "resourceExtname == .json || resourceExtname == .md"
         }
       ]
     },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "mcpSocketManager",
-          "title": "MCP Socket Manager",
-          "icon": "./media/mcp.svg"
+          "id": "arrakisTheater",
+          "title": "🎭 Arrakis Theater",
+          "icon": "./media/arrakis-theater-icon.svg"
         }
       ]
     },
     "configuration": {
-      "title": "MCP Socket Manager",
+      "title": "🎭 Arrakis Theater Engine",
       "properties": {
-        "mcpSocketManager.configPath": {
+        "arrakisTheater.configPath": {
           "type": "string",
           "default": "",
-          "description": "Path to the MCP configuration file"
+          "description": "Path to the Theater configuration file"
         },
-        "mcpSocketManager.autoStart": {
+        "arrakisTheater.autoStart": {
           "type": "boolean",
           "default": false,
-          "description": "Auto-start services when opening workspace"
+          "description": "Auto-start Theater services when opening workspace"
+        },
+        "arrakisTheater.hackerMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hacker-style terminal aesthetics and green color scheme"
         },
         "alephscript.logging.level": {
           "type": "string",
@@ -759,6 +870,129 @@
             "description": "Help with Socket.IO integration and monitoring."
           }
         ]
+      },
+      {
+        "id": "mcp-vscode-ext.isaac",
+        "fullName": "Isaac - El Marinero",
+        "name": "isaac",
+        "description": "Tu marinero fiel para navegación técnica y exploración de frameworks",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "navegar",
+            "description": "Navegar por el código y explorar arquitecturas"
+          },
+          {
+            "name": "bitacora",
+            "description": "Documentar hazañas técnicas y descubrimientos"
+          }
+        ]
+      },
+      {
+        "id": "mcp-vscode-ext.don-alvaro",
+        "fullName": "Don Álvaro - Capataz de Astilleros",
+        "name": "don-alvaro",
+        "description": "Ingeniero especializado en mantenimiento y optimización de frameworks",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "diagnostico",
+            "description": "Diagnóstico técnico completo de sistemas"
+          },
+          {
+            "name": "optimizar",
+            "description": "Optimización de rendimiento y arquitectura"
+          },
+          {
+            "name": "mantener",
+            "description": "Mantenimiento preventivo y correctivo"
+          }
+        ]
+      },
+      {
+        "id": "mcp-vscode-ext.capitan-didac",
+        "fullName": "Capitán Dídac - Líder de Expedición",
+        "name": "capitan-didac",
+        "description": "Liderazgo técnico para navegación en territorios desconocidos",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "liderar",
+            "description": "Liderazgo en proyectos complejos"
+          },
+          {
+            "name": "estrategia",
+            "description": "Planificación estratégica técnica"
+          },
+          {
+            "name": "expedicion",
+            "description": "Exploración de nuevas tecnologías"
+          }
+        ]
+      },
+      {
+        "id": "mcp-vscode-ext.indra",
+        "fullName": "Indra - Agente de Integración",
+        "name": "indra",
+        "description": "Especialista en integración cross-component y comunicación entre servicios",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "integrar",
+            "description": "Integración entre componentes y servicios"
+          },
+          {
+            "name": "comunicar",
+            "description": "Establecer comunicación entre sistemas"
+          },
+          {
+            "name": "sincronizar",
+            "description": "Sincronización de estados y datos"
+          }
+        ]
+      },
+      {
+        "id": "mcp-vscode-ext.backend-agent",
+        "fullName": "Backend Agent - Arquitecto de Backend",
+        "name": "backend-agent",
+        "description": "Especialista en desarrollo de backend, APIs y arquitectura de servidores",
+        "isSticky": false,
+        "commands": [
+          {
+            "name": "api",
+            "description": "Desarrollo y diseño de APIs"
+          },
+          {
+            "name": "servidor",
+            "description": "Configuración y optimización de servidores"
+          },
+          {
+            "name": "base-datos",
+            "description": "Diseño y optimización de bases de datos"
+          }
+        ]
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "alephscript.agentContentEditor",
+        "displayName": "Agent Content Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.agent.md"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "alephscript.agentConfigEditor", 
+        "displayName": "Agent Configuration Editor",
+        "selector": [
+          {
+            "filenamePattern": "**/theatrical-content/configurations/agents/*.config.json"
+          }
+        ],
+        "priority": "default"
       }
     ]
   },

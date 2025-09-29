@@ -1,0 +1,478 @@
+/* Agent Content Editor Styles */
+
+:root {
+    --editor-bg: var(--vscode-editor-background);
+    --editor-fg: var(--vscode-editor-foreground);
+    --sidebar-bg: var(--vscode-sideBar-background);
+    --toolbar-bg: var(--vscode-toolbar-hoverBackground);
+    --border-color: var(--vscode-panel-border);
+    --button-bg: var(--vscode-button-background);
+    --button-fg: var(--vscode-button-foreground);
+    --button-hover-bg: var(--vscode-button-hoverBackground);
+    --input-bg: var(--vscode-input-background);
+    --input-fg: var(--vscode-input-foreground);
+    --primary-color: #007acc;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--editor-fg);
+    background-color: var(--editor-bg);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Header */
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.header-info h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.agent-info {
+    display: flex;
+    gap: 12px;
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.agent-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-primary {
+    background-color: var(--button-bg);
+    color: var(--button-fg);
+}
+
+.btn-primary:hover {
+    background-color: var(--button-hover-bg);
+}
+
+.btn-secondary {
+    background-color: var(--toolbar-bg);
+    color: var(--editor-fg);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+/* Main Editor Area */
+.editor-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.editor-sidebar {
+    width: 280px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.structure-tree {
+    font-size: 0.875rem;
+}
+
+.structure-item {
+    padding: 4px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    padding-left: 8px;
+}
+
+.structure-item:hover {
+    background-color: var(--toolbar-bg);
+}
+
+.structure-item.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.metadata-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metadata-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metadata-field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.metadata-field input {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-fg);
+    font-size: 0.875rem;
+}
+
+.quick-guides {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.guide-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-fg);
+    cursor: pointer;
+    font-size: 0.875rem;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.guide-btn:hover {
+    background-color: var(--toolbar-bg);
+    border-color: var(--primary-color);
+}
+
+/* Content Editor */
+.editor-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--toolbar-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 4px;
+}
+
+.toolbar-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--input-fg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+    background-color: var(--toolbar-bg);
+    border-color: var(--primary-color);
+}
+
+.toolbar-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.content-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 16px;
+    background-color: var(--editor-bg);
+    color: var(--editor-fg);
+    font-family: var(--vscode-editor-font-family, 'Consolas, Monaco, monospace');
+    font-size: var(--vscode-editor-font-size, 14px);
+    line-height: 1.5;
+    resize: none;
+    tab-size: 4;
+}
+
+.editor-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--sidebar-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.status-info {
+    display: flex;
+    gap: 16px;
+}
+
+.validation-status .status-indicator {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.status-indicator.valid {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status-indicator.invalid {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.status-indicator.warning {
+    background-color: var(--warning-color);
+    color: black;
+}
+
+/* Preview Panel */
+.editor-preview {
+    width: 400px;
+    background-color: var(--editor-bg);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preview-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+.preview-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.preview-content h1,
+.preview-content h2,
+.preview-content h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.preview-content p {
+    margin-bottom: 16px;
+}
+
+.preview-content code {
+    background-color: var(--toolbar-bg);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.preview-content pre {
+    background-color: var(--toolbar-bg);
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+/* Validation Panel */
+.validation-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background-color: var(--sidebar-bg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.validation-results {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.validation-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.validation-item.error {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left: 4px solid var(--danger-color);
+}
+
+.validation-item.warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid var(--warning-color);
+}
+
+.validation-item.success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 4px solid var(--success-color);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--editor-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 6px;
+    border: 2px solid var(--editor-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--toolbar-bg);
+}
+
+/* Responsive design */
+@media (max-width: 800px) {
+    .editor-sidebar {
+        width: 240px;
+    }
+    
+    .editor-preview {
+        width: 320px;
+    }
+}
+
+@media (max-width: 600px) {
+    .editor-main {
+        flex-direction: column;
+    }
+    
+    .editor-sidebar {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .editor-preview {
+        width: 100%;
+        height: 200px;
+    }
+}
