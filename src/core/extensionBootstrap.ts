@@ -8,6 +8,7 @@ import { LoggingManager, LogCategory, LogLevel, createLogger } from '../loggingM
 import { ProcessManager } from '../processManager';
 import { WebViewManager } from '../webViewManager';
 import { CommandPaletteManager } from '../commandPaletteManager';
+import { McpChatParticipant } from '../mcpChatParticipant';
 
 export interface ExtensionContext {
     managers: {
@@ -21,6 +22,7 @@ export interface ExtensionContext {
         analytics: AnalyticsService;
         aiAssistant: AIAssistantService;
     };
+    chatParticipant: McpChatParticipant;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -52,6 +54,9 @@ export class ExtensionBootstrap {
             // Create all standard managers
             const managers = await createStandardManagers(context);
             
+            // Initialize the MCP Chat Participant
+            const chatParticipant = new McpChatParticipant(context);
+            
             this.extensionContext = {
                 managers: {
                     factory: managers.factory,
@@ -64,6 +69,7 @@ export class ExtensionBootstrap {
                     analytics: managers.analyticsService,
                     aiAssistant: managers.aiAssistantService
                 },
+                chatParticipant,
                 logger
             };
 
@@ -927,6 +933,10 @@ AlephScript Extension Status:
             this.extensionContext.logger.info('AlephScript extension deactivation started');
             
             try {
+                // Dispose chat participant first
+                this.extensionContext.chatParticipant.dispose();
+                
+                // Then dispose all managers
                 await this.extensionContext.managers.factory.disposeAll();
                 this.extensionContext.logger.info('AlephScript extension deactivation completed');
             } catch (error) {
