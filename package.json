@@ -1015,7 +1015,8 @@
     "uninstall:local": "code --uninstall-extension arrakis-theater.arrakis-theater-chat",
     "build:local": "npm run compile && npm run package:local",
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
-    "dev:quick": "npm run compile && npm run deploy:local"
+    "dev:quick": "npm run compile && npm run deploy:local",
+	"unix:code": "sh ./setup-vscode-path"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

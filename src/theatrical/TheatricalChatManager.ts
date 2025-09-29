@@ -42,7 +42,7 @@ export class TheatricalChatManager {
         // Define our 5 migrated agents
         const agents: TheatricalChatAgent[] = [
             {
-                id: 'isaac',
+                id: 'mcp-vscode-ext.isaac',
                 name: 'Isaac - Marinero Fiel',
                 emoji: '⚓',
                 category: 'framework-retro',
@@ -50,7 +50,7 @@ export class TheatricalChatManager {
                 expertise: ['project-management', 'documentation', 'framework-navigation']
             },
             {
-                id: 'don-alvaro',
+                id: 'mcp-vscode-ext.don-alvaro',
                 name: 'Don Álvaro - Capataz de Astilleros',
                 emoji: '🔧',
                 category: 'framework-retro',
@@ -58,7 +58,7 @@ export class TheatricalChatManager {
                 expertise: ['quality-assurance', 'partnership-historico', 'supervisor-authority']
             },
             {
-                id: 'capitan-didac',
+                id: 'mcp-vscode-ext.capitan-didac',
                 name: 'Capitán Dídac - Liderazgo Naval',
                 emoji: '🏴‍☠️',
                 category: 'framework-retro', 
@@ -66,7 +66,7 @@ export class TheatricalChatManager {
                 expertise: ['project-leadership', 'architecture-decisions', 'strategic-planning']
             },
             {
-                id: 'indra',
+                id: 'mcp-vscode-ext.indra',
                 name: 'Indra - Integration Agent',
                 emoji: '🌐',
                 category: 'technical-devops',
@@ -74,7 +74,7 @@ export class TheatricalChatManager {
                 expertise: ['integration', 'cross-component', 'external-services']
             },
             {
-                id: 'backend-agent',
+                id: 'mcp-vscode-ext.backend-agent',
                 name: 'Backend Agent - Technical Specialist',
                 emoji: '💻',
                 category: 'technical-devops',
@@ -172,19 +172,19 @@ export class TheatricalChatManager {
         const prompt = request.prompt;
 
         switch (agent.id) {
-            case 'isaac':
+            case 'mcp-vscode-ext.isaac':
                 await this.handleIsaacRequest(prompt, stream);
                 break;
-            case 'don-alvaro':
+            case 'mcp-vscode-ext.don-alvaro':
                 await this.handleDonAlvaroRequest(prompt, stream);
                 break;
-            case 'capitan-didac':
+            case 'mcp-vscode-ext.capitan-didac':
                 await this.handleCapitanDidacRequest(prompt, stream);
                 break;
-            case 'indra':
+            case 'mcp-vscode-ext.indra':
                 await this.handleIndraRequest(prompt, stream);
                 break;
-            case 'backend-agent':
+            case 'mcp-vscode-ext.backend-agent':
                 await this.handleBackendAgentRequest(prompt, stream);
                 break;
             default:
@@ -290,31 +290,31 @@ export class TheatricalChatManager {
 
         // Add agent-specific followups
         switch (agent.id) {
-            case 'isaac':
+            case 'mcp-vscode-ext.isaac':
                 followups.push(
                     { prompt: '¿Cómo puedo navegar el proyecto?', label: '🧭 Navegación del proyecto' },
                     { prompt: '¿Qué agentes están disponibles?', label: '👥 Ver agentes del teatro' }
                 );
                 break;
-            case 'don-alvaro':
+            case 'mcp-vscode-ext.don-alvaro':
                 followups.push(
                     { prompt: '¿Cuál es el estado de calidad?', label: '📊 Estado de calidad' },
                     { prompt: '¿Qué es Partnership Histórico?', label: '🤝 Partnership Histórico' }
                 );
                 break;
-            case 'capitan-didac':
+            case 'mcp-vscode-ext.capitan-didac':
                 followups.push(
                     { prompt: '¿Cuál es la visión del proyecto?', label: '🎯 Visión estratégica' },
                     { prompt: '¿Cómo está la arquitectura?', label: '🏗️ Estado arquitectural' }
                 );
                 break;
-            case 'indra':
+            case 'mcp-vscode-ext.indra':
                 followups.push(
                     { prompt: '¿Qué servicios están integrados?', label: '🔗 Servicios integrados' },
                     { prompt: '¿Cómo funciona la sincronización?', label: '⚡ Sincronización' }
                 );
                 break;
-            case 'backend-agent':
+            case 'mcp-vscode-ext.backend-agent':
                 followups.push(
                     { prompt: '¿Cómo optimizar el backend?', label: '⚡ Optimización backend' },
                     { prompt: '¿Qué patterns usar en Express?', label: '🔧 Express patterns' }
