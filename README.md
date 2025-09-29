@@ -4,9 +4,14 @@
 
 ![Arrakis Theater](./media/arrakis-theater-icon.png)
 
+![](./pics/arrakis_theater_extension.png)
+
 ## 🖥️ The Hacker's Theater
 
 Welcome to **Arrakis Theater**, where AI agents perform in a digital theater powered by hacker aesthetics and the Model Context Protocol (MCP). This VS Code extension transforms your development environment into a command center for orchestrating intelligent agents with theatrical flair.
+
+![](./pics/THEATER_INSTALL_1.png)
+
 
 ### 🎯 Core Philosophy
 

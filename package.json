@@ -651,7 +651,7 @@
         {
           "id": "arrakisTheater",
           "title": "🎭 Arrakis Theater",
-          "icon": "./media/arrakis-theater-icon.svg"
+          "icon": "./media/arrakis-theater-icon.png"
         }
       ]
     },
@@ -1012,7 +1012,7 @@
     "package": "vsce package",
     "package:local": "vsce package --out mcp-extension-local.vsix",
     "install:local": "code --install-extension mcp-extension-local.vsix",
-    "uninstall:local": "code --uninstall-extension mcp-gamification.mcp-socket-gamification-manager",
+    "uninstall:local": "code --uninstall-extension arrakis-theater.arrakis-theater-chat",
     "build:local": "npm run compile && npm run package:local",
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
     "dev:quick": "npm run compile && npm run deploy:local"
