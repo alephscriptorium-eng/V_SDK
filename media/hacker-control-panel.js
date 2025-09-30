@@ -3,16 +3,27 @@
 (function() {
     'use strict';
 
-    // Get VS Code API
-    const vscode = acquireVsCodeApi();
+    // Acquire the VS Code API once and store it. Reuse if already set on window.
+    let vscode = null;
+    if (typeof window !== 'undefined') {
+        if (window.vscode) {
+            vscode = window.vscode;
+        } else if (typeof acquireVsCodeApi === 'function') {
+            try {
+                vscode = acquireVsCodeApi();
+                window.vscode = vscode;
+            } catch (error) {
+                console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+                vscode = window.vscode || null;
+            }
+        }
+    }
     
     let webviewGroups = [];
-    let matrixInterval;
     let timeInterval;
 
     // Initialize the panel
     document.addEventListener('DOMContentLoaded', function() {
-        initializeMatrixRain();
         startMatrixTime();
         requestStatus();
         setupEventListeners();
@@ -33,10 +44,10 @@
     // Separate click handler function to avoid duplicates
     function handleDocumentClick(event) {
         const target = event.target;
-        
         // Handle control buttons
-        if (target.hasAttribute('data-action')) {
-            const action = target.getAttribute('data-action');
+        const actionEl = target.closest('[data-action]');
+        if (actionEl) {
+            const action = actionEl.getAttribute('data-action');
             switch (action) {
                 case 'refreshAll':
                     refreshAll();
@@ -46,53 +57,28 @@
                     break;
             }
         }
-        
         // Handle webview launch
-        if (target.hasAttribute('data-launch-webview')) {
-            const command = target.getAttribute('data-launch-webview');
+        const launchEl = target.closest('[data-launch-webview]');
+        if (launchEl) {
+            const command = launchEl.getAttribute('data-launch-webview');
             launchWebview(command);
         }
-        
         // Handle webview close
-        if (target.hasAttribute('data-close-webview')) {
+        const closeEl = target.closest('[data-close-webview]');
+        if (closeEl) {
             event.stopPropagation();
-            const webviewId = target.getAttribute('data-close-webview');
+            const webviewId = closeEl.getAttribute('data-close-webview');
             closeWebview(webviewId);
         }
-        
         // Handle group toggle
-        if (target.hasAttribute('data-toggle-group')) {
-            const groupId = target.getAttribute('data-toggle-group');
+        const headerEl = target.closest('[data-toggle-group]');
+        if (headerEl) {
+            const groupId = headerEl.getAttribute('data-toggle-group');
             toggleGroup(groupId);
         }
     }
 
-    // Matrix Rain Animation
-    function initializeMatrixRain() {
-        const matrixContainer = document.getElementById('matrixRain');
-        const characters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-        
-        function createMatrixChar() {
-            const char = document.createElement('div');
-            char.className = 'matrix-char';
-            char.textContent = characters[Math.floor(Math.random() * characters.length)];
-            char.style.left = Math.random() * 100 + '%';
-            char.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            char.style.fontSize = (Math.random() * 8 + 8) + 'px';
-            char.style.opacity = Math.random() * 0.3 + 0.1;
-            
-            matrixContainer.appendChild(char);
-            
-            setTimeout(() => {
-                if (char.parentNode) {
-                    char.parentNode.removeChild(char);
-                }
-            }, 5000);
-        }
-        
-        // Create matrix characters
-        matrixInterval = setInterval(createMatrixChar, 200);
-    }
+    // Matrix rain removed
 
     // Matrix Time Display
     function startMatrixTime() {
@@ -115,9 +101,11 @@
     // Message handling from VS Code extension
     window.addEventListener('message', event => {
         const message = event.data;
+        console.log('Received message from backend:', message);
         
         switch (message.command) {
             case 'updateStatus':
+                console.log('Updating status with data:', message.data);
                 updateWebviewGroups(message.data);
                 break;
         }
@@ -125,38 +113,88 @@
 
     // Request status from extension
     function requestStatus() {
-        vscode.postMessage({
-            command: 'getStatus'
-        });
+        console.log('Requesting status from backend...');
+        if (vscode) {
+            vscode.postMessage({
+                command: 'getStatus'
+            });
+        } else {
+            console.error('VS Code API not available, cannot request status.');
+        }
     }
 
-    // Global functions for button clicks
-    window.refreshAll = function() {
-        console.log('JavaScript: refreshAll called');
-        showTerminalMessage('>>> REFRESHING QUANTUM MATRIX...');
-        vscode.postMessage({
-            command: 'refreshPanel'
-        });
-        console.log('JavaScript: Sent refreshPanel message');
-        
-        setTimeout(() => {
-            showTerminalMessage('>>> MATRIX REFRESH COMPLETE');
-        }, 1000);
-    };
+    // Launch a webview
+    function launchWebview(command) {
+        if (vscode) {
+            vscode.postMessage({
+                command: 'launchWebview',
+                commandId: command,
+                payload: { command: command }
+            });
+        } else {
+            console.error('VS Code API not available, cannot launch webview.');
+        }
+    }
 
-    window.reloadAllWebviews = function() {
-        showTerminalMessage('>>> RELOADING ALL NEURAL LINKS...');
-        vscode.postMessage({
-            command: 'reloadAllWebviews'
-        });
+    // Close a webview
+    function closeWebview(webviewId) {
+        if (vscode) {
+            vscode.postMessage({
+                command: 'closeWebview',
+                webviewId: webviewId,
+                payload: { webviewId: webviewId }
+            });
+        } else {
+            console.error('VS Code API not available, cannot close webview.');
+        }
+    }
+
+    // Refresh all statuses
+    function refreshAll() {
+        requestStatus();
+    }
+
+    // Reload all webviews
+    function reloadAllWebviews() {
+        if (vscode) {
+            vscode.postMessage({ command: 'reloadAllWebviews' });
+        } else {
+            console.error('VS Code API not available, cannot reload webviews.');
+        }
+    }
+
+
+
+    // Toggle webview group visibility
+    window.toggleGroup = function(groupId) {
+        const groupElement = document.getElementById(groupId);
         
-        setTimeout(() => {
-            showTerminalMessage('>>> NEURAL LINKS RELOADED');
-        }, 2000);
+        if (!groupElement) {
+            console.error('Group element not found for ID:', groupId);
+            return;
+        }
+        
+        const headerElement = groupElement.previousElementSibling;
+        const icon = headerElement ? headerElement.querySelector('.group-icon') : null;
+        const isCollapsed = groupElement.classList.contains('collapsed');
+        if (isCollapsed) {
+            // Expand the group
+            groupElement.classList.remove('collapsed');
+            if (headerElement) headerElement.classList.remove('collapsed');
+            if (icon) icon.classList.remove('collapsed');
+            localStorage.removeItem(groupId);
+        } else {
+            // Collapse the group
+            groupElement.classList.add('collapsed');
+            if (headerElement) headerElement.classList.add('collapsed');
+            if (icon) icon.classList.add('collapsed');
+            localStorage.setItem(groupId, 'collapsed');
+        }
     };
 
     // Update webview groups display
     function updateWebviewGroups(groups) {
+        console.log('updateWebviewGroups called with:', groups);
         webviewGroups = groups;
         renderWebviewGroups();
         updateActiveLinkCount();
@@ -164,9 +202,11 @@
 
     // Render webview groups
     function renderWebviewGroups() {
+        console.log('renderWebviewGroups called, webviewGroups:', webviewGroups);
         const container = document.getElementById('controlPanels');
         
         if (!webviewGroups || webviewGroups.length === 0) {
+            console.log('No webview groups to render');
             container.innerHTML = `
                 <div class="loading-message">
                     <span class="blinking-text">>>> NO QUANTUM INTERFACES DETECTED...</span>
@@ -175,15 +215,21 @@
             return;
         }
 
+        console.log('Rendering', webviewGroups.length, 'groups');
         let html = '';
         
         webviewGroups.forEach((group, groupIndex) => {
             const groupId = `group-${groupIndex}`;
-            const isCollapsed = localStorage.getItem(groupId) === 'collapsed';
+            let isCollapsed = localStorage.getItem(groupId) === 'collapsed';
+            // Ensure last group is open by default
+            if (groupIndex === webviewGroups.length - 1) {
+                isCollapsed = false;
+                localStorage.removeItem(groupId);
+            }
             
             html += `
                 <div class="webview-group">
-                    <div class="group-header" data-toggle-group="${groupId}">
+                    <div class="group-header ${isCollapsed ? 'collapsed' : ''}" data-toggle-group="${groupId}">
                         <span class="group-icon ${isCollapsed ? 'collapsed' : ''}">▼</span>
                         <span class="group-title">${group.icon} ${group.name}</span>
                         <span class="group-description">${group.description}</span>
@@ -223,51 +269,6 @@
             `;
         }).join('');
     }
-
-    // Toggle group collapse/expand
-    window.toggleGroup = function(groupId) {
-        const groupElement = document.getElementById(groupId);
-        
-        if (!groupElement) {
-            console.error('Group element not found for ID:', groupId);
-            return;
-        }
-        
-        const headerElement = groupElement.previousElementSibling;
-        const icon = headerElement ? headerElement.querySelector('.group-icon') : null;
-        
-        if (groupElement.classList.contains('collapsed')) {
-            // Expand the group
-            groupElement.classList.remove('collapsed');
-            if (icon) icon.classList.remove('collapsed');
-            localStorage.removeItem(groupId);
-        } else {
-            // Collapse the group
-            groupElement.classList.add('collapsed');
-            if (icon) icon.classList.add('collapsed');
-            localStorage.setItem(groupId, 'collapsed');
-        }
-    };
-
-    // Launch webview
-    window.launchWebview = function(command) {
-        console.log(`JavaScript: launchWebview called with command: ${command}`);
-        showTerminalMessage(`>>> LAUNCHING NEURAL INTERFACE: ${command}`);
-        vscode.postMessage({
-            command: 'launchWebview',
-            commandId: command
-        });
-        console.log(`JavaScript: Sent message to launch webview: ${command}`);
-    };
-
-    // Close webview
-    window.closeWebview = function(webviewId) {
-        showTerminalMessage(`>>> TERMINATING NEURAL LINK: ${webviewId}`);
-        vscode.postMessage({
-            command: 'closeWebview',
-            webviewId: webviewId
-        });
-    };
 
     // Update active link count
     function updateActiveLinkCount() {

@@ -1,17 +1,18 @@
 /* Teatro WebView Styles */
 
 :root {
-    --teatro-primary: #3b82f6;
-    --teatro-secondary: #6366f1;
-    --teatro-success: #10b981;
-    --teatro-warning: #f59e0b;
-    --teatro-danger: #ef4444;
-    --teatro-dark: #1f2937;
-    --teatro-light: #f3f4f6;
-    --teatro-border: #e5e7eb;
-    --teatro-text: var(--vscode-foreground);
-    --teatro-bg: var(--vscode-editor-background);
-    --teatro-surface: var(--vscode-editor-background);
+    /* Map to global hacker theme tokens when present, fallback to prior values/VS Code tokens */
+    --teatro-primary: var(--accent, #3b82f6);
+    --teatro-secondary: var(--info, #6366f1);
+    --teatro-success: var(--status-online, #10b981);
+    --teatro-warning: var(--warning, #f59e0b);
+    --teatro-danger: var(--danger, #ef4444);
+    --teatro-dark: var(--header-bg, #1f2937);
+    --teatro-light: var(--panel-bg, #f3f4f6);
+    --teatro-border: var(--panel-border, #e5e7eb);
+    --teatro-text: var(--terminal-fg, var(--vscode-foreground));
+    --teatro-bg: var(--terminal-bg, var(--vscode-editor-background));
+    --teatro-surface: var(--panel-bg, var(--vscode-editor-background));
 }
 
 * {

@@ -4,7 +4,20 @@
     'use strict';
 
     // VS Code API
-    const vscode = acquireVsCodeApi();
+    let vscode = null;
+    if (typeof window !== 'undefined') {
+        if (window.vscode) {
+            vscode = window.vscode;
+        } else if (typeof acquireVsCodeApi === 'function') {
+            try {
+                vscode = acquireVsCodeApi();
+                window.vscode = vscode;
+            } catch (error) {
+                console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+                vscode = window.vscode || null;
+            }
+        }
+    }
 
     // Global state
     let configData = {};

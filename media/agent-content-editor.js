@@ -8,7 +8,19 @@ let isPreviewOpen = false;
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Acquire VS Code API
-    vscode = acquireVsCodeApi();
+    if (typeof window !== 'undefined') {
+        if (window.vscode) {
+            vscode = window.vscode;
+        } else if (typeof acquireVsCodeApi === 'function') {
+            try {
+                vscode = acquireVsCodeApi();
+                window.vscode = vscode;
+            } catch (error) {
+                console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+                vscode = window.vscode || null;
+            }
+        }
+    }
     
     // Initialize editor
     initializeEditor();

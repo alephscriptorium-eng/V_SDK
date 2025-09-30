@@ -37,8 +37,12 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected initializePanel(): void {
+        console.log('HackerControlPanelProvider.initializePanel called');
         // Initial status update
-        setTimeout(() => this._updateStatus(), 1000);
+        setTimeout(() => {
+            console.log('Calling _updateStatus after 1 second delay');
+            this._updateStatus();
+        }, 1000);
     }
 
     protected getHtmlContent(webview: vscode.Webview): string {
@@ -136,17 +140,23 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     private _updateStatus(): void {
+        console.log('HackerControlPanelProvider._updateStatus called');
         if (this._view) {
             const webviewGroups = this._getWebViewGroups();
+            console.log('Sending webview groups to frontend:', webviewGroups);
             this.postMessage({
                 command: 'updateStatus',
                 data: webviewGroups
             });
+            console.log('Posted updateStatus message to webview');
+        } else {
+            console.log('No view available, cannot update status');
         }
     }
 
     private _getWebViewGroups(): WebViewGroup[] {
         const activeWebviews = this.webViewManager.getAllWebViews();
+        console.log('Active webviews from WebViewManager:', activeWebviews);
         
         return [
             {
@@ -249,6 +259,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
 
     private _getWebViewStatus(webviewId: string, activeWebviews: any[]): 'available' | 'active' | 'error' {
         const active = activeWebviews.find(w => w.id === webviewId);
+        console.log(`Status check for ${webviewId}:`, active ? 'found active' : 'not found', active);
         if (!active) return 'available';
         if (active.status === 'error') return 'error';
         return 'active';

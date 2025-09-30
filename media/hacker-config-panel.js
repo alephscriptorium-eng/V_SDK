@@ -2,55 +2,46 @@
 (function() {
     'use strict';
 
-    const vscode = acquireVsCodeApi();
-    let configData = [];
-
-    // Matrix rain effect
-    function initMatrixRain() {
-        const matrixContainer = document.getElementById('matrixRain');
-        if (!matrixContainer) return;
-
-        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-        const drops = [];
-        const fontSize = 14;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        matrixContainer.appendChild(canvas);
-        
-        function resizeCanvas() {
-            canvas.width = matrixContainer.offsetWidth;
-            canvas.height = matrixContainer.offsetHeight;
-            
-            const columns = Math.floor(canvas.width / fontSize);
-            drops.length = 0;
-            for (let i = 0; i < columns; i++) {
-                drops[i] = Math.random() * canvas.height;
+    // Acquire the VS Code API once and store it. Reuse if already set on window.
+    let vscode = null;
+    const messageQueue = [];
+    if (typeof window !== 'undefined') {
+        if (window.vscode) {
+            vscode = window.vscode;
+        } else if (typeof acquireVsCodeApi === 'function') {
+            try {
+                vscode = acquireVsCodeApi();
+                window.vscode = vscode;
+            } catch (error) {
+                console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+                vscode = window.vscode || null;
             }
         }
-        
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = '#00ff00';
-            ctx.font = `${fontSize}px Courier New`;
-            
-            for (let i = 0; i < drops.length; i++) {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillText(text, i * fontSize, drops[i]);
-                
-                if (drops[i] > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i] += fontSize;
-            }
-        }
-        
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        setInterval(draw, 100);
     }
+    let configData = [];
+    // Flush any queued messages once API becomes available
+    if (vscode && messageQueue.length) {
+        while (messageQueue.length) {
+            try {
+                vscode.postMessage(messageQueue.shift());
+            } catch (e) {
+                console.warn('Failed to flush queued message', e);
+                break;
+            }
+        }
+    }
+
+    // Safe postMessage wrapper to avoid runtime errors if VS Code API isn't available
+    function safePostMessage(message) {
+        if (vscode && typeof vscode.postMessage === 'function') {
+            vscode.postMessage(message);
+        } else {
+            // Queue until VS Code API is ready to avoid CSP/early-load issues
+            messageQueue.push(message);
+        }
+    }
+
+    // Matrix rain removed
 
     // Initialize system time display
     function updateSystemTime() {
@@ -89,11 +80,11 @@
                         <table class="config-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 25%">Configuration</th>
-                                    <th style="width: 35%">Description</th>
-                                    <th style="width: 15%">Type</th>
-                                    <th style="width: 15%">Value</th>
-                                    <th style="width: 10%">Action</th>
+                                    <th>Configuration</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -117,10 +108,11 @@
             activeLinkCount.textContent = totalConfigs;
         }
 
-        // Add animation delays
+        // Optional: mark rows for CSS-driven stagger (no inline styles to satisfy CSP)
         const configRows = document.querySelectorAll('.config-table tr');
         configRows.forEach((row, index) => {
-            row.style.animationDelay = `${index * 0.1}s`;
+            row.dataset.appearIndex = String(index);
+            row.classList.add('stagger-appear');
         });
     }
 
@@ -169,11 +161,14 @@
     window.toggleGroup = function(groupIndex) {
         const content = document.getElementById(`group-${groupIndex}`);
         if (content) {
-            const isVisible = content.style.display !== 'none';
-            content.style.display = isVisible ? 'none' : 'block';
-            
-            if (!isVisible) {
-                content.style.animation = 'configAppear 0.5s ease-out';
+            const isHidden = content.classList.contains('hidden');
+            const willBeHidden = !isHidden;
+            // Toggle visibility via CSS class to avoid inline styles
+            content.classList.toggle('hidden', willBeHidden);
+            // If we are showing it (was hidden), play appear animation
+            if (isHidden) {
+                content.classList.add('animate-appear');
+                setTimeout(() => content.classList.remove('animate-appear'), 600);
             }
         }
     };
@@ -181,7 +176,7 @@
     // Open VS Code setting
     window.openVSCodeSetting = function(settingKey) {
         console.log(`JavaScript: openVSCodeSetting called with settingKey: ${settingKey}`);
-        vscode.postMessage({
+        safePostMessage({
             command: 'openVSCodeSetting',
             settingKey: settingKey
         });
@@ -195,7 +190,7 @@
             return;
         }
         
-        vscode.postMessage({
+        safePostMessage({
             command: 'openConfigFile',
             filePath: filePath
         });
@@ -209,7 +204,7 @@
             loadingMessage.innerHTML = '<span class="blinking-text">>>> RESCANNING QUANTUM CONFIGURATIONS...</span>';
         }
         
-        vscode.postMessage({
+        safePostMessage({
             command: 'refreshConfigs'
         });
         console.log('JavaScript: Sent refreshConfigs message');
@@ -217,14 +212,14 @@
 
     // Open workspace settings
     window.openWorkspaceSettings = function() {
-        vscode.postMessage({
+        safePostMessage({
             command: 'openWorkspaceSettings'
         });
     };
 
     // Open user settings
     window.openUserSettings = function() {
-        vscode.postMessage({
+        safePostMessage({
             command: 'openUserSettings'
         });
     };
@@ -263,35 +258,24 @@
         }
     });
 
-    // Add hover effects for enhanced interactivity
-    document.addEventListener('mouseover', (e) => {
-        if (e.target.classList.contains('config-name')) {
-            e.target.style.transform = 'translateX(5px)';
-        }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        if (e.target.classList.contains('config-name')) {
-            e.target.style.transform = 'translateX(0)';
-        }
-    });
+    // Hover effects handled by CSS; avoid inline style mutations to satisfy CSP
 
     // Initialize the panel
     function initialize() {
-        initMatrixRain();
         updateSystemTime();
         setInterval(updateSystemTime, 1000);
         setupEventListeners();
         
         // Request initial configuration data
-        vscode.postMessage({
+        safePostMessage({
             command: 'refreshConfigs'
         });
         
-        // Add welcome animation
+        // Add welcome animation via CSS class (CSP-safe)
         const terminal = document.querySelector('.hacker-terminal');
         if (terminal) {
-            terminal.style.animation = 'fadeIn 1s ease-out';
+            terminal.classList.add('animate-fade-in');
+            setTimeout(() => terminal.classList.remove('animate-fade-in'), 1100);
         }
     }
 

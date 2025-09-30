@@ -103,7 +103,9 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
 
     private async _openVSCodeSetting(settingKey: string): Promise<void> {
         try {
-            await vscode.commands.executeCommand('workbench.action.openSettings', settingKey);
+            // Use an exact ID query to reveal the specific setting in the Settings UI
+            const query = `@id:${settingKey}`;
+            await vscode.commands.executeCommand('workbench.action.openSettings', query);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to open setting: ${error}`);
         }
@@ -184,23 +186,28 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
     }
 
     private _getExtensionSettings(): ConfigItem[] {
-        const config = vscode.workspace.getConfiguration('alephscript');
+    // Use unscoped configuration to allow fetching values from multiple sections
+    const allConfig = vscode.workspace.getConfiguration();
         const settings: ConfigItem[] = [];
 
-        // Core extension settings
+        // Core extension settings (must match contributes.configuration in package.json)
         const extensionSettings = [
-            { key: 'alephscript.enableTeatroMode', name: 'Teatro Mode', description: 'Enable theatrical AI agent mode' },
-            { key: 'alephscript.webview.autoStart', name: 'Auto Start Webviews', description: 'Automatically start webview servers' },
-            { key: 'alephscript.webview.defaultPort', name: 'Default Port', description: 'Default port for webview servers' },
-            { key: 'alephscript.socket.enableMonitoring', name: 'Socket Monitoring', description: 'Enable real-time socket monitoring' },
-            { key: 'alephscript.mcp.serverPath', name: 'MCP Server Path', description: 'Path to MCP server executable' },
-            { key: 'alephscript.debug.verbose', name: 'Verbose Logging', description: 'Enable verbose debug logging' },
-            { key: 'alephscript.ui.theme', name: 'UI Theme', description: 'UI theme preference (dark/light/hacker)' },
-            { key: 'alephscript.gamification.enabled', name: 'Gamification', description: 'Enable gamification features' }
+            { key: 'arrakisTheater.configPath', name: 'Theater Config Path', description: 'Path to the Theater configuration file' },
+            { key: 'arrakisTheater.autoStart', name: 'Auto Start Theater', description: 'Auto-start Theater services when opening workspace' },
+            { key: 'arrakisTheater.hackerMode', name: 'Hacker Mode', description: 'Enable hacker-style terminal aesthetics and green color scheme' },
+            { key: 'alephscript.statusBar.visible', name: 'Status Bar: Visible', description: 'Show/hide the hacker panel quick access buttons in status bar' },
+            { key: 'alephscript.statusBar.animation', name: 'Status Bar: Animation', description: 'Enable animations and effects for status bar buttons' },
+            { key: 'alephscript.logging.level', name: 'Logging Level', description: 'Minimum log level to display' },
+            { key: 'alephscript.logging.enabledCategories', name: 'Logging Categories', description: 'Log categories to enable' },
+            { key: 'alephscript.logging.showTimestamp', name: 'Logging: Show Timestamp', description: 'Show timestamp in log entries' },
+            { key: 'alephscript.logging.showLevel', name: 'Logging: Show Level', description: 'Show log level in log entries' },
+            { key: 'alephscript.logging.showCategory', name: 'Logging: Show Category', description: 'Show category in log entries' },
+            { key: 'alephscript.logging.showSource', name: 'Logging: Show Source', description: 'Show source in log entries' },
+            { key: 'alephscript.logging.maxEntries', name: 'Logging: Max Entries', description: 'Maximum number of log entries to keep in memory' }
         ];
 
         extensionSettings.forEach(setting => {
-            const value = config.get(setting.key);
+            const value = allConfig.get(setting.key);
             settings.push({
                 id: setting.key,
                 name: setting.name,

@@ -1,20 +1,23 @@
 import * as vscode from 'vscode';
-import { TeatroTreeDataProvider, TeatroAgent } from './TeatroTreeDataProvider';
+import { TeatroTreeDataProvider } from './TeatroTreeDataProvider';
 
 export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'alephscript.teatro.webview';
 
     private _view?: vscode.WebviewView;
+    private readonly THEME_STORAGE_KEY = 'alephscript.hackerTheme';
+    private readonly THEME_MANUAL_KEY = 'alephscript.hackerTheme.manual';
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
+        private readonly _extensionContext: vscode.ExtensionContext,
         private readonly teatroProvider: TeatroTreeDataProvider
     ) {}
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
+        _context: vscode.WebviewViewResolveContext,
+        _token: vscode.CancellationToken
     ) {
         this._view = webviewView;
 
@@ -25,49 +28,69 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        // Handle messages from the webview
-        webviewView.webview.onDidReceiveMessage(
-            message => {
-                switch (message.command) {
-                    case 'activateAgent':
-                        this.teatroProvider.activateAgent(message.agentId);
-                        this._updateWebview();
-                        break;
-                    case 'deactivateAgent':
-                        this.teatroProvider.deactivateAgent(message.agentId);
-                        this._updateWebview();
-                        break;
-                    case 'openChatParticipant':
-                        this._openChatParticipant(message.agentId, message.command);
-                        break;
-                    case 'refresh':
-                        this.teatroProvider.refresh();
-                        this._updateWebview();
-                        break;
-                    case 'getStatus':
-                        this._updateWebview();
-                        break;
+        webviewView.webview.onDidReceiveMessage(message => {
+            switch (message?.command) {
+                case 'setTheme': {
+                    const t = message.theme as 'matrix' | 'light' | 'dark' | undefined;
+                    if (t === 'matrix' || t === 'light' || t === 'dark') {
+                        this.setCurrentTheme(t);
+                        // Immediately notify the client that the theme was set manually
+                        this.postMessage({ command: 'applyTheme', theme: t, mode: 'manual' });
+                    }
+                    break;
                 }
-            },
-            undefined,
-            []
-        );
+                case 'setThemeAuto': {
+                    this.setAutoThemeMode();
+                    const t = this.getAutoThemeFromVSCode();
+                    this.postMessage({ command: 'applyTheme', theme: t, mode: 'auto' });
+                    break;
+                }
+                case 'activateAgent':
+                    this.teatroProvider.activateAgent(message.agentId);
+                    this._updateWebview();
+                    break;
+                case 'deactivateAgent':
+                    this.teatroProvider.deactivateAgent(message.agentId);
+                    this._updateWebview();
+                    break;
+                case 'openChatParticipant':
+                    this._openChatParticipant(message.agentId, message.command);
+                    break;
+                case 'refresh':
+                    this.teatroProvider.refresh();
+                    this._updateWebview();
+                    break;
+                case 'getStatus':
+                    this._updateWebview();
+                    break;
+            }
+        });
 
-        // Initial update
+        const themeListener = vscode.window.onDidChangeActiveColorTheme(() => {
+            const isManual = this.isManualThemeSelected();
+            console.log(`Teatro: VS Code theme changed, manual selection: ${isManual}`);
+            if (!isManual) {
+                const autoTheme = this.getAutoThemeFromVSCode();
+                console.log(`Teatro: Applying auto theme: ${autoTheme}`);
+                this.postMessage({ command: 'applyTheme', theme: autoTheme });
+            } else {
+                console.log(`Teatro: Skipping auto theme change because manual theme is selected`);
+            }
+        });
+        this._extensionContext.subscriptions.push(themeListener);
+
         this._updateWebview();
     }
 
     private _updateWebview() {
-        if (this._view) {
-            const status = this.teatroProvider.getAgentsStatus();
-            const activeAgents = this.teatroProvider.getActiveAgents();
-            
-            this._view.webview.postMessage({
-                command: 'updateStatus',
-                status: status,
-                activeAgents: activeAgents
-            });
-        }
+        if (!this._view) return;
+        const status = this.teatroProvider.getAgentsStatus();
+        const activeAgents = this.teatroProvider.getActiveAgents();
+        this._view.webview.postMessage({
+            command: 'updateStatus',
+            status,
+            activeAgents
+        });
     }
 
     private async _openChatParticipant(agentId: string, command?: string) {
@@ -77,13 +100,9 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
                 vscode.window.showErrorMessage(`Agente ${agentId} no encontrado`);
                 return;
             }
-
-            // Open chat participant
             await vscode.commands.executeCommand('workbench.panel.chat.view.copilot.focus');
-            
-            // Show information about the agent
             vscode.window.showInformationMessage(
-                `🎭 Conectando con ${agent.fullName}`, 
+                `🎭 Conectando con ${agent.fullName}`,
                 'Abrir Chat'
             ).then(selection => {
                 if (selection === 'Abrir Chat') {
@@ -98,23 +117,48 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        // Get the local path to main script run in the webview
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'teatro.js'));
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'teatro.css'));
+        const baseStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-base.css'));
+        const themesStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-themes.css'));
+        const teatroStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'teatro.css'));
+        const themeScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-theme-switcher.js'));
 
-        // Use a nonce to only allow specific scripts to be run
-        const nonce = getNonce();
+        const nonce = this.getNonce();
+        const currentTheme = this.getCurrentTheme();
 
         return `<!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <link href="${styleUri}" rel="stylesheet">
-            <title>🎭 Teatro de Agentes</title>
-        </head>
-        <body>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}' ${webview.cspSource};">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="${baseStyleUri}" rel="stylesheet">
+    <link href="${teatroStyleUri}" rel="stylesheet">
+    <link href="${themesStyleUri}" rel="stylesheet">
+    <title>🎭 Teatro de Agentes</title>
+</head>
+<body class="theme-${currentTheme}">
+    <div class="hacker-terminal">
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <span class="blinking-cursor">█</span> 🎭 Teatro de Agentes
+            </div>
+            <div class="system-status">
+                <span class="status-indicator online"></span> THEATER_SYSTEM_ACTIVE
+            </div>
+            <div class="header-controls" title="Theme">
+                <span class="theme-label">THEME:</span>
+                <select id="themeSelector" class="theme-select" aria-label="Select theme">
+                    ${this.isManualThemeSelected() ? '' : '<option value="auto" selected>Auto (VS Code)</option>'}
+                    ${this.isManualThemeSelected() ? '<option value="auto">Auto (VS Code)</option>' : ''}
+                    <option value="matrix" ${this.isManualThemeSelected() && currentTheme === 'matrix' ? 'selected' : ''}>Matrix</option>
+                    <option value="light" ${this.isManualThemeSelected() && currentTheme === 'light' ? 'selected' : ''}>Light</option>
+                    <option value="dark" ${this.isManualThemeSelected() && currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="terminal-body">
             <div class="teatro-container">
                 <header class="teatro-header">
                     <h1>🎭 Teatro de Agentes</h1>
@@ -150,38 +194,75 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
 
                 <section class="teatro-agents">
                     <h2>🎪 Agentes del Teatro</h2>
-                    <div id="agentsContainer" class="agents-container">
-                        <!-- Agents will be populated by JavaScript -->
-                    </div>
+                    <div id="agentsContainer" class="agents-container"></div>
                 </section>
 
                 <section class="teatro-actions">
                     <h2>⚡ Acciones Rápidas</h2>
                     <div class="actions-grid">
-                        <button class="action-btn primary" onclick="refreshTeatro()">
-                            🔄 Actualizar Teatro
-                        </button>
-                        <button class="action-btn secondary" onclick="openAllChats()">
-                            💬 Abrir Panel de Chat
-                        </button>
-                        <button class="action-btn tertiary" onclick="showSystemInfo()">
-                            ℹ️ Info del Sistema
-                        </button>
+                        <button class="action-btn primary" onclick="refreshTeatro()">🔄 Actualizar Teatro</button>
+                        <button class="action-btn secondary" onclick="openAllChats()">💬 Abrir Panel de Chat</button>
+                        <button class="action-btn tertiary" onclick="showSystemInfo()">ℹ️ Info del Sistema</button>
                     </div>
                 </section>
             </div>
+        </div>
 
-            <script nonce="${nonce}" src="${scriptUri}"></script>
-        </body>
-        </html>`;
-    }
-}
+        <div class="terminal-footer">
+            <div class="system-info">
+                THEATER_STATE: <span class="status-text">OPERATIONAL</span> |
+                ACTIVE_AGENTS: <span id="activeAgentsFooter">0</span>
+            </div>
+        </div>
+    </div>
 
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    <script src="${themeScriptUri}"></script>
+    <script nonce="${nonce}" src="${scriptUri}"></script>
+</body>
+</html>`;
     }
-    return text;
+
+    private postMessage(message: any) {
+        this._view?.webview.postMessage(message);
+    }
+
+    private getNonce(): string {
+        let text = '';
+        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < 32; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+
+    private getCurrentTheme(): 'matrix' | 'light' | 'dark' {
+        if (this.isManualThemeSelected()) {
+            const saved = this._extensionContext.globalState.get<string>(this.THEME_STORAGE_KEY);
+            if (saved === 'light' || saved === 'dark' || saved === 'matrix') return saved;
+        }
+        return this.getAutoThemeFromVSCode();
+    }
+
+    private getAutoThemeFromVSCode(): 'light' | 'dark' {
+        const kind = vscode.window.activeColorTheme.kind;
+        if (kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight) {
+            return 'light';
+        }
+        return 'dark';
+    }
+
+    private setCurrentTheme(theme: 'matrix' | 'light' | 'dark'): void {
+        // Mark as manual selection and persist synchronously
+        this._extensionContext.globalState.update(this.THEME_MANUAL_KEY, true);
+        this._extensionContext.globalState.update(this.THEME_STORAGE_KEY, theme);
+        console.log(`Teatro: Theme set manually to: ${theme}, manual flag: ${this.isManualThemeSelected()}`);
+    }
+
+    private isManualThemeSelected(): boolean {
+        return this._extensionContext.globalState.get<boolean>(this.THEME_MANUAL_KEY) === true;
+    }
+
+    private setAutoThemeMode(): void {
+        this._extensionContext.globalState.update(this.THEME_MANUAL_KEY, false);
+    }
 }

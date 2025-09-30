@@ -8,6 +8,7 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
     protected matrixInterval?: NodeJS.Timeout;
     protected timeInterval?: NodeJS.Timeout;
     protected readonly THEME_STORAGE_KEY = 'alephscript.hackerTheme';
+    protected readonly THEME_MANUAL_KEY = 'alephscript.hackerTheme.manual';
 
     constructor(
         protected readonly _extensionUri: vscode.Uri,
@@ -35,7 +36,17 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(message => {
             if (message?.command === 'setTheme' && typeof message.theme === 'string') {
-                this.setCurrentTheme(message.theme as 'matrix' | 'light' | 'dark');
+                const theme = message.theme as 'matrix' | 'light' | 'dark';
+                this.setCurrentTheme(theme);
+                // Immediately notify the client that the theme was set manually
+                this.postMessage({ command: 'applyTheme', theme: theme, mode: 'manual' });
+                return;
+            }
+            if (message?.command === 'setThemeAuto') {
+                this.setAutoThemeMode();
+                // Immediately apply the current VS Code mapped theme
+                const t = this.getAutoThemeFromVSCode();
+                this.postMessage({ command: 'applyTheme', theme: t, mode: 'auto' });
                 return;
             }
             this.handleMessage(message);
@@ -43,6 +54,20 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
 
         // Initialize panel
         this.initializePanel();
+
+        // Auto-sync VS Code theme if user hasn't manually selected a theme
+        const themeListener = vscode.window.onDidChangeActiveColorTheme(() => {
+            const isManual = this.isManualThemeSelected();
+            console.log(`VS Code theme changed, manual selection: ${isManual}`);
+            if (!isManual) {
+                const autoTheme = this.getAutoThemeFromVSCode();
+                console.log(`Applying auto theme: ${autoTheme}`);
+                this.postMessage({ command: 'applyTheme', theme: autoTheme });
+            } else {
+                console.log(`Skipping auto theme change because manual theme is selected`);
+            }
+        });
+        this.context.subscriptions.push(themeListener);
     }
 
     protected initializePanel(): void {
@@ -56,8 +81,11 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
         title: string,
         bodyContent: string
     ): string {
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', scriptFileName));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', scriptFileName));
+    const themeScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-theme-switcher.js'));
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', styleFileName));
+    const baseStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-base.css'));
+    const themesStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'hacker-themes.css'));
 
         const nonce = this.getNonce();
         const currentTheme = this.getCurrentTheme();
@@ -66,43 +94,12 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}' ${webview.cspSource};">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="${baseStyleUri}" rel="stylesheet">
             <link href="${styleUri}" rel="stylesheet">
+            <link href="${themesStyleUri}" rel="stylesheet">
             <title>${title}</title>
-            <style>
-                /* Theme selector minimal styles */
-                .header-controls { display: flex; align-items: center; gap: 8px; }
-                .theme-select { background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 4px; padding: 2px 6px; font-size: 0.85rem; }
-                .theme-label { opacity: 0.8; font-size: 0.75rem; }
-
-                /* Theme overrides */
-                body.theme-matrix .hacker-terminal { background: #000 !important; color: #00ff7f !important; }
-                body.theme-matrix .terminal-header, 
-                body.theme-matrix .terminal-footer { background: rgba(0, 255, 127, 0.08) !important; border-color: rgba(0,255,127,0.25) !important; }
-                body.theme-matrix .status-text { color: #00ff7f !important; }
-                body.theme-matrix .system-status .online { background: #00ff7f !important; }
-                body.theme-matrix #matrixRain { display: block !important; }
-
-                body.theme-light { color: #111 !important; }
-                body.theme-light .hacker-terminal { background: #fafafa !important; color: #111 !important; }
-                body.theme-light .terminal-header, 
-                body.theme-light .terminal-footer { background: #ffffff !important; border-color: #e5e5e5 !important; color: #111 !important; }
-                body.theme-light .terminal-body { background: #ffffff !important; }
-                body.theme-light .status-text { color: #333 !important; }
-                body.theme-light .system-status .online { background: #22c55e !important; }
-
-                body.theme-dark { color: #e5e7eb !important; }
-                body.theme-dark .hacker-terminal { background: #0b1020 !important; color: #e5e7eb !important; }
-                body.theme-dark .terminal-header, 
-                body.theme-dark .terminal-footer { background: #0f172a !important; border-color: #1f2937 !important; color: #e5e7eb !important; }
-                body.theme-dark .terminal-body { background: #0b1020 !important; }
-                body.theme-dark .status-text { color: #93c5fd !important; }
-                body.theme-dark .system-status .online { background: #38bdf8 !important; }
-
-                /* Hide matrix rain when not in matrix theme */
-                body.theme-light #matrixRain, body.theme-dark #matrixRain { display: none !important; }
-            </style>
         </head>
         <body class="theme-${currentTheme}">
             <div class="hacker-terminal">
@@ -116,15 +113,16 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
                     <div class="header-controls" title="Theme">
                         <span class="theme-label">THEME:</span>
                         <select id="themeSelector" class="theme-select" aria-label="Select theme">
-                            <option value="matrix" ${currentTheme === 'matrix' ? 'selected' : ''}>Matrix</option>
-                            <option value="light" ${currentTheme === 'light' ? 'selected' : ''}>Light</option>
-                            <option value="dark" ${currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
+                            ${this.isManualThemeSelected() ? '' : '<option value="auto" selected>Auto (VS Code)</option>'}
+                            ${this.isManualThemeSelected() ? '<option value="auto">Auto (VS Code)</option>' : ''}
+                            <option value="matrix" ${this.isManualThemeSelected() && currentTheme === 'matrix' ? 'selected' : ''}>Matrix</option>
+                            <option value="light" ${this.isManualThemeSelected() && currentTheme === 'light' ? 'selected' : ''}>Light</option>
+                            <option value="dark" ${this.isManualThemeSelected() && currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="terminal-body">
-                    <div class="matrix-rain" id="matrixRain"></div>
                     ${bodyContent}
                 </div>
                 
@@ -136,28 +134,7 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
                     </div>
                 </div>
             </div>
-            <script nonce="${nonce}">
-                const vscode = acquireVsCodeApi();
-                (function() {
-                    var selector = document.getElementById('themeSelector');
-                    function applyTheme(t) {
-                        document.body.classList.remove('theme-matrix','theme-light','theme-dark');
-                        document.body.classList.add('theme-' + t);
-                    }
-                    // Initialize from saved
-                    var initial = '${currentTheme}';
-                    applyTheme(initial);
-                    try { localStorage.setItem('${this.THEME_STORAGE_KEY}', initial); } catch (err) {}
-                    if (selector) {
-                        selector.addEventListener('change', function() {
-                            var val = selector.value;
-                            applyTheme(val);
-                            try { localStorage.setItem('${this.THEME_STORAGE_KEY}', val); } catch (err) {}
-                            vscode.postMessage({ command: 'setTheme', theme: val });
-                        });
-                    }
-                })();
-            </script>
+            <script src="${themeScriptUri}"></script>
             <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>
         </html>`;
@@ -165,7 +142,10 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
 
     protected postMessage(message: any): void {
         if (this._view) {
+            console.log('BaseHackerPanelProvider.postMessage sending:', message);
             this._view.webview.postMessage(message);
+        } else {
+            console.log('BaseHackerPanelProvider.postMessage: No view available');
         }
     }
 
@@ -194,15 +174,39 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
     }
 
     protected getCurrentTheme(): 'matrix' | 'light' | 'dark' {
-        const saved = this.context.globalState.get<string>(this.THEME_STORAGE_KEY);
-        if (saved === 'light' || saved === 'dark' || saved === 'matrix') return saved;
-        return 'matrix';
+        const manual = this.isManualThemeSelected();
+        if (manual) {
+            const saved = this.context.globalState.get<string>(this.THEME_STORAGE_KEY);
+            if (saved === 'light' || saved === 'dark' || saved === 'matrix') return saved;
+        }
+        // Auto mode: map VS Code theme to our light/dark; default to dark
+        return this.getAutoThemeFromVSCode();
+    }
+
+    protected getAutoThemeFromVSCode(): 'light' | 'dark' {
+        const kind = vscode.window.activeColorTheme.kind;
+        // Map Light themes to 'light', everything else to 'dark'
+        if (kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight) {
+            return 'light';
+        }
+        return 'dark';
     }
 
     protected setCurrentTheme(theme: 'matrix' | 'light' | 'dark'): void {
+        // Mark as manual selection and persist synchronously
+        this.context.globalState.update(this.THEME_MANUAL_KEY, true);
         this.context.globalState.update(this.THEME_STORAGE_KEY, theme);
-        // If the view exists, we can optionally update without full refresh by posting a message
-        // but since theme only affects CSS classes, simply refresh to re-render header selector state.
-        this.refresh();
+        console.log(`Theme set manually to: ${theme}, manual flag: ${this.isManualThemeSelected()}`);
+        // Do not refresh the view here; the client script already applied the theme instantly.
+    }
+
+    protected isManualThemeSelected(): boolean {
+        return this.context.globalState.get<boolean>(this.THEME_MANUAL_KEY) === true;
+    }
+
+    protected setAutoThemeMode(): void {
+        this.context.globalState.update(this.THEME_MANUAL_KEY, false);
+        // Optional: clear explicit theme value
+        // this.context.globalState.update(this.THEME_STORAGE_KEY, undefined);
     }
 }

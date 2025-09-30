@@ -1,19 +1,29 @@
 // Teatro WebView JavaScript
 
 // Global variables
-let vscode;
+let vscode = null;
+if (typeof window !== 'undefined') {
+    if (window.vscode) {
+        vscode = window.vscode;
+    } else if (typeof acquireVsCodeApi === 'function') {
+        try {
+            vscode = acquireVsCodeApi();
+            window.vscode = vscode;
+        } catch (error) {
+            console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+            vscode = window.vscode || null;
+        }
+    }
+}
 let currentAgents = [];
 let currentStatus = { total: 0, active: 0, inactive: 0 };
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Acquire VS Code API
-    vscode = acquireVsCodeApi();
-    
-    // Request initial status
-    vscode.postMessage({ command: 'getStatus' });
-    
-    console.log('🎭 Teatro WebView initialized');
+    // No need to acquire API here, it's done globally
+    initializeEventListeners();
+    requestInitialData();
+    setInterval(requestInitialData, 5000); // Refresh data every 5 seconds
 });
 
 // Handle messages from the extension
@@ -143,49 +153,69 @@ function createAgentCard(agent) {
 
 // Action functions
 function activateAgent(agentId) {
-    vscode.postMessage({
-        command: 'activateAgent',
-        agentId: agentId
-    });
+    if (vscode) {
+        vscode.postMessage({
+            command: 'activateAgent',
+            agentId: agentId
+        });
+    } else {
+        console.error("VS Code API not available, cannot activate agent.");
+    }
 }
 
 function deactivateAgent(agentId) {
-    vscode.postMessage({
-        command: 'deactivateAgent',
-        agentId: agentId
-    });
+    if (vscode) {
+        vscode.postMessage({
+            command: 'deactivateAgent',
+            agentId: agentId
+        });
+    } else {
+        console.error("VS Code API not available, cannot deactivate agent.");
+    }
 }
 
 function openChatParticipant(agentId, command = null) {
-    vscode.postMessage({
-        command: 'openChatParticipant',
-        agentId: agentId,
-        command: command
-    });
+    if (vscode) {
+        vscode.postMessage({
+            command: 'openChatParticipant',
+            agentId: agentId,
+            command: command
+        });
+    } else {
+        console.error("VS Code API not available, cannot open chat participant.");
+    }
 }
 
 function refreshTeatro() {
-    vscode.postMessage({ command: 'refresh' });
-    
-    // Visual feedback
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '🔄 Actualizando...';
-    btn.disabled = true;
-    
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }, 1000);
+    if (vscode) {
+        vscode.postMessage({ command: 'refresh' });
+        
+        // Visual feedback
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '🔄 Actualizando...';
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 1000);
+    } else {
+        console.error("VS Code API not available, cannot refresh Teatro.");
+    }
 }
 
 function openAllChats() {
-    // Open the chat panel
-    vscode.postMessage({
-        command: 'openChatParticipant',
-        agentId: 'general',
-        command: 'panel'
-    });
+    if (vscode) {
+        // Open the chat panel
+        vscode.postMessage({
+            command: 'openChatParticipant',
+            agentId: 'general',
+            command: 'panel'
+        });
+    } else {
+        console.error("VS Code API not available, cannot open all chats.");
+    }
 }
 
 function showSystemInfo() {
@@ -206,19 +236,36 @@ ${currentAgents.map(agent => `• ${agent.icon || '🤖'} ${agent.name} - ${agen
     `;
     
     // Send to VS Code for display
-    vscode.postMessage({
-        command: 'openChatParticipant',
-        agentId: 'system',
-        command: 'info'
-    });
+    if (vscode) {
+        vscode.postMessage({
+            command: 'openChatParticipant',
+            agentId: 'system',
+            command: 'info'
+        });
+    } else {
+        console.error("VS Code API not available, cannot show system info.");
+    }
 }
 
 function showAgentInfo(agentId) {
-    vscode.postMessage({
-        command: 'openChatParticipant',
-        agentId: agentId,
-        command: 'info'
-    });
+    if (vscode) {
+        vscode.postMessage({
+            command: 'openChatParticipant',
+            agentId: agentId,
+            command: 'info'
+        });
+    } else {
+        console.error("VS Code API not available, cannot show agent info.");
+    }
+}
+
+// Request initial data from the extension
+function requestInitialData() {
+    if (vscode) {
+        vscode.postMessage({ command: 'getInitialData' });
+    } else {
+        console.error("VS Code API not available, cannot request initial data.");
+    }
 }
 
 // Utility functions
@@ -235,7 +282,11 @@ function formatTimestamp() {
 
 // Auto-refresh every 30 seconds
 setInterval(() => {
-    vscode.postMessage({ command: 'getStatus' });
+    if (vscode) {
+        vscode.postMessage({ command: 'getStatus' });
+    } else {
+        console.error("VS Code API not available, cannot auto-refresh.");
+    }
 }, 30000);
 
 console.log('🎭 Teatro WebView JavaScript loaded successfully');

@@ -3,16 +3,27 @@
 (function() {
     'use strict';
 
-    // Get VS Code API
-    const vscode = acquireVsCodeApi();
+    // Acquire the VS Code API once and store it. Reuse if already set on window.
+    let vscode = null;
+    if (typeof window !== 'undefined') {
+        if (window.vscode) {
+            vscode = window.vscode;
+        } else if (typeof acquireVsCodeApi === 'function') {
+            try {
+                vscode = acquireVsCodeApi();
+                window.vscode = vscode;
+            } catch (error) {
+                console.warn('VS Code API already acquired elsewhere, using existing window.vscode if any');
+                vscode = window.vscode || null;
+            }
+        }
+    }
     
     let commandCategories = [];
-    let matrixInterval;
     let timeInterval;
 
     // Initialize the panel
     document.addEventListener('DOMContentLoaded', function() {
-        initializeMatrixRain();
         startMatrixTime();
         requestCommands();
         setupEventListeners();
@@ -23,17 +34,43 @@
 
     // Setup event listeners for buttons
     function setupEventListeners() {
-        // Remove any existing listeners to avoid duplicates
-        document.removeEventListener('click', handleDocumentClick);
-        
-        // Add event listeners for control buttons
+        // Add a single delegated event listener for the entire panel
         document.addEventListener('click', handleDocumentClick);
+    }
+
+    // Toggle category collapse/expand
+    function toggleCategory(categoryId) {
+        const categoryElement = document.getElementById(categoryId);
+        
+        if (!categoryElement) {
+            console.error('Category element not found for ID:', categoryId);
+            return;
+        }
+        
+        const headerElement = categoryElement.previousElementSibling;
+        const toggle = headerElement ? headerElement.querySelector('.category-toggle') : null;
+        
+        if (categoryElement.classList.contains('expanded')) {
+            // Collapse the category
+            categoryElement.classList.remove('expanded');
+            categoryElement.classList.add('collapsed');
+            if (toggle) toggle.classList.add('collapsed');
+            localStorage.setItem(categoryId, 'collapsed');
+        } else {
+            // Expand the category
+            categoryElement.classList.remove('collapsed');
+            categoryElement.classList.add('expanded');
+            if (toggle) toggle.classList.remove('collapsed');
+            localStorage.removeItem(categoryId);
+        }
     }
     
     // Separate click handler function to avoid duplicates
     function handleDocumentClick(event) {
-        const target = event.target;
+        const target = event.target.closest('[data-action], [data-execute-command], [data-execute-command-input], [data-show-command-info], [data-toggle-category], [data-close-modal]');
         
+        if (!target) return;
+
         // Handle command control buttons
         if (target.hasAttribute('data-action')) {
             const action = target.getAttribute('data-action');
@@ -81,31 +118,7 @@
         }
     }
 
-    // Matrix Rain Animation (reuse from base)
-    function initializeMatrixRain() {
-        const matrixContainer = document.getElementById('matrixRain');
-        const characters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン><{}[]()';
-        
-        function createMatrixChar() {
-            const char = document.createElement('div');
-            char.className = 'matrix-char';
-            char.textContent = characters[Math.floor(Math.random() * characters.length)];
-            char.style.left = Math.random() * 100 + '%';
-            char.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            char.style.fontSize = (Math.random() * 8 + 8) + 'px';
-            char.style.opacity = Math.random() * 0.3 + 0.1;
-            
-            matrixContainer.appendChild(char);
-            
-            setTimeout(() => {
-                if (char.parentNode) {
-                    char.parentNode.removeChild(char);
-                }
-            }, 5000);
-        }
-        
-        matrixInterval = setInterval(createMatrixChar, 300);
-    }
+    // Matrix Rain removed
 
     // Matrix Time Display
     function startMatrixTime() {

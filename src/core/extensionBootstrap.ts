@@ -97,7 +97,7 @@ export class ExtensionBootstrap {
             
             // Initialize Teatro components
             const teatroTreeProvider = new TeatroTreeDataProvider();
-            const teatroWebViewProvider = new TeatroWebViewProvider(context.extensionUri, teatroTreeProvider);
+            const teatroWebViewProvider = new TeatroWebViewProvider(context.extensionUri, context, teatroTreeProvider);
             const hackerControlPanelProvider = new HackerControlPanelProvider(context.extensionUri, context);
             const hackerCommandPanelProvider = new HackerCommandPanelProvider(context.extensionUri, context);
             const hackerConfigPanelProvider = new HackerConfigPanelProvider(context.extensionUri, context);

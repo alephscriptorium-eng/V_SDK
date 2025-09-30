@@ -7,9 +7,9 @@
 }
 
 body {
-    font-family: 'Courier New', monospace;
-    background: #000;
-    color: #00ff00;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
     overflow: hidden;
     height: 100vh;
     position: relative;
@@ -17,49 +17,20 @@ body {
 
 .hacker-terminal {
     height: 100vh;
-    background: linear-gradient(45deg, #000000, #001100);
-    border: 2px solid #00ff00;
-    box-shadow: 0 0 20px #00ff00;
+    background: linear-gradient(45deg, rgba(0,0,0,0), rgba(0,0,0,0.15));
+    border: 2px solid var(--panel-border);
+    box-shadow: var(--shadow-accent);
     display: flex;
     flex-direction: column;
     position: relative;
 }
 
-/* Matrix Rain Animation */
-.matrix-rain {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    opacity: 0.1;
-}
-
-.matrix-char {
-    position: absolute;
-    color: #00ff00;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    animation: fall linear infinite;
-}
-
-@keyframes fall {
-    0% {
-        transform: translateY(-100vh);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh);
-        opacity: 0;
-    }
-}
+/* Matrix rain removed */
 
 /* Terminal Header */
 .terminal-header {
-    background: #002200;
-    border-bottom: 1px solid #00ff00;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--panel-border);
     padding: 10px;
     display: flex;
     justify-content: space-between;
@@ -71,7 +42,7 @@ body {
 .terminal-title {
     font-weight: bold;
     font-size: 14px;
-    text-shadow: 0 0 5px #00ff00;
+    text-shadow: 0 0 5px var(--accent-weak);
 }
 
 .system-status {
@@ -89,8 +60,8 @@ body {
 }
 
 .status-indicator.online {
-    background: #00ff00;
-    box-shadow: 0 0 5px #00ff00;
+    background: var(--status-online);
+    box-shadow: 0 0 5px var(--accent-weak);
 }
 
 @keyframes pulse {
@@ -106,7 +77,7 @@ body {
     overflow-y: auto;
     z-index: 10;
     position: relative;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--panel-bg-weak);
 }
 
 .control-panels {
@@ -122,17 +93,17 @@ body {
 }
 
 .webview-group {
-    border: 1px solid #00aa00;
+    border: 1px solid var(--panel-border);
     border-radius: 5px;
     margin-bottom: 15px;
-    background: rgba(0, 50, 0, 0.2);
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-accent);
 }
 
 .group-header {
-    background: #003300;
+    background: var(--panel-bg-weak);
     padding: 10px;
-    border-bottom: 1px solid #00aa00;
+    border-bottom: 1px solid var(--panel-border);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -141,8 +112,8 @@ body {
 }
 
 .group-header:hover {
-    background: #004400;
-    text-shadow: 0 0 8px #00ff00;
+    background: var(--table-row-hover-bg);
+    text-shadow: 0 0 8px var(--accent-weak);
 }
 
 .group-header.collapsed .group-icon {
@@ -186,17 +157,17 @@ body {
     align-items: center;
     gap: 10px;
     padding: 8px;
-    border: 1px solid #006600;
+    border: 1px solid var(--panel-border);
     border-radius: 3px;
-    background: rgba(0, 30, 0, 0.3);
+    background: var(--panel-bg-weak);
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .webview-item:hover {
-    background: rgba(0, 80, 0, 0.4);
-    border-color: #00ff00;
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+    background: var(--table-row-hover-bg);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-accent);
     transform: translateX(5px);
 }
 
@@ -224,7 +195,7 @@ body {
 
 .webview-port {
     font-size: 10px;
-    color: #ffff00;
+    color: var(--highlight);
 }
 
 .webview-status {
@@ -237,23 +208,23 @@ body {
 }
 
 .webview-status.available {
-    background: #333;
-    color: #00ff00;
-    border: 1px solid #00aa00;
+    background: rgba(0,0,0,0.2);
+    color: var(--accent);
+    border: 1px solid var(--panel-border);
 }
 
 .webview-status.active {
-    background: #004400;
-    color: #00ff00;
-    border: 1px solid #00ff00;
-    box-shadow: 0 0 5px #00ff00;
+    background: var(--panel-bg-weak);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    box-shadow: var(--shadow-accent);
     animation: glow 2s infinite;
 }
 
 .webview-status.error {
-    background: #440000;
-    color: #ff4444;
-    border: 1px solid #ff4444;
+    background: rgba(68,0,0,0.5);
+    color: var(--danger);
+    border: 1px solid var(--danger);
 }
 
 @keyframes glow {
@@ -269,25 +240,25 @@ body {
 
 .action-btn {
     background: none;
-    border: 1px solid #00aa00;
-    color: #00ff00;
+    border: 1px solid var(--panel-border);
+    color: var(--accent);
     padding: 2px 6px;
     font-size: 10px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: 'Courier New', monospace;
+    font-family: inherit;
 }
 
 .action-btn:hover {
-    background: #00aa00;
+    background: var(--accent-weak);
     color: #000;
-    box-shadow: 0 0 5px #00ff00;
+    box-shadow: var(--shadow-accent);
 }
 
 .action-btn.danger {
-    border-color: #ff4444;
-    color: #ff4444;
+    border-color: var(--danger);
+    color: var(--danger);
 }
 
 .action-btn.danger:hover {
@@ -339,8 +310,8 @@ body {
 
 /* Terminal Footer */
 .terminal-footer {
-    background: #002200;
-    border-top: 1px solid #00ff00;
+    background: var(--header-bg);
+    border-top: 1px solid var(--panel-border);
     padding: 8px 15px;
     font-size: 10px;
     z-index: 10;
@@ -354,9 +325,9 @@ body {
 }
 
 .status-text {
-    color: #00ff00;
+    color: var(--status-fg);
     font-weight: bold;
-    text-shadow: 0 0 3px #00ff00;
+    text-shadow: 0 0 3px var(--accent-weak);
 }
 
 /* Animations */
@@ -378,18 +349,11 @@ body {
     width: 8px;
 }
 
-::-webkit-scrollbar-track {
-    background: #000;
-}
+::-webkit-scrollbar-track { background: var(--terminal-bg); }
 
-::-webkit-scrollbar-thumb {
-    background: #00aa00;
-    border-radius: 4px;
-}
+::-webkit-scrollbar-thumb { background: var(--accent-weak); border-radius: 4px; }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #00ff00;
-}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* Responsive adjustments */
 @media (max-width: 400px) {
