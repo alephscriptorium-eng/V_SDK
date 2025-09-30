@@ -1,0 +1,400 @@
+/* Hacker Command Panel CSS - Extends base hacker terminal aesthetic */
+
+/* Import base hacker styles */
+@import url('./hacker-control-panel.css');
+
+/* Command-specific styles */
+.command-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.command-category {
+    border: 1px solid #00aa00;
+    border-radius: 5px;
+    background: rgba(0, 50, 0, 0.2);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.category-header {
+    background: #003300;
+    padding: 10px;
+    border-bottom: 1px solid #00aa00;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.category-header:hover {
+    background: #004400;
+    text-shadow: 0 0 8px #00ff00;
+}
+
+.category-header.collapsed .category-toggle {
+    transform: rotate(-90deg);
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.category-toggle {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    color: #00ff00;
+}
+
+.category-icon {
+    font-size: 16px;
+    min-width: 20px;
+}
+
+.category-title {
+    font-weight: bold;
+    font-size: 13px;
+    color: #00ff00;
+}
+
+.category-description {
+    font-size: 11px;
+    opacity: 0.7;
+    color: #00aa00;
+}
+
+.category-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 10px;
+    color: #00aa00;
+}
+
+.commands-table {
+    display: none;
+    padding: 10px;
+    background: rgba(0, 20, 0, 0.3);
+}
+
+.commands-table.expanded {
+    display: block;
+}
+
+.command-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.command-table th {
+    background: #002200;
+    color: #00ff00;
+    padding: 8px 6px;
+    text-align: left;
+    border: 1px solid #00aa00;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 10px;
+}
+
+.command-table td {
+    padding: 6px;
+    border: 1px solid #004400;
+    background: rgba(0, 30, 0, 0.2);
+    vertical-align: middle;
+}
+
+.command-table tr:hover td {
+    background: rgba(0, 60, 0, 0.4);
+    border-color: #00aa00;
+}
+
+.command-id {
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    font-weight: bold;
+    font-size: 10px;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.command-title {
+    color: #00dd00;
+    font-weight: normal;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.command-description {
+    color: #00aa00;
+    font-size: 10px;
+    opacity: 0.8;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.command-icon {
+    text-align: center;
+    font-size: 14px;
+    min-width: 20px;
+}
+
+.command-shortcut {
+    font-family: 'Courier New', monospace;
+    color: #ffff00;
+    font-size: 9px;
+    background: rgba(100, 100, 0, 0.2);
+    padding: 2px 4px;
+    border-radius: 3px;
+    border: 1px solid #666600;
+}
+
+.command-stats {
+    text-align: center;
+    font-size: 10px;
+}
+
+.exec-count {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.last-executed {
+    color: #00aa00;
+    font-size: 9px;
+}
+
+.command-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.cmd-btn {
+    background: rgba(0, 100, 0, 0.3);
+    border: 1px solid #00aa00;
+    color: #00ff00;
+    padding: 4px 8px;
+    font-size: 9px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    font-weight: bold;
+    min-width: 45px;
+}
+
+.cmd-btn:hover {
+    background: rgba(0, 150, 0, 0.5);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+    transform: translateY(-1px);
+}
+
+.cmd-btn.execute {
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
+.cmd-btn.info {
+    border-color: #0088ff;
+    color: #0088ff;
+}
+
+.cmd-btn.with-input {
+    border-color: #ffaa00;
+    color: #ffaa00;
+}
+
+.cmd-btn.with-input:hover {
+    background: rgba(255, 170, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
+}
+
+.input-indicator {
+    font-size: 8px;
+    background: rgba(255, 170, 0, 0.2);
+    color: #ffaa00;
+    padding: 1px 3px;
+    border-radius: 2px;
+    margin-left: 4px;
+}
+
+/* Command Controls */
+.command-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.command-controls .hacker-btn {
+    font-size: 10px;
+    padding: 8px 12px;
+}
+
+.hacker-btn.info {
+    border-color: #0088ff;
+    color: #0088ff;
+}
+
+.hacker-btn.info:hover {
+    background: rgba(0, 136, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 136, 255, 0.5);
+}
+
+.hacker-btn.warning {
+    border-color: #ffaa00;
+    color: #ffaa00;
+}
+
+.hacker-btn.warning:hover {
+    background: rgba(255, 170, 0, 0.3);
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.5);
+}
+
+/* Command Statistics */
+.command-stats {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(0, 50, 0, 0.2);
+    border: 1px solid #00aa00;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 9px;
+    color: #00aa00;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.stat-value {
+    font-size: 14px;
+    color: #00ff00;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+/* Status Messages */
+.status-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 50, 0, 0.95);
+    border: 2px solid #00ff00;
+    padding: 15px 25px;
+    border-radius: 8px;
+    z-index: 1000;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 250px;
+    box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+    animation: statusPulse 2s ease-in-out;
+}
+
+@keyframes statusPulse {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Execution feedback */
+.command-executed {
+    animation: executeFlash 0.5s ease-in-out;
+}
+
+@keyframes executeFlash {
+    0% { background: rgba(0, 255, 0, 0.2); }
+    50% { background: rgba(0, 255, 0, 0.4); }
+    100% { background: rgba(0, 30, 0, 0.2); }
+}
+
+.command-error {
+    animation: errorFlash 0.5s ease-in-out;
+}
+
+@keyframes errorFlash {
+    0% { background: rgba(255, 0, 0, 0.2); }
+    50% { background: rgba(255, 0, 0, 0.4); }
+    100% { background: rgba(0, 30, 0, 0.2); }
+}
+
+/* Loading states */
+.loading-commands {
+    text-align: center;
+    padding: 30px;
+    color: #00aa00;
+    font-style: italic;
+}
+
+.scanning-indicator {
+    display: inline-block;
+    animation: scanningDots 1.5s infinite;
+}
+
+@keyframes scanningDots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .command-table {
+        font-size: 9px;
+    }
+    
+    .command-table th,
+    .command-table td {
+        padding: 4px 3px;
+    }
+    
+    .command-actions {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .cmd-btn {
+        width: 100%;
+        font-size: 8px;
+        padding: 3px 6px;
+    }
+    
+    .command-controls {
+        flex-direction: column;
+    }
+    
+    .command-controls .hacker-btn {
+        width: 100%;
+    }
+}

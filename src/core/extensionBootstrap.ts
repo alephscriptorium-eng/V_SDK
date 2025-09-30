@@ -12,8 +12,21 @@ import { McpChatParticipant } from '../mcpChatParticipant';
 import { TheatricalChatManager } from '../theatrical/TheatricalChatManager';
 import { TeatroTreeDataProvider } from '../views/TeatroTreeDataProvider';
 import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
+import { HackerControlPanelProvider } from '../views/HackerControlPanelProvider';
+import { HackerCommandPanelProvider } from '../views/HackerCommandPanelProvider';
+import { HackerConfigPanelProvider } from '../views/HackerConfigPanelProvider';
+import { HackerStatusBarManager } from './HackerStatusBarManager';
 import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
 import { AgentConfigEditorProvider } from '../editors/AgentConfigEditorProvider';
+// Gamification TreeDataProviders (First Era)
+import { SocketsTreeDataProvider } from '../treeViews/socketsTreeView';
+import { UIsTreeDataProvider } from '../treeViews/uisTreeView';
+import { ConfigsTreeDataProvider } from '../treeViews/configsTreeView';
+import { LogsTreeDataProvider } from '../treeViews/logsTreeView';
+import { AgentsTreeDataProvider } from '../treeViews/agentsTreeView';
+import { SocketMonitor } from '../socketMonitor';
+import { UIManager } from '../uiManager';
+import { MCPServerManager } from '../mcpServerManager';
 
 export interface ExtensionContext {
     managers: {
@@ -27,12 +40,24 @@ export interface ExtensionContext {
         analytics: AnalyticsService;
         aiAssistant: AIAssistantService;
     };
+    // Segunda Época - Teatralización
     chatParticipant: McpChatParticipant;
     theatricalChat: TheatricalChatManager;
     teatroTreeProvider: TeatroTreeDataProvider;
     teatroWebViewProvider: TeatroWebViewProvider;
+    hackerControlPanelProvider: HackerControlPanelProvider;
+    hackerCommandPanelProvider: HackerCommandPanelProvider;
+    hackerConfigPanelProvider: HackerConfigPanelProvider;
+    hackerStatusBarManager: HackerStatusBarManager;
     agentContentEditor: AgentContentEditorProvider;
     agentConfigEditor: AgentConfigEditorProvider;
+    // Primera Época - Socket.io Gamification
+    socketMonitor: SocketMonitor;
+    socketsTreeProvider: SocketsTreeDataProvider;
+    uisTreeProvider: UIsTreeDataProvider;
+    configsTreeProvider: ConfigsTreeDataProvider;
+    logsTreeProvider: LogsTreeDataProvider;
+    agentsTreeProvider: AgentsTreeDataProvider;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -73,10 +98,26 @@ export class ExtensionBootstrap {
             // Initialize Teatro components
             const teatroTreeProvider = new TeatroTreeDataProvider();
             const teatroWebViewProvider = new TeatroWebViewProvider(context.extensionUri, teatroTreeProvider);
+            const hackerControlPanelProvider = new HackerControlPanelProvider(context.extensionUri, context);
+            const hackerCommandPanelProvider = new HackerCommandPanelProvider(context.extensionUri, context);
+            const hackerConfigPanelProvider = new HackerConfigPanelProvider(context.extensionUri, context);
+            
+            // Initialize Hacker Status Bar Manager
+            const hackerStatusBarManager = HackerStatusBarManager.getInstance();
             
             // Initialize Agent Editors
             const agentContentEditor = new AgentContentEditorProvider(context);
             const agentConfigEditor = new AgentConfigEditorProvider(context);
+            
+            // Initialize Gamification components (First Era Restoration)
+            const socketMonitor = new SocketMonitor();
+            const uiManager = new UIManager(managers.processManager);
+            const mcpServerManager = new MCPServerManager(managers.processManager);
+            const socketsTreeProvider = new SocketsTreeDataProvider(socketMonitor);
+            const uisTreeProvider = new UIsTreeDataProvider(uiManager);
+            const configsTreeProvider = new ConfigsTreeDataProvider();
+            const logsTreeProvider = new LogsTreeDataProvider();
+            const agentsTreeProvider = new AgentsTreeDataProvider(mcpServerManager);
             
             this.extensionContext = {
                 managers: {
@@ -90,17 +131,33 @@ export class ExtensionBootstrap {
                     analytics: managers.analyticsService,
                     aiAssistant: managers.aiAssistantService
                 },
+                // Segunda Época - Teatralización
                 chatParticipant,
                 theatricalChat,
                 teatroTreeProvider,
                 teatroWebViewProvider,
+                hackerControlPanelProvider,
+                hackerCommandPanelProvider,
+                hackerConfigPanelProvider,
+                hackerStatusBarManager,
                 agentContentEditor,
                 agentConfigEditor,
+                // Primera Época - Socket.io Gamification
+                socketMonitor,
+                socketsTreeProvider,
+                uisTreeProvider,
+                configsTreeProvider,
+                logsTreeProvider,
+                agentsTreeProvider,
                 logger
             };
 
             // Initialize core services
             await this.initializeCoreServices();
+            
+            // Initialize Hacker Status Bar (must be after core services)
+            this.extensionContext.hackerStatusBarManager.initialize(context);
+            logger.info('🚀 Hacker Status Bar initialized');
             
             // Initialize Theatrical Chat Participants (Teatro VS Code)
             await this.extensionContext.theatricalChat.initialize();
@@ -281,6 +338,103 @@ export class ExtensionBootstrap {
                         error as Error, 
                         'webview.reloadAll', 
                         LogCategory.WEBVIEW
+                    );
+                }
+            }),
+
+            // Hacker Control Panel Commands
+            vscode.commands.registerCommand('alephscript.hackerControlPanel.toggle', async () => {
+                try {
+                    // Focus the hacker control panel view
+                    await vscode.commands.executeCommand('alephscript.hackerControlPanel.focus');
+                    vscode.window.showInformationMessage('🚀 Neural Control Matrix activated');
+                    
+                    // Update status bar to indicate active panel
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        this.extensionContext.hackerStatusBarManager.updateButtonStates(['control']);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerControlPanel.toggle',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.hackerCommandPanel.toggle', async () => {
+                try {
+                    // Focus the hacker command panel view
+                    await vscode.commands.executeCommand('alephscript.hackerCommandPanel.focus');
+                    vscode.window.showInformationMessage('⚡ Command Terminal activated');
+                    
+                    // Update status bar to indicate active panel
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        this.extensionContext.hackerStatusBarManager.updateButtonStates(['command']);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerCommandPanel.toggle',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.hackerConfigPanel.toggle', async () => {
+                try {
+                    // Focus the hacker config panel view
+                    await vscode.commands.executeCommand('alephscript.hackerConfigPanel.focus');
+                    vscode.window.showInformationMessage('⚙️ Config Matrix activated');
+                    
+                    // Update status bar to indicate active panel
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        this.extensionContext.hackerStatusBarManager.updateButtonStates(['config']);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerConfigPanel.toggle',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            // Hacker Status Bar Commands
+            vscode.commands.registerCommand('alephscript.statusBar.animate', async () => {
+                try {
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        this.extensionContext.hackerStatusBarManager.animateButtons();
+                        this.extensionContext.hackerStatusBarManager.showMessage('🚀 Neural Interface Synchronized');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'statusBar.animate',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.statusBar.toggle', async () => {
+                try {
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        const config = vscode.workspace.getConfiguration('alephscript');
+                        const isVisible = config.get<boolean>('statusBar.visible', true);
+                        const newVisibility = !isVisible;
+                        
+                        await config.update('statusBar.visible', newVisibility, vscode.ConfigurationTarget.Global);
+                        this.extensionContext.hackerStatusBarManager.setVisible(newVisibility);
+                        
+                        vscode.window.showInformationMessage(
+                            newVisibility ? '🚀 Hacker Status Bar Enabled' : '💫 Hacker Status Bar Disabled'
+                        );
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'statusBar.toggle',
+                        LogCategory.EXTENSION
                     );
                 }
             }),
@@ -712,20 +866,30 @@ export class ExtensionBootstrap {
                 vscode.window.showInformationMessage('🎭 Teatro actualizado');
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.activateAgent', (agentId: string) => {
+            vscode.commands.registerCommand('alephscript.teatro.activateAgent', (arg: any) => {
                 if (!this.extensionContext) return;
+                const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? arg?.label ?? '';
+                if (!agentId || typeof agentId !== 'string') {
+                    vscode.window.showErrorMessage('No se pudo determinar el agente a activar');
+                    return;
+                }
                 this.extensionContext.teatroTreeProvider.activateAgent(agentId);
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.deactivateAgent', (agentId: string) => {
+            vscode.commands.registerCommand('alephscript.teatro.deactivateAgent', (arg: any) => {
                 if (!this.extensionContext) return;
+                const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? arg?.label ?? '';
+                if (!agentId || typeof agentId !== 'string') {
+                    vscode.window.showErrorMessage('No se pudo determinar el agente a desactivar');
+                    return;
+                }
                 this.extensionContext.teatroTreeProvider.deactivateAgent(agentId);
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.openChatParticipant', async (agentId: string, command?: string) => {
+            vscode.commands.registerCommand('alephscript.teatro.openChatParticipant', async (arg: any, command?: string) => {
                 try {
                     if (!this.extensionContext) return;
-                    
+                    const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? '';
                     const agent = this.extensionContext.teatroTreeProvider.getAgent(agentId);
                     if (!agent) {
                         vscode.window.showErrorMessage(`Agente ${agentId} no encontrado`);
@@ -758,9 +922,9 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.showAgentInfo', (agentId: string) => {
+            vscode.commands.registerCommand('alephscript.teatro.showAgentInfo', (arg: any) => {
                 if (!this.extensionContext) return;
-                
+                const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? '';
                 if (agentId === 'system') {
                     const status = this.extensionContext.teatroTreeProvider.getAgentsStatus();
                     vscode.window.showInformationMessage(
@@ -1080,6 +1244,37 @@ Detalles específicos sobre cómo configurar y usar este agente.
                         LogCategory.EXTENSION
                     );
                 }
+            }),
+
+            // Socket.io Gamification Commands (First Era Restoration)
+            vscode.commands.registerCommand('mcpSocketManager.openSocketMonitor', async () => {
+                try {
+                    if (this.extensionContext && this.vsCodeContext) {
+                        this.extensionContext.socketMonitor.createOrShowPanel(this.vsCodeContext.extensionUri);
+                        this.extensionContext.logger.info('Socket Monitor opened');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'socket.openMonitor',
+                        LogCategory.SOCKET
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.sockets.refresh', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.socketsTreeProvider.refresh();
+                        this.extensionContext.logger.info('Sockets TreeView refreshed');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'sockets.refresh',
+                        LogCategory.SOCKET
+                    );
+                }
             })
         );
 
@@ -1115,6 +1310,30 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 )
             );
 
+            // Register Hacker Control Panel WebView Provider
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    HackerControlPanelProvider.viewType,
+                    this.extensionContext.hackerControlPanelProvider
+                )
+            );
+
+            // Register Hacker Command Panel WebView Provider
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    HackerCommandPanelProvider.viewType,
+                    this.extensionContext.hackerCommandPanelProvider
+                )
+            );
+
+            // Register Hacker Config Panel WebView Provider
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    HackerConfigPanelProvider.viewType,
+                    this.extensionContext.hackerConfigPanelProvider
+                )
+            );
+
             // Register Agent Content Editor (for .agent.md files)
             this.vsCodeContext.subscriptions.push(
                 vscode.window.registerCustomEditorProvider(
@@ -1145,8 +1364,50 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 )
             );
 
+            // Register Gamification TreeViews (First Era Restoration)
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.sockets', {
+                    treeDataProvider: this.extensionContext.socketsTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.uis', {
+                    treeDataProvider: this.extensionContext.uisTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.configs', {
+                    treeDataProvider: this.extensionContext.configsTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.logs', {
+                    treeDataProvider: this.extensionContext.logsTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.agents', {
+                    treeDataProvider: this.extensionContext.agentsTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
             this.extensionContext.logger.info('🎭 Teatro TreeViews and WebViews registered successfully');
             this.extensionContext.logger.info('🔧 Agent Editors registered successfully');
+            this.extensionContext.logger.info('🎮 Gamification TreeViews restored successfully');
         } catch (error) {
             this.extensionContext.logger.error('Failed to setup TreeViews:', error);
             throw error;

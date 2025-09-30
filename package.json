@@ -100,8 +100,9 @@
       },
       {
         "command": "alephscript.teatro.openTeatroPanel",
-        "title": "🎭 >>> Launch Theater Console",
-        "category": "🎭 Arrakis Theater"
+        "title": "Open",
+        "category": "🎭 Arrakis Theater",
+        "icon": "$(device-desktop)"
       },
       {
         "command": "alephscript.agents.start",
@@ -364,6 +365,36 @@
         "icon": "$(trash)"
       },
       {
+        "command": "alephscript.hackerControlPanel.toggle",
+        "title": "🚀 Toggle Neural Control Matrix",
+        "category": "🎭 Theater Control",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "alephscript.hackerCommandPanel.toggle",
+        "title": "⚡ Toggle Command Terminal",
+        "category": "🎭 Theater Control",
+        "icon": "$(terminal-cmd)"
+      },
+      {
+        "command": "alephscript.hackerConfigPanel.toggle",
+        "title": "⚙️ Toggle Config Matrix",
+        "category": "🎭 Theater Control",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "alephscript.statusBar.animate",
+        "title": "🚀 Animate Status Bar",
+        "category": "🎭 Theater Control",
+        "icon": "$(loading~spin)"
+      },
+      {
+        "command": "alephscript.statusBar.toggle",
+        "title": "💫 Toggle Status Bar",
+        "category": "🎭 Theater Control",
+        "icon": "$(eye)"
+      },
+      {
         "command": "alephscript.webview.showDashboard",
         "title": ">>> Theater Dashboard",
         "category": "🎭 Theater Interfaces",
@@ -537,6 +568,21 @@
       ],
       "view/title": [
         {
+          "command": "alephscript.hackerControlPanel.toggle",
+          "when": "view == alephscript.hackerControlPanel",
+          "group": "navigation@1"
+        },
+        {
+          "command": "alephscript.hackerCommandPanel.toggle",
+          "when": "view == alephscript.hackerCommandPanel",
+          "group": "navigation@1"
+        },
+        {
+          "command": "alephscript.hackerConfigPanel.toggle",
+          "when": "view == alephscript.hackerConfigPanel",
+          "group": "navigation@1"
+        },
+        {
           "command": "alephscript.agents.refresh",
           "when": "view == alephscript.agents",
           "group": "navigation"
@@ -601,38 +647,62 @@
     "views": {
       "arrakisTheater": [
         {
+          "id": "alephscript.hackerControlPanel",
+          "type": "webview",
+          "name": "🚀 Panel",
+          "icon": "$(pulse)",
+          "when": "true",
+          "visibility": "visible"
+        },
+        {
+          "id": "alephscript.hackerCommandPanel",
+          "type": "webview",
+          "name": "⚡  Panel",
+          "icon": "$(terminal-cmd)",
+          "when": "true",
+          "visibility": "visible"
+        },
+        {
+          "id": "alephscript.hackerConfigPanel",
+          "type": "webview",
+          "name": "⚙️ Panel",
+          "icon": "$(settings-gear)",
+          "when": "true",
+          "visibility": "visible"
+        },
+        {
           "id": "alephscript.teatro",
-          "name": "🎭 Theater Agents",
+          "name": "🤖 Automatons",
           "icon": "$(symbol-operator)",
           "when": "true"
         },
         {
           "id": "alephscript.agents",
-          "name": "🤖 MCP Servers", 
+          "name": "🤖 MCP", 
           "icon": "$(server)",
           "when": "true"
         },
         {
           "id": "alephscript.uis",
-          "name": "🖥️ Theater UIs",
+          "name": "🖥️ UIs",
           "icon": "$(browser)",
           "when": "true"
         },
         {
           "id": "alephscript.configs",
-          "name": "⚙️ Engine Configs",
+          "name": "⚙️ Configs",
           "icon": "$(settings-gear)",
           "when": "true"
         },
         {
           "id": "alephscript.sockets",
-          "name": "🔌 Neural Networks",
+          "name": "🔌 Brains",
           "icon": "$(plug)",
           "when": "true"
         },
         {
           "id": "alephscript.logs",
-          "name": "📡 System Logs",
+          "name": "📡 Logs",
           "icon": "$(terminal)",
           "when": "true"
         }
@@ -672,6 +742,16 @@
           "type": "boolean",
           "default": true,
           "description": "Enable hacker-style terminal aesthetics and green color scheme"
+        },
+        "alephscript.statusBar.visible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show/hide the hacker panel quick access buttons in status bar"
+        },
+        "alephscript.statusBar.animation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable animations and effects for status bar buttons"
         },
         "alephscript.logging.level": {
           "type": "string",
@@ -776,6 +856,30 @@
         "command": "alephscript.emergencyStop",
         "key": "ctrl+alt+x",
         "mac": "cmd+alt+x",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.hackerControlPanel.toggle",
+        "key": "ctrl+alt+1",
+        "mac": "cmd+alt+1",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.hackerCommandPanel.toggle",
+        "key": "ctrl+alt+2",
+        "mac": "cmd+alt+2",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.hackerConfigPanel.toggle",
+        "key": "ctrl+alt+3",
+        "mac": "cmd+alt+3",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.statusBar.animate",
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0",
         "when": "true"
       },
       {

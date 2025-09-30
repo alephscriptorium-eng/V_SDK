@@ -1,0 +1,452 @@
+// Hacker Command Panel JavaScript - Command Registry Terminal
+
+(function() {
+    'use strict';
+
+    // Get VS Code API
+    const vscode = acquireVsCodeApi();
+    
+    let commandCategories = [];
+    let matrixInterval;
+    let timeInterval;
+
+    // Initialize the panel
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeMatrixRain();
+        startMatrixTime();
+        requestCommands();
+        
+        // Request command refresh every 30 seconds
+        setInterval(requestCommands, 30000);
+    });
+
+    // Matrix Rain Animation (reuse from base)
+    function initializeMatrixRain() {
+        const matrixContainer = document.getElementById('matrixRain');
+        const characters = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン><{}[]()';
+        
+        function createMatrixChar() {
+            const char = document.createElement('div');
+            char.className = 'matrix-char';
+            char.textContent = characters[Math.floor(Math.random() * characters.length)];
+            char.style.left = Math.random() * 100 + '%';
+            char.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            char.style.fontSize = (Math.random() * 8 + 8) + 'px';
+            char.style.opacity = Math.random() * 0.3 + 0.1;
+            
+            matrixContainer.appendChild(char);
+            
+            setTimeout(() => {
+                if (char.parentNode) {
+                    char.parentNode.removeChild(char);
+                }
+            }, 5000);
+        }
+        
+        matrixInterval = setInterval(createMatrixChar, 300);
+    }
+
+    // Matrix Time Display
+    function startMatrixTime() {
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateStr = now.toISOString().split('T')[0];
+            const timeElement = document.getElementById('matrixTime');
+            if (timeElement) {
+                timeElement.textContent = `${dateStr}_${timeStr}`;
+            }
+        }
+        
+        updateTime();
+        timeInterval = setInterval(updateTime, 1000);
+    }
+
+    // Message handling from VS Code extension
+    window.addEventListener('message', event => {
+        const message = event.data;
+        
+        switch (message.command) {
+            case 'updateCommands':
+                updateCommandDisplay(message.data);
+                break;
+            case 'commandExecuted':
+                handleCommandExecuted(message);
+                break;
+            case 'commandInfo':
+                showCommandInfo(message.data);
+                break;
+            case 'showMessage':
+                showStatusMessage(message.message);
+                break;
+        }
+    });
+
+    // Request commands from extension
+    function requestCommands() {
+        vscode.postMessage({
+            command: 'refreshCommands'
+        });
+    }
+
+    // Global functions for button clicks
+    window.refreshCommands = function() {
+        showStatusMessage('>>> RESCANNING COMMAND REGISTRY...');
+        vscode.postMessage({
+            command: 'refreshCommands'
+        });
+    };
+
+    window.showAllCommands = function() {
+        vscode.postMessage({
+            command: 'showAllCommands'
+        });
+    };
+
+    window.exportCommands = function() {
+        showStatusMessage('>>> EXPORTING COMMAND REGISTRY...');
+        vscode.postMessage({
+            command: 'exportCommands'
+        });
+    };
+
+    // Update command display
+    function updateCommandDisplay(data) {
+        commandCategories = data.categories;
+        renderCommandCategories();
+        updateStats(data);
+        updateProcessCount();
+    }
+
+    // Render command categories
+    function renderCommandCategories() {
+        const container = document.getElementById('commandPanels');
+        
+        if (!commandCategories || commandCategories.length === 0) {
+            container.innerHTML = `
+                <div class="loading-commands">
+                    <span class="blinking-text">>>> NO COMMANDS DETECTED IN REGISTRY...</span>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        
+        commandCategories.forEach((category, categoryIndex) => {
+            const categoryId = `category-${categoryIndex}`;
+            const isCollapsed = localStorage.getItem(categoryId) === 'collapsed';
+            
+            html += `
+                <div class="command-category">
+                    <div class="category-header" onclick="toggleCategory('${categoryId}')">
+                        <div class="category-info">
+                            <span class="category-toggle ${isCollapsed ? 'collapsed' : ''}">▼</span>
+                            <span class="category-icon">${category.icon}</span>
+                            <span class="category-title">${category.name}</span>
+                            <span class="category-description">${category.description}</span>
+                        </div>
+                        <div class="category-stats">
+                            <span>CMDS: ${category.commands.length}</span>
+                            <span>EXEC: ${getTotalExecutions(category.commands)}</span>
+                        </div>
+                    </div>
+                    <div class="commands-table ${isCollapsed ? '' : 'expanded'}" id="${categoryId}">
+                        ${renderCommandTable(category.commands)}
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // Render command table
+    function renderCommandTable(commands) {
+        if (!commands || commands.length === 0) {
+            return '<div class="loading-commands">No commands in this category</div>';
+        }
+
+        let tableHtml = `
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>🔧</th>
+                        <th>Command ID</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>⌨️</th>
+                        <th>📊</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        commands.forEach(command => {
+            const executionCount = command.executionCount || 0;
+            const lastExecuted = command.lastExecuted ? 
+                new Date(command.lastExecuted).toLocaleTimeString() : 'Never';
+            
+            tableHtml += `
+                <tr id="cmd-${command.id}" class="command-row">
+                    <td class="command-icon">${command.icon || '⚡'}</td>
+                    <td class="command-id" title="${command.id}">${command.id}</td>
+                    <td class="command-title" title="${command.title}">${command.title}</td>
+                    <td class="command-description" title="${command.description || 'No description'}">${command.description || 'No description'}</td>
+                    <td class="command-shortcut">
+                        ${command.shortcut ? `<span class="command-shortcut">${command.shortcut}</span>` : '-'}
+                    </td>
+                    <td class="command-stats">
+                        <div class="exec-count">${executionCount}</div>
+                        <div class="last-executed">${lastExecuted}</div>
+                    </td>
+                    <td class="command-actions">
+                        ${generateActionButtons(command)}
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `
+                </tbody>
+            </table>
+        `;
+
+        return tableHtml;
+    }
+
+    // Generate action buttons for command
+    function generateActionButtons(command) {
+        let buttons = '';
+
+        if (command.requiresInput) {
+            buttons += `
+                <button class="cmd-btn with-input" 
+                        onclick="executeCommandWithInput('${command.id}', '${command.inputType}')">
+                    EXEC<span class="input-indicator">?</span>
+                </button>
+            `;
+        } else {
+            buttons += `
+                <button class="cmd-btn execute" onclick="executeCommand('${command.id}')">
+                    EXEC
+                </button>
+            `;
+        }
+
+        buttons += `
+            <button class="cmd-btn info" onclick="showCommandInfo('${command.id}')">
+                INFO
+            </button>
+        `;
+
+        return buttons;
+    }
+
+    // Toggle category collapse/expand
+    window.toggleCategory = function(categoryId) {
+        const categoryElement = document.getElementById(categoryId);
+        const toggle = categoryElement.previousElementSibling.querySelector('.category-toggle');
+        
+        if (categoryElement.classList.contains('expanded')) {
+            categoryElement.classList.remove('expanded');
+            toggle.classList.add('collapsed');
+            localStorage.setItem(categoryId, 'collapsed');
+        } else {
+            categoryElement.classList.add('expanded');
+            toggle.classList.remove('collapsed');
+            localStorage.removeItem(categoryId);
+        }
+    };
+
+    // Execute command
+    window.executeCommand = function(commandId) {
+        showStatusMessage(`>>> EXECUTING: ${commandId}`);
+        
+        const commandRow = document.getElementById(`cmd-${commandId}`);
+        if (commandRow) {
+            commandRow.classList.add('command-executed');
+            setTimeout(() => {
+                commandRow.classList.remove('command-executed');
+            }, 1000);
+        }
+
+        vscode.postMessage({
+            command: 'executeCommand',
+            commandId: commandId
+        });
+    };
+
+    // Execute command with input
+    window.executeCommandWithInput = function(commandId, inputType) {
+        showStatusMessage(`>>> REQUESTING INPUT FOR: ${commandId}`);
+        
+        vscode.postMessage({
+            command: 'requestInput',
+            commandId: commandId,
+            inputType: inputType
+        });
+    };
+
+    // Show command info
+    window.showCommandInfo = function(commandId) {
+        vscode.postMessage({
+            command: 'getCommandInfo',
+            commandId: commandId
+        });
+    };
+
+    // Handle command execution result
+    function handleCommandExecuted(message) {
+        const commandRow = document.getElementById(`cmd-${message.commandId}`);
+        
+        if (commandRow) {
+            if (message.success) {
+                commandRow.classList.add('command-executed');
+                setTimeout(() => {
+                    commandRow.classList.remove('command-executed');
+                }, 1000);
+            } else {
+                commandRow.classList.add('command-error');
+                setTimeout(() => {
+                    commandRow.classList.remove('command-error');
+                }, 1000);
+            }
+        }
+
+        showStatusMessage(message.message);
+        
+        // Refresh the display to update execution counts
+        setTimeout(() => {
+            requestCommands();
+        }, 1000);
+    }
+
+    // Show command info modal
+    function showCommandInfo(commandInfo) {
+        const infoHtml = `
+            <div class="command-info-modal">
+                <h3>🔧 COMMAND DETAILS</h3>
+                <div class="info-grid">
+                    <div><strong>ID:</strong> ${commandInfo.id}</div>
+                    <div><strong>Title:</strong> ${commandInfo.title}</div>
+                    <div><strong>Category:</strong> ${commandInfo.category}</div>
+                    <div><strong>Description:</strong> ${commandInfo.description || 'No description'}</div>
+                    <div><strong>Requires Input:</strong> ${commandInfo.requiresInput ? 'Yes' : 'No'}</div>
+                    ${commandInfo.inputType ? `<div><strong>Input Type:</strong> ${commandInfo.inputType}</div>` : ''}
+                    <div><strong>Executions:</strong> ${commandInfo.executionCount || 0}</div>
+                    <div><strong>Last Executed:</strong> ${commandInfo.lastExecuted ? new Date(commandInfo.lastExecuted).toLocaleString() : 'Never'}</div>
+                </div>
+                <button onclick="closeInfoModal()">CLOSE</button>
+            </div>
+        `;
+        
+        showStatusMessage(infoHtml, 5000);
+    }
+
+    // Update statistics
+    function updateStats(data) {
+        const totalCommandsEl = document.getElementById('totalCommands');
+        const totalCategoriesEl = document.getElementById('totalCategories');
+        const totalExecutionsEl = document.getElementById('totalExecutions');
+
+        if (totalCommandsEl) totalCommandsEl.textContent = data.totalCommands;
+        if (totalCategoriesEl) totalCategoriesEl.textContent = data.totalCategories;
+        if (totalExecutionsEl) totalExecutionsEl.textContent = data.totalExecutions;
+    }
+
+    // Update process count
+    function updateProcessCount() {
+        const processCountEl = document.getElementById('processCount');
+        if (processCountEl) {
+            processCountEl.textContent = commandCategories.length;
+        }
+    }
+
+    // Get total executions for category
+    function getTotalExecutions(commands) {
+        return commands.reduce((sum, cmd) => sum + (cmd.executionCount || 0), 0);
+    }
+
+    // Show status message
+    function showStatusMessage(message, duration = 2000) {
+        // Remove existing status messages
+        const existingMessages = document.querySelectorAll('.status-message');
+        existingMessages.forEach(msg => msg.remove());
+
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'status-message';
+        messageDiv.innerHTML = message;
+        
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.parentNode.removeChild(messageDiv);
+            }
+        }, duration);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(event) {
+        // Ctrl+R: Refresh commands
+        if (event.ctrlKey && event.key === 'r') {
+            event.preventDefault();
+            refreshCommands();
+        }
+        
+        // Ctrl+E: Export commands
+        if (event.ctrlKey && event.key === 'e') {
+            event.preventDefault();
+            exportCommands();
+        }
+        
+        // Ctrl+A: Show all commands
+        if (event.ctrlKey && event.key === 'a') {
+            event.preventDefault();
+            showAllCommands();
+        }
+        
+        // Escape: Close any open modals
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            const modals = document.querySelectorAll('.status-message');
+            modals.forEach(modal => modal.remove());
+        }
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', function() {
+        if (matrixInterval) {
+            clearInterval(matrixInterval);
+        }
+        if (timeInterval) {
+            clearInterval(timeInterval);
+        }
+    });
+
+    // Add hover effects for command rows
+    document.addEventListener('mouseover', function(event) {
+        if (event.target.closest('.command-row')) {
+            const row = event.target.closest('.command-row');
+            row.style.transform = 'translateX(3px)';
+            row.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+        }
+    });
+
+    document.addEventListener('mouseout', function(event) {
+        if (event.target.closest('.command-row')) {
+            const row = event.target.closest('.command-row');
+            row.style.transform = 'translateX(0)';
+            row.style.boxShadow = 'none';
+        }
+    });
+
+})();

@@ -1,0 +1,343 @@
+/* Hacker Config Panel Styles - Matrix Theme */
+@import url('teatro.css');
+
+.config-panels {
+    margin: 20px 0;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.config-group {
+    margin-bottom: 30px;
+    border: 1px solid #00ff00;
+    border-radius: 8px;
+    background: rgba(0, 255, 0, 0.05);
+    backdrop-filter: blur(5px);
+    animation: groupGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes groupGlow {
+    0% { box-shadow: 0 0 5px #00ff00; }
+    100% { box-shadow: 0 0 15px #00ff00, inset 0 0 10px rgba(0, 255, 0, 0.1); }
+}
+
+.config-group-header {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 200, 0, 0.1));
+    border-bottom: 1px solid #00ff00;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.config-group-header:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.3), rgba(0, 200, 0, 0.2));
+    box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.config-group-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #00ff00, #00cc00);
+    animation: sidePulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes sidePulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.config-group-icon {
+    font-size: 24px;
+    text-shadow: 0 0 10px #00ff00;
+    animation: iconFloat 4s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.config-group-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+}
+
+.config-group-description {
+    font-size: 12px;
+    color: #00cc00;
+    opacity: 0.8;
+    margin-left: auto;
+    font-style: italic;
+}
+
+.config-group-content {
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.config-table th {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.3), rgba(0, 200, 0, 0.2));
+    color: #00ff00;
+    padding: 12px 15px;
+    font-weight: bold;
+    text-align: left;
+    border-bottom: 2px solid #00ff00;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.config-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+    vertical-align: top;
+    transition: all 0.3s ease;
+}
+
+.config-table tr:hover td {
+    background: rgba(0, 255, 0, 0.1);
+    transform: scale(1.01);
+    box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.config-name {
+    color: #00ff00;
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0 0 5px #00ff00;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-name:hover {
+    color: #ffffff;
+    text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    transform: translateX(5px);
+}
+
+.config-icon {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.config-description {
+    color: #00cc00;
+    font-size: 12px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.config-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.config-type.vscode-setting {
+    background: rgba(0, 150, 255, 0.2);
+    color: #0096ff;
+    border: 1px solid #0096ff;
+}
+
+.config-type.config-file {
+    background: rgba(255, 150, 0, 0.2);
+    color: #ff9600;
+    border: 1px solid #ff9600;
+}
+
+.config-value {
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    background: rgba(0, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-action {
+    text-align: center;
+}
+
+.config-link {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 200, 0, 0.1));
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.config-link:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.4), rgba(0, 200, 0, 0.3));
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.config-link:active {
+    transform: translateY(0);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.config-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(0, 255, 0, 0.05);
+    border-top: 1px solid rgba(0, 255, 0, 0.3);
+    font-size: 11px;
+    color: #00cc00;
+}
+
+.config-count {
+    font-weight: bold;
+    color: #00ff00;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #00ff00;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+.system-controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.system-controls .hacker-btn {
+    flex: 1;
+    min-width: 180px;
+    font-size: 12px;
+    padding: 12px 15px;
+}
+
+/* Scrollbar Styling */
+.config-panels::-webkit-scrollbar,
+.config-group-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.config-panels::-webkit-scrollbar-track,
+.config-group-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.config-panels::-webkit-scrollbar-thumb,
+.config-group-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #00ff00, #00cc00);
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.config-panels::-webkit-scrollbar-thumb:hover,
+.config-group-content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #00cc00, #009900);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .config-table {
+        font-size: 11px;
+    }
+    
+    .config-table td,
+    .config-table th {
+        padding: 8px 10px;
+    }
+    
+    .config-group-header {
+        padding: 12px 15px;
+    }
+    
+    .system-controls .hacker-btn {
+        min-width: 120px;
+        font-size: 11px;
+        padding: 10px 12px;
+    }
+}
+
+/* Animation for new configs appearing */
+@keyframes configAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.config-table tr {
+    animation: configAppear 0.5s ease-out;
+}
+
+/* Special styling for different config categories */
+.config-group[data-category="extension"] .config-group-header::before {
+    background: linear-gradient(to bottom, #00ff00, #ffff00);
+}
+
+.config-group[data-category="webview"] .config-group-header::before {
+    background: linear-gradient(to bottom, #00ff00, #0099ff);
+}
+
+.config-group[data-category="schema"] .config-group-header::before {
+    background: linear-gradient(to bottom, #00ff00, #ff6600);
+}
+
+.config-group[data-category="theatrical"] .config-group-header::before {
+    background: linear-gradient(to bottom, #00ff00, #ff00ff);
+}
+
+.config-group[data-category="development"] .config-group-header::before {
+    background: linear-gradient(to bottom, #00ff00, #ff0000);
+}

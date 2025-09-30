@@ -24,8 +24,10 @@ export class TeatroTreeItem extends vscode.TreeItem {
         super(label, collapsibleState);
         
         if (agent) {
+            // Put rich info in tooltip and keep label clean
             this.tooltip = `${agent.fullName}\n${agent.description}\nEspecialización: ${agent.specialization}\nEstado: ${agent.isActive ? 'Activo' : 'Inactivo'}`;
-            this.description = agent.isActive ? '🟢 Activo' : '🔴 Inactivo';
+            // Remove explicit "Activo" label from the row; status will be indicated via icon/decorations
+            this.description = '';
             this.iconPath = new vscode.ThemeIcon(agent.icon);
             this.contextValue = agent.isActive ? 'teatroAgentActive' : 'teatroAgentInactive';
         }
@@ -48,7 +50,7 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                 { name: 'bitacora', description: 'Documentar hazañas técnicas y descubrimientos' }
             ],
             specialization: 'Navegación Técnica & Documentación',
-            icon: 'anchor'
+            icon: 'globe'
         },
         {
             id: 'don-alvaro',
@@ -122,16 +124,16 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
         if (!element) {
             // Root level - show categories
             return Promise.resolve([
-                new TeatroTreeItem('🎭 Agentes Activos', vscode.TreeItemCollapsibleState.Expanded),
-                new TeatroTreeItem('💤 Agentes Inactivos', vscode.TreeItemCollapsibleState.Collapsed),
-                new TeatroTreeItem('⚙️ Configuración del Teatro', vscode.TreeItemCollapsibleState.Collapsed)
+                new TeatroTreeItem('🟢 Invocados', vscode.TreeItemCollapsibleState.Expanded),
+                new TeatroTreeItem('� Catálogo', vscode.TreeItemCollapsibleState.Collapsed),
+                new TeatroTreeItem('⚙️ Configuración', vscode.TreeItemCollapsibleState.Collapsed)
             ]);
-        } else if (element.label === '🎭 Agentes Activos') {
+        } else if (element.label === '🟢 Invocados') {
             // Show active agents
             const activeAgents = this.agents.filter(agent => agent.isActive);
             return Promise.resolve(activeAgents.map(agent => 
                 new TeatroTreeItem(
-                    agent.name,
+                    `${agent.isActive ? '•' : ''} ${agent.name}`.trim(),
                     vscode.TreeItemCollapsibleState.Collapsed,
                     agent,
                     {
@@ -141,12 +143,12 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                     }
                 )
             ));
-        } else if (element.label === '💤 Agentes Inactivos') {
+        } else if (element.label === '� Catálogo') {
             // Show inactive agents
             const inactiveAgents = this.agents.filter(agent => !agent.isActive);
             return Promise.resolve(inactiveAgents.map(agent => 
                 new TeatroTreeItem(
-                    agent.name,
+                    `○ ${agent.name}`,
                     vscode.TreeItemCollapsibleState.Collapsed,
                     agent,
                     {
@@ -156,7 +158,7 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                     }
                 )
             ));
-        } else if (element.label === '⚙️ Configuración del Teatro') {
+        } else if (element.label === '⚙️ Configuración') {
             // Show configuration options
             return Promise.resolve([
                 new TeatroTreeItem('📊 Estado del Sistema', vscode.TreeItemCollapsibleState.None, undefined, {
@@ -178,9 +180,9 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
         } else if (element.agent) {
             // Show agent commands
             const agent = element.agent;
-            return Promise.resolve(agent.commands.map(cmd => 
-                new TeatroTreeItem(
-                    `${cmd.name}: ${cmd.description}`,
+            return Promise.resolve(agent.commands.map(cmd => {
+                const item = new TeatroTreeItem(
+                    `${cmd.name}`,
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
                     {
@@ -188,8 +190,11 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                         title: 'Ejecutar Comando',
                         arguments: [agent.id, cmd.name]
                     }
-                )
-            ));
+                );
+                // Move description to tooltip only
+                item.tooltip = cmd.description;
+                return item;
+            }));
         }
 
         return Promise.resolve([]);
