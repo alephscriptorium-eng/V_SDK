@@ -23,55 +23,62 @@
 
     // Setup event listeners for buttons
     function setupEventListeners() {
-        document.addEventListener('click', function(event) {
-            const target = event.target;
-            
-            // Handle command control buttons
-            if (target.hasAttribute('data-action')) {
-                const action = target.getAttribute('data-action');
-                switch (action) {
-                    case 'refreshCommands':
-                        refreshCommands();
-                        break;
-                    case 'showAllCommands':
-                        showAllCommands();
-                        break;
-                    case 'exportCommands':
-                        exportCommands();
-                        break;
-                }
+        // Remove any existing listeners to avoid duplicates
+        document.removeEventListener('click', handleDocumentClick);
+        
+        // Add event listeners for control buttons
+        document.addEventListener('click', handleDocumentClick);
+    }
+    
+    // Separate click handler function to avoid duplicates
+    function handleDocumentClick(event) {
+        const target = event.target;
+        
+        // Handle command control buttons
+        if (target.hasAttribute('data-action')) {
+            const action = target.getAttribute('data-action');
+            switch (action) {
+                case 'refreshCommands':
+                    refreshCommands();
+                    break;
+                case 'showAllCommands':
+                    showAllCommands();
+                    break;
+                case 'exportCommands':
+                    exportCommands();
+                    break;
             }
-            
-            // Handle command execution
-            if (target.hasAttribute('data-execute-command')) {
-                const commandId = target.getAttribute('data-execute-command');
-                executeCommand(commandId);
-            }
-            
-            // Handle command execution with input
-            if (target.hasAttribute('data-execute-command-input')) {
-                const commandId = target.getAttribute('data-execute-command-input');
-                const inputType = target.getAttribute('data-input-type');
-                executeCommandWithInput(commandId, inputType);
-            }
-            
-            // Handle command info
-            if (target.hasAttribute('data-show-command-info')) {
-                const commandId = target.getAttribute('data-show-command-info');
-                showCommandInfo(commandId);
-            }
-            
-            // Handle category toggle
-            if (target.hasAttribute('data-toggle-category')) {
-                const categoryId = target.getAttribute('data-toggle-category');
-                toggleCategory(categoryId);
-            }
-            
-            // Handle modal close
-            if (target.hasAttribute('data-close-modal')) {
-                closeInfoModal();
-            }
-        });
+        }
+        
+        // Handle command execution
+        if (target.hasAttribute('data-execute-command')) {
+            const commandId = target.getAttribute('data-execute-command');
+            executeCommand(commandId);
+        }
+        
+        // Handle command execution with input
+        if (target.hasAttribute('data-execute-command-input')) {
+            const commandId = target.getAttribute('data-execute-command-input');
+            const inputType = target.getAttribute('data-input-type');
+            executeCommandWithInput(commandId, inputType);
+        }
+        
+        // Handle command info
+        if (target.hasAttribute('data-show-command-info')) {
+            const commandId = target.getAttribute('data-show-command-info');
+            showCommandInfo(commandId);
+        }
+        
+        // Handle category toggle
+        if (target.hasAttribute('data-toggle-category')) {
+            const categoryId = target.getAttribute('data-toggle-category');
+            toggleCategory(categoryId);
+        }
+        
+        // Handle modal close
+        if (target.hasAttribute('data-close-modal')) {
+            closeInfoModal();
+        }
     }
 
     // Matrix Rain Animation (reuse from base)
@@ -210,7 +217,7 @@
                             <span>EXEC: ${getTotalExecutions(category.commands)}</span>
                         </div>
                     </div>
-                    <div class="commands-table ${isCollapsed ? '' : 'expanded'}" id="${categoryId}">
+                    <div class="commands-table ${isCollapsed ? 'collapsed' : 'expanded'}" id="${categoryId}">
                         ${renderCommandTable(category.commands)}
                     </div>
                 </div>
@@ -307,15 +314,26 @@
     // Toggle category collapse/expand
     window.toggleCategory = function(categoryId) {
         const categoryElement = document.getElementById(categoryId);
-        const toggle = categoryElement.previousElementSibling.querySelector('.category-toggle');
+        
+        if (!categoryElement) {
+            console.error('Category element not found for ID:', categoryId);
+            return;
+        }
+        
+        const headerElement = categoryElement.previousElementSibling;
+        const toggle = headerElement ? headerElement.querySelector('.category-toggle') : null;
         
         if (categoryElement.classList.contains('expanded')) {
+            // Collapse the category
             categoryElement.classList.remove('expanded');
-            toggle.classList.add('collapsed');
+            categoryElement.classList.add('collapsed');
+            if (toggle) toggle.classList.add('collapsed');
             localStorage.setItem(categoryId, 'collapsed');
         } else {
+            // Expand the category
+            categoryElement.classList.remove('collapsed');
             categoryElement.classList.add('expanded');
-            toggle.classList.remove('collapsed');
+            if (toggle) toggle.classList.remove('collapsed');
             localStorage.removeItem(categoryId);
         }
     };

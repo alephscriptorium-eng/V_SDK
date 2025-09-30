@@ -1135,7 +1135,9 @@
     "build:local": "npm run compile && npm run package:local",
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
     "dev:quick": "npm run compile && npm run deploy:local",
-	"unix:code": "sh ./setup-vscode-path"
+    "debug:view": "code --extensionDevelopmentPath=c:/Users/oracl/Documents/REPOS/mcp-vscode-ext --new-window",
+	  "unix:code": "sh ./setup-vscode-path",
+    "dev:tools": "echo 'Ctrl+Shift+I'"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

@@ -149,6 +149,10 @@ body {
     transform: rotate(-90deg);
 }
 
+.group-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
 .group-icon {
     font-size: 16px;
     transition: transform 0.3s ease;

@@ -23,42 +23,48 @@
 
     // Setup event listeners for buttons
     function setupEventListeners() {
+        // Remove any existing listeners to avoid duplicates
+        document.removeEventListener('click', handleDocumentClick);
+        
         // Add event listeners for control buttons
-        document.addEventListener('click', function(event) {
-            const target = event.target;
-            
-            // Handle control buttons
-            if (target.hasAttribute('data-action')) {
-                const action = target.getAttribute('data-action');
-                switch (action) {
-                    case 'refreshAll':
-                        refreshAll();
-                        break;
-                    case 'reloadAllWebviews':
-                        reloadAllWebviews();
-                        break;
-                }
+        document.addEventListener('click', handleDocumentClick);
+    }
+    
+    // Separate click handler function to avoid duplicates
+    function handleDocumentClick(event) {
+        const target = event.target;
+        
+        // Handle control buttons
+        if (target.hasAttribute('data-action')) {
+            const action = target.getAttribute('data-action');
+            switch (action) {
+                case 'refreshAll':
+                    refreshAll();
+                    break;
+                case 'reloadAllWebviews':
+                    reloadAllWebviews();
+                    break;
             }
-            
-            // Handle webview launch
-            if (target.hasAttribute('data-launch-webview')) {
-                const command = target.getAttribute('data-launch-webview');
-                launchWebview(command);
-            }
-            
-            // Handle webview close
-            if (target.hasAttribute('data-close-webview')) {
-                event.stopPropagation();
-                const webviewId = target.getAttribute('data-close-webview');
-                closeWebview(webviewId);
-            }
-            
-            // Handle group toggle
-            if (target.hasAttribute('data-toggle-group')) {
-                const groupId = target.getAttribute('data-toggle-group');
-                toggleGroup(groupId);
-            }
-        });
+        }
+        
+        // Handle webview launch
+        if (target.hasAttribute('data-launch-webview')) {
+            const command = target.getAttribute('data-launch-webview');
+            launchWebview(command);
+        }
+        
+        // Handle webview close
+        if (target.hasAttribute('data-close-webview')) {
+            event.stopPropagation();
+            const webviewId = target.getAttribute('data-close-webview');
+            closeWebview(webviewId);
+        }
+        
+        // Handle group toggle
+        if (target.hasAttribute('data-toggle-group')) {
+            const groupId = target.getAttribute('data-toggle-group');
+            toggleGroup(groupId);
+        }
     }
 
     // Matrix Rain Animation
@@ -221,15 +227,24 @@
     // Toggle group collapse/expand
     window.toggleGroup = function(groupId) {
         const groupElement = document.getElementById(groupId);
-        const icon = groupElement.previousElementSibling.querySelector('.group-icon');
+        
+        if (!groupElement) {
+            console.error('Group element not found for ID:', groupId);
+            return;
+        }
+        
+        const headerElement = groupElement.previousElementSibling;
+        const icon = headerElement ? headerElement.querySelector('.group-icon') : null;
         
         if (groupElement.classList.contains('collapsed')) {
+            // Expand the group
             groupElement.classList.remove('collapsed');
-            icon.classList.remove('collapsed');
+            if (icon) icon.classList.remove('collapsed');
             localStorage.removeItem(groupId);
         } else {
+            // Collapse the group
             groupElement.classList.add('collapsed');
-            icon.classList.add('collapsed');
+            if (icon) icon.classList.add('collapsed');
             localStorage.setItem(groupId, 'collapsed');
         }
     };
@@ -256,6 +271,8 @@
 
     // Update active link count
     function updateActiveLinkCount() {
+        if (!webviewGroups) return;
+        
         let activeCount = 0;
         webviewGroups.forEach(group => {
             group.webviews.forEach(webview => {
@@ -265,7 +282,12 @@
             });
         });
         
-        document.getElementById('activeLinkCount').textContent = activeCount;
+        const activeLinkElement = document.getElementById('activeLinkCount');
+        if (activeLinkElement) {
+            activeLinkElement.textContent = activeCount;
+        } else {
+            console.log('Active neural links:', activeCount);
+        }
     }
 
     // Show terminal message (temporary feedback)

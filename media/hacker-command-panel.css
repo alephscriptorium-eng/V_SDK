@@ -39,6 +39,10 @@
     transform: rotate(-90deg);
 }
 
+.category-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
 .category-info {
     display: flex;
     align-items: center;
@@ -84,6 +88,10 @@
 
 .commands-table.expanded {
     display: block;
+}
+
+.commands-table.collapsed {
+    display: none;
 }
 
 .command-table {
