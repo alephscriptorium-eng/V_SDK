@@ -71,7 +71,7 @@ Esto creará un archivo `.vsix` con el nombre similar a: `mcp-socket-gamificatio
 
 ```bash
 # Empaquetar con un nombre específico
-vsce package --out mcp-extension-local.vsix
+vsce package --out mcp-arrakis-theater-ext.vsix
 
 # Empaquetar sin ejecutar prepublish scripts
 vsce package --no-dependencies
@@ -179,7 +179,7 @@ code --list-extensions
    ```
 3. **Re-empaquetar**:
    ```bash
-   vsce package --out mcp-extension-local-v2.vsix
+   vsce package --out mcp-arrakis-theater-ext-v2.vsix
    ```
 4. **Desinstalar versión anterior**:
    ```bash
@@ -187,7 +187,7 @@ code --list-extensions
    ```
 5. **Instalar nueva versión**:
    ```bash
-   code --install-extension mcp-extension-local-v2.vsix
+   code --install-extension mcp-arrakis-theater-ext-v2.vsix
    ```
 
 ### Para Desarrollo Continuo
@@ -202,8 +202,8 @@ Agrega estos scripts a tu `package.json` para facilitar el desarrollo:
 {
   "scripts": {
     "package": "vsce package",
-    "package-local": "vsce package --out mcp-extension-local.vsix",
-    "install-local": "code --install-extension mcp-extension-local.vsix",
+    "package-local": "vsce package --out mcp-arrakis-theater-ext.vsix",
+    "install-local": "code --install-extension mcp-arrakis-theater-ext.vsix",
     "dev-package": "npm run compile && npm run package-local",
     "dev-install": "npm run dev-package && npm run install-local"
   }

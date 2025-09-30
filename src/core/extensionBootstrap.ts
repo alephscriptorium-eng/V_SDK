@@ -866,6 +866,40 @@ export class ExtensionBootstrap {
                 vscode.window.showInformationMessage('🎭 Teatro actualizado');
             }),
 
+            // Agents Commands
+            vscode.commands.registerCommand('alephscript.agents.refresh', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.agentsTreeProvider.refresh();
+                        this.extensionContext.logger.info('Agents TreeView refreshed');
+                        vscode.window.showInformationMessage('🤖 Agents refreshed');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'agents.refresh',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            // UIs Commands
+            vscode.commands.registerCommand('alephscript.uis.refresh', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.uisTreeProvider.refresh();
+                        this.extensionContext.logger.info('UIs TreeView refreshed');
+                        vscode.window.showInformationMessage('🎨 UIs refreshed');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'uis.refresh',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
             vscode.commands.registerCommand('alephscript.teatro.activateAgent', (arg: any) => {
                 if (!this.extensionContext) return;
                 const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? arg?.label ?? '';
@@ -1273,6 +1307,23 @@ Detalles específicos sobre cómo configurar y usar este agente.
                         error as Error,
                         'sockets.refresh',
                         LogCategory.SOCKET
+                    );
+                }
+            }),
+
+            // Configs Commands
+            vscode.commands.registerCommand('alephscript.configs.refresh', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.configsTreeProvider.refresh();
+                        this.extensionContext.logger.info('Configs TreeView refreshed');
+                        vscode.window.showInformationMessage('⚙️ Configurations refreshed');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'configs.refresh',
+                        LogCategory.EXTENSION
                     );
                 }
             })

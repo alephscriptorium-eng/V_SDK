@@ -49,13 +49,13 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
             </div>
             
             <div class="system-controls">
-                <button class="hacker-btn primary" onclick="refreshConfigs()">
+                <button class="hacker-btn primary" data-action="refreshConfigs">
                     🔄 RESCAN_CONFIG_MATRIX
                 </button>
-                <button class="hacker-btn secondary" onclick="openWorkspaceSettings()">
+                <button class="hacker-btn secondary" data-action="openWorkspaceSettings">
                     ⚙️ WORKSPACE_SETTINGS
                 </button>
-                <button class="hacker-btn secondary" onclick="openUserSettings()">
+                <button class="hacker-btn secondary" data-action="openUserSettings">
                     👤 USER_SETTINGS
                 </button>
             </div>
@@ -71,22 +71,33 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
+        console.log('HackerConfigPanel received message:', message);
+        vscode.window.showInformationMessage(`HackerConfigPanel received: ${message.command}`);
+        
         switch (message.command) {
             case 'openVSCodeSetting':
+                console.log('Opening VS Code setting:', message.settingKey);
                 this._openVSCodeSetting(message.settingKey);
                 break;
             case 'openConfigFile':
+                console.log('Opening config file:', message.filePath);
                 this._openConfigFile(message.filePath);
                 break;
             case 'refreshConfigs':
+                console.log('Refreshing configs');
                 this._refreshConfigs();
                 break;
             case 'openWorkspaceSettings':
+                console.log('Opening workspace settings');
                 this._openWorkspaceSettings();
                 break;
             case 'openUserSettings':
+                console.log('Opening user settings');
                 this._openUserSettings();
                 break;
+            default:
+                console.log('Unknown command:', message.command);
+                vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }
 

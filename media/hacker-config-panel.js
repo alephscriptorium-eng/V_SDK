@@ -80,7 +80,7 @@
             
             html += `
                 <div class="config-group" data-category="${group.name.toLowerCase().replace(/\s+/g, '-')}">
-                    <div class="config-group-header" onclick="toggleGroup(${groupIndex})">
+                    <div class="config-group-header" data-toggle-group="${groupIndex}">
                         <span class="config-group-icon">${group.icon}</span>
                         <span class="config-group-title">${group.name}</span>
                         <span class="config-group-description">${group.description}</span>
@@ -131,17 +131,21 @@
                 'N/A';
 
             const actionButton = config.type === 'vscode-setting' ?
-                `<button class="config-link" onclick="openVSCodeSetting('${config.settingKey}')">
+                `<button class="config-link" data-open-vscode-setting="${config.settingKey}">
                     ⚙️ EDIT
                 </button>` :
-                `<button class="config-link" onclick="openConfigFile('${config.filePath?.replace(/\\/g, '\\\\')}')">
+                `<button class="config-link" data-open-config-file="${config.filePath?.replace(/\\/g, '\\\\')}">
                     📝 OPEN
                 </button>`;
+
+            const nameAction = config.type === 'vscode-setting' ? 
+                `data-open-vscode-setting="${config.settingKey}"` : 
+                `data-open-config-file="${config.filePath?.replace(/\\/g, '\\\\')}"`;
 
             return `
                 <tr>
                     <td>
-                        <div class="config-name" onclick="${config.type === 'vscode-setting' ? `openVSCodeSetting('${config.settingKey}')` : `openConfigFile('${config.filePath?.replace(/\\/g, '\\\\')}')`}">
+                        <div class="config-name" ${nameAction}>
                             <span class="config-icon">${config.icon}</span>
                             ${config.name}
                         </div>
@@ -176,10 +180,12 @@
 
     // Open VS Code setting
     window.openVSCodeSetting = function(settingKey) {
+        console.log(`JavaScript: openVSCodeSetting called with settingKey: ${settingKey}`);
         vscode.postMessage({
             command: 'openVSCodeSetting',
             settingKey: settingKey
         });
+        console.log(`JavaScript: Sent openVSCodeSetting message for: ${settingKey}`);
     };
 
     // Open configuration file
@@ -197,6 +203,7 @@
 
     // Refresh configurations
     window.refreshConfigs = function() {
+        console.log('JavaScript: refreshConfigs called');
         const loadingMessage = document.querySelector('.loading-message');
         if (loadingMessage) {
             loadingMessage.innerHTML = '<span class="blinking-text">>>> RESCANNING QUANTUM CONFIGURATIONS...</span>';
@@ -205,6 +212,7 @@
         vscode.postMessage({
             command: 'refreshConfigs'
         });
+        console.log('JavaScript: Sent refreshConfigs message');
     };
 
     // Open workspace settings
@@ -273,6 +281,7 @@
         initMatrixRain();
         updateSystemTime();
         setInterval(updateSystemTime, 1000);
+        setupEventListeners();
         
         // Request initial configuration data
         vscode.postMessage({
@@ -284,6 +293,46 @@
         if (terminal) {
             terminal.style.animation = 'fadeIn 1s ease-out';
         }
+    }
+
+    // Setup event listeners for buttons and interactions
+    function setupEventListeners() {
+        document.addEventListener('click', function(event) {
+            const target = event.target;
+            
+            // Handle control buttons
+            if (target.hasAttribute('data-action')) {
+                const action = target.getAttribute('data-action');
+                switch (action) {
+                    case 'refreshConfigs':
+                        refreshConfigs();
+                        break;
+                    case 'openWorkspaceSettings':
+                        openWorkspaceSettings();
+                        break;
+                    case 'openUserSettings':
+                        openUserSettings();
+                        break;
+                }
+            }
+            
+            // Handle config item clicks
+            if (target.hasAttribute('data-open-vscode-setting')) {
+                const settingKey = target.getAttribute('data-open-vscode-setting');
+                openVSCodeSetting(settingKey);
+            }
+            
+            if (target.hasAttribute('data-open-config-file')) {
+                const filePath = target.getAttribute('data-open-config-file');
+                openConfigFile(filePath);
+            }
+            
+            // Handle group toggle
+            if (target.hasAttribute('data-toggle-group')) {
+                const groupIndex = target.getAttribute('data-toggle-group');
+                toggleGroup(parseInt(groupIndex));
+            }
+        });
     }
 
     // Start everything when DOM is ready

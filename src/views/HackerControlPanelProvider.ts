@@ -50,10 +50,10 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
             </div>
             
             <div class="system-controls">
-                <button class="hacker-btn primary" onclick="refreshAll()">
+                <button class="hacker-btn primary" data-action="refreshAll">
                     🔄 REFRESH_MATRIX
                 </button>
-                <button class="hacker-btn danger" onclick="reloadAllWebviews()">
+                <button class="hacker-btn danger" data-action="reloadAllWebviews">
                     ⚡ RELOAD_ALL_NEURAL_LINKS
                 </button>
             </div>
@@ -69,31 +69,46 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
+        console.log('HackerControlPanel received message:', message);
+        vscode.window.showInformationMessage(`HackerControlPanel received: ${message.command}`);
+        
         switch (message.command) {
             case 'launchWebview':
+                console.log('Launching webview with commandId:', message.commandId);
                 this._launchWebview(message.commandId);
                 break;
             case 'refreshPanel':
+                console.log('Refreshing panel');
                 this._refreshPanel();
                 break;
             case 'getStatus':
+                console.log('Getting status');
                 this._updateStatus();
                 break;
             case 'closeWebview':
+                console.log('Closing webview:', message.webviewId);
                 this._closeWebview(message.webviewId);
                 break;
             case 'reloadAllWebviews':
+                console.log('Reloading all webviews');
                 this._reloadAllWebviews();
                 break;
+            default:
+                console.log('Unknown command:', message.command);
+                vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }
 
     private async _launchWebview(commandId: string): Promise<void> {
         try {
+            console.log(`Attempting to execute command: ${commandId}`);
+            vscode.window.showInformationMessage(`Launching webview with command: ${commandId}`);
             await vscode.commands.executeCommand(commandId);
+            console.log(`Successfully executed command: ${commandId}`);
             // Update status after launch
             setTimeout(() => this._updateStatus(), 2000);
         } catch (error) {
+            console.error(`Failed to launch webview: ${error}`);
             vscode.window.showErrorMessage(`Failed to launch webview: ${error}`);
         }
     }

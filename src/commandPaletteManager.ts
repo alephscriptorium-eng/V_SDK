@@ -377,7 +377,18 @@ export class CommandPaletteManager {
 
     private async validateAllConfigs(): Promise<void> {
         this.logger.info('Validating all configurations');
-        vscode.commands.executeCommand('alephscript.configs.refresh');
+        
+        // Check if the command exists before trying to execute it
+        try {
+            const availableCommands = await vscode.commands.getCommands();
+            if (availableCommands.includes('alephscript.configs.refresh')) {
+                vscode.commands.executeCommand('alephscript.configs.refresh');
+            } else {
+                this.logger.warn('alephscript.configs.refresh command not yet available, skipping refresh');
+            }
+        } catch (error) {
+            this.logger.error('Error checking for configs.refresh command:', error);
+        }
     }
 
     private async backupAllConfigs(): Promise<void> {

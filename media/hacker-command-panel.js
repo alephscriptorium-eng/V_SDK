@@ -15,10 +15,64 @@
         initializeMatrixRain();
         startMatrixTime();
         requestCommands();
+        setupEventListeners();
         
         // Request command refresh every 30 seconds
         setInterval(requestCommands, 30000);
     });
+
+    // Setup event listeners for buttons
+    function setupEventListeners() {
+        document.addEventListener('click', function(event) {
+            const target = event.target;
+            
+            // Handle command control buttons
+            if (target.hasAttribute('data-action')) {
+                const action = target.getAttribute('data-action');
+                switch (action) {
+                    case 'refreshCommands':
+                        refreshCommands();
+                        break;
+                    case 'showAllCommands':
+                        showAllCommands();
+                        break;
+                    case 'exportCommands':
+                        exportCommands();
+                        break;
+                }
+            }
+            
+            // Handle command execution
+            if (target.hasAttribute('data-execute-command')) {
+                const commandId = target.getAttribute('data-execute-command');
+                executeCommand(commandId);
+            }
+            
+            // Handle command execution with input
+            if (target.hasAttribute('data-execute-command-input')) {
+                const commandId = target.getAttribute('data-execute-command-input');
+                const inputType = target.getAttribute('data-input-type');
+                executeCommandWithInput(commandId, inputType);
+            }
+            
+            // Handle command info
+            if (target.hasAttribute('data-show-command-info')) {
+                const commandId = target.getAttribute('data-show-command-info');
+                showCommandInfo(commandId);
+            }
+            
+            // Handle category toggle
+            if (target.hasAttribute('data-toggle-category')) {
+                const categoryId = target.getAttribute('data-toggle-category');
+                toggleCategory(categoryId);
+            }
+            
+            // Handle modal close
+            if (target.hasAttribute('data-close-modal')) {
+                closeInfoModal();
+            }
+        });
+    }
 
     // Matrix Rain Animation (reuse from base)
     function initializeMatrixRain() {
@@ -144,7 +198,7 @@
             
             html += `
                 <div class="command-category">
-                    <div class="category-header" onclick="toggleCategory('${categoryId}')">
+                    <div class="category-header" data-toggle-category="${categoryId}">
                         <div class="category-info">
                             <span class="category-toggle ${isCollapsed ? 'collapsed' : ''}">▼</span>
                             <span class="category-icon">${category.icon}</span>
@@ -228,20 +282,21 @@
         if (command.requiresInput) {
             buttons += `
                 <button class="cmd-btn with-input" 
-                        onclick="executeCommandWithInput('${command.id}', '${command.inputType}')">
+                        data-execute-command-input="${command.id}" 
+                        data-input-type="${command.inputType}">
                     EXEC<span class="input-indicator">?</span>
                 </button>
             `;
         } else {
             buttons += `
-                <button class="cmd-btn execute" onclick="executeCommand('${command.id}')">
+                <button class="cmd-btn execute" data-execute-command="${command.id}">
                     EXEC
                 </button>
             `;
         }
 
         buttons += `
-            <button class="cmd-btn info" onclick="showCommandInfo('${command.id}')">
+            <button class="cmd-btn info" data-show-command-info="${command.id}">
                 INFO
             </button>
         `;
@@ -267,6 +322,7 @@
 
     // Execute command
     window.executeCommand = function(commandId) {
+        console.log(`JavaScript: executeCommand called with commandId: ${commandId}`);
         showStatusMessage(`>>> EXECUTING: ${commandId}`);
         
         const commandRow = document.getElementById(`cmd-${commandId}`);
@@ -281,6 +337,7 @@
             command: 'executeCommand',
             commandId: commandId
         });
+        console.log(`JavaScript: Sent executeCommand message for: ${commandId}`);
     };
 
     // Execute command with input
@@ -343,7 +400,7 @@
                     <div><strong>Executions:</strong> ${commandInfo.executionCount || 0}</div>
                     <div><strong>Last Executed:</strong> ${commandInfo.lastExecuted ? new Date(commandInfo.lastExecuted).toLocaleString() : 'Never'}</div>
                 </div>
-                <button onclick="closeInfoModal()">CLOSE</button>
+                <button data-close-modal="true">CLOSE</button>
             </div>
         `;
         

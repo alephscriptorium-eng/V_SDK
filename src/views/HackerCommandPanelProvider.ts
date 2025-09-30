@@ -52,13 +52,13 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
             </div>
             
             <div class="command-controls">
-                <button class="hacker-btn primary" onclick="refreshCommands()">
+                <button class="hacker-btn primary" data-action="refreshCommands">
                     🔄 RESCAN_COMMANDS
                 </button>
-                <button class="hacker-btn info" onclick="showAllCommands()">
+                <button class="hacker-btn info" data-action="showAllCommands">
                     📋 SHOW_ALL_REGISTRY
                 </button>
-                <button class="hacker-btn warning" onclick="exportCommands()">
+                <button class="hacker-btn warning" data-action="exportCommands">
                     📤 EXPORT_COMMAND_LIST
                 </button>
             </div>
@@ -89,25 +89,37 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
+        console.log('HackerCommandPanel received message:', message);
+        vscode.window.showInformationMessage(`HackerCommandPanel received: ${message.command}`);
+        
         switch (message.command) {
             case 'executeCommand':
+                console.log('Executing command:', message.commandId);
                 this.executeCommand(message.commandId, message.args);
                 break;
             case 'refreshCommands':
+                console.log('Refreshing commands');
                 this.refreshCommands();
                 break;
             case 'getCommandInfo':
+                console.log('Getting command info:', message.commandId);
                 this.sendCommandInfo(message.commandId);
                 break;
             case 'requestInput':
+                console.log('Requesting input for command:', message.commandId);
                 this.requestCommandInput(message.commandId, message.inputType, message.options);
                 break;
             case 'exportCommands':
+                console.log('Exporting commands');
                 this.exportCommandList();
                 break;
             case 'showAllCommands':
+                console.log('Showing all commands');
                 this.showAllCommands();
                 break;
+            default:
+                console.log('Unknown command:', message.command);
+                vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }
 

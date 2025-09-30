@@ -51,6 +51,28 @@ export class WebViewManager {
         return WebViewManager.instance;
     }
 
+    /**
+     * Get the next available column for opening webviews.
+     * Tries to distribute webviews across different columns to avoid overlapping.
+     */
+    private getNextAvailableColumn(): vscode.ViewColumn {
+        const activeWebviews = Array.from(this.webviews.values()).filter(w => w.status !== 'closed');
+        const webviewCount = activeWebviews.length;
+
+        // Distribute webviews across columns
+        // Column.One for first webview, Column.Two for second, etc.
+        switch (webviewCount % 3) {
+            case 0:
+                return vscode.ViewColumn.One;
+            case 1:
+                return vscode.ViewColumn.Two;
+            case 2:
+                return vscode.ViewColumn.Three;
+            default:
+                return vscode.ViewColumn.Beside; // For any additional webviews
+        }
+    }
+
     async createWebView(config: WebViewConfig): Promise<WebViewInstance | undefined> {
         try {
             this.loggingManager.log(LogLevel.INFO, LogCategory.WEBVIEW, `Creating webview: ${config.id}`);
@@ -66,11 +88,14 @@ export class WebViewManager {
                 this.webviews.delete(config.id);
             }
 
+            // Determine the best column for this webview
+            const targetColumn = this.getNextAvailableColumn();
+
             // Create the webview panel
             const panel = vscode.window.createWebviewPanel(
                 config.type,
                 config.title,
-                vscode.ViewColumn.One,
+                targetColumn,
                 {
                     enableScripts: config.enableScripts !== false,
                     retainContextWhenHidden: config.retainContextWhenHidden !== false,

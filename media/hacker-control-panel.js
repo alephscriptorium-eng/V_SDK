@@ -15,10 +15,51 @@
         initializeMatrixRain();
         startMatrixTime();
         requestStatus();
+        setupEventListeners();
         
         // Request status every 10 seconds
         setInterval(requestStatus, 10000);
     });
+
+    // Setup event listeners for buttons
+    function setupEventListeners() {
+        // Add event listeners for control buttons
+        document.addEventListener('click', function(event) {
+            const target = event.target;
+            
+            // Handle control buttons
+            if (target.hasAttribute('data-action')) {
+                const action = target.getAttribute('data-action');
+                switch (action) {
+                    case 'refreshAll':
+                        refreshAll();
+                        break;
+                    case 'reloadAllWebviews':
+                        reloadAllWebviews();
+                        break;
+                }
+            }
+            
+            // Handle webview launch
+            if (target.hasAttribute('data-launch-webview')) {
+                const command = target.getAttribute('data-launch-webview');
+                launchWebview(command);
+            }
+            
+            // Handle webview close
+            if (target.hasAttribute('data-close-webview')) {
+                event.stopPropagation();
+                const webviewId = target.getAttribute('data-close-webview');
+                closeWebview(webviewId);
+            }
+            
+            // Handle group toggle
+            if (target.hasAttribute('data-toggle-group')) {
+                const groupId = target.getAttribute('data-toggle-group');
+                toggleGroup(groupId);
+            }
+        });
+    }
 
     // Matrix Rain Animation
     function initializeMatrixRain() {
@@ -85,10 +126,12 @@
 
     // Global functions for button clicks
     window.refreshAll = function() {
+        console.log('JavaScript: refreshAll called');
         showTerminalMessage('>>> REFRESHING QUANTUM MATRIX...');
         vscode.postMessage({
             command: 'refreshPanel'
         });
+        console.log('JavaScript: Sent refreshPanel message');
         
         setTimeout(() => {
             showTerminalMessage('>>> MATRIX REFRESH COMPLETE');
@@ -134,7 +177,7 @@
             
             html += `
                 <div class="webview-group">
-                    <div class="group-header" onclick="toggleGroup('${groupId}')">
+                    <div class="group-header" data-toggle-group="${groupId}">
                         <span class="group-icon ${isCollapsed ? 'collapsed' : ''}">▼</span>
                         <span class="group-title">${group.icon} ${group.name}</span>
                         <span class="group-description">${group.description}</span>
@@ -157,7 +200,7 @@
             const portInfo = webview.port ? `PORT: ${webview.port}` : '';
             
             return `
-                <div class="webview-item" onclick="launchWebview('${webview.command}')">
+                <div class="webview-item" data-launch-webview="${webview.command}">
                     <span class="webview-icon">${webview.icon}</span>
                     <div class="webview-info">
                         <div class="webview-name">${webview.name}</div>
@@ -167,7 +210,7 @@
                     <div class="webview-status ${statusClass}">${statusText}</div>
                     <div class="webview-actions">
                         ${webview.status === 'active' ? `
-                            <button class="action-btn danger" onclick="event.stopPropagation(); closeWebview('${webview.id}')">CLOSE</button>
+                            <button class="action-btn danger" data-close-webview="${webview.id}">CLOSE</button>
                         ` : ''}
                     </div>
                 </div>
@@ -193,11 +236,13 @@
 
     // Launch webview
     window.launchWebview = function(command) {
+        console.log(`JavaScript: launchWebview called with command: ${command}`);
         showTerminalMessage(`>>> LAUNCHING NEURAL INTERFACE: ${command}`);
         vscode.postMessage({
             command: 'launchWebview',
             commandId: command
         });
+        console.log(`JavaScript: Sent message to launch webview: ${command}`);
     };
 
     // Close webview
