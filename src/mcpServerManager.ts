@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { ProcessManager, ProcessInfo } from './processManager';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
+import { MCPConfiguration } from './theatrical/core/interfaces';
+import { MCPServersConfig } from './mcpTypes';
 
 export interface MCPServerInfo {
     id: string;
@@ -118,7 +120,18 @@ export class MCPServerManager {
                 return;
             }
 
-            await this.processManager.startMCPServer(serverId, server.port || this.configManager.getMcpServerPort(serverId) || 3001);
+            const command = this.configManager.getMcpServer(serverId) || {
+
+            } as MCPServersConfig;
+
+            
+            await this.processManager.startMCPServer(
+                serverId, 
+                server.port || this.configManager.getMcpServerPort(serverId) || 3001,
+                command.wdir + "",
+                command.cmd + "",
+                command.args as string[]
+            );
             server.status = 'running';
             
             vscode.window.showInformationMessage(`MCP Server ${server.name} started on port ${server.port}`);

@@ -15,8 +15,10 @@ export type McpStatus = 'running' | 'stopped' | 'error';
 // Configuration interfaces to match sample-config.json structure
 export interface MCPServerConfig {
   port: number;
+  wdir: string
   cmd: string;
-  args: Record<string, any>;
+  args: string[];
+  desc: string;
 }
 
 export interface MCPServersConfig {

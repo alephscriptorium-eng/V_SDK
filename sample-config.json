@@ -1,6 +1,6 @@
 {
   "app": {
-    "type": "x-plus-1"
+    "type": "arrakis-theater-opera"
   },
   "launcher": {
     "ollamaUrl": "http://localhost:11434",
@@ -10,11 +10,11 @@
     "shutdownGracePeriod": 5000
   },
   "game": {
-    "id": "x-plus-1-demo",
+    "id": "arrakis-theater-opera-demo",
     "name": "X+1 Demo Game",
     "description": "Demo configuration for testing the VS Code extension",
     "mcpServerId": "state-machine-server",
-    "graphId": "x-plus-1-game",
+    "graphId": "arrakis-theater-opera-game",
     "userId": "player-1",
     "sessionId": "demo-session",
     "agentConfigs": [
@@ -31,25 +31,33 @@
   },
   "mcp": {
     "servers": {
-      "state-machine-server": {
-        "port": 3001,
-        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-        "args": {}
+      "mcp-mesh-sdk": {
+        "port": 3010,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-mesh-sdk",
+        "cmd": "npm",
+        "args": ["start"],
+        "desc": "MCP Servers Hub"
+      },
+      "mcp-model-sdk": {
+        "port": 4001,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-model-sdk",
+        "cmd": "npm",
+        "args": ["start"],
+        "desc": "SLMs Conversation Hub"
+      },
+      "mcp-presets-site": {
+        "port": 3012,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-presets-site\\zeus",
+        "cmd": "npm",
+        "args": ["start"],
+        "desc": "MCP Presets Editor"
       },
       "wiki-mcp-browser": {
         "port": 3002,
-        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-        "args": {}
-      },
-      "devops-mcp-server": {
-        "port": 3003,
-        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-        "args": {}  
-      },
-      "mcp-mesh-sdk": {
-        "port": 3010,
-        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-        "args": {}
+        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+        "cmd": "npm",
+        "args": ["start"],
+        "desc": "Wiki Content Scrapper"
       }
     }
   },

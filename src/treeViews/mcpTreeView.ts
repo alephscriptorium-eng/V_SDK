@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { McpConfigurationManager } from '../core/mcpConfigurationManager';
 import { MCPServerManager, MCPServerInfo } from '../mcpServerManager';
+import { ProcessManager } from '../processManager';
 
 export interface MCPTreeItem {
     id: string;
@@ -17,9 +18,11 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
     private _onDidChangeTreeData: vscode.EventEmitter<MCPTreeItem | undefined | null | void> = new vscode.EventEmitter<MCPTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<MCPTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
     private configManager: McpConfigurationManager;
+    private processManager: ProcessManager;
 
     constructor(private mcpServerManager: MCPServerManager) {
         this.configManager = McpConfigurationManager.getInstance();
+        this.processManager = ProcessManager.getInstance();
     }
 
     refresh(): void {
@@ -28,6 +31,60 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
 
     getMCPServerManager() {
         return this.mcpServerManager;
+    }
+
+    getProcessManager() {
+        return this.processManager;
+    }
+
+    async startMCPServer(serverId: string): Promise<boolean> {
+        try {
+            const serverConfig = this.configManager.getMcpServers()[serverId];
+            if (!serverConfig) {
+                vscode.window.showErrorMessage(`Server configuration not found for ${serverId}`);
+                return false;
+            }
+
+            const success = await this.processManager.startMCPServer(
+                serverId,
+                serverConfig.port || 8080,
+                serverConfig.wdir || process.cwd(),
+                serverConfig.cmd || 'node',
+                serverConfig.args || ['index.js']
+            );
+
+            if (success) {
+                vscode.window.showInformationMessage(`MCP Server ${serverId} started successfully`);
+                this.refresh(); // Refresh the tree view
+            } else {
+                vscode.window.showErrorMessage(`Failed to start MCP Server ${serverId}`);
+            }
+
+            return success;
+        } catch (error) {
+            console.error(`Error starting MCP server ${serverId}:`, error);
+            vscode.window.showErrorMessage(`Error starting MCP Server ${serverId}: ${error}`);
+            return false;
+        }
+    }
+
+    async stopMCPServer(serverId: string): Promise<boolean> {
+        try {
+            const success = await this.processManager.stopMCPServer(serverId);
+
+            if (success) {
+                vscode.window.showInformationMessage(`MCP Server ${serverId} stopped successfully`);
+                this.refresh(); // Refresh the tree view
+            } else {
+                vscode.window.showErrorMessage(`Failed to stop MCP Server ${serverId}`);
+            }
+
+            return success;
+        } catch (error) {
+            console.error(`Error stopping MCP server ${serverId}:`, error);
+            vscode.window.showErrorMessage(`Error stopping MCP Server ${serverId}: ${error}`);
+            return false;
+        }
     }
 
     getTreeItem(element: MCPTreeItem): vscode.TreeItem {
@@ -50,8 +107,13 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
                 break;
         }
 
-        // Context value for commands
-        treeItem.contextValue = element.children ? 'group' : 'item';
+        // Context value for commands - different for groups vs servers, and based on status
+        if (element.children) {
+            treeItem.contextValue = 'group';
+        } else {
+            // Set context based on server status to show appropriate buttons
+            treeItem.contextValue = element.status === 'running' ? 'serverRunning' : 'serverStopped';
+        }
         
         return treeItem;
     }
@@ -88,11 +150,15 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
             const servers: MCPTreeItem[] = [];
 
             for (const [serverId, serverConfig] of Object.entries(mcpServers)) {
+                // Get real status from ProcessManager
+                const isRunning = this.processManager.isProcessRunning(serverId);
+                const processInfo = this.processManager.getProcessInfo(serverId);
+                const config = this.configManager.getMcpServer(serverId);
                 servers.push({
                     id: serverId,
                     label: this.formatServerName(serverId),
-                    description: this.getServerDescription(serverId),
-                    status: 'stopped', // Will be updated from actual status
+                    description: this.getServerDescription(serverId, config?.desc || '', isRunning),
+                    status: isRunning ? 'running' : 'stopped',
                     port: serverConfig.port
                 });
             }
@@ -111,13 +177,19 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
             .join(' ');
     }
 
-    private getServerDescription(serverId: string): string {
+    private getServerDescription(serverId: string, description: string, isRunning?: boolean): string {
         const descriptions: { [key: string]: string } = {
             'state-machine-server': 'Game state management',
             'wiki-mcp-browser': 'Knowledge browsing',
             'devops-mcp-server': 'System operations',
             'mcp-mesh-sdk': 'Mesh SDK server'
         };
-        return descriptions[serverId] || 'MCP server';
+        const baseDescription = description || 'MCP server';
+        
+        if (isRunning !== undefined) {
+            return `${baseDescription}  ${isRunning ? '•' : ''}`;
+        }
+        
+        return baseDescription;
     }
 }

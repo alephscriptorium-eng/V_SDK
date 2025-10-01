@@ -898,13 +898,9 @@ export class ExtensionBootstrap {
                             return;
                         }
 
-                        // Get the MCPServerManager instance from the mcpTreeProvider
-                        const mcpServerManager = this.extensionContext.mcpTreeProvider.getMCPServerManager();
-                        await mcpServerManager.showMCPManager();
-                        await mcpServerManager.startServer(serverId);
+                        // Use the new startMCPServer method from mcpTreeProvider
+                        await this.extensionContext.mcpTreeProvider.startMCPServer(serverId);
                         
-                        // Refresh the tree view to reflect the new status
-                        this.extensionContext.mcpTreeProvider.refresh();
                         this.extensionContext.logger.info(`MCP Server ${serverId} start command executed`);
                     }
                 } catch (error) {
@@ -925,12 +921,9 @@ export class ExtensionBootstrap {
                             return;
                         }
 
-                        // Get the MCPServerManager instance from the mcpTreeProvider
-                        const mcpServerManager = this.extensionContext.mcpTreeProvider.getMCPServerManager();
-                        await mcpServerManager.stopServer(serverId);
+                        // Use the new stopMCPServer method from mcpTreeProvider
+                        await this.extensionContext.mcpTreeProvider.stopMCPServer(serverId);
                         
-                        // Refresh the tree view to reflect the new status
-                        this.extensionContext.mcpTreeProvider.refresh();
                         this.extensionContext.logger.info(`MCP Server ${serverId} stop command executed`);
                     }
                 } catch (error) {

@@ -1,24 +1,27 @@
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
 import * as path from 'path';
+import { TerminalManager } from './terminalManager';
 
 export interface ProcessInfo {
     id?: string;
     name: string;
-    pid: number;
+    pid?: number;  // Made optional since VS Code terminals don't always expose PID
     command: string;
     status: 'running' | 'stopped' | 'unknown';
     port?: number;
     workingDirectory: string;
     startTime?: Date;
+    terminal?: vscode.Terminal;  // Added terminal reference
 }
 
 export class ProcessManager {
     private static instance: ProcessManager;
-    private processes: Map<string, cp.ChildProcess> = new Map();
     private processInfo: Map<string, ProcessInfo> = new Map();
+    private terminalManager: TerminalManager;
 
-    private constructor() {}
+    private constructor() {
+        this.terminalManager = new TerminalManager();
+    }
 
     static getInstance(): ProcessManager {
         if (!ProcessManager.instance) {
@@ -29,44 +32,60 @@ export class ProcessManager {
 
     async startProcess(name: string, command: string, args: string[], workingDir: string, port?: number): Promise<boolean> {
         try {
-            if (this.processes.has(name)) {
+            // Check if process is already running
+            if (this.processInfo.has(name) && this.processInfo.get(name)?.status === 'running') {
                 console.log(`Process ${name} is already running`);
                 return false;
             }
 
-            const process = cp.spawn(command, args, {
+            const fullCommand = `${command} ${args.join(' ')}`;
+            console.log(`Process launching at ${workingDir} :> ${fullCommand}`);
+
+            // Create terminal using VS Code's terminal API
+            const terminal = vscode.window.createTerminal({
+                name: `Arrakis: ${name}`,
                 cwd: workingDir,
-                shell: true
+                shellPath: this.getShellPath(),
+                env: {
+                    ...process.env,
+                    ARRAKIS_PROCESS: name,
+                    ARRAKIS_PORT: port?.toString() || ''
+                }
             });
 
-            if (process.pid) {
-                this.processes.set(name, process);
-                this.processInfo.set(name, {
-                    id: name,
-                    name,
-                    pid: process.pid,
-                    command: `${command} ${args.join(' ')}`,
-                    status: 'running',
-                    port,
-                    workingDirectory: workingDir,
-                    startTime: new Date()
-                });
+            // Store process info
+            const processInfo: ProcessInfo = {
+                id: name,
+                name,
+                command: fullCommand,
+                status: 'running',
+                port,
+                workingDirectory: workingDir,
+                startTime: new Date(),
+                terminal
+            };
 
-                process.on('exit', (code) => {
-                    console.log(`Process ${name} exited with code ${code}`);
-                    this.processes.delete(name);
-                    if (this.processInfo.has(name)) {
-                        const info = this.processInfo.get(name)!;
+            this.processInfo.set(name, processInfo);
+
+            // Show terminal and execute command
+            terminal.show();
+            terminal.sendText(fullCommand);
+
+            // Listen for terminal disposal (when user closes it)
+            const disposable = vscode.window.onDidCloseTerminal((closedTerminal) => {
+                if (closedTerminal === terminal) {
+                    const info = this.processInfo.get(name);
+                    if (info) {
                         info.status = 'stopped';
                         this.processInfo.set(name, info);
                     }
-                });
+                    console.log(`Terminal process ${name} was closed`);
+                    disposable.dispose();
+                }
+            });
 
-                console.log(`Process ${name} started with PID ${process.pid}`);
-                return true;
-            }
-
-            return false;
+            console.log(`Process ${name} started in terminal`);
+            return true;
         } catch (error) {
             console.error(`Failed to start process ${name}:`, error);
             return false;
@@ -75,23 +94,48 @@ export class ProcessManager {
 
     async stopProcess(name: string): Promise<boolean> {
         try {
-            const process = this.processes.get(name);
-            if (process && !process.killed) {
-                process.kill('SIGTERM');
-                this.processes.delete(name);
-                
-                if (this.processInfo.has(name)) {
-                    const info = this.processInfo.get(name)!;
-                    info.status = 'stopped';
-                    this.processInfo.set(name, info);
-                }
-                
-                console.log(`Process ${name} stopped`);
-                return true;
+            const processInfo = this.processInfo.get(name);
+            if (!processInfo) {
+                console.log(`Process ${name} not found`);
+                return false;
             }
-            return false;
+
+            if (processInfo.status !== 'running') {
+                console.log(`Process ${name} is not running (status: ${processInfo.status})`);
+                return false;
+            }
+
+            // Use TerminalManager to stop the terminal gracefully
+            if (processInfo.terminal) {
+                // Send Ctrl+C to gracefully stop the process
+                processInfo.terminal.sendText('\u0003'); // Ctrl+C
+                
+                // Wait a moment for graceful shutdown
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Then dispose the terminal
+                processInfo.terminal.dispose();
+                console.log(`Terminal for process ${name} disposed`);
+            }
+            
+            // Update status
+            processInfo.status = 'stopped';
+            processInfo.terminal = undefined;
+            this.processInfo.set(name, processInfo);
+            
+            console.log(`Process ${name} stopped successfully`);
+            return true;
         } catch (error) {
             console.error(`Failed to stop process ${name}:`, error);
+            
+            // Mark as stopped even if there was an error, to prevent zombie entries
+            const processInfo = this.processInfo.get(name);
+            if (processInfo) {
+                processInfo.status = 'stopped';
+                processInfo.terminal = undefined;
+                this.processInfo.set(name, processInfo);
+            }
+            
             return false;
         }
     }
@@ -105,13 +149,16 @@ export class ProcessManager {
     }
 
     isProcessRunning(name: string): boolean {
-        const process = this.processes.get(name);
-        return process !== undefined && !process.killed;
+        const processInfo = this.processInfo.get(name);
+        return processInfo !== undefined && processInfo.status === 'running';
     }
 
     async killAllProcesses(): Promise<void> {
-        const promises = Array.from(this.processes.keys()).map(name => this.stopProcess(name));
+        const allProcessNames = Array.from(this.processInfo.keys());
+        const promises = allProcessNames.map(name => this.stopProcess(name));
         await Promise.all(promises);
+        
+        console.log(`All processes stopped (${allProcessNames.length} processes)`);
     }
 
     getRunningProcessesCount(): number {
@@ -136,9 +183,8 @@ export class ProcessManager {
     }
 
     // MCP Server methods
-    async startMCPServer(serverId: string, port: number): Promise<boolean> {
-        const workingDir = path.join(__dirname, '..', '..', 'mcp-servers', serverId);
-        return await this.startProcess(serverId, 'node', ['index.js'], workingDir, port);
+    async startMCPServer(serverId: string, port: number, workingDir: string, cmd: string, args: string[]): Promise<boolean> {
+        return await this.startProcess(serverId, cmd || 'node', args || ['index.js'], workingDir, port);
     }
 
     async stopMCPServer(serverId: string): Promise<boolean> {
@@ -175,7 +221,27 @@ export class ProcessManager {
     // Dispose method for cleanup
     dispose(): void {
         this.killAllProcesses();
-        this.processes.clear();
         this.processInfo.clear();
+    }
+
+    private getShellPath(): string {
+        // For Windows with bash.exe (user preference)
+        if (process.platform === 'win32') {
+            // Try common bash locations
+            const bashPaths = [
+                'C:\\Program Files\\Git\\bin\\bash.exe',
+                'C:\\Windows\\System32\\bash.exe',
+                'bash.exe' // Let PATH resolve it
+            ];
+            
+            for (const bashPath of bashPaths) {
+                if (bashPath === 'bash.exe' || require('fs').existsSync(bashPath)) {
+                    return bashPath;
+                }
+            }
+        }
+        
+        // Default shell for other platforms
+        return process.env.SHELL || '/bin/bash';
     }
 }

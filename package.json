@@ -634,12 +634,12 @@
       "view/item/context": [
         {
           "command": "alephscript.mcptree.start",
-          "when": "view == alephscript.mcptree && viewItem == item",
+          "when": "view == alephscript.mcptree && viewItem == serverStopped",
           "group": "inline@1"
         },
         {
           "command": "alephscript.mcptree.stop",
-          "when": "view == alephscript.mcptree && viewItem == item",
+          "when": "view == alephscript.mcptree && viewItem == serverRunning",
           "group": "inline@1"
         },
         {

@@ -10,7 +10,22 @@ export class McpConfigurationManager {
     private configPath: string | null = null;
     private readonly logger = createLogger(LogCategory.EXTENSION, 'McpConfigurationManager');
 
-    private constructor() {}
+    private constructor() {
+        console.log(`McpConfigurationManager, to init you can use:
+        {
+            "command": "ArrakisTheater.LoadConfig",
+            "title": "🎭 Load Opera Configuration",
+            "category": "⚙️ Arrakis Configuration",
+            "icon": "$(folder-opened)"
+        },
+        {
+            "command": "ArrakisTheater.DownloadConfig",
+            "title": "🎭 Download Configuration",
+            "category": "⚙️ Arrakis Configuration",
+            "icon": "$(save)"
+        }
+        `)
+    }
 
     static getInstance(): McpConfigurationManager {
         if (!McpConfigurationManager.instance) {
@@ -37,8 +52,8 @@ export class McpConfigurationManager {
             // If no path in settings, look for sample-config.json in workspace
             if (!configPath && vscode.workspace.workspaceFolders) {
                 const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-                const defaultConfigPath = path.join(workspaceRoot, 'sample-config.json');
-                
+                const defaultConfigPath = path.join(workspaceRoot, 'ArrakisTheater_OperaConfig.json');
+
                 if (fs.existsSync(defaultConfigPath)) {
                     configPath = defaultConfigPath;
                     this.logger.info(`Found sample-config.json at: ${configPath}`);
@@ -79,81 +94,99 @@ export class McpConfigurationManager {
      */
     private setDefaultConfiguration(): void {
         this.config = {
-            app: {
-                type: "x-plus-1"
+            "app": {
+                "type": "arrakis-theater-opera"
             },
-            launcher: {
-                ollamaUrl: "http://localhost:11434",
-                requiredModel: "GPT-OSS:20b",
-                mcpServiceLauncherPort: 3050,
-                healthCheckTimeout: 30000,
-                shutdownGracePeriod: 5000
+            "launcher": {
+                "ollamaUrl": "http://localhost:11434",
+                "requiredModel": "GPT-OSS:20b",
+                "mcpServiceLauncherPort": 3050,
+                "healthCheckTimeout": 30000,
+                "shutdownGracePeriod": 5000
             },
-            game: {
-                id: "x-plus-1-demo",
-                name: "X+1 Demo Game",
-                description: "Demo configuration for testing the VS Code extension",
-                mcpServerId: "state-machine-server",
-                graphId: "x-plus-1-game",
-                userId: "player-1",
-                sessionId: "demo-session",
-                agentConfigs: []
+            "game": {
+                "id": "arrakis-theater-opera-demo",
+                "name": "X+1 Demo Game",
+                "description": "Demo configuration for testing the VS Code extension",
+                "mcpServerId": "state-machine-server",
+                "graphId": "arrakis-theater-opera-game",
+                "userId": "player-1",
+                "sessionId": "demo-session",
+                "agentConfigs": [
+                    {
+                        "id": "test-agent",
+                        "name": "TestAgent",
+                        "role": "narrator",
+                        "description": "Test agent for demonstration",
+                        "mcpServerId": "state-machine-server",
+                        "autoStart": true,
+                        "priority": 10
+                    }
+                ]
             },
-            mcp: {
-                servers: {
+            "mcp": {
+                "servers": {
                     "state-machine-server": {
-                        port: 3001,
-                        cmd: "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-                        args: {}
+                        "port": 3001,
+                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+                        "cmd": "npm",
+                        "args": ["start"],
+                        "desc": ""
                     },
                     "wiki-mcp-browser": {
-                        port: 3002,
-                        cmd: "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-                        args: {}
+                        "port": 3002,
+                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+                        "cmd": "npm",
+                        "args": ["start"],
+                        "desc": ""
                     },
                     "devops-mcp-server": {
-                        port: 3003,
-                        cmd: "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-                        args: {}
+                        "port": 3003,
+                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+                        "cmd": "npm",
+                        "args": ["start"],
+                        "desc": ""
                     },
                     "mcp-mesh-sdk": {
-                        port: 3010,
-                        cmd: "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
-                        args: {}
+                        "port": 3010,
+                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+                        "cmd": "npm",
+                        "args": ["start"],
+                        "desc": ""
                     }
                 }
             },
-            orchestration: {
-                enableReplay: true,
-                replayBufferSize: 200,
-                enableLogging: true,
-                enableCrossChannelRouting: true,
-                messageTimeout: 10000
+            "orchestration": {
+                "enableReplay": true,
+                "replayBufferSize": 200,
+                "enableLogging": true,
+                "enableCrossChannelRouting": true,
+                "messageTimeout": 10000
             },
-            ui: [
+            "ui": [
                 {
-                    id: "console-demo",
-                    name: "Demo Console UI",
-                    type: "custom",
-                    enabled: true,
-                    config: {
-                        isPrimary: true,
-                        autoStart: true,
-                        port: 8080
+                    "id": "console-demo",
+                    "name": "Demo Console UI",
+                    "type": "custom",
+                    "enabled": true,
+                    "config": {
+                        "isPrimary": true,
+                        "autoStart": true,
+                        "port": 8080
                     }
                 },
                 {
-                    id: "web-demo",
-                    name: "Demo Web UI",
-                    type: "html5",
-                    enabled: true,
-                    config: {
-                        autoStart: false,
-                        port: 8081
+                    "id": "web-demo",
+                    "name": "Demo Web UI",
+                    "type": "html5",
+                    "enabled": true,
+                    "config": {
+                        "port": 8081,
+                        "autoStart": false
                     }
                 }
             ]
-        };
+        }
     }
 
     /**
@@ -274,11 +307,11 @@ export class McpConfigurationManager {
     async updateVSCodeSettings(configPath: string): Promise<void> {
         const config = vscode.workspace.getConfiguration('mcpSocketManager');
         await config.update('configPath', configPath, vscode.ConfigurationTarget.Workspace);
-        
+
         // Also update the extension-specific setting for better visibility
         const alephConfig = vscode.workspace.getConfiguration('alephscript');
         await alephConfig.update('configurationFile', configPath, vscode.ConfigurationTarget.Workspace);
-        
+
         this.logger.info(`Updated VS Code settings to use configuration file: ${configPath}`);
     }
 
@@ -317,7 +350,7 @@ export class McpConfigurationManager {
 
         // Deep merge the updates
         this.config = this.mergeConfigurations(this.config, updates);
-        
+
         // Save if we have a file path
         if (this.configPath) {
             await this.saveConfiguration();
@@ -329,7 +362,7 @@ export class McpConfigurationManager {
      */
     private mergeConfigurations(base: AlephScriptConfiguration, updates: Partial<AlephScriptConfiguration>): AlephScriptConfiguration {
         const result = JSON.parse(JSON.stringify(base)); // Deep clone
-        
+
         for (const key in updates) {
             if (updates.hasOwnProperty(key)) {
                 const value = updates[key as keyof AlephScriptConfiguration];
@@ -345,7 +378,7 @@ export class McpConfigurationManager {
                 }
             }
         }
-        
+
         return result;
     }
 }
