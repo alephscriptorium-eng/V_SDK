@@ -343,7 +343,7 @@ export class CommandPaletteManager {
     private async startAllAgents(): Promise<void> {
         this.logger.info('Starting all agents');
         // Integration with AgentsTreeDataProvider
-        vscode.commands.executeCommand('alephscript.agents.refresh');
+        vscode.commands.executeCommand('alephscript.mcptree.refresh');
     }
 
     private async stopAllAgents(): Promise<void> {

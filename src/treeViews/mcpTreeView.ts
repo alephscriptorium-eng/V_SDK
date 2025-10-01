@@ -1,19 +1,20 @@
 import * as vscode from 'vscode';
 import { MCPServerManager, MCPServerInfo } from '../mcpServerManager';
 
-export interface AgentTreeItem {
+export interface MCPTreeItem {
     id: string;
     label: string;
     description?: string;
     status: 'running' | 'stopped' | 'error';
     port?: number;
     iconPath?: vscode.ThemeIcon;
-    children?: AgentTreeItem[];
+    children?: MCPTreeItem[];
 }
 
-export class AgentsTreeDataProvider implements vscode.TreeDataProvider<AgentTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<AgentTreeItem | undefined | null | void> = new vscode.EventEmitter<AgentTreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<AgentTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem> {
+
+    private _onDidChangeTreeData: vscode.EventEmitter<MCPTreeItem | undefined | null | void> = new vscode.EventEmitter<MCPTreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<MCPTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     constructor(private mcpServerManager: MCPServerManager) {}
 
@@ -21,7 +22,11 @@ export class AgentsTreeDataProvider implements vscode.TreeDataProvider<AgentTree
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: AgentTreeItem): vscode.TreeItem {
+    getMCPServerManager() {
+        return this.mcpServerManager;
+    }
+
+    getTreeItem(element: MCPTreeItem): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.label, element.children ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
         
         treeItem.id = element.id;
@@ -42,12 +47,12 @@ export class AgentsTreeDataProvider implements vscode.TreeDataProvider<AgentTree
         }
 
         // Context value for commands
-        treeItem.contextValue = element.children ? 'agentGroup' : 'agent';
+        treeItem.contextValue = element.children ? 'group' : 'item';
         
         return treeItem;
     }
 
-    getChildren(element?: AgentTreeItem): Thenable<AgentTreeItem[]> {
+    getChildren(element?: MCPTreeItem): Thenable<MCPTreeItem[]> {
         if (!element) {
             // Root level - show MCP Servers group
             return Promise.resolve([
@@ -68,10 +73,10 @@ export class AgentsTreeDataProvider implements vscode.TreeDataProvider<AgentTree
         return Promise.resolve([]);
     }
 
-    private async getMCPServers(): Promise<AgentTreeItem[]> {
+    private async getMCPServers(): Promise<MCPTreeItem[]> {
         try {
             // Access servers from MCPServerManager (need to make this public or add getter)
-            const servers: AgentTreeItem[] = [
+            const servers: MCPTreeItem[] = [
                 {
                     id: 'state-machine-server',
                     label: 'State Machine Server',

@@ -23,7 +23,7 @@ import { SocketsTreeDataProvider } from '../treeViews/socketsTreeView';
 import { UIsTreeDataProvider } from '../treeViews/uisTreeView';
 import { ConfigsTreeDataProvider } from '../treeViews/configsTreeView';
 import { LogsTreeDataProvider } from '../treeViews/logsTreeView';
-import { AgentsTreeDataProvider } from '../treeViews/agentsTreeView';
+import { MCPTreeDataProvider } from '../treeViews/mcpTreeView';
 import { SocketMonitor } from '../socketMonitor';
 import { UIManager } from '../uiManager';
 import { MCPServerManager } from '../mcpServerManager';
@@ -57,7 +57,7 @@ export interface ExtensionContext {
     uisTreeProvider: UIsTreeDataProvider;
     configsTreeProvider: ConfigsTreeDataProvider;
     logsTreeProvider: LogsTreeDataProvider;
-    agentsTreeProvider: AgentsTreeDataProvider;
+    mcpTreeProvider: MCPTreeDataProvider;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -117,7 +117,7 @@ export class ExtensionBootstrap {
             const uisTreeProvider = new UIsTreeDataProvider(uiManager);
             const configsTreeProvider = new ConfigsTreeDataProvider();
             const logsTreeProvider = new LogsTreeDataProvider();
-            const agentsTreeProvider = new AgentsTreeDataProvider(mcpServerManager);
+            const mcpTreeProvider = new MCPTreeDataProvider(mcpServerManager);
             
             this.extensionContext = {
                 managers: {
@@ -148,7 +148,7 @@ export class ExtensionBootstrap {
                 uisTreeProvider,
                 configsTreeProvider,
                 logsTreeProvider,
-                agentsTreeProvider,
+                mcpTreeProvider,
                 logger
             };
 
@@ -866,11 +866,11 @@ export class ExtensionBootstrap {
                 vscode.window.showInformationMessage('🎭 Teatro actualizado');
             }),
 
-            // Agents Commands
-            vscode.commands.registerCommand('alephscript.agents.refresh', async () => {
+            // MCP Commands
+            vscode.commands.registerCommand('alephscript.mcptree.refresh', async () => {
                 try {
                     if (this.extensionContext) {
-                        this.extensionContext.agentsTreeProvider.refresh();
+                        this.extensionContext.mcpTreeProvider.refresh();
                         this.extensionContext.logger.info('Agents TreeView refreshed');
                         vscode.window.showInformationMessage('🤖 Agents refreshed');
                     }
@@ -878,6 +878,59 @@ export class ExtensionBootstrap {
                     await managers.errorBoundary.handleError(
                         error as Error,
                         'agents.refresh',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.mcptree.start', async (item?: any) => {
+                try {
+                    if (this.extensionContext) {
+                        const serverId = item?.id || item?.serverId || item?.label;
+                        if (!serverId) {
+                            vscode.window.showErrorMessage('No MCP server ID provided for start command');
+                            return;
+                        }
+
+                        // Get the MCPServerManager instance from the mcpTreeProvider
+                        const mcpServerManager = this.extensionContext.mcpTreeProvider.getMCPServerManager();
+                        await mcpServerManager.showMCPManager();
+                        await mcpServerManager.startServer(serverId);
+                        
+                        // Refresh the tree view to reflect the new status
+                        this.extensionContext.mcpTreeProvider.refresh();
+                        this.extensionContext.logger.info(`MCP Server ${serverId} start command executed`);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'mcptree.start',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.mcptree.stop', async (item?: any) => {
+                try {
+                    if (this.extensionContext) {
+                        const serverId = item?.id || item?.serverId || item?.label;
+                        if (!serverId) {
+                            vscode.window.showErrorMessage('No MCP server ID provided for stop command');
+                            return;
+                        }
+
+                        // Get the MCPServerManager instance from the mcpTreeProvider
+                        const mcpServerManager = this.extensionContext.mcpTreeProvider.getMCPServerManager();
+                        await mcpServerManager.stopServer(serverId);
+                        
+                        // Refresh the tree view to reflect the new status
+                        this.extensionContext.mcpTreeProvider.refresh();
+                        this.extensionContext.logger.info(`MCP Server ${serverId} stop command executed`);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'mcptree.stop',
                         LogCategory.EXTENSION
                     );
                 }
@@ -1449,8 +1502,8 @@ Detalles específicos sobre cómo configurar y usar este agente.
             );
 
             this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.agents', {
-                    treeDataProvider: this.extensionContext.agentsTreeProvider,
+                vscode.window.createTreeView('alephscript.mcptree', {
+                    treeDataProvider: this.extensionContext.mcpTreeProvider,
                     showCollapseAll: true,
                     canSelectMany: false
                 })

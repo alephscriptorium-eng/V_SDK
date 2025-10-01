@@ -105,13 +105,13 @@
         "icon": "$(device-desktop)"
       },
       {
-        "command": "alephscript.agents.start",
-        "title": "Start Agent",
+        "command": "alephscript.mcptree.start",
+        "title": "Start MCP Server",
         "icon": "$(play)"
       },
       {
-        "command": "alephscript.agents.stop",
-        "title": "Stop Agent",
+        "command": "alephscript.mcptree.stop",
+        "title": "Stop MCP Server",
         "icon": "$(stop)"
       },
       {
@@ -140,7 +140,7 @@
         "category": "AlephScript"
       },
       {
-        "command": "alephscript.agents.refresh",
+        "command": "alephscript.mcptree.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
@@ -314,7 +314,7 @@
         "icon": "$(play-circle)"
       },
       {
-        "command": "alephscript.agents.stopAll",
+        "command": "alephscript.mcptree.stopAll",
         "title": ">>> Shutdown Agent Matrix",
         "category": "🤖 Agent Matrix",
         "icon": "$(debug-disconnect)"
@@ -491,14 +491,14 @@
     "menus": {
       "view/item/context": [
         {
-          "command": "alephscript.agents.start",
-          "when": "view == alephscript.agents && viewItem == agent",
+          "command": "alephscript.mcptree.start",
+          "when": "view == alephscript.mcptree && viewItem == item",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.agents.stop",
-          "when": "view == alephscript.agents && viewItem == agent",
-          "group": "inline@2"
+          "command": "alephscript.mcptree.stop",
+          "when": "view == alephscript.mcptree && viewItem == item",
+          "group": "inline@1"
         },
         {
           "command": "alephscript.uis.start",
@@ -598,8 +598,8 @@
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.agents.refresh",
-          "when": "view == alephscript.agents",
+          "command": "alephscript.mcptree.refresh",
+          "when": "view == alephscript.mcptree",
           "group": "navigation"
         },
         {
@@ -692,7 +692,7 @@
           "when": "true"
         },
         {
-          "id": "alephscript.agents",
+          "id": "alephscript.mcptree",
           "name": "🤖 MCP", 
           "icon": "$(server)",
           "when": "true"

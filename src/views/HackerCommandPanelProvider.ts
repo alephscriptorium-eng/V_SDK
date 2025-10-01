@@ -234,6 +234,7 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
         if (commandId.startsWith('alephscript.webview')) return '🎭 Theater Interfaces';
         if (commandId.startsWith('alephscript.teatro')) return '🎭 Theater Control';
         if (commandId.startsWith('alephscript.agents')) return '🤖 Agent Management';
+        if (commandId.startsWith('alephscript.mcptree')) return '🤖 MCP Management';
         if (commandId.startsWith('alephscript.sockets')) return '🔌 Neural Networks';
         if (commandId.startsWith('alephscript.configs')) return '⚙️ Configuration';
         if (commandId.startsWith('alephscript.logs')) return '📡 System Logs';

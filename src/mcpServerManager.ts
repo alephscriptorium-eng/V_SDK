@@ -112,7 +112,7 @@ export class MCPServerManager {
             .join(' ');
     }
 
-    private async startServer(serverId: string) {
+    public async startServer(serverId: string) {
         try {
             const server = this.servers.get(serverId);
             if (!server) {
@@ -134,7 +134,7 @@ export class MCPServerManager {
         }
     }
 
-    private async stopServer(serverId: string) {
+    public async stopServer(serverId: string) {
         try {
             const server = this.servers.get(serverId);
             if (!server) {
