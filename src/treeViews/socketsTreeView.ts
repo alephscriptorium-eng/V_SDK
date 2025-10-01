@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SocketMonitor } from '../socketMonitor';
+import { McpConfigurationManager } from '../core/mcpConfigurationManager';
 
 export interface SocketTreeItem {
     id: string;
@@ -19,8 +20,10 @@ export class SocketsTreeDataProvider implements vscode.TreeDataProvider<SocketTr
     private socketRooms: Map<string, SocketTreeItem> = new Map();
     private connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'error' = 'disconnected';
     private lastServerCheck: Date = new Date();
+    private configManager: McpConfigurationManager;
 
     constructor(private socketMonitor: SocketMonitor) {
+        this.configManager = McpConfigurationManager.getInstance();
         // Listen for Socket.IO events to update TreeView
         this.setupSocketEventListeners();
     }
@@ -77,6 +80,18 @@ export class SocketsTreeDataProvider implements vscode.TreeDataProvider<SocketTr
         return treeItem;
     }
 
+    private getServerDescription(): string {
+        if (this.configManager.isConfigLoaded()) {
+            const defaultUrl = this.configManager.getDefaultSocketUrl();
+            // Extract host:port from URL like ws://localhost:3000
+            const match = defaultUrl.match(/ws:\/\/([^:]+):(\d+)/);
+            if (match) {
+                return `${match[1]}:${match[2]}`;
+            }
+        }
+        return 'localhost:3000'; // fallback
+    }
+
     getChildren(element?: SocketTreeItem): Thenable<SocketTreeItem[]> {
         if (!element) {
             // Root level - show connection status and rooms
@@ -84,7 +99,7 @@ export class SocketsTreeDataProvider implements vscode.TreeDataProvider<SocketTr
                 {
                     id: 'socket-server',
                     label: 'Socket.IO Server',
-                    description: this.connectionStatus === 'connected' ? 'localhost:3000' : 'Disconnected',
+                    description: this.connectionStatus === 'connected' ? this.getServerDescription() : 'Disconnected',
                     connectionStatus: this.connectionStatus,
                     children: this.connectionStatus === 'connected' ? [] : undefined
                 }
@@ -208,7 +223,15 @@ export class SocketsTreeDataProvider implements vscode.TreeDataProvider<SocketTr
     }
 
     // Public methods for commands
-    public async connectToServer(url: string = 'ws://localhost:3000'): Promise<void> {
+    public async connectToServer(url?: string): Promise<void> {
+        if (!url) {
+            // Get default URL from configuration
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
+            }
+            url = this.configManager.getDefaultSocketUrl();
+        }
+        
         this.connectionStatus = 'connecting';
         this.refresh();
         

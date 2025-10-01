@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { McpConfigurationManager } from './core/mcpConfigurationManager';
 import { LogCategory, createLogger, CategoryLogger } from './loggingManager';
 
 export interface AlephScriptCommand {
@@ -29,9 +30,11 @@ export class CommandPaletteManager {
     private registeredCommands: vscode.Disposable[] = [];
     private logger: CategoryLogger;
     private context: vscode.ExtensionContext;
+    private configManager: McpConfigurationManager;
 
     private constructor(context: vscode.ExtensionContext) {
         this.context = context;
+        this.configManager = McpConfigurationManager.getInstance();
         this.logger = createLogger(LogCategory.EXTENSION, 'CommandPaletteManager');
         this.initializeCoreCommands();
     }
@@ -135,7 +138,7 @@ export class CommandPaletteManager {
             id: 'alephscript.sockets.quickConnect',
             title: 'Quick Connect to Local Socket',
             category: CommandCategory.SOCKETS,
-            description: 'Connect to localhost:3000 socket server',
+            description: 'Connect to default socket server from configuration',
             icon: 'plug',
             shortcut: 'ctrl+alt+c',
             handler: () => this.quickConnectSocket()

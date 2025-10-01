@@ -486,8 +486,150 @@
         "title": ">>> Run Agent Diagnostics",
         "category": "🤖 Agent Matrix",
         "icon": "$(pulse)"
+      },
+      {
+        "command": "ArrakisTheater.LoadConfig",
+        "title": "🎭 Load Opera Configuration",
+        "category": "⚙️ Arrakis Configuration",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "ArrakisTheater.DownloadConfig",
+        "title": "🎭 Download Configuration",
+        "category": "⚙️ Arrakis Configuration",
+        "icon": "$(save)"
+      },
+      {
+        "command": "ArrakisTheater.ResetConfig",
+        "title": "🎭 Reset to Defaults",
+        "category": "⚙️ Arrakis Configuration",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ArrakisTheater.ShowCurrentConfig",
+        "title": "🎭 Show Current Configuration",
+        "category": "⚙️ Arrakis Configuration",
+        "icon": "$(eye)"
       }
     ],
+    "configuration": {
+      "title": "Arrakis Theater Configuration",
+      "properties": {
+        "alephscript.configurationFile": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Arrakis Theater configuration file (ArrakisTheater_OperaConfig.json)",
+          "scope": "window"
+        },
+        "mcpSocketManager.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the MCP configuration file (legacy setting)",
+          "scope": "window"
+        },
+        "alephscript.autoLoadConfig": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically load configuration file on extension startup",
+          "scope": "window"
+        },
+        "alephscript.configValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable configuration validation on load",
+          "scope": "window"
+        },
+        "arrakisTheater.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Theater configuration file"
+        },
+        "arrakisTheater.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-start Theater services when opening workspace"
+        },
+        "arrakisTheater.hackerMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hacker-style terminal aesthetics and green color scheme"
+        },
+        "alephscript.statusBar.visible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show/hide the hacker panel quick access buttons in status bar"
+        },
+        "alephscript.statusBar.animation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable animations and effects for status bar buttons"
+        },
+        "alephscript.logging.level": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ],
+          "default": "info",
+          "description": "Minimum log level to display"
+        },
+        "alephscript.logging.enabledCategories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "general",
+              "process",
+              "terminal",
+              "mcp",
+              "socket",
+              "config",
+              "ui",
+              "extension"
+            ]
+          },
+          "default": [
+            "general",
+            "process",
+            "terminal",
+            "mcp",
+            "socket",
+            "config",
+            "ui",
+            "extension"
+          ],
+          "description": "Log categories to enable"
+        },
+        "alephscript.logging.showTimestamp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show timestamp in log entries"
+        },
+        "alephscript.logging.showLevel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show log level in log entries"
+        },
+        "alephscript.logging.showCategory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show category in log entries"
+        },
+        "alephscript.logging.showSource": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show source in log entries"
+        },
+        "alephscript.logging.maxEntries": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum number of log entries to keep in memory"
+        }
+      }
+    },
     "menus": {
       "view/item/context": [
         {
@@ -739,100 +881,6 @@
           "icon": "./media/arrakis-theater-icon.png"
         }
       ]
-    },
-    "configuration": {
-      "title": "🎭 Arrakis Theater Engine",
-      "properties": {
-        "arrakisTheater.configPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the Theater configuration file"
-        },
-        "arrakisTheater.autoStart": {
-          "type": "boolean",
-          "default": false,
-          "description": "Auto-start Theater services when opening workspace"
-        },
-        "arrakisTheater.hackerMode": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable hacker-style terminal aesthetics and green color scheme"
-        },
-        "alephscript.statusBar.visible": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show/hide the hacker panel quick access buttons in status bar"
-        },
-        "alephscript.statusBar.animation": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable animations and effects for status bar buttons"
-        },
-        "alephscript.logging.level": {
-          "type": "string",
-          "enum": [
-            "error",
-            "warn",
-            "info",
-            "debug",
-            "trace"
-          ],
-          "default": "info",
-          "description": "Minimum log level to display"
-        },
-        "alephscript.logging.enabledCategories": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "general",
-              "process",
-              "terminal",
-              "mcp",
-              "socket",
-              "config",
-              "ui",
-              "extension"
-            ]
-          },
-          "default": [
-            "general",
-            "process",
-            "terminal",
-            "mcp",
-            "socket",
-            "config",
-            "ui",
-            "extension"
-          ],
-          "description": "Log categories to enable"
-        },
-        "alephscript.logging.showTimestamp": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show timestamp in log entries"
-        },
-        "alephscript.logging.showLevel": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show log level in log entries"
-        },
-        "alephscript.logging.showCategory": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show category in log entries"
-        },
-        "alephscript.logging.showSource": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show source in log entries"
-        },
-        "alephscript.logging.maxEntries": {
-          "type": "number",
-          "default": 10000,
-          "description": "Maximum number of log entries to keep in memory"
-        }
-      }
     },
     "jsonValidation": [
       {

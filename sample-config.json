@@ -31,9 +31,26 @@
   },
   "mcp": {
     "servers": {
-      "state-machine-server": {},
-      "wiki-mcp-browser": {},
-      "devops-mcp-server": {}
+      "state-machine-server": {
+        "port": 3001,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
+        "args": {}
+      },
+      "wiki-mcp-browser": {
+        "port": 3002,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
+        "args": {}
+      },
+      "devops-mcp-server": {
+        "port": 3003,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
+        "args": {}  
+      },
+      "mcp-mesh-sdk": {
+        "port": 3010,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
+        "args": {}
+      }
     }
   },
   "orchestration": {

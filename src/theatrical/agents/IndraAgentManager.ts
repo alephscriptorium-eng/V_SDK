@@ -23,6 +23,7 @@ import {
   ValidationWarning
 } from '../core/interfaces';
 import * as vscode from 'vscode';
+import { McpConfigurationManager } from '../../core/mcpConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -162,6 +163,7 @@ export class IndraAgentManager extends TheatricalAgent {
   private externalServices: ExternalServicesConfig;
   private qualityStandards: QualityStandards;
   private theaterPerformance: TheaterPerformanceCapabilities;
+  private configManager: McpConfigurationManager;
 
   private constructor(
     id: string,
@@ -171,6 +173,8 @@ export class IndraAgentManager extends TheatricalAgent {
     mcpIntegration: MCPIntegration
   ) {
     super(id, content, configuration, vibeCodingIntegration, mcpIntegration);
+    
+    this.configManager = McpConfigurationManager.getInstance();
     
     // Initialize Integration Agent Indra specific capabilities
     this.integrationCapabilities = this.initializeIntegrationCapabilities();
@@ -402,11 +406,21 @@ export class IndraAgentManager extends TheatricalAgent {
    * Initialize external services configuration
    */
   private initializeExternalServices(): ExternalServicesConfig {
+    // Get MCP server ports from configuration if available
+    let mcpgaiaPort = 3003; // Default fallback
+    
+    if (this.configManager.isConfigLoaded()) {
+      const devopsServerPort = this.configManager.getMcpServerPort('devops-mcp-server');
+      if (devopsServerPort) {
+        mcpgaiaPort = devopsServerPort;
+      }
+    }
+
     return {
       zeusArchitecture: {
         zeusPort: 3012,
         slmo42Port: 4001,
-        mcpgaiaPort: 3003
+        mcpgaiaPort: mcpgaiaPort
       },
       serviceHealthValidation: true,
       mockDataStrategy: true,

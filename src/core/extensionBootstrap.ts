@@ -17,7 +17,9 @@ import { HackerCommandPanelProvider } from '../views/HackerCommandPanelProvider'
 import { HackerConfigPanelProvider } from '../views/HackerConfigPanelProvider';
 import { HackerStatusBarManager } from './HackerStatusBarManager';
 import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
+import { ConfigurationCommandsService } from './configurationCommandsService';
 import { AgentConfigEditorProvider } from '../editors/AgentConfigEditorProvider';
+import { McpConfigurationManager } from './mcpConfigurationManager';
 // Gamification TreeDataProviders (First Era)
 import { SocketsTreeDataProvider } from '../treeViews/socketsTreeView';
 import { UIsTreeDataProvider } from '../treeViews/uisTreeView';
@@ -86,6 +88,10 @@ export class ExtensionBootstrap {
         logger.info('AlephScript extension activation started');
 
         try {
+            // Initialize MCP Configuration Manager first
+            const mcpConfigManager = McpConfigurationManager.getInstance();
+            await mcpConfigManager.initialize();
+            
             // Create all standard managers
             const managers = await createStandardManagers(context);
             
@@ -1337,7 +1343,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
             vscode.commands.registerCommand('mcpSocketManager.openSocketMonitor', async () => {
                 try {
                     if (this.extensionContext && this.vsCodeContext) {
-                        this.extensionContext.socketMonitor.createOrShowPanel(this.vsCodeContext.extensionUri);
+                        await this.extensionContext.socketMonitor.createOrShowPanel(this.vsCodeContext.extensionUri);
                         this.extensionContext.logger.info('Socket Monitor opened');
                     }
                 } catch (error) {
@@ -1385,7 +1391,10 @@ Detalles específicos sobre cómo configurar y usar este agente.
         // Add all commands to context subscriptions
         this.vsCodeContext.subscriptions.push(...commands);
 
-        this.extensionContext.logger.info(`Registered ${commands.length} commands`);
+        // Register configuration commands
+        ConfigurationCommandsService.registerCommands(this.vsCodeContext);
+
+        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands`);
     }
 
     /**

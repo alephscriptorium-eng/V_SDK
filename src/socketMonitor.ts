@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { io, Socket } from 'socket.io-client';
+import { McpConfigurationManager } from './core/mcpConfigurationManager';
 
 export interface SocketMessage {
     id: string;
@@ -24,6 +25,7 @@ export class SocketMonitor {
     private messages: SocketMessage[] = [];
     private isConnected = false;
     private rooms: Map<string, SocketRoomInfo> = new Map();
+    private configManager: McpConfigurationManager;
     
     // Event emitters for TreeView integration
     private _onConnectionChange: vscode.EventEmitter<boolean> = new vscode.EventEmitter<boolean>();
@@ -34,7 +36,11 @@ export class SocketMonitor {
     public readonly onRoomsChange: vscode.Event<Map<string, SocketRoomInfo>> = this._onRoomsChange.event;
     public readonly onMessageReceived: vscode.Event<SocketMessage> = this._onMessageReceived.event;
 
-    public createOrShowPanel(extensionUri: vscode.Uri) {
+    constructor() {
+        this.configManager = McpConfigurationManager.getInstance();
+    }
+
+    public async createOrShowPanel(extensionUri: vscode.Uri) {
         if (this.panel) {
             this.panel.reveal();
             return;
@@ -50,7 +56,7 @@ export class SocketMonitor {
             }
         );
 
-        this.panel.webview.html = this.getWebviewContent();
+        this.panel.webview.html = await this.getWebviewContent();
 
         this.panel.onDidDispose(() => {
             this.disconnect();
@@ -235,7 +241,16 @@ export class SocketMonitor {
         }
     }
 
-    private getWebviewContent(): string {
+    private async getDefaultSocketUrl(): Promise<string> {
+        if (!this.configManager.isConfigLoaded()) {
+            await this.configManager.initialize();
+        }
+        return this.configManager.getDefaultSocketUrl();
+    }
+
+    private async getWebviewContent(): Promise<string> {
+        const defaultUrl = await this.getDefaultSocketUrl();
+        
         return `<!DOCTYPE html>
         <html lang="en">
         <head>
@@ -390,7 +405,7 @@ export class SocketMonitor {
             <div class="header">
                 <h2>Socket.io Bus Monitor</h2>
                 <div class="connection-panel">
-                    <input type="text" id="socketUrl" placeholder="ws://localhost:3000" value="ws://localhost:3000">
+                    <input type="text" id="socketUrl" placeholder="${defaultUrl}" value="${defaultUrl}">
                     <button class="btn" onclick="connect()">Connect</button>
                     <button class="btn" onclick="disconnect()">Disconnect</button>
                     <span id="connectionStatus" class="status disconnected">Disconnected</span>
@@ -588,11 +603,19 @@ export class SocketMonitor {
         return this.messages.slice(0, count);
     }
 
-    public async connectToSocket(url: string = 'ws://localhost:3000'): Promise<boolean> {
+    public async connectToSocket(url?: string): Promise<boolean> {
+        // Use configuration manager to get default socket URL if not provided
+        if (!url) {
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
+            }
+            url = this.configManager.getDefaultSocketUrl();
+        }
+        
         // Use existing connect logic but return Promise
         return new Promise((resolve, reject) => {
             try {
-                this.connect(url);
+                this.connect(url!);
                 // Monitor connection state
                 const checkConnection = setInterval(() => {
                     if (this.isConnected) {

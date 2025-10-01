@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { McpConfigurationManager } from './core/mcpConfigurationManager';
 import { TerminalManager, TerminalInfo } from './terminalManager';
 import { ProcessManager, ProcessInfo } from './processManager';
 import { SocketMonitor, SocketRoomInfo } from './socketMonitor';
@@ -35,12 +36,14 @@ export class StatusManager {
     private statusPanel: vscode.WebviewPanel | undefined;
     private refreshInterval: NodeJS.Timeout | undefined;
     private currentStatus: SystemStatus | undefined;
+    private configManager: McpConfigurationManager;
 
     constructor(
         private terminalManager: TerminalManager,
         private processManager: ProcessManager,
         private socketMonitor?: SocketMonitor
     ) {
+        this.configManager = McpConfigurationManager.getInstance();
         this.statusBarItem = vscode.window.createStatusBarItem(
             vscode.StatusBarAlignment.Left,
             100
@@ -324,30 +327,32 @@ export class StatusManager {
     }
 
     private async getMCPServerStatus(): Promise<ServiceStatus[]> {
-        // Mock data - in real implementation, would check actual MCP server health
-        return [
-            {
-                id: 'state-machine-server',
-                name: 'State Machine Server',
-                status: 'stopped',
-                port: 3001,
+        // Ensure configuration manager is initialized
+        if (!this.configManager.isConfigLoaded()) {
+            await this.configManager.initialize();
+        }
+
+        const mcpServers = this.configManager.getMcpServers();
+        const serverStatuses: ServiceStatus[] = [];
+
+        for (const [serverId, serverConfig] of Object.entries(mcpServers)) {
+            serverStatuses.push({
+                id: serverId,
+                name: this.formatServerName(serverId),
+                status: 'stopped', // TODO: Implement actual health check
+                port: serverConfig.port,
                 lastCheck: new Date()
-            },
-            {
-                id: 'wiki-mcp-browser',
-                name: 'Wiki MCP Browser',
-                status: 'stopped',
-                port: 3002,
-                lastCheck: new Date()
-            },
-            {
-                id: 'devops-mcp-server',
-                name: 'DevOps MCP Server',
-                status: 'stopped',
-                port: 3003,
-                lastCheck: new Date()
-            }
-        ];
+            });
+        }
+
+        return serverStatuses;
+    }
+
+    private formatServerName(serverId: string): string {
+        return serverId
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
     }
 
     private async getGameUIStatus(): Promise<ServiceStatus[]> {
@@ -394,15 +399,34 @@ export class StatusManager {
         const rooms = Array.from(this.socketMonitor.getRooms().values());
         const recentMessages = this.socketMonitor.getRecentMessages();
 
+        // Get default socket URL from configuration
+        let connectionUrl: string | undefined;
+        if (isConnected) {
+            if (this.configManager.isConfigLoaded()) {
+                connectionUrl = this.configManager.getDefaultSocketUrl();
+            } else {
+                connectionUrl = 'ws://localhost:3000'; // fallback
+            }
+        }
+
+        // Extract port from URL for display
+        let port = 3000; // default
+        if (connectionUrl) {
+            const match = connectionUrl.match(/:(\d+)/);
+            if (match) {
+                port = parseInt(match[1]);
+            }
+        }
+
         return {
             id: 'socket-server',
             name: 'Socket.IO Server',
             status: isConnected ? 'running' : 'stopped',
-            port: 3000,
+            port,
             isConnected,
             rooms,
             messageCount: recentMessages.length,
-            connectionUrl: isConnected ? 'ws://localhost:3000' : undefined,
+            connectionUrl,
             lastCheck: new Date()
         };
     }

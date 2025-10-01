@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { McpConfigurationManager } from '../core/mcpConfigurationManager';
 import { MCPServerManager, MCPServerInfo } from '../mcpServerManager';
 
 export interface MCPTreeItem {
@@ -15,8 +16,11 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
 
     private _onDidChangeTreeData: vscode.EventEmitter<MCPTreeItem | undefined | null | void> = new vscode.EventEmitter<MCPTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<MCPTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+    private configManager: McpConfigurationManager;
 
-    constructor(private mcpServerManager: MCPServerManager) {}
+    constructor(private mcpServerManager: MCPServerManager) {
+        this.configManager = McpConfigurationManager.getInstance();
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -75,35 +79,45 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
 
     private async getMCPServers(): Promise<MCPTreeItem[]> {
         try {
-            // Access servers from MCPServerManager (need to make this public or add getter)
-            const servers: MCPTreeItem[] = [
-                {
-                    id: 'state-machine-server',
-                    label: 'State Machine Server',
-                    description: 'Game state management',
+            // Ensure configuration manager is initialized
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
+            }
+
+            const mcpServers = this.configManager.getMcpServers();
+            const servers: MCPTreeItem[] = [];
+
+            for (const [serverId, serverConfig] of Object.entries(mcpServers)) {
+                servers.push({
+                    id: serverId,
+                    label: this.formatServerName(serverId),
+                    description: this.getServerDescription(serverId),
                     status: 'stopped', // Will be updated from actual status
-                    port: 3001
-                },
-                {
-                    id: 'wiki-mcp-browser',
-                    label: 'Wiki MCP Browser',
-                    description: 'Knowledge browsing',
-                    status: 'stopped',
-                    port: 3002
-                },
-                {
-                    id: 'devops-mcp-server',
-                    label: 'DevOps MCP Server',
-                    description: 'System operations',
-                    status: 'stopped',
-                    port: 3003
-                }
-            ];
+                    port: serverConfig.port
+                });
+            }
 
             return servers;
         } catch (error) {
             console.error('Error loading MCP servers for TreeView:', error);
             return [];
         }
+    }
+
+    private formatServerName(serverId: string): string {
+        return serverId
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
+    private getServerDescription(serverId: string): string {
+        const descriptions: { [key: string]: string } = {
+            'state-machine-server': 'Game state management',
+            'wiki-mcp-browser': 'Knowledge browsing',
+            'devops-mcp-server': 'System operations',
+            'mcp-mesh-sdk': 'Mesh SDK server'
+        };
+        return descriptions[serverId] || 'MCP server';
     }
 }

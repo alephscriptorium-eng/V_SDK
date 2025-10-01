@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ProcessManager, ProcessInfo } from './processManager';
+import { McpConfigurationManager } from './core/mcpConfigurationManager';
 
 export interface MCPServerInfo {
     id: string;
@@ -11,8 +12,11 @@ export interface MCPServerInfo {
 
 export class MCPServerManager {
     private servers: Map<string, MCPServerInfo> = new Map();
+    private configManager: McpConfigurationManager;
 
-    constructor(private processManager: ProcessManager) {}
+    constructor(private processManager: ProcessManager) {
+        this.configManager = McpConfigurationManager.getInstance();
+    }
 
     public async showMCPManager() {
         const panel = vscode.window.createWebviewPanel(
@@ -62,44 +66,34 @@ export class MCPServerManager {
 
     private async loadServersFromConfig() {
         try {
-            const config = vscode.workspace.getConfiguration('mcpSocketManager');
-            const configPath = config.get<string>('configPath');
-            
-            if (configPath) {
-                const fs = require('fs');
-                const configContent = fs.readFileSync(configPath, 'utf8');
-                const configData = JSON.parse(configContent);
-                
-                this.servers.clear();
-                
-                if (configData.mcp && configData.mcp.servers) {
-                    // Standard MCP server ports
-                    const defaultPorts: { [key: string]: number } = {
-                        'state-machine-server': 3001,
-                        'wiki-mcp-browser': 3002,
-                        'devops-mcp-server': 3003
-                    };
-
-                    Object.keys(configData.mcp.servers).forEach((serverId, index) => {
-                        const serverConfig = configData.mcp.servers[serverId];
-                        const server: MCPServerInfo = {
-                            id: serverId,
-                            name: this.formatServerName(serverId),
-                            port: serverConfig.port || defaultPorts[serverId] || (3001 + index),
-                            status: 'stopped',
-                            config: serverConfig
-                        };
-                        
-                        this.servers.set(serverId, server);
-                        
-                        // Check if process is already running
-                        const processInfo = this.processManager.getProcess(serverId);
-                        if (processInfo && processInfo.status === 'running') {
-                            server.status = 'running';
-                        }
-                    });
-                }
+            // Ensure configuration manager is initialized
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
             }
+
+            this.servers.clear();
+            
+            const mcpServers = this.configManager.getMcpServers();
+            
+            Object.keys(mcpServers).forEach((serverId) => {
+                const serverConfig = mcpServers[serverId];
+                const server: MCPServerInfo = {
+                    id: serverId,
+                    name: this.formatServerName(serverId),
+                    port: serverConfig.port,
+                    status: 'stopped',
+                    config: serverConfig
+                };
+                
+                this.servers.set(serverId, server);
+                
+                // Check if process is already running
+                const processInfo = this.processManager.getProcess(serverId);
+                if (processInfo && processInfo.status === 'running') {
+                    server.status = 'running';
+                }
+            });
+            
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to load MCP servers from config: ${error}`);
         }
@@ -124,7 +118,7 @@ export class MCPServerManager {
                 return;
             }
 
-            await this.processManager.startMCPServer(serverId, server.port || 3001);
+            await this.processManager.startMCPServer(serverId, server.port || this.configManager.getMcpServerPort(serverId) || 3001);
             server.status = 'running';
             
             vscode.window.showInformationMessage(`MCP Server ${server.name} started on port ${server.port}`);

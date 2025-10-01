@@ -1,0 +1,162 @@
+{
+  "app": {
+    "type": "arrakis-theater-production"
+  },
+  "launcher": {
+    "ollamaUrl": "http://localhost:11434",
+    "requiredModel": "llama3.2:3b",
+    "mcpServiceLauncherPort": 3050,
+    "healthCheckTimeout": 30000,
+    "shutdownGracePeriod": 5000
+  },
+  "game": {
+    "id": "arrakis-theater-main",
+    "name": "Arrakis Theater - Main Production",
+    "description": "Main production environment for Arrakis Theater with full agent orchestra",
+    "mcpServerId": "state-machine-server",
+    "graphId": "arrakis-theater-graph",
+    "userId": "theater-director",
+    "sessionId": "production-session",
+    "agentConfigs": [
+      {
+        "id": "indra-agent",
+        "name": "Indra",
+        "role": "lead-performer",
+        "description": "Lead AI performer agent with neural network capabilities",
+        "mcpServerId": "state-machine-server",
+        "autoStart": true,
+        "priority": 100
+      },
+      {
+        "id": "zeus-architect",
+        "name": "Zeus Architect",
+        "role": "system-architect",
+        "description": "System architecture and infrastructure management agent",
+        "mcpServerId": "devops-mcp-server",
+        "autoStart": true,
+        "priority": 90
+      },
+      {
+        "id": "framework-retro",
+        "name": "Framework Retro",
+        "role": "knowledge-curator",
+        "description": "Framework knowledge and documentation management agent",
+        "mcpServerId": "wiki-mcp-browser",
+        "autoStart": false,
+        "priority": 80
+      }
+    ]
+  },
+  "mcp": {
+    "servers": {
+      "state-machine-server": {
+        "port": 3001,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm run start:state-machine",
+        "args": {
+          "environment": "production",
+          "debug": false
+        }
+      },
+      "wiki-mcp-browser": {
+        "port": 3002,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm run start:wiki-browser",
+        "args": {
+          "indexing": true,
+          "cache": true
+        }
+      },
+      "devops-mcp-server": {
+        "port": 3003,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm run start:devops",
+        "args": {
+          "monitoring": true,
+          "automation": true
+        }
+      },
+      "mcp-mesh-sdk": {
+        "port": 3010,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/mcp-mesh-sdk && npm start",
+        "args": {
+          "mesh": true,
+          "discovery": true
+        }
+      },
+      "neural-network-server": {
+        "port": 3004,
+        "cmd": "cd /c/Users/oracl/Documents/REPOS/neural-server && python app.py",
+        "args": {
+          "model": "transformer",
+          "workers": 4
+        }
+      }
+    }
+  },
+  "orchestration": {
+    "enableReplay": true,
+    "replayBufferSize": 500,
+    "enableLogging": true,
+    "enableCrossChannelRouting": true,
+    "messageTimeout": 15000,
+    "enablePerformanceMetrics": true,
+    "enableErrorRecovery": true
+  },
+  "ui": [
+    {
+      "id": "theater-stage",
+      "name": "Arrakis Theater Stage",
+      "type": "custom",
+      "enabled": true,
+      "config": {
+        "isPrimary": true,
+        "autoStart": true,
+        "port": 8080,
+        "theme": "cyberpunk",
+        "features": ["neural-link", "hacker-mode", "performance-metrics"]
+      }
+    },
+    {
+      "id": "director-console",
+      "name": "Theater Director Console",
+      "type": "html5",
+      "enabled": true,
+      "config": {
+        "autoStart": true,
+        "port": 8081,
+        "role": "director",
+        "features": ["agent-orchestration", "live-coding", "performance-monitoring"]
+      }
+    },
+    {
+      "id": "audience-view",
+      "name": "Audience View",
+      "type": "html5",
+      "enabled": false,
+      "config": {
+        "autoStart": false,
+        "port": 8082,
+        "role": "spectator",
+        "features": ["read-only", "performance-view"]
+      }
+    }
+  ],
+  "theater": {
+    "performance": {
+      "enableLiveCoding": true,
+      "enableAudienceInteraction": false,
+      "recordSessions": true,
+      "maxSessionDuration": 3600000
+    },
+    "agents": {
+      "maxConcurrent": 5,
+      "enableNeuralLink": true,
+      "enableAutoRecovery": true,
+      "performanceMonitoring": true
+    },
+    "aesthetics": {
+      "theme": "cyberpunk-hacker",
+      "animations": true,
+      "particleEffects": true,
+      "soundEffects": false
+    }
+  }
+}

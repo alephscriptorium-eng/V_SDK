@@ -11,3 +11,78 @@ export interface IMcpClient {
 }
 
 export type McpStatus = 'running' | 'stopped' | 'error';
+
+// Configuration interfaces to match sample-config.json structure
+export interface MCPServerConfig {
+  port: number;
+  cmd: string;
+  args: Record<string, any>;
+}
+
+export interface MCPServersConfig {
+  [serverId: string]: MCPServerConfig;
+}
+
+export interface LauncherConfig {
+  ollamaUrl: string;
+  requiredModel: string;
+  mcpServiceLauncherPort: number;
+  healthCheckTimeout: number;
+  shutdownGracePeriod: number;
+}
+
+export interface GameConfig {
+  id: string;
+  name: string;
+  description: string;
+  mcpServerId: string;
+  graphId: string;
+  userId: string;
+  sessionId: string;
+  agentConfigs: AgentConfig[];
+}
+
+export interface AgentConfig {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  mcpServerId: string;
+  autoStart: boolean;
+  priority: number;
+}
+
+export interface UIConfig {
+  id: string;
+  name: string;
+  type: 'custom' | 'html5';
+  enabled: boolean;
+  config: {
+    isPrimary?: boolean;
+    autoStart: boolean;
+    port: number;
+  };
+}
+
+export interface OrchestrationConfig {
+  enableReplay: boolean;
+  replayBufferSize: number;
+  enableLogging: boolean;
+  enableCrossChannelRouting: boolean;
+  messageTimeout: number;
+}
+
+export interface AppConfig {
+  type: string;
+}
+
+export interface AlephScriptConfiguration {
+  app: AppConfig;
+  launcher: LauncherConfig;
+  game: GameConfig;
+  mcp: {
+    servers: MCPServersConfig;
+  };
+  orchestration: OrchestrationConfig;
+  ui: UIConfig[];
+}

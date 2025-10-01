@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { McpConfigurationManager } from '../core/mcpConfigurationManager';
 
 export interface ConfigTreeItem {
     id: string;
@@ -29,8 +30,10 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
     private fileWatchers: vscode.FileSystemWatcher[] = [];
     private configFiles: Map<string, ConfigTreeItem> = new Map();
     private validationCache: Map<string, ConfigValidationResult> = new Map();
+    private configManager: McpConfigurationManager;
 
     constructor() {
+        this.configManager = McpConfigurationManager.getInstance();
         this.setupFileWatchers();
         this.refreshConfigFiles();
     }
@@ -421,6 +424,11 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
     }
 
     public async createFromTemplate(templateType: 'xplus1' | 'socket' | 'ui'): Promise<void> {
+        // Get default socket URL from configuration
+        const defaultSocketUrl = this.configManager.isConfigLoaded() 
+            ? this.configManager.getDefaultSocketUrl() 
+            : "ws://localhost:3000";
+
         const templates = {
             xplus1: {
                 fileName: 'xplus1-config.json',
@@ -428,7 +436,7 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
                     gameName: "New AlephScript Game",
                     version: "1.0.0",
                     socketIO: {
-                        url: "ws://localhost:3000",
+                        url: defaultSocketUrl,
                         rooms: ["Application", "System", "UserInterface"]
                     },
                     ui: {
@@ -444,7 +452,7 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
             socket: {
                 fileName: 'socket-config.json',
                 content: {
-                    url: "ws://localhost:3000",
+                    url: defaultSocketUrl,
                     rooms: {
                         "Application": { maxClients: 10 },
                         "System": { maxClients: 5 },
