@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { AlephScriptConfiguration, MCPServerConfig, MCPServersConfig, UIConfig } from '../mcpTypes';
+import { AlephScriptConfiguration, MCPServerConfig, MCPServersConfig, MCPWebsConfig, UIConfig } from '../mcpTypes';
 import { LoggingManager, LogCategory, createLogger } from '../loggingManager';
 
 export class McpConfigurationManager {
@@ -154,6 +154,14 @@ export class McpConfigurationManager {
                         "args": ["start"],
                         "desc": ""
                     }
+                },
+                "webs": {
+                        "mcp-presets-site": {
+                        "host": "localhost",
+                        "port": 3012,
+                        "args": [],
+                        "desc": ""
+                    }
                 }
             },
             "orchestration": {
@@ -194,6 +202,10 @@ export class McpConfigurationManager {
      */
     getMcpServers(): MCPServersConfig {
         return this.config?.mcp?.servers || {};
+    }
+
+    getMcpWebs(): MCPWebsConfig {
+        return this.config?.mcp?.webs || {};
     }
 
     /**

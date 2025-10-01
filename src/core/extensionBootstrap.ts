@@ -29,6 +29,7 @@ import { MCPTreeDataProvider } from '../treeViews/mcpTreeView';
 import { SocketMonitor } from '../socketMonitor';
 import { UIManager } from '../uiManager';
 import { MCPServerManager } from '../mcpServerManager';
+import { MCPWebViewManager } from '../mcpWebViewManager';
 
 export interface ExtensionContext {
     managers: {
@@ -60,6 +61,7 @@ export interface ExtensionContext {
     configsTreeProvider: ConfigsTreeDataProvider;
     logsTreeProvider: LogsTreeDataProvider;
     mcpTreeProvider: MCPTreeDataProvider;
+    mcpWebViewManager: MCPWebViewManager;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -119,6 +121,7 @@ export class ExtensionBootstrap {
             const socketMonitor = new SocketMonitor();
             const uiManager = new UIManager(managers.processManager);
             const mcpServerManager = new MCPServerManager(managers.processManager);
+            const mcpWebViewManager = MCPWebViewManager.getInstance();
             const socketsTreeProvider = new SocketsTreeDataProvider(socketMonitor);
             const uisTreeProvider = new UIsTreeDataProvider(uiManager);
             const configsTreeProvider = new ConfigsTreeDataProvider();
@@ -155,6 +158,7 @@ export class ExtensionBootstrap {
                 configsTreeProvider,
                 logsTreeProvider,
                 mcpTreeProvider,
+                mcpWebViewManager,
                 logger
             };
 
@@ -930,6 +934,38 @@ export class ExtensionBootstrap {
                     await managers.errorBoundary.handleError(
                         error as Error,
                         'mcptree.stop',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.mcptree.web.open', async (item?: any) => {
+                try {
+                    if (this.extensionContext) {
+                        let webId = item?.id || item?.webId || item?.label;
+                        if (!webId) {
+                            vscode.window.showErrorMessage('No MCP web ID provided for open command');
+                            return;
+                        }
+
+                        // Remove the 'web-' prefix if present
+                        if (webId.startsWith('web-')) {
+                            webId = webId.replace('web-', '');
+                        }
+
+                        // Use the MCPWebViewManager to open the web interface
+                        const success = await this.extensionContext.mcpWebViewManager.openMCPWeb(webId);
+                        
+                        if (success) {
+                            this.extensionContext.logger.info(`MCP Web ${webId} opened successfully`);
+                        } else {
+                            vscode.window.showErrorMessage(`Failed to open MCP Web ${webId}`);
+                        }
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'mcptree.web.open',
                         LogCategory.EXTENSION
                     );
                 }

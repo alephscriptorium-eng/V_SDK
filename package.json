@@ -115,6 +115,11 @@
         "icon": "$(stop)"
       },
       {
+        "command": "alephscript.mcptree.web.open",
+        "title": "Open MCP Web Interface",
+        "icon": "$(globe)"
+      },
+      {
         "command": "alephscript.uis.start",
         "title": "Start UI",
         "icon": "$(play)"
@@ -640,6 +645,11 @@
         {
           "command": "alephscript.mcptree.stop",
           "when": "view == alephscript.mcptree && viewItem == serverRunning",
+          "group": "inline@1"
+        },
+        {
+          "command": "alephscript.mcptree.web.open",
+          "when": "view == alephscript.mcptree && viewItem == web",
           "group": "inline@1"
         },
         {

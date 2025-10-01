@@ -94,25 +94,37 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         treeItem.description = element.description;
         treeItem.tooltip = `${element.label} - ${element.status}${element.port ? ` (port ${element.port})` : ''}`;
         
-        // Status-based icons
-        switch (element.status) {
-            case 'running':
-                treeItem.iconPath = new vscode.ThemeIcon('play', new vscode.ThemeColor('testing.iconPassed'));
-                break;
-            case 'stopped':
-                treeItem.iconPath = new vscode.ThemeIcon('stop', new vscode.ThemeColor('testing.iconQueued'));
-                break;
-            case 'error':
-                treeItem.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'));
-                break;
+        // Status-based icons for individual items
+        if (!element.children) {
+            switch (element.status) {
+                case 'running':
+                    treeItem.iconPath = new vscode.ThemeIcon('play', new vscode.ThemeColor('testing.iconPassed'));
+                    break;
+                case 'stopped':
+                    treeItem.iconPath = new vscode.ThemeIcon('stop', new vscode.ThemeColor('testing.iconQueued'));
+                    break;
+                case 'error':
+                    treeItem.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('testing.iconFailed'));
+                    break;
+            }
         }
 
-        // Context value for commands - different for groups vs servers, and based on status
+        // Context value for commands - different for groups vs individual items
         if (element.children) {
             treeItem.contextValue = 'group';
         } else {
-            // Set context based on server status to show appropriate buttons
-            treeItem.contextValue = element.status === 'running' ? 'serverRunning' : 'serverStopped';
+            // For individual items, determine context based on which group they belong to
+            const parentId = this.getParentId(element.id);
+            
+            if (parentId === 'mcp-servers') {
+                // Set context based on server status to show appropriate buttons
+                treeItem.contextValue = element.status === 'running' ? 'serverRunning' : 'serverStopped';
+            } else if (parentId === 'mcp-webs') {
+                // Set context for web items to show open button
+                treeItem.contextValue = 'web';
+                // Override icon for web items
+                treeItem.iconPath = new vscode.ThemeIcon('globe', new vscode.ThemeColor('testing.iconPassed'));
+            }
         }
         
         return treeItem;
@@ -128,12 +140,23 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
                     description: 'Model Context Protocol Servers',
                     status: 'running',
                     children: []
+                },
+                {
+                    id: 'mcp-webs',
+                    label: 'MCP UIs',
+                    description: 'Model Context Protocol UIs',
+                    status: 'running',
+                    children: []
                 }
             ]);
         }
 
         if (element.id === 'mcp-servers') {
             return this.getMCPServers();
+        }
+
+        if (element.id === 'mcp-webs') {
+            return this.getMCPWebs();
         }
 
         return Promise.resolve([]);
@@ -170,6 +193,46 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         }
     }
 
+    private async getMCPWebs(): Promise<MCPTreeItem[]> {
+        try {
+            // Ensure configuration manager is initialized
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
+            }
+
+            const mcpWebs = this.configManager.getMcpWebs();
+            const servers: MCPTreeItem[] = [];
+
+            for (const [webId, webConfig] of Object.entries(mcpWebs)) {
+                // Get status from ProcessManager (check if we're tracking this web)
+                const isRunning = this.processManager.isMCPWebRunning(webId);
+                const webInfo = this.processManager.getMCPWebInfo(webId);
+                
+                // If not tracked yet, try to track it (assuming it might be running)
+                if (!webInfo) {
+                    await this.processManager.startMCPWeb(
+                        webId, 
+                        webConfig.host, 
+                        webConfig.port
+                    );
+                }
+                
+                servers.push({
+                    id: `web-${webId}`, // Prefix to avoid conflicts with server IDs
+                    label: this.formatServerName(webId),
+                    description: this.getWebDescription(webId, webConfig.desc || '', webConfig.host, webConfig.port),
+                    status: isRunning ? 'running' : 'stopped',
+                    port: webConfig.port
+                });
+            }
+
+            return servers;
+        } catch (error) {
+            console.error('Error loading MCP webs for TreeView:', error);
+            return [];
+        }
+    }
+
     private formatServerName(serverId: string): string {
         return serverId
             .split('-')
@@ -178,12 +241,6 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
     }
 
     private getServerDescription(serverId: string, description: string, isRunning?: boolean): string {
-        const descriptions: { [key: string]: string } = {
-            'state-machine-server': 'Game state management',
-            'wiki-mcp-browser': 'Knowledge browsing',
-            'devops-mcp-server': 'System operations',
-            'mcp-mesh-sdk': 'Mesh SDK server'
-        };
         const baseDescription = description || 'MCP server';
         
         if (isRunning !== undefined) {
@@ -191,5 +248,37 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         }
         
         return baseDescription;
+    }
+
+    private getWebDescription(webId: string, description: string, host: string, port: number): string {
+        const baseDescription = description || 'MCP web interface';
+        const url = `http://${host}:${port}`;
+        return `${baseDescription} • ${url}`;
+    }
+
+    /**
+     * Determine which parent group an item belongs to based on configuration
+     */
+    private getParentId(itemId: string): string {
+        // Check if it has the web prefix
+        if (itemId.startsWith('web-')) {
+            return 'mcp-webs';
+        }
+        
+        // Check if it's in MCP servers
+        const mcpServers = this.configManager.getMcpServers();
+        if (mcpServers[itemId]) {
+            return 'mcp-servers';
+        }
+        
+        // Check if it's in MCP webs (without prefix)
+        const webIdWithoutPrefix = itemId.replace('web-', '');
+        const mcpWebs = this.configManager.getMcpWebs();
+        if (mcpWebs[webIdWithoutPrefix]) {
+            return 'mcp-webs';
+        }
+        
+        // Default to servers if not found
+        return 'mcp-servers';
     }
 }

@@ -201,6 +201,69 @@ export class ProcessManager {
         return await this.stopProcess(uiId);
     }
 
+    // MCP Web methods - these can track web server status
+    async startMCPWeb(webId: string, host: string, port: number, workingDir?: string, cmd?: string, args?: string[]): Promise<boolean> {
+        // For webs, we typically don't start them from here since they're already running servers
+        // But we can track their status by attempting to check if the port is responding
+        try {
+            const processName = `mcp-web-${webId}`;
+            
+            // If we have actual startup commands, use them
+            if (cmd && args && workingDir) {
+                return await this.startProcess(processName, cmd, args, workingDir, port);
+            }
+            
+            // Otherwise, just mark it as a tracked process (for status monitoring)
+            const processInfo: ProcessInfo = {
+                id: processName,
+                name: `MCP Web: ${webId}`,
+                command: `Web interface at http://${host}:${port}`,
+                status: 'running',  // Assume running if we can reach it
+                port,
+                workingDirectory: workingDir || process.cwd(),
+                startTime: new Date()
+            };
+            
+            this.processInfo.set(processName, processInfo);
+            console.log(`MCP Web ${webId} tracked at http://${host}:${port}`);
+            return true;
+        } catch (error) {
+            console.error(`Failed to start/track MCP web ${webId}:`, error);
+            return false;
+        }
+    }
+
+    async stopMCPWeb(webId: string): Promise<boolean> {
+        const processName = `mcp-web-${webId}`;
+        return await this.stopProcess(processName);
+    }
+
+    // Check if a MCP web is accessible (for status checking)
+    async checkMCPWebStatus(webId: string, host: string, port: number): Promise<boolean> {
+        try {
+            // This is a simple implementation - could be enhanced with actual HTTP requests
+            // For now, we'll just check if we have it tracked as running
+            const processName = `mcp-web-${webId}`;
+            const processInfo = this.processInfo.get(processName);
+            return processInfo?.status === 'running';
+        } catch (error) {
+            console.error(`Failed to check MCP web status for ${webId}:`, error);
+            return false;
+        }
+    }
+
+    // Get MCP Web info
+    getMCPWebInfo(webId: string): ProcessInfo | undefined {
+        const processName = `mcp-web-${webId}`;
+        return this.getProcessInfo(processName);
+    }
+
+    // Check if MCP Web is running
+    isMCPWebRunning(webId: string): boolean {
+        const processName = `mcp-web-${webId}`;
+        return this.isProcessRunning(processName);
+    }
+
     // Process information methods
     getProcess(processId: string): ProcessInfo | undefined {
         return this.getProcessInfo(processId);

@@ -21,8 +21,19 @@ export interface MCPServerConfig {
   desc: string;
 }
 
+export interface MCPWebConfig {
+  host:string;
+  port: number;
+  args: string[];
+  desc: string;
+}
+
 export interface MCPServersConfig {
   [serverId: string]: MCPServerConfig;
+}
+
+export interface MCPWebsConfig {
+  [serverId: string]: MCPWebConfig;
 }
 
 export interface LauncherConfig {
@@ -84,6 +95,7 @@ export interface AlephScriptConfiguration {
   game: GameConfig;
   mcp: {
     servers: MCPServersConfig;
+    webs: MCPWebsConfig;
   };
   orchestration: OrchestrationConfig;
   ui: UIConfig[];

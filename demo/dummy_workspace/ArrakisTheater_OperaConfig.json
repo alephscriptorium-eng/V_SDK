@@ -35,29 +35,45 @@
         "port": 3010,
         "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-mesh-sdk",
         "cmd": "npm",
-        "args": ["start"],
+        "args": [
+          "start"
+        ],
         "desc": "MCP Servers Hub"
       },
       "mcp-model-sdk": {
         "port": 4001,
         "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-model-sdk",
         "cmd": "npm",
-        "args": ["start"],
+        "args": [
+          "start"
+        ],
         "desc": "SLMs Conversation Hub"
       },
       "mcp-presets-site": {
         "port": 3012,
         "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-presets-site\\zeus",
         "cmd": "npm",
-        "args": ["start"],
+        "args": [
+          "start"
+        ],
         "desc": "MCP Presets Editor"
       },
       "wiki-mcp-browser": {
         "port": 3002,
         "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
         "cmd": "npm",
-        "args": ["start"],
+        "args": [
+          "start"
+        ],
         "desc": "Wiki Content Scrapper"
+      }
+    },
+    "webs": {
+      "mcp-presets-site": {
+        "host": "localhost",
+        "port": 3012,
+        "args": [],
+        "desc": "MCP Presets Editor"
       }
     }
   },
