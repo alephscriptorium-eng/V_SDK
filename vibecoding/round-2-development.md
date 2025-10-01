@@ -9,7 +9,7 @@
 
 ## Cambios Propuestos/Realizados
 - **Nuevos archivos**: 
-  - `src/treeViews/agentsTreeView.ts` - TreeView para servidores MCP
+  - `src/treeViews/mcpTreeView.ts` - TreeView para servidores MCP
   - `src/treeViews/uisTreeView.ts` - TreeView para UIs de gamificación
   - `src/treeViews/configsTreeView.ts` - TreeView para archivos de configuración
 - **Views registradas**: `alephscript.agents`, `alephscript.uis`, `alephscript.configs` en activity bar

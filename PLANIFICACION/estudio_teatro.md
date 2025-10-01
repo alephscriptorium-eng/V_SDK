@@ -223,7 +223,7 @@ src/
 ├── ui/
 │   ├── treeviews/
 │   │   ├── CompaniesTreeView.ts           # TreeView compañías
-│   │   ├── AgentsTreeView.ts              # TreeView agentes
+│   │   ├── mcpTreeView.ts              # TreeView agentes
 │   │   ├── SprintsTreeView.ts             # TreeView micro-sprints
 │   │   └── ValidationTreeView.ts          # TreeView validation S09
 │   ├── webviews/

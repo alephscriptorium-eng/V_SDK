@@ -39,4 +39,4 @@ Implementar TreeViews nativos para reemplazar webviews pesados en agentes, UIs y
 ## Artefactos a Tocar
 - `package.json` (contribuciones views)
 - `src/extension.ts` (registrar TreeDataProviders)
-- Nuevos: `src/treeViews/agentsTreeView.ts`, `src/treeViews/uisTreeView.ts`, `src/treeViews/configsTreeView.ts`
+- Nuevos: `src/treeViews/mcpTreeView.ts`, `src/treeViews/uisTreeView.ts`, `src/treeViews/configsTreeView.ts`

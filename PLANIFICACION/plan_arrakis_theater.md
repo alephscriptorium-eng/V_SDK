@@ -167,7 +167,7 @@ src/
 ├── ui/
 │   ├── treeviews/
 │   │   ├── CompaniesTreeView.ts            # TreeView compañías
-│   │   ├── AgentsTreeView.ts               # TreeView agentes
+│   │   ├── mcpTreeView.ts                  # TreeView MCP 
 │   │   └── PlaysTreeView.ts                # TreeView obras
 │   ├── webviews/
 │   │   ├── ConfigurationEditor.ts          # Editor configuración

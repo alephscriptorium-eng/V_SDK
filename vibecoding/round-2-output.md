@@ -7,7 +7,7 @@
 - Comandos refresh independientes
 
 ## Evidencias
-- TreeDataProviders implementados: `agentsTreeView.ts`, `uisTreeView.ts`, `configsTreeView.ts`
+- TreeDataProviders implementados: `mcpTreeView.ts`, `uisTreeView.ts`, `configsTreeView.ts`
 - Views registradas en `package.json` con iconos temáticos
 - Conexión con managers existentes sin romper funcionalidad
 
