@@ -1,20 +1,31 @@
-# 🎭 Arrakis Theater Chat Engine
+# 📜 ALEPH Scriptorium — Extensión VS Code
 
-> **Advanced hacker-style theatrical chat engine with AI agent orchestration and MCP protocol integration**
+> **Framework de escritura asistida por IA para proyectos de largo aliento**
 
-![Arrakis Theater](./media/arrakis-theater-icon.png)
+[![Version](https://img.shields.io/badge/version-0.1.0--scriptorium-blueviolet)](https://github.com/escrivivir-co/aleph-scriptorium)
+[![License: AIPL](https://img.shields.io/badge/License-AIPL%20v1.0-blue.svg)](../LICENSE.md)
 
-![](./pics/arrakis_theater_extension.png)
+## 🎯 Qué es
 
-## 🖥️ The Hacker's Theater
+Esta extensión integra **ALEPH Scriptorium** con VS Code y GitHub Copilot Chat, proporcionando:
 
-Welcome to **Arrakis Theater**, where AI agents perform in a digital theater powered by hacker aesthetics and the Model Context Protocol (MCP). This VS Code extension transforms your development environment into a command center for orchestrating intelligent agents with theatrical flair.
+- **Vista de Agentes**: 20+ agentes organizados por capas (UI, Backend, Sistema, Plugins, Meta)
+- **Vista de Plugins**: 8 plugins con sus recursos (agentes, prompts, instructions)
+- **Vista de Backlogs**: Seguimiento visual de épicas, stories y tasks
+- **ChatParticipants**: Invoca agentes directamente desde Copilot Chat (`@aleph`, `@ox`, `@blueflag`...)
+- **Panel de Sprint**: Estado actual del sprint con métricas
 
-![](./pics/THEATER_INSTALL_1.png)
+## 📊 Sistema de Agentes
 
-# Using Arrakis Theater for personal CORPUS
-
-![](./pics/ARRAKIS_THEATER.png)
+```
+🐂 OX (Meta) ← Oráculo
+│
+├─── 🟢 UI (Producción): @aleph, @revisor, @periodico
+├─── 🔵⚫🔴🟡🟠 Backend (Auditoría): 5 banderas
+├─── ⚪ Sistema (Navegación): @vestibulo, @cartaspuerta
+├─── ⚙️ Meta (Gestión): @pluginmanager, @ox
+└─── 🔌 Plugins (Bridges): 8 plugin bridges
+```
 
 
 ## Implemented (v.001)

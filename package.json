@@ -1,12 +1,13 @@
 {
-  "name": "arrakis-theater-chat",
-  "displayName": "🎭 Arrakis Theater Chat Engine",
-  "description": "The central STAGE of the Arrakis Theater ecosystem - where live-coding performers orchestrate AI agents with hacker aesthetics. Features Indra & Zeus-Architect agents, Framework Retro integration, and MCP protocol support for theatrical development sessions.",
-  "version": "1.0.0",
-  "publisher": "arrakis-theater",
+  "name": "scriptorium-vscode-extension",
+  "displayName": "📜 ALEPH Scriptorium",
+  "description": "Extensión de VS Code para el framework de escritura asistida ALEPH Scriptorium. Gestión visual de agentes (20+), plugins (8), backlogs y sistema Scrum. Integración con GitHub Copilot Chat mediante ChatParticipants personalizados.",
+  "version": "0.1.0-scriptorium",
+  "publisher": "escrivivir-co",
   "repository": {
     "type": "git",
-    "url": "https://github.com/escrivivir-co/arrakis-theater-chat.git"
+    "url": "https://github.com/escrivivir-co/aleph-scriptorium.git",
+    "directory": "vscode-alephscript-extension"
   },
   "engines": {
     "vscode": "^1.95.0"
@@ -17,19 +18,18 @@
     "Other"
   ],
   "keywords": [
-    "theater",
-    "arrakis",
-    "chat",
+    "scriptorium",
+    "aleph",
+    "writing",
     "ai",
     "agents",
-    "mcp",
-    "hacker",
-    "neural-network",
-    "live-coding",
-    "orchestration",
-    "framework-retro",
-    "indra",
-    "zeus-architect"
+    "copilot",
+    "chat-participants",
+    "plugins",
+    "scrum",
+    "backlog",
+    "markdown",
+    "fundacion"
   ],
   "icon": "./media/arrakis-theater-icon.png",
   "activationEvents": [
