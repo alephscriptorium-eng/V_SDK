@@ -4,6 +4,8 @@
  */
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { 
     getCopilotLogExporterService, 
     getAgentAutoDebugService,
@@ -15,11 +17,117 @@ import {
 } from './index';
 
 /**
+ * Auto-register the Copilot Logs MCP Server in .vscode/mcp.json
+ * Creates the file if it doesn't exist, or adds the server if not present
+ */
+async function ensureMCPServerRegistered(): Promise<void> {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+        console.log('No workspace folder found, skipping mcp.json registration');
+        return;
+    }
+
+    const workspaceRoot = workspaceFolders[0].uri.fsPath;
+    const vscodeDir = path.join(workspaceRoot, '.vscode');
+    const mcpJsonPath = path.join(vscodeDir, 'mcp.json');
+
+    const serverEntry = {
+        "copilot-logs-mcp-server": {
+            "type": "http",
+            "url": "http://localhost:3100"
+        }
+    };
+
+    try {
+        // Ensure .vscode directory exists
+        if (!fs.existsSync(vscodeDir)) {
+            fs.mkdirSync(vscodeDir, { recursive: true });
+        }
+
+        let mcpConfig: { servers?: Record<string, any> } = { servers: {} };
+
+        // Read existing mcp.json if it exists
+        if (fs.existsSync(mcpJsonPath)) {
+            const existingContent = fs.readFileSync(mcpJsonPath, 'utf8');
+            try {
+                mcpConfig = JSON.parse(existingContent);
+                if (!mcpConfig.servers) {
+                    mcpConfig.servers = {};
+                }
+            } catch (parseError) {
+                console.error('Failed to parse existing mcp.json, creating new one');
+                mcpConfig = { servers: {} };
+            }
+        }
+
+        // Check if our server is already registered
+        if (mcpConfig.servers?.['copilot-logs-mcp-server']) {
+            console.log('Copilot Logs MCP Server already registered in mcp.json');
+            return;
+        }
+
+        // Add our server
+        mcpConfig.servers = {
+            ...mcpConfig.servers,
+            ...serverEntry
+        };
+
+        // Write back
+        fs.writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2));
+        console.log('✅ Copilot Logs MCP Server registered in .vscode/mcp.json');
+
+    } catch (error) {
+        console.error('Failed to register MCP server in mcp.json:', error);
+    }
+}
+
+/**
+ * Auto-start the Copilot Logs MCP Server on extension activation
+ * Runs async and non-blocking to not delay extension startup
+ */
+async function autoStartMCPServer(context: vscode.ExtensionContext): Promise<void> {
+    // Check if auto-start is enabled in settings (default: true)
+    const config = vscode.workspace.getConfiguration('alephscript.copilotLogs');
+    const autoStart = config.get<boolean>('autoStartMCPServer', true);
+
+    if (!autoStart) {
+        console.log('MCP Server auto-start disabled by configuration');
+        return;
+    }
+
+    // Small delay to let extension fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    try {
+        if (isCopilotLogsMCPServerRunning()) {
+            console.log('MCP Server already running');
+            return;
+        }
+
+        const server = await startCopilotLogsMCPServer(context);
+        console.log(`✅ Copilot Logs MCP Server auto-started at ${getCopilotLogsMCPServerUrl()}`);
+        
+        // Show subtle notification (not intrusive)
+        vscode.window.setStatusBarMessage('$(radio-tower) Copilot Logs MCP Server ready on :3100', 5000);
+
+    } catch (error) {
+        console.error('Failed to auto-start MCP server:', error);
+        // Don't show error to user on auto-start failure - they can start manually
+    }
+}
+
+/**
  * Register all Copilot Log Exporter commands
  */
 export function registerCopilotLogCommands(context: vscode.ExtensionContext): void {
     const logService = getCopilotLogExporterService();
     const debugService = getAgentAutoDebugService();
+
+    // Auto-register MCP server in mcp.json on extension activation
+    ensureMCPServerRegistered();
+
+    // Auto-start MCP server on extension activation (async, non-blocking)
+    autoStartMCPServer(context);
 
     // Command: List Sessions
     context.subscriptions.push(
