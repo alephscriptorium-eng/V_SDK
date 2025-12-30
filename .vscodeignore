@@ -1,0 +1,50 @@
+# Source files
+src/**
+**/*.ts
+!out/**
+
+# Test files
+tests/**
+coverage/**
+jest.config.js
+*.test.ts
+*.test.js
+
+# Build/config files
+tsconfig.json
+tsconfig.build.json
+.eslintrc*
+.prettierrc*
+
+# Git
+.git/**
+.gitignore
+.gitmodules
+
+# Documentation (not needed in package)
+PLANIFICACION/**
+prompts/**
+vibecoding/**
+demo/**
+FEATURE_CONFIGS/**
+*.md
+!README.md
+!LICENSE.md
+
+# Development files
+.vscode/**
+node_modules/**
+
+# Submodule node_modules (important!)
+mcp-core-sdk/node_modules/**
+mcp-core-sdk/.git/**
+mcp-core-sdk/scripts/**
+
+# Other
+*.vsix
+*.log
+.DS_Store
+Thumbs.db
+
+# Pics folder (large assets not needed)
+pics/**
