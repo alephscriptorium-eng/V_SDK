@@ -596,11 +596,12 @@ export class ExtensionBootstrap {
                     }
                     
                     const terminals: { name: string; cwd: string; command: string }[] = [
-                        { name: '🌐 Jekyll Site', cwd: `${workspaceRoot}/scripts`, command: './serve-site.sh' },
+                        { name: '🌐 Jekyll Site', cwd: `${workspaceRoot}`, command: './scripts/serve-site.sh' },
                         { name: '🚀 MCP Launcher', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:launcher' },
                         { name: '🤖 MCP Model', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:model' },
                         { name: '⚡ Zeus', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:zeus' },
-                        { name: '📝 Novelist', cwd: `${workspaceRoot}/NovelistEditor`, command: 'npm start' }
+                        { name: '📝 Novelist', cwd: `${workspaceRoot}/NovelistEditor`, command: 'npm start' },
+						{ name: '📝 Novelist UI', cwd: `${workspaceRoot}/NovelistEditor`, command: 'npm run docs:serve' }
                     ];
                     
                     for (const config of terminals) {
