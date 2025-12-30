@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { getCopilotLogExporterService } from './CopilotLogExporterService';
+import { getCacheStats } from './CcreqDocumentResolver';
 import { CopilotUsageMetrics, ContextBloatAnalysis } from './types';
 
 /**
@@ -24,6 +25,7 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
         _token: vscode.CancellationToken
     ): void {
         this._view = webviewView;
+        console.log('[CopilotMetricsPanel] WebView resolved');
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -32,20 +34,26 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
 
         // Handle messages from the webview (e.g., refresh button)
         webviewView.webview.onDidReceiveMessage(async (message) => {
+            console.log('[CopilotMetricsPanel] Message received:', message);
             if (message.command === 'refresh') {
                 await this.refresh();
             }
         });
 
-        this.updateContent();
+        // Initial load
+        this.updateContent().catch(err => {
+            console.error('[CopilotMetricsPanel] Initial load error:', err);
+        });
     }
 
     /**
      * Refresh the panel content
      */
     async refresh(): Promise<void> {
+        console.log('[CopilotMetricsPanel] Refresh requested');
         if (this._view) {
             await this.updateContent();
+            console.log('[CopilotMetricsPanel] Refresh completed');
         }
     }
 
@@ -56,13 +64,20 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
         if (!this._view) return;
 
         try {
+            console.log('[CopilotMetricsPanel] Refreshing log service...');
             await this.logService.refresh();
+            
+            console.log('[CopilotMetricsPanel] Getting metrics...');
             const metrics = await this.logService.getUsageMetrics();
             const analysis = await this.logService.analyzeSession();
             const diagnostics = this.logService.getDiagnostics();
+            const cacheStats = getCacheStats();
+            
+            console.log(`[CopilotMetricsPanel] Data loaded: ${diagnostics.requestCount} requests, ${cacheStats.size} cached`);
 
-            this._view.webview.html = this.getHtml(metrics, analysis, diagnostics);
+            this._view.webview.html = this.getHtml(metrics, analysis, diagnostics, cacheStats);
         } catch (error) {
+            console.error('[CopilotMetricsPanel] Error:', error);
             this._view.webview.html = this.getErrorHtml(error);
         }
     }
@@ -73,7 +88,8 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
     private getHtml(
         metrics: CopilotUsageMetrics,
         analysis: ContextBloatAnalysis,
-        diagnostics: { logPath: string; lastScan: Date | null; requestCount: number; sessionCount: number }
+        diagnostics: { logPath: string; lastScan: Date | null; requestCount: number; sessionCount: number },
+        cacheStats: { size: number; maxSize: number; ids: string[] }
     ): string {
         const statusColors = {
             optimal: '#4caf50',
@@ -305,17 +321,54 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
         <ul>${recommendationItems}</ul>
     </div>
 
+    <!-- Content Cache -->
+    <div class="section-title">💾 Request Cache</div>
+    <div class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span class="metric-value" style="font-size: 18px;">${cacheStats.size}/${cacheStats.maxSize}</span>
+                <span class="metric-subtitle"> requests cached</span>
+            </div>
+            <div class="status-badge" style="background: ${cacheStats.size > 0 ? '#4caf50' : '#666'}">
+                ${cacheStats.size > 0 ? 'ACTIVE' : 'EMPTY'}
+            </div>
+        </div>
+        ${cacheStats.ids.length > 0 ? `
+        <div class="metric-subtitle" style="margin-top: 8px;">
+            Recent: ${cacheStats.ids.slice(-3).map(id => '<code>' + id + '</code>').join(', ')}
+        </div>
+        ` : ''}
+    </div>
+
     <!-- Diagnostics -->
-    <div class="diagnostics">
-        Log path: ${diagnostics.logPath}<br>
-        Last scan: ${diagnostics.lastScan?.toLocaleString() || 'Never'}<br>
-        Total indexed: ${diagnostics.requestCount} requests
+    <div class="section-title">🔧 Diagnostics</div>
+    <div class="metric-card diagnostics" style="opacity: 1; font-size: 11px;">
+        <div><strong>Log path:</strong> ${diagnostics.logPath}</div>
+        <div><strong>Last scan:</strong> ${diagnostics.lastScan?.toLocaleString() || 'Never'}</div>
+        <div><strong>Indexed:</strong> ${diagnostics.requestCount} requests in ${diagnostics.sessionCount} sessions</div>
+        <div><strong>MCP Server:</strong> http://localhost:3100</div>
     </div>
 
     <script>
         const vscode = acquireVsCodeApi();
+        let isRefreshing = false;
+        
         function refresh() {
+            if (isRefreshing) return;
+            
+            const btn = document.querySelector('.refresh-btn');
+            btn.textContent = '⏳ Refreshing...';
+            btn.disabled = true;
+            isRefreshing = true;
+            
             vscode.postMessage({ command: 'refresh' });
+            
+            // Re-enable after a short delay (the page will reload anyway)
+            setTimeout(() => {
+                isRefreshing = false;
+                btn.textContent = '↻ Refresh';
+                btn.disabled = false;
+            }, 500);
         }
     </script>
 </body>

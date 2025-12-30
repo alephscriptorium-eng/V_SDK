@@ -204,6 +204,78 @@ export function registerCopilotLogCommands(context: vscode.ExtensionContext): vo
         })
     );
 
+    // Command: Get Request Content (for MCP server access)
+    // This command runs in Extension Host context and can access ccreq: scheme
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.getRequestContent', async (requestId: string, format: 'copilotmd' | 'json' = 'copilotmd') => {
+            try {
+                const doc = await logService.getRequest(requestId, format);
+                
+                if (!doc) {
+                    return { 
+                        success: false, 
+                        error: `Request not found: ${requestId}`,
+                        requestId 
+                    };
+                }
+
+                // Return the full content for MCP consumption
+                return {
+                    success: true,
+                    requestId: doc.requestId,
+                    format: doc.format,
+                    raw: doc.raw,
+                    metadata: doc.metadata,
+                    systemMessage: doc.systemMessage,
+                    systemMessageLength: doc.systemMessage?.length || 0,
+                    userMessages: doc.userMessages,
+                    assistantResponses: doc.assistantResponses,
+                    toolCalls: doc.toolCalls
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: `Failed to resolve: ${error}`,
+                    requestId
+                };
+            }
+        })
+    );
+
+    // Command: Get Latest Request Content (for MCP server access)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.getLatestRequestContent', async () => {
+            try {
+                const doc = await logService.getLatestRequest();
+                
+                if (!doc) {
+                    return { 
+                        success: false, 
+                        error: 'No latest request available'
+                    };
+                }
+
+                return {
+                    success: true,
+                    requestId: doc.requestId,
+                    format: doc.format,
+                    raw: doc.raw,
+                    metadata: doc.metadata,
+                    systemMessage: doc.systemMessage,
+                    systemMessageLength: doc.systemMessage?.length || 0,
+                    userMessages: doc.userMessages,
+                    assistantResponses: doc.assistantResponses,
+                    toolCalls: doc.toolCalls
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: `Failed to resolve latest: ${error}`
+                };
+            }
+        })
+    );
+
     // Command: Analyze Session
     context.subscriptions.push(
         vscode.commands.registerCommand('copilotLogs.analyzeSession', async (sessionId?: string) => {

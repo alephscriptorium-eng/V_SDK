@@ -8,7 +8,19 @@ export * from './types';
 
 // Core services
 export { DiskLogScanner } from './DiskLogScanner';
-export { CcreqDocumentResolver, CCREQ_SCHEME, CcreqDocumentContent } from './CcreqDocumentResolver';
+export { 
+    CcreqDocumentResolver, 
+    CCREQ_SCHEME, 
+    CcreqDocumentContent,
+    getCachedRequestContent,
+    getCachedRequestIds,
+    cacheRequestContent,
+    getCacheStats,
+    clearCache,
+    setCacheConfig,
+    getCacheConfig,
+    CacheConfig
+} from './CcreqDocumentResolver';
 export { ContextBloatAnalyzer } from './ContextBloatAnalyzer';
 export { 
     CopilotLogExporterService, 

@@ -11,6 +11,38 @@ import * as vscode from 'vscode';
 export const CCREQ_SCHEME = 'ccreq';
 
 /**
+ * Configuration for cache behavior
+ */
+export interface CacheConfig {
+    /** Maximum number of requests to keep in cache (default: 5) */
+    maxCacheSize: number;
+}
+
+/** Default cache configuration */
+const DEFAULT_CACHE_CONFIG: CacheConfig = {
+    maxCacheSize: 5
+};
+
+/** Current cache configuration */
+let cacheConfig: CacheConfig = { ...DEFAULT_CACHE_CONFIG };
+
+/**
+ * Update cache configuration
+ */
+export function setCacheConfig(config: Partial<CacheConfig>): void {
+    cacheConfig = { ...cacheConfig, ...config };
+    // Trim cache if new size is smaller
+    trimCache();
+}
+
+/**
+ * Get current cache configuration
+ */
+export function getCacheConfig(): CacheConfig {
+    return { ...cacheConfig };
+}
+
+/**
  * Parsed content from a ccreq document
  */
 export interface CcreqDocumentContent {
@@ -40,6 +72,99 @@ export interface CcreqDocumentContent {
         arguments?: string;
         result?: string;
     }>;
+    /** Timestamp when cached */
+    cachedAt?: number;
+}
+
+/**
+ * Global cache for resolved ccreq documents
+ * Populated when documents are successfully resolved via VS Code API
+ * Accessible by MCP server for HTTP requests
+ * Limited to maxCacheSize entries (default: 5)
+ */
+const contentCache: Map<string, CcreqDocumentContent> = new Map();
+
+/**
+ * Order of cache entries (for LRU eviction)
+ */
+const cacheOrder: string[] = [];
+
+/**
+ * Trim cache to configured max size (LRU eviction)
+ */
+function trimCache(): void {
+    while (cacheOrder.length > cacheConfig.maxCacheSize) {
+        const oldestId = cacheOrder.shift();
+        if (oldestId) {
+            contentCache.delete(oldestId);
+            console.log(`[CcreqResolver] Cache evicted: ${oldestId} (limit: ${cacheConfig.maxCacheSize})`);
+        }
+    }
+}
+
+/**
+ * Get cached content for a request ID (used by MCP server)
+ */
+export function getCachedRequestContent(requestId: string): CcreqDocumentContent | null {
+    const content = contentCache.get(requestId);
+    if (content) {
+        // Move to end of cache order (LRU touch)
+        const idx = cacheOrder.indexOf(requestId);
+        if (idx > -1) {
+            cacheOrder.splice(idx, 1);
+            cacheOrder.push(requestId);
+        }
+    }
+    return content || null;
+}
+
+/**
+ * Get all cached request IDs (most recent last)
+ */
+export function getCachedRequestIds(): string[] {
+    return [...cacheOrder];
+}
+
+/**
+ * Get cache statistics
+ */
+export function getCacheStats(): { size: number; maxSize: number; ids: string[] } {
+    return {
+        size: contentCache.size,
+        maxSize: cacheConfig.maxCacheSize,
+        ids: [...cacheOrder]
+    };
+}
+
+/**
+ * Manually cache content (used by commands and resolver)
+ * Respects maxCacheSize limit with LRU eviction
+ */
+export function cacheRequestContent(requestId: string, content: CcreqDocumentContent): void {
+    // Remove if already exists (will re-add at end)
+    const existingIdx = cacheOrder.indexOf(requestId);
+    if (existingIdx > -1) {
+        cacheOrder.splice(existingIdx, 1);
+    }
+    
+    // Add with timestamp
+    content.cachedAt = Date.now();
+    contentCache.set(requestId, content);
+    cacheOrder.push(requestId);
+    
+    // Evict oldest if over limit
+    trimCache();
+    
+    console.log(`[CcreqResolver] Cached ${requestId} (${cacheOrder.length}/${cacheConfig.maxCacheSize})`);
+}
+
+/**
+ * Clear all cached content
+ */
+export function clearCache(): void {
+    contentCache.clear();
+    cacheOrder.length = 0;
+    console.log('[CcreqResolver] Cache cleared');
 }
 
 /**
@@ -67,14 +192,40 @@ export class CcreqDocumentResolver {
      * Note: This requires the Copilot Chat extension to be active and have registered its TextDocumentContentProvider
      */
     async resolveDocument(requestId: string, format: 'copilotmd' | 'json' = 'copilotmd'): Promise<CcreqDocumentContent | null> {
+        // First check cache
+        const cached = contentCache.get(requestId);
+        if (cached) {
+            console.log(`[CcreqResolver] Cache HIT for ${requestId}`);
+            return cached;
+        }
+
         try {
             const uri = CcreqDocumentResolver.buildUri(requestId, format);
+            console.log(`[CcreqResolver] Attempting to open: ${uri.toString()}`);
+            
             const document = await vscode.workspace.openTextDocument(uri);
             const content = document.getText();
+            
+            console.log(`[CcreqResolver] Document opened, content length: ${content.length} chars`);
+            
+            // Log first 200 chars for debugging
+            if (content.length > 0) {
+                console.log(`[CcreqResolver] Content preview: ${content.substring(0, 200)}...`);
+            } else {
+                console.warn(`[CcreqResolver] WARNING: Document is empty for ${requestId}`);
+            }
 
-            return this.parseContent(content, requestId, format);
+            const parsed = this.parseContent(content, requestId, format);
+            
+            // Cache successful resolution
+            if (parsed && parsed.raw && parsed.raw.length > 0) {
+                contentCache.set(requestId, parsed);
+                console.log(`[CcreqResolver] Parsed and cached: systemMessage=${parsed.systemMessage?.length || 0} chars, userMessages=${parsed.userMessages.length}`);
+            }
+            
+            return parsed;
         } catch (error) {
-            console.error(`Failed to resolve ccreq document for ${requestId}:`, error);
+            console.error(`[CcreqResolver] Failed to resolve ccreq document for ${requestId}:`, error);
             return null;
         }
     }
@@ -85,16 +236,30 @@ export class CcreqDocumentResolver {
     async resolveLatest(): Promise<CcreqDocumentContent | null> {
         try {
             const uri = CcreqDocumentResolver.buildLatestUri();
+            console.log(`[CcreqResolver] Attempting to open LATEST: ${uri.toString()}`);
+            
             const document = await vscode.workspace.openTextDocument(uri);
             const content = document.getText();
+            
+            console.log(`[CcreqResolver] Latest document opened, content length: ${content.length} chars`);
 
             // Extract request ID from content
             const idMatch = content.match(/Request ID:\s*`?([a-f0-9]+)`?/i);
             const requestId = idMatch ? idMatch[1] : 'latest';
+            
+            console.log(`[CcreqResolver] Extracted request ID: ${requestId}`);
 
-            return this.parseContent(content, requestId, 'copilotmd');
+            const parsed = this.parseContent(content, requestId, 'copilotmd');
+            
+            // Cache successful resolution (only if we got a real ID)
+            if (parsed && requestId !== 'latest') {
+                contentCache.set(requestId, parsed);
+                console.log(`[CcreqResolver] Latest cached with ID ${requestId}`);
+            }
+            
+            return parsed;
         } catch (error) {
-            console.error('Failed to resolve latest ccreq document:', error);
+            console.error('[CcreqResolver] Failed to resolve latest ccreq document:', error);
             return null;
         }
     }

@@ -20,6 +20,7 @@ import { BaseMCPServer, MCPLogger } from '@alephscript/mcp-core-sdk/server';
 import { BaseMCPServerConfig } from '@alephscript/mcp-core-sdk/server';
 import { CopilotLogExporterService, getCopilotLogExporterService } from './CopilotLogExporterService';
 import { CopilotLogSearchQuery } from './types';
+import { getCacheStats, getCacheConfig, setCacheConfig } from './CcreqDocumentResolver';
 
 /**
  * Default configuration for the Copilot Logs MCP Server
@@ -201,12 +202,57 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
             },
             async ({ requestId, format }) => {
                 try {
-                    const doc = await this.logService.getRequest(requestId, format as 'copilotmd' | 'json');
+                    // First try the direct service method
+                    let doc = await this.logService.getRequest(requestId, format as 'copilotmd' | 'json');
+                    
+                    // If direct resolution failed, try via VS Code command (Extension Host context)
+                    if (!doc) {
+                        this.outputChannel.appendLine(`Direct resolution failed for ${requestId}, trying VS Code command...`);
+                        try {
+                            const cmdResult = await vscode.commands.executeCommand<{
+                                success: boolean;
+                                error?: string;
+                                requestId?: string;
+                                raw?: string;
+                                metadata?: any;
+                                systemMessage?: string;
+                                systemMessageLength?: number;
+                                userMessages?: string[];
+                                assistantResponses?: string[];
+                                toolCalls?: any[];
+                            }>('copilotLogs.getRequestContent', requestId, format);
+                            
+                            if (cmdResult?.success) {
+                                // Command succeeded - use its result
+                                return {
+                                    content: [{
+                                        type: 'text',
+                                        text: format === 'copilotmd' 
+                                            ? cmdResult.raw || ''
+                                            : JSON.stringify({
+                                                requestId: cmdResult.requestId,
+                                                systemMessageLength: cmdResult.systemMessageLength || 0,
+                                                userMessages: cmdResult.userMessages || [],
+                                                assistantResponses: cmdResult.assistantResponses || [],
+                                                toolCalls: cmdResult.toolCalls?.map((t: any) => ({
+                                                    name: t.name,
+                                                    argumentsLength: t.arguments?.length || 0,
+                                                    resultLength: t.result?.length || 0
+                                                })) || []
+                                            }, null, 2)
+                                    }]
+                                };
+                            }
+                        } catch (cmdError) {
+                            this.outputChannel.appendLine(`VS Code command fallback also failed: ${cmdError}`);
+                        }
+                    }
+                    
                     if (!doc) {
                         return {
                             content: [{
                                 type: 'text',
-                                text: `Request not found: ${requestId}`
+                                text: `Request not found: ${requestId}. Try opening it first with copilotLogs.viewRequest command.`
                             }],
                             isError: true
                         };
@@ -238,6 +284,75 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
                         content: [{
                             type: 'text',
                             text: `Error getting request: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: get_latest_request
+        // =====================================================================
+        this.server.tool(
+            'get_latest_request',
+            'Get the most recent Copilot request from the current session (system message, user messages, tool calls, responses)',
+            {},
+            async () => {
+                try {
+                    this.outputChannel.appendLine('[MCP] Getting latest request via ccreq:latest...');
+                    
+                    // Use the VS Code command which has Extension Host context
+                    const cmdResult = await vscode.commands.executeCommand<{
+                        success: boolean;
+                        error?: string;
+                        requestId?: string;
+                        raw?: string;
+                        metadata?: any;
+                        systemMessage?: string;
+                        systemMessageLength?: number;
+                        userMessages?: string[];
+                        assistantResponses?: string[];
+                        toolCalls?: any[];
+                    }>('copilotLogs.getLatestRequestContent');
+                    
+                    if (cmdResult?.success && cmdResult.requestId) {
+                        this.outputChannel.appendLine(`[MCP] Latest request found: ${cmdResult.requestId}`);
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: JSON.stringify({
+                                    requestId: cmdResult.requestId,
+                                    model: cmdResult.metadata?.model,
+                                    systemMessageLength: cmdResult.systemMessageLength || 0,
+                                    systemMessagePreview: cmdResult.systemMessage?.substring(0, 500) || '',
+                                    userMessages: cmdResult.userMessages || [],
+                                    assistantResponses: cmdResult.assistantResponses || [],
+                                    toolCallsCount: cmdResult.toolCalls?.length || 0,
+                                    toolCalls: cmdResult.toolCalls?.map((t: any) => ({
+                                        name: t.name,
+                                        argumentsLength: t.arguments?.length || 0
+                                    })) || [],
+                                    promptTokens: cmdResult.metadata?.promptTokens,
+                                    cachedTokens: cmdResult.metadata?.cachedTokens
+                                }, null, 2)
+                            }]
+                        };
+                    }
+                    
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: 'No active request found. This tool only works for the current Copilot Chat session.'
+                        }],
+                        isError: true
+                    };
+                } catch (error) {
+                    this.outputChannel.appendLine(`[MCP] Error getting latest request: ${error}`);
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error getting latest request: ${error}`
                         }],
                         isError: true
                     };
@@ -452,6 +567,7 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
                 try {
                     const diag = this.logService.getDiagnostics();
                     const isAvailable = await this.logService.isAvailable();
+                    const cacheStats = getCacheStats();
 
                     return {
                         content: [{
@@ -463,7 +579,12 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
                                 requestCount: diag.requestCount,
                                 sessionCount: diag.sessionCount,
                                 serverPort: this.config.port,
-                                serverName: this.config.name
+                                serverName: this.config.name,
+                                cache: {
+                                    size: cacheStats.size,
+                                    maxSize: cacheStats.maxSize,
+                                    cachedIds: cacheStats.ids
+                                }
                             }, null, 2)
                         }]
                     };
@@ -472,6 +593,48 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
                         content: [{
                             type: 'text',
                             text: `Error getting diagnostics: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: configure_cache
+        // =====================================================================
+        this.server.tool(
+            'configure_cache',
+            'Configure the request content cache size (default: 5, increase for more history)',
+            {
+                maxSize: z.number().min(1).max(100).describe('Maximum number of requests to cache (1-100)')
+            },
+            async ({ maxSize }) => {
+                try {
+                    const oldConfig = getCacheConfig();
+                    setCacheConfig({ maxCacheSize: maxSize });
+                    const newConfig = getCacheConfig();
+                    const stats = getCacheStats();
+                    
+                    this.outputChannel.appendLine(`[MCP] Cache config updated: ${oldConfig.maxCacheSize} → ${newConfig.maxCacheSize}`);
+                    
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: JSON.stringify({
+                                message: `Cache size updated from ${oldConfig.maxCacheSize} to ${newConfig.maxCacheSize}`,
+                                previousMaxSize: oldConfig.maxCacheSize,
+                                newMaxSize: newConfig.maxCacheSize,
+                                currentCacheSize: stats.size,
+                                cachedIds: stats.ids
+                            }, null, 2)
+                        }]
+                    };
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error configuring cache: ${error}`
                         }],
                         isError: true
                     };
