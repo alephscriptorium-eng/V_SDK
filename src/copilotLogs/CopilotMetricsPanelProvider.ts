@@ -30,6 +30,13 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this.extensionUri]
         };
 
+        // Handle messages from the webview (e.g., refresh button)
+        webviewView.webview.onDidReceiveMessage(async (message) => {
+            if (message.command === 'refresh') {
+                await this.refresh();
+            }
+        });
+
         this.updateContent();
     }
 
