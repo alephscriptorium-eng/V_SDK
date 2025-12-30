@@ -11,6 +11,7 @@
         "node_modules",
         ".vscode-test",
         "out",
-        "tests"
+        "tests",
+        "mcp-core-sdk"
     ]
 }

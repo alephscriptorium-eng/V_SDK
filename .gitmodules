@@ -1,0 +1,4 @@
+[submodule "mcp-core-sdk"]
+	path = mcp-core-sdk
+	url = https://github.com/escrivivir-co/alephscript-mcp-core-sdk.git
+	branch = integration/beta/scriptorium

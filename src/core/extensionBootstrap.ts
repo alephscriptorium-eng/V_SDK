@@ -30,6 +30,9 @@ import { SocketMonitor } from '../socketMonitor';
 import { UIManager } from '../uiManager';
 import { MCPServerManager } from '../mcpServerManager';
 import { MCPWebViewManager } from '../mcpWebViewManager';
+// WISH-01/02/03: Copilot Log Exporter
+import { registerCopilotLogCommands } from '../copilotLogs/commands';
+import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
 
 export interface ExtensionContext {
     managers: {
@@ -1423,7 +1426,16 @@ Detalles específicos sobre cómo configurar y usar este agente.
         // Register configuration commands
         ConfigurationCommandsService.registerCommands(this.vsCodeContext);
 
-        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands`);
+        // WISH-01/02/03: Register Copilot Log Exporter commands
+        registerCopilotLogCommands(this.vsCodeContext);
+        
+        // Initialize Copilot Log Exporter service
+        const copilotLogService = getCopilotLogExporterService();
+        copilotLogService.initialize().catch(err => {
+            this.extensionContext?.logger.warn('Failed to initialize Copilot Log Exporter:', err);
+        });
+
+        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands + Copilot Log Exporter`);
     }
 
     /**
