@@ -495,7 +495,7 @@
       {
         "command": "alephscript.agents.editConfig",
         "title": ">>> Hack Agent Config",
-        "category": "🤖 Agent Matrix", 
+        "category": "🤖 Agent Matrix",
         "icon": "$(circuit-board)"
       },
       {
@@ -926,7 +926,7 @@
         },
         {
           "id": "alephscript.mcptree",
-          "name": "🤖 MCP", 
+          "name": "🤖 MCP",
           "icon": "$(server)",
           "when": "true"
         },
@@ -1251,7 +1251,7 @@
         "priority": "default"
       },
       {
-        "viewType": "alephscript.agentConfigEditor", 
+        "viewType": "alephscript.agentConfigEditor",
         "displayName": "Agent Configuration Editor",
         "selector": [
           {
@@ -1283,7 +1283,7 @@
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
     "dev:quick": "npm run compile && npm run deploy:local",
     "debug:view": "code --extensionDevelopmentPath=c:/Users/oracl/Documents/REPOS/mcp-vscode-ext --new-window",
-	  "unix:code": "sh ./setup-vscode-path",
+    "unix:code": "sh ./setup-vscode-path",
     "dev:tools": "echo 'Ctrl+Shift+I'"
   },
   "devDependencies": {
@@ -1303,7 +1303,7 @@
     "yo": "^5.1.0"
   },
   "dependencies": {
-    "@alephscript/mcp-core-sdk": "file:./mcp-core-sdk",
+    "@alephscript/mcp-core-sdk": "file:mcp-core-sdk/alephscript-mcp-core-sdk-1.0.0.tgz",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "express": "^5.1.0",
     "socket.io-client": "^4.8.1",

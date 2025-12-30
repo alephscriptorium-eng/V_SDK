@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "copilot-logs-mcp-server": {
+      "type": "http",
+      "url": "http://localhost:3100"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 # Source files
 src/**
 **/*.ts
+!**/*.d.ts
 !out/**
 
 # Test files
@@ -33,12 +34,22 @@ FEATURE_CONFIGS/**
 
 # Development files
 .vscode/**
-node_modules/**
 
-# Submodule node_modules (important!)
-mcp-core-sdk/node_modules/**
-mcp-core-sdk/.git/**
-mcp-core-sdk/scripts/**
+# Exclude devDependencies-related files but keep node_modules for runtime deps
+node_modules/.bin/**
+node_modules/@types/**
+node_modules/typescript/**
+node_modules/@typescript-eslint/**
+node_modules/eslint/**
+node_modules/jest/**
+node_modules/ts-jest/**
+node_modules/@vscode/**
+node_modules/yo/**
+node_modules/generator-code/**
+
+# Submodule mcp-core-sdk in root - EXCLUDE COMPLETELY
+# (only used to generate npm pack, not needed in extension)
+mcp-core-sdk/**
 
 # Other
 *.vsix
