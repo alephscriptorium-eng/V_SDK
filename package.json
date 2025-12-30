@@ -135,6 +135,18 @@
         "icon": "$(globe)"
       },
       {
+        "command": "alephscript.demo.runAll",
+        "title": "▶️ Run All Demo Servers",
+        "category": "AlephScript Demo",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "alephscript.demo.stopAll",
+        "title": "⏹️ Stop All Demo Servers",
+        "category": "AlephScript Demo",
+        "icon": "$(debug-stop)"
+      },
+      {
         "command": "alephscript.showStatusPanel",
         "title": "Show System Status Panel",
         "category": "AlephScript"

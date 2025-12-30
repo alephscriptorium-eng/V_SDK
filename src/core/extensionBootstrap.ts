@@ -586,6 +586,62 @@ export class ExtensionBootstrap {
                 }
             }),
 
+            // Demo commands - Run All Servers (DEMO-1.0.0-F002)
+            vscode.commands.registerCommand('alephscript.demo.runAll', async () => {
+                try {
+                    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+                    if (!workspaceRoot) {
+                        vscode.window.showErrorMessage('No workspace folder found');
+                        return;
+                    }
+                    
+                    const terminals: { name: string; cwd: string; command: string }[] = [
+                        { name: '🌐 Jekyll Site', cwd: `${workspaceRoot}/scripts`, command: './serve-site.sh' },
+                        { name: '🚀 MCP Launcher', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:launcher' },
+                        { name: '🤖 MCP Model', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:model' },
+                        { name: '⚡ Zeus', cwd: `${workspaceRoot}/MCPGallery`, command: 'npm run start:zeus' },
+                        { name: '📝 Novelist', cwd: `${workspaceRoot}/NovelistEditor`, command: 'npm start' }
+                    ];
+                    
+                    for (const config of terminals) {
+                        const terminal = vscode.window.createTerminal({
+                            name: config.name,
+                            cwd: config.cwd
+                        });
+                        terminal.show(false);
+                        terminal.sendText(config.command);
+                    }
+                    
+                    vscode.window.showInformationMessage('🎬 All 5 demo servers started!');
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'demo.runAll',
+                        LogCategory.PROCESS
+                    );
+                }
+            }),
+            
+            vscode.commands.registerCommand('alephscript.demo.stopAll', async () => {
+                try {
+                    const demoTerminals = vscode.window.terminals.filter(t => 
+                        ['🌐 Jekyll Site', '🚀 MCP Launcher', '🤖 MCP Model', '⚡ Zeus', '📝 Novelist'].includes(t.name)
+                    );
+                    
+                    for (const terminal of demoTerminals) {
+                        terminal.dispose();
+                    }
+                    
+                    vscode.window.showInformationMessage(`🛑 Stopped ${demoTerminals.length} demo servers`);
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'demo.stopAll',
+                        LogCategory.PROCESS
+                    );
+                }
+            }),
+
             // System commands
             vscode.commands.registerCommand('alephscript.system.showStatus', () => {
                 this.showSystemStatus();
