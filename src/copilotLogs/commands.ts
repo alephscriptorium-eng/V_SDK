@@ -13,7 +13,8 @@ import {
     startCopilotLogsMCPServer,
     stopCopilotLogsMCPServer,
     isCopilotLogsMCPServerRunning,
-    getCopilotLogsMCPServerUrl
+    getCopilotLogsMCPServerUrl,
+    getSnapshotManager
 } from './index';
 
 /**
@@ -550,6 +551,202 @@ export function registerCopilotLogCommands(context: vscode.ExtensionContext): vo
             } else if (selected === 'Stop Server') {
                 vscode.commands.executeCommand('copilotLogs.stopMCPServer');
             }
+        })
+    );
+
+    // =========================================================================
+    // Snapshot Commands (FEATURE-SNAPSHOTS-1.0.0)
+    // =========================================================================
+
+    // Command: Capture Snapshot
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.captureSnapshot', async () => {
+            const snapshotManager = getSnapshotManager();
+            
+            // 1. Prompt for snapshot name (required)
+            const name = await vscode.window.showInputBox({
+                prompt: '💾 Snapshot name',
+                placeHolder: 'e.g., Debug session for issue #42',
+                validateInput: (value) => value.trim() ? null : 'Name is required'
+            });
+
+            if (!name) return;
+
+            // 2. Prompt for optional description
+            const description = await vscode.window.showInputBox({
+                prompt: '📝 Description (optional)',
+                placeHolder: 'e.g., Investigating context bloat issue'
+            });
+
+            // 3. Link to backlog (QuickPick)
+            const backlogOptions = [
+                { label: '$(dash) No link', value: undefined },
+                { label: '$(git-pull-request) FEATURE-SNAPSHOTS-1.0.0', value: 'FEATURE-SNAPSHOTS-1.0.0' },
+                { label: '$(bug) BUG-MCLOGS-1.0.0', value: 'BUG-MCLOGS-1.0.0' },
+                { label: '$(beaker) SCRIPT-2.2.0', value: 'SCRIPT-2.2.0' },
+                { label: '$(edit) Enter manually...', value: '__custom__' }
+            ];
+
+            const selectedBacklog = await vscode.window.showQuickPick(backlogOptions, {
+                placeHolder: '🔗 Link to backlog (optional)'
+            });
+
+            let linkedBacklog: string | undefined;
+            if (selectedBacklog?.value === '__custom__') {
+                linkedBacklog = await vscode.window.showInputBox({
+                    prompt: 'Backlog ID',
+                    placeHolder: 'e.g., SCRIPT-2.1.1'
+                }) || undefined;
+            } else {
+                linkedBacklog = selectedBacklog?.value;
+            }
+
+            try {
+                const result = await snapshotManager.captureSnapshot({ name, description, linkedBacklog });
+                
+                if (!result.success) {
+                    vscode.window.showErrorMessage(`Failed to capture snapshot: ${result.error}`);
+                    return;
+                }
+
+                const action = await vscode.window.showInformationMessage(
+                    `✅ Snapshot captured: ${result.snapshotId} (${result.requestCount} requests)`,
+                    'View', 'Export MD', 'Open Folder'
+                );
+
+                if (action === 'View' && result.snapshotId) {
+                    const snapshot = await snapshotManager.getSnapshot(result.snapshotId);
+                    if (snapshot) {
+                        const doc = await vscode.workspace.openTextDocument({
+                            content: JSON.stringify(snapshot, null, 2),
+                            language: 'json'
+                        });
+                        await vscode.window.showTextDocument(doc);
+                    }
+                } else if (action === 'Export MD' && result.snapshotId) {
+                    const mdPath = await snapshotManager.exportToMarkdown(result.snapshotId);
+                    if (mdPath) {
+                        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(mdPath));
+                        await vscode.window.showTextDocument(doc);
+                    }
+                } else if (action === 'Open Folder') {
+                    const snapshotsDir = snapshotManager.getSnapshotsDirectory();
+                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(snapshotsDir));
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to capture snapshot: ${error}`);
+            }
+        })
+    );
+
+    // Command: List Snapshots
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.listSnapshots', async () => {
+            const snapshotManager = getSnapshotManager();
+            const snapshots = await snapshotManager.listSnapshots();
+
+            if (snapshots.length === 0) {
+                const create = await vscode.window.showInformationMessage(
+                    'No snapshots found. Would you like to capture one now?',
+                    'Capture Now'
+                );
+                if (create) {
+                    vscode.commands.executeCommand('copilotLogs.captureSnapshot');
+                }
+                return;
+            }
+
+            const items = snapshots.map(s => ({
+                label: s.name,
+                description: `${s.requestCount} requests`,
+                detail: `${new Date(s.createdAt).toLocaleString()} | ${s.models?.join(', ') || 'unknown model'}`,
+                snapshotId: s.id
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: `${snapshots.length} snapshots available`
+            });
+
+            if (selected) {
+                const action = await vscode.window.showQuickPick(
+                    ['View JSON', 'Export Markdown', 'Delete'],
+                    { placeHolder: `Action for "${selected.label}"` }
+                );
+
+                if (action === 'View JSON') {
+                    const snapshot = await snapshotManager.getSnapshot(selected.snapshotId);
+                    if (snapshot) {
+                        const doc = await vscode.workspace.openTextDocument({
+                            content: JSON.stringify(snapshot, null, 2),
+                            language: 'json'
+                        });
+                        await vscode.window.showTextDocument(doc);
+                    }
+                } else if (action === 'Export Markdown') {
+                    const mdPath = await snapshotManager.exportToMarkdown(selected.snapshotId);
+                    if (mdPath) {
+                        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(mdPath));
+                        await vscode.window.showTextDocument(doc);
+                    }
+                } else if (action === 'Delete') {
+                    const confirm = await vscode.window.showWarningMessage(
+                        `Delete snapshot "${selected.label}"?`,
+                        { modal: true },
+                        'Delete'
+                    );
+                    if (confirm) {
+                        const deleted = await snapshotManager.deleteSnapshot(selected.snapshotId);
+                        if (deleted) {
+                            vscode.window.showInformationMessage('Snapshot deleted');
+                        } else {
+                            vscode.window.showErrorMessage('Failed to delete snapshot');
+                        }
+                    }
+                }
+            }
+        })
+    );
+
+    // Command: Open Snapshots Folder
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.openSnapshotsFolder', async () => {
+            const snapshotManager = getSnapshotManager();
+            const snapshotsDir = snapshotManager.getSnapshotsDirectory();
+            
+            // Ensure directory exists
+            if (!fs.existsSync(snapshotsDir)) {
+                fs.mkdirSync(snapshotsDir, { recursive: true });
+            }
+
+            vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(snapshotsDir));
+        })
+    );
+
+    // Command: Generate Abstract (T009)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('copilotLogs.generateAbstract', async () => {
+            const snapshotManager = getSnapshotManager();
+            
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Generando ABSTRACT.md con resúmenes semánticos...',
+                cancellable: false
+            }, async () => {
+                const abstractPath = await snapshotManager.generateAbstract();
+                
+                if (abstractPath) {
+                    const action = await vscode.window.showInformationMessage(
+                        '✅ ABSTRACT.md generado con resúmenes semánticos',
+                        'Abrir'
+                    );
+                    if (action === 'Abrir') {
+                        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(abstractPath));
+                        await vscode.window.showTextDocument(doc);
+                    }
+                } else {
+                    vscode.window.showWarningMessage('No hay snapshots para generar abstract. Captura algunos primero.');
+                }
+            });
         })
     );
 

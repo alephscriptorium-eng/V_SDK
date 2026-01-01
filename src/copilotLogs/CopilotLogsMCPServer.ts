@@ -21,6 +21,7 @@ import { BaseMCPServerConfig } from '@alephscript/mcp-core-sdk/server';
 import { CopilotLogExporterService, getCopilotLogExporterService } from './CopilotLogExporterService';
 import { CopilotLogSearchQuery } from './types';
 import { getCacheStats, getCacheConfig, setCacheConfig } from './CcreqDocumentResolver';
+import { getSnapshotManager } from './SnapshotManager';
 
 /**
  * Default configuration for the Copilot Logs MCP Server
@@ -635,6 +636,320 @@ export class CopilotLogsMCPServer extends BaseMCPServer {
                         content: [{
                             type: 'text',
                             text: `Error configuring cache: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: help
+        // =====================================================================
+        this.server.tool(
+            'help',
+            'Get help and important warnings about Copilot Logs',
+            {},
+            async () => {
+                const stats = getSnapshotManager(this.outputChannel).getStats();
+                const helpText = `## Copilot Logs — Guía de Uso
+
+### ⚠️ Advertencia Importante
+
+Los logs de Copilot Chat se almacenan en memoria con un **límite de ~100 requests**.
+En sesiones largas, los requests antiguos se sobrescriben automáticamente (FIFO).
+
+### 👉 Recomendación
+
+**Captura snapshots frecuentemente** para no perder contexto valioso.
+Cada 20-30 minutos de trabajo intensivo, usa \`capture_snapshot\`.
+
+### 📊 Estado Actual
+
+- Snapshots guardados: ${stats.snapshotCount}
+- Requests en cache local: ${stats.cacheSize}/${stats.cacheMaxSize}
+
+### 🔧 Herramientas Disponibles
+
+| Tool | Descripción |
+|------|-------------|
+| \`help\` | Esta guía |
+| \`get_latest_request\` | Último request (siempre funciona) |
+| \`list_copilot_requests\` | IDs de requests disponibles |
+| \`get_copilot_request(id)\` | Contenido SI está en memoria |
+| \`capture_snapshot\` | **NUEVO** Guardar conversación actual |
+| \`list_snapshots\` | **NUEVO** Ver snapshots guardados |
+| \`get_snapshot(id)\` | **NUEVO** Recuperar snapshot |
+| \`delete_snapshot(id)\` | **NUEVO** Eliminar snapshot |
+| \`configure_cache\` | Aumentar cache (default: 5) |
+
+### 📁 Ubicación de Snapshots
+
+\`ARCHIVO/DISCO/COPILOT_SNAPSHOTS/\`
+
+Cada snapshot contiene:
+- \`metadata.json\` — Info del snapshot
+- \`requests.json\` — Contenido completo
+- \`summary.md\` — Resumen legible
+
+---
+
+*Aleph Scriptorium v1.0.0-beta.1*`;
+
+                return {
+                    content: [{
+                        type: 'text',
+                        text: helpText
+                    }]
+                };
+            }
+        );
+
+        // =====================================================================
+        // Tool: capture_snapshot
+        // =====================================================================
+        this.server.tool(
+            'capture_snapshot',
+            'Capture current Copilot conversation as a snapshot for later retrieval',
+            {
+                name: z.string().describe('Name for the snapshot (e.g., "fundacion-cap3-revision")'),
+                description: z.string().optional().describe('Optional description of what was discussed'),
+                linkedBacklog: z.string().optional().describe('Optional backlog ID to link (e.g., "SCRIPT-2.1.1")')
+            },
+            async ({ name, description, linkedBacklog }) => {
+                try {
+                    const manager = getSnapshotManager(this.outputChannel);
+                    const result = await manager.captureSnapshot({
+                        name,
+                        description,
+                        linkedBacklog
+                    });
+
+                    if (result.success) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: JSON.stringify({
+                                    success: true,
+                                    message: `✅ Snapshot saved successfully`,
+                                    snapshotId: result.snapshotId,
+                                    requestCount: result.requestCount,
+                                    location: `ARCHIVO/DISCO/COPILOT_SNAPSHOTS/${result.snapshotId}/`
+                                }, null, 2)
+                            }]
+                        };
+                    } else {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `❌ Failed to capture snapshot: ${result.error}`
+                            }],
+                            isError: true
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error capturing snapshot: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: list_snapshots
+        // =====================================================================
+        this.server.tool(
+            'list_snapshots',
+            'List all saved conversation snapshots',
+            {},
+            async () => {
+                try {
+                    const manager = getSnapshotManager(this.outputChannel);
+                    const snapshots = await manager.listSnapshots();
+
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: JSON.stringify({
+                                count: snapshots.length,
+                                snapshots: snapshots.map(s => ({
+                                    id: s.id,
+                                    name: s.name,
+                                    createdAt: s.createdAt.toISOString(),
+                                    requestCount: s.requestCount,
+                                    models: s.models,
+                                    linkedBacklog: s.linkedBacklog
+                                }))
+                            }, null, 2)
+                        }]
+                    };
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error listing snapshots: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: get_snapshot
+        // =====================================================================
+        this.server.tool(
+            'get_snapshot',
+            'Retrieve a saved snapshot by ID',
+            {
+                snapshotId: z.string().describe('The snapshot ID (e.g., "2026-01-01_14-30_fundacion-cap3")'),
+                format: z.enum(['json', 'markdown']).optional().default('json').describe('Output format')
+            },
+            async ({ snapshotId, format }) => {
+                try {
+                    const manager = getSnapshotManager(this.outputChannel);
+
+                    if (format === 'markdown') {
+                        const markdown = await manager.exportToMarkdown(snapshotId);
+                        if (!markdown) {
+                            return {
+                                content: [{
+                                    type: 'text',
+                                    text: `Snapshot not found: ${snapshotId}`
+                                }],
+                                isError: true
+                            };
+                        }
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: markdown
+                            }]
+                        };
+                    }
+
+                    const snapshot = await manager.getSnapshot(snapshotId);
+                    if (!snapshot) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `Snapshot not found: ${snapshotId}`
+                            }],
+                            isError: true
+                        };
+                    }
+
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: JSON.stringify({
+                                metadata: {
+                                    ...snapshot.metadata,
+                                    createdAt: snapshot.metadata.createdAt.toISOString()
+                                },
+                                requestCount: snapshot.requests.length,
+                                requests: snapshot.requests.map(r => ({
+                                    requestId: r.requestId,
+                                    model: r.metadata?.model,
+                                    userMessagesCount: r.userMessages.length,
+                                    assistantResponsesCount: r.assistantResponses.length,
+                                    toolCallsCount: r.toolCalls.length
+                                }))
+                            }, null, 2)
+                        }]
+                    };
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error getting snapshot: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: delete_snapshot
+        // =====================================================================
+        this.server.tool(
+            'delete_snapshot',
+            'Delete a saved snapshot',
+            {
+                snapshotId: z.string().describe('The snapshot ID to delete')
+            },
+            async ({ snapshotId }) => {
+                try {
+                    const manager = getSnapshotManager(this.outputChannel);
+                    const deleted = await manager.deleteSnapshot(snapshotId);
+
+                    if (deleted) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `✅ Snapshot deleted: ${snapshotId}`
+                            }]
+                        };
+                    } else {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `Snapshot not found: ${snapshotId}`
+                            }],
+                            isError: true
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error deleting snapshot: ${error}`
+                        }],
+                        isError: true
+                    };
+                }
+            }
+        );
+
+        // =====================================================================
+        // Tool: generate_abstract (T009)
+        // Genera ABSTRACT.md con resúmenes semánticos usando LLM
+        // =====================================================================
+        this.server.tool(
+            'generate_abstract',
+            'Generate ABSTRACT.md with semantic summaries of all snapshots using LLM. Creates intelligent summaries of each session.',
+            {},
+            async () => {
+                try {
+                    const manager = getSnapshotManager(this.outputChannel);
+                    const abstractPath = await manager.generateAbstract();
+
+                    if (abstractPath) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: `✅ ABSTRACT.md generado en: ${abstractPath}\n\nEl archivo contiene resúmenes semánticos de tus snapshots, generados con LLM cuando está disponible.`
+                            }]
+                        };
+                    } else {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: 'No hay snapshots disponibles para generar el abstract. Captura algunos snapshots primero con capture_snapshot.'
+                            }],
+                            isError: true
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `Error generando abstract: ${error}`
                         }],
                         isError: true
                     };

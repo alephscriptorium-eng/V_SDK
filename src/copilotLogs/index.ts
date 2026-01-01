@@ -1,10 +1,13 @@
 /**
  * WISH-01/02/03: Copilot Log Exporter Module
  * Main entry point for the copilotLogs module
+ * 
+ * Refactorizado: Tipos modulares en types/
  */
 
 // Types
 export * from './types';
+export * from './types/snapshot.types';
 
 // Core services
 export { DiskLogScanner } from './DiskLogScanner';
@@ -39,6 +42,14 @@ export {
 // WISH-03: Metrics Panel
 export { CopilotMetricsPanelProvider } from './CopilotMetricsPanelProvider';
 
+// Templates
+export { 
+    generateMetricsPanelHtml,
+    generateErrorHtml,
+    MetricsPanelData,
+    PanelDiagnostics
+} from './templates/MetricsPanelTemplate';
+
 // MCP Server
 export { 
     CopilotLogsMCPServer,
@@ -48,3 +59,9 @@ export {
     isCopilotLogsMCPServerRunning,
     getCopilotLogsMCPServerUrl
 } from './CopilotLogsMCPServer';
+
+// FEATURE-SNAPSHOTS-1.0.0: Snapshot Manager
+export {
+    SnapshotManager,
+    getSnapshotManager
+} from './SnapshotManager';
