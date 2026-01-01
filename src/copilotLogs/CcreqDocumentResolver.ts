@@ -20,7 +20,7 @@ export interface CacheConfig {
 
 /** Default cache configuration */
 const DEFAULT_CACHE_CONFIG: CacheConfig = {
-    maxCacheSize: 5
+    maxCacheSize: 20
 };
 
 /** Current cache configuration */
@@ -243,17 +243,21 @@ export class CcreqDocumentResolver {
             
             console.log(`[CcreqResolver] Latest document opened, content length: ${content.length} chars`);
 
-            // Extract request ID from content
-            const idMatch = content.match(/Request ID:\s*`?([a-f0-9]+)`?/i);
-            const requestId = idMatch ? idMatch[1] : 'latest';
+            // Extract request ID from content - try multiple patterns
+            const idMatch = content.match(/Request ID:\s*`?([a-f0-9]+)`?/i)
+                         || content.match(/requestId["']?:\s*["']?([a-f0-9]+)/i);
             
-            console.log(`[CcreqResolver] Extracted request ID: ${requestId}`);
+            // Generate unique ID if extraction fails (timestamp-based)
+            const requestId = idMatch ? idMatch[1] : `snap_${Date.now().toString(36)}`;
+            const wasExtracted = !!idMatch;
+            
+            console.log(`[CcreqResolver] Request ID: ${requestId} (extracted: ${wasExtracted})`);
 
             const parsed = this.parseContent(content, requestId, 'copilotmd');
             
-            // Cache successful resolution (only if we got a real ID)
-            if (parsed && requestId !== 'latest') {
-                contentCache.set(requestId, parsed);
+            // Always cache successful resolution to enable snapshots
+            if (parsed) {
+                cacheRequestContent(requestId, parsed);
                 console.log(`[CcreqResolver] Latest cached with ID ${requestId}`);
             }
             
