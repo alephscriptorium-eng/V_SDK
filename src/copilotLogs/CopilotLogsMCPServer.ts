@@ -925,10 +925,7 @@ Cada snapshot contiene:
             'generate_abstract',
             'Generate ABSTRACT.md with semantic summaries of all snapshots using LLM. Creates intelligent summaries of each session. Optionally specify a model ID.',
             {
-                modelId: {
-                    type: 'string',
-                    description: 'Optional model ID to use (e.g., "claude-sonnet-4", "claude-opus-4.5", "gpt-5.2"). If not specified, uses the default model.'
-                }
+                modelId: z.string().optional().describe('Optional model ID to use (e.g., "claude-sonnet-4", "claude-opus-4.5", "gpt-5.2"). If not specified, uses the default model.')
             },
             async ({ modelId }: { modelId?: string }) => {
                 try {
