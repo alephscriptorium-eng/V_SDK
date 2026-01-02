@@ -1,11 +1,13 @@
 /**
- * WISH-03 + FEATURE-SNAPSHOTS-1.0.0: Plantilla HTML del Panel de Métricas
+ * WISH-03 + FEATURE-SNAPSHOTS-1.0.0 + SCRIPT-2.2.0: Plantilla HTML del Panel de Métricas
  * 
  * Separado del Provider para mejor mantenibilidad
+ * SCRIPT-2.2.0: Añadido Model Selector para Generate Abstract
  */
 
 import { CopilotUsageMetrics, ContextBloatAnalysis } from '../types';
 import { SnapshotMetadata, CacheStats } from '../types/snapshot.types';
+import { ModelInfo } from '../types/model.types';
 
 // =============================================================================
 // Template Data Types
@@ -24,6 +26,10 @@ export interface MetricsPanelData {
     diagnostics: PanelDiagnostics;
     cacheStats: CacheStats;
     snapshots: SnapshotMetadata[];
+    /** SCRIPT-2.2.0: Available models for Generate Abstract */
+    availableModels?: ModelInfo[];
+    /** SCRIPT-2.2.0: Default model ID */
+    defaultModelId?: string;
 }
 
 // =============================================================================
@@ -234,6 +240,7 @@ const PANEL_STYLES = `
 const PANEL_SCRIPTS = `
     const vscode = acquireVsCodeApi();
     let isRefreshing = false;
+    let isGenerating = false;
     
     function refresh() {
         if (isRefreshing) return;
@@ -268,6 +275,28 @@ const PANEL_SCRIPTS = `
         if (confirm('¿Eliminar este snapshot?')) {
             vscode.postMessage({ command: 'deleteSnapshot', snapshotId });
         }
+    }
+
+    // SCRIPT-2.2.0: Generate Abstract with model selection
+    function generateAbstract() {
+        if (isGenerating) return;
+        
+        const selector = document.getElementById('model-selector');
+        const modelId = selector ? selector.value : null;
+        const btn = document.getElementById('generate-abstract-btn');
+        
+        btn.textContent = '⏳ Generating...';
+        btn.disabled = true;
+        isGenerating = true;
+        
+        vscode.postMessage({ command: 'generateAbstract', modelId });
+        
+        // Reset after timeout (actual completion handled by refresh)
+        setTimeout(() => {
+            isGenerating = false;
+            btn.textContent = '✨ Generate Abstract';
+            btn.disabled = false;
+        }, 30000);
     }
 `;
 
@@ -408,6 +437,70 @@ function generateCacheSection(cacheStats: CacheStats): string {
     </div>`;
 }
 
+// SCRIPT-2.2.0: Generate Abstract with Model Selector
+function generateAbstractSection(models?: ModelInfo[], defaultModelId?: string): string {
+    if (!models || models.length === 0) {
+        // Fallback with no selector
+        return `
+    <div class="section-title">🤖 Generate Abstract</div>
+    <div class="metric-card">
+        <p style="margin: 0 0 12px 0; font-size: 12px; opacity: 0.8;">
+            Generate semantic summaries of your snapshots using LLM.
+        </p>
+        <button id="generate-abstract-btn" class="refresh-btn" onclick="generateAbstract()" style="width: 100%;">
+            ✨ Generate Abstract
+        </button>
+    </div>`;
+    }
+
+    // Group models by tier
+    const premiumModels = models.filter(m => m.tier === 'premium');
+    const standardModels = models.filter(m => m.tier === 'standard');
+    const liteModels = models.filter(m => m.tier === 'lite');
+
+    const generateOptions = (modelList: ModelInfo[], tierLabel: string) => {
+        if (modelList.length === 0) return '';
+        return `<optgroup label="${tierLabel}">
+            ${modelList.map(m => `
+                <option value="${m.id}" ${m.id === defaultModelId ? 'selected' : ''}>
+                    ${escapeHtml(m.name)}${m.usedInLogs ? ' ✓' : ''}
+                </option>
+            `).join('')}
+        </optgroup>`;
+    };
+
+    const options = [
+        generateOptions(premiumModels, '⭐ Premium'),
+        generateOptions(standardModels, '📊 Standard'),
+        generateOptions(liteModels, '⚡ Lite')
+    ].filter(Boolean).join('');
+
+    return `
+    <div class="section-title">🤖 Generate Abstract</div>
+    <div class="metric-card">
+        <p style="margin: 0 0 12px 0; font-size: 12px; opacity: 0.8;">
+            Generate semantic summaries of your snapshots using LLM.
+        </p>
+        <div style="margin-bottom: 12px;">
+            <label for="model-selector" style="font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px;">
+                Select Model:
+            </label>
+            <select id="model-selector" style="width: 100%; padding: 6px; border-radius: 4px; 
+                background: var(--vscode-input-background); 
+                color: var(--vscode-input-foreground);
+                border: 1px solid var(--vscode-input-border);">
+                ${options}
+            </select>
+        </div>
+        <button id="generate-abstract-btn" class="refresh-btn" onclick="generateAbstract()" style="width: 100%;">
+            ✨ Generate Abstract
+        </button>
+        <div style="margin-top: 8px; font-size: 10px; opacity: 0.6;">
+            ✓ = Model used in your recent sessions
+        </div>
+    </div>`;
+}
+
 function generateSnapshotsSection(snapshots: SnapshotMetadata[], cacheStats: CacheStats): string {
     const lastSnapshot = snapshots.length > 0 ? snapshots[0] : null;
     const timeSinceLastSnapshot = lastSnapshot 
@@ -467,7 +560,7 @@ function generateDiagnosticsSection(diagnostics: PanelDiagnostics): string {
  * Genera el HTML completo del panel de métricas
  */
 export function generateMetricsPanelHtml(data: MetricsPanelData): string {
-    const { metrics, analysis, diagnostics, cacheStats, snapshots } = data;
+    const { metrics, analysis, diagnostics, cacheStats, snapshots, availableModels, defaultModelId } = data;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -487,6 +580,7 @@ export function generateMetricsPanelHtml(data: MetricsPanelData): string {
     ${generateKeyMetricsGrid(metrics, diagnostics)}
     ${generateHourlyChart(metrics.hourlyDistribution)}
     ${generateModelTable(metrics.byModel)}
+    ${generateAbstractSection(availableModels, defaultModelId)}
     ${generateIssuesSection(analysis.issues)}
     ${generateRecommendationsSection(analysis.recommendations)}
     ${generateCacheSection(cacheStats)}

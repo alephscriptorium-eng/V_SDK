@@ -2,6 +2,7 @@
  * SnapshotManager - Gestión de snapshots de conversaciones Copilot
  * 
  * Parte de FEATURE-SNAPSHOTS-1.0.0
+ * SCRIPT-2.2.0: Añadido soporte para selección de modelo en generateAbstract
  * 
  * Los snapshots capturan el estado actual del cache de requests
  * y lo persisten a disco para consulta posterior.
@@ -15,6 +16,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CcreqDocumentContent, getCachedRequestIds, getCachedRequestContent, getCacheStats } from './CcreqDocumentResolver';
+import { getModelConfigService } from './ModelConfigService';
 import { 
     SnapshotMetadata, 
     Snapshot, 
@@ -425,9 +427,12 @@ export class SnapshotManager {
 
     /**
      * Generar ABSTRACT.md con resúmenes semánticos usando LLM (T009)
+     * SCRIPT-2.2.0: Añadido soporte para selección de modelo
      * Usa la API vscode.lm para generar resúmenes inteligentes
+     * 
+     * @param modelId - Optional model ID to use (e.g., 'claude-sonnet-4')
      */
-    async generateAbstract(): Promise<string | null> {
+    async generateAbstract(modelId?: string): Promise<string | null> {
         try {
             const snapshots = await this.listSnapshots();
             if (snapshots.length === 0) {
@@ -435,11 +440,41 @@ export class SnapshotManager {
                 return null;
             }
 
-            // Intentar usar LLM para resúmenes inteligentes
-            const models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
+            // SCRIPT-2.2.0: Use ModelConfigService for model selection
+            const modelConfigService = getModelConfigService(undefined, this.outputChannel);
+            const modelSelection = await modelConfigService.selectModel(modelId);
+            
+            let models: vscode.LanguageModelChat[] = [];
+            let selectedModelName = 'unknown';
+
+            if (modelSelection.success && modelSelection.model) {
+                selectedModelName = modelSelection.model.name;
+                models = await vscode.lm.selectChatModels({
+                    vendor: modelSelection.model.vendor,
+                    family: modelSelection.model.family
+                });
+                
+                if (modelSelection.usedFallback) {
+                    this.outputChannel.appendLine(
+                        `[SnapshotManager] Using fallback model: ${selectedModelName}`
+                    );
+                } else {
+                    this.outputChannel.appendLine(
+                        `[SnapshotManager] Using selected model: ${selectedModelName}`
+                    );
+                }
+            } else {
+                // Last resort fallback to gpt-4o
+                this.outputChannel.appendLine(
+                    `[SnapshotManager] Model selection failed, trying gpt-4o fallback`
+                );
+                models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
+                selectedModelName = 'GPT-4o (fallback)';
+            }
             
             let abstractContent = `# Resúmenes de Sesiones — Copilot Logs\n\n`;
             abstractContent += `> **Generado automáticamente** por SnapshotManager + LLM  \n`;
+            abstractContent += `> **Modelo**: ${selectedModelName}  \n`;
             abstractContent += `> **Actualizado**: ${new Date().toISOString()}\n\n`;
             abstractContent += `---\n\n`;
 

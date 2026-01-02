@@ -918,22 +918,28 @@ Cada snapshot contiene:
 
         // =====================================================================
         // Tool: generate_abstract (T009)
+        // SCRIPT-2.2.0: Added modelId parameter for model selection
         // Genera ABSTRACT.md con resúmenes semánticos usando LLM
         // =====================================================================
         this.server.tool(
             'generate_abstract',
-            'Generate ABSTRACT.md with semantic summaries of all snapshots using LLM. Creates intelligent summaries of each session.',
-            {},
-            async () => {
+            'Generate ABSTRACT.md with semantic summaries of all snapshots using LLM. Creates intelligent summaries of each session. Optionally specify a model ID.',
+            {
+                modelId: {
+                    type: 'string',
+                    description: 'Optional model ID to use (e.g., "claude-sonnet-4", "claude-opus-4.5", "gpt-5.2"). If not specified, uses the default model.'
+                }
+            },
+            async ({ modelId }: { modelId?: string }) => {
                 try {
                     const manager = getSnapshotManager(this.outputChannel);
-                    const abstractPath = await manager.generateAbstract();
+                    const abstractPath = await manager.generateAbstract(modelId);
 
                     if (abstractPath) {
                         return {
                             content: [{
                                 type: 'text',
-                                text: `✅ ABSTRACT.md generado en: ${abstractPath}\n\nEl archivo contiene resúmenes semánticos de tus snapshots, generados con LLM cuando está disponible.`
+                                text: `✅ ABSTRACT.md generado en: ${abstractPath}\n\n${modelId ? `Modelo utilizado: ${modelId}\n\n` : ''}El archivo contiene resúmenes semánticos de tus snapshots, generados con LLM.`
                             }]
                         };
                     } else {

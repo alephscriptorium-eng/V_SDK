@@ -1,5 +1,6 @@
 /**
  * WISH-01/02/03: Copilot Log Exporter Module
+ * SCRIPT-2.2.0: Added Model Config Service
  * Main entry point for the copilotLogs module
  * 
  * Refactorizado: Tipos modulares en types/
@@ -8,6 +9,7 @@
 // Types
 export * from './types';
 export * from './types/snapshot.types';
+export * from './types/model.types';
 
 // Core services
 export { DiskLogScanner } from './DiskLogScanner';
@@ -29,6 +31,13 @@ export {
     CopilotLogExporterService, 
     getCopilotLogExporterService 
 } from './CopilotLogExporterService';
+
+// SCRIPT-2.2.0: Model Config Service
+export {
+    ModelConfigService,
+    getModelConfigService,
+    resetModelConfigService
+} from './ModelConfigService';
 
 // WISH-02: Auto-Debug
 export { 

@@ -3,6 +3,7 @@
  * WebView panel for displaying Copilot usage metrics
  * 
  * FEATURE-SNAPSHOTS-1.0.0: Añadido minidashboard de snapshots
+ * SCRIPT-2.2.0: Añadido Model Selector para Generate Abstract
  * 
  * Refactorizado: Template HTML extraído a templates/MetricsPanelTemplate.ts
  */
@@ -11,6 +12,7 @@ import * as vscode from 'vscode';
 import { getCopilotLogExporterService } from './CopilotLogExporterService';
 import { getCacheStats } from './CcreqDocumentResolver';
 import { getSnapshotManager } from './SnapshotManager';
+import { getModelConfigService } from './ModelConfigService';
 import { PREDEFINED_BACKLOGS } from './types/snapshot.types';
 import { 
     generateMetricsPanelHtml, 
@@ -76,6 +78,9 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
                 break;
             case 'deleteSnapshot':
                 await this.handleDeleteSnapshot(message.snapshotId as string);
+                break;
+            case 'generateAbstract':
+                await this.handleGenerateAbstract(message.modelId as string | undefined);
                 break;
         }
     }
@@ -178,6 +183,33 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
     }
 
     // =========================================================================
+    // Generate Abstract handler (SCRIPT-2.2.0)
+    // =========================================================================
+
+    private async handleGenerateAbstract(modelId?: string): Promise<void> {
+        try {
+            vscode.window.showInformationMessage(
+                `🤖 Generating abstract${modelId ? ` with ${modelId}` : ''}...`
+            );
+
+            const snapshotManager = getSnapshotManager();
+            const abstractPath = await snapshotManager.generateAbstract(modelId);
+
+            if (abstractPath) {
+                vscode.window.showInformationMessage('✅ Abstract generated successfully!');
+                const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(abstractPath));
+                await vscode.window.showTextDocument(doc);
+            } else {
+                vscode.window.showWarningMessage('No snapshots available to generate abstract.');
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error generating abstract: ${error}`);
+        } finally {
+            await this.refresh();
+        }
+    }
+
+    // =========================================================================
     // Content Update
     // =========================================================================
 
@@ -196,15 +228,23 @@ export class CopilotMetricsPanelProvider implements vscode.WebviewViewProvider {
             
             const snapshotManager = getSnapshotManager();
             const snapshots = await snapshotManager.listSnapshots();
+
+            // SCRIPT-2.2.0: Get available models and enrich with log data
+            const modelConfigService = getModelConfigService();
+            modelConfigService.enrichWithHistoricalModels(metrics);
+            const availableModels = modelConfigService.getAvailableModels();
+            const defaultModel = modelConfigService.getDefaultModel();
             
-            console.log(`[CopilotMetricsPanel] Data loaded: ${diagnostics.requestCount} requests, ${cacheStats.size} cached, ${snapshots.length} snapshots`);
+            console.log(`[CopilotMetricsPanel] Data loaded: ${diagnostics.requestCount} requests, ${cacheStats.size} cached, ${snapshots.length} snapshots, ${availableModels.length} models`);
 
             const data: MetricsPanelData = {
                 metrics,
                 analysis,
                 diagnostics,
                 cacheStats,
-                snapshots
+                snapshots,
+                availableModels,
+                defaultModelId: defaultModel?.id
             };
 
             this._view.webview.html = generateMetricsPanelHtml(data);
