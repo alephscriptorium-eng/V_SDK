@@ -33,11 +33,6 @@ const COPILOT_LOGS_SERVER_CONFIG: BaseMCPServerConfig = {
     description: 'MCP Server for accessing and analyzing Copilot Chat request logs',
     port: 3100, // Dedicated port for this server
     capabilities: {
-        tools: [],
-        resources: [],
-        prompts: []
-    },
-    capabilitiesCheck: {
         tools: true,
         resources: true,
         prompts: false
@@ -54,17 +49,20 @@ const COPILOT_LOGS_SERVER_CONFIG: BaseMCPServerConfig = {
  */
 function createVSCodeLogger(outputChannel: vscode.OutputChannel): MCPLogger {
     return {
-        info: (message: string, ...args: any[]) => {
-            outputChannel.appendLine(`[INFO] ${message} ${args.length ? JSON.stringify(args) : ''}`);
+        info: (message: string, meta?: object) => {
+            outputChannel.appendLine(`[INFO] ${message}${meta ? ' ' + JSON.stringify(meta) : ''}`);
         },
-        error: (message: string, ...args: any[]) => {
-            outputChannel.appendLine(`[ERROR] ${message} ${args.length ? JSON.stringify(args) : ''}`);
+        warn: (message: string, meta?: object) => {
+            outputChannel.appendLine(`[WARN] ${message}${meta ? ' ' + JSON.stringify(meta) : ''}`);
         },
-        debug: (message: string, ...args: any[]) => {
-            outputChannel.appendLine(`[DEBUG] ${message} ${args.length ? JSON.stringify(args) : ''}`);
+        error: (message: string, meta?: object) => {
+            outputChannel.appendLine(`[ERROR] ${message}${meta ? ' ' + JSON.stringify(meta) : ''}`);
         },
-        verbose: (message: string, ...args: any[]) => {
-            outputChannel.appendLine(`[VERBOSE] ${message} ${args.length ? JSON.stringify(args) : ''}`);
+        debug: (message: string, meta?: object) => {
+            outputChannel.appendLine(`[DEBUG] ${message}${meta ? ' ' + JSON.stringify(meta) : ''}`);
+        },
+        verbose: (message: string, meta?: object) => {
+            outputChannel.appendLine(`[VERBOSE] ${message}${meta ? ' ' + JSON.stringify(meta) : ''}`);
         }
     };
 }

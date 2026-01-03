@@ -1307,7 +1307,7 @@
     "yo": "^5.1.0"
   },
   "dependencies": {
-    "@alephscript/mcp-core-sdk": "file:mcp-core-sdk/alephscript-mcp-core-sdk-1.0.0.tgz",
+    "@alephscript/mcp-core-sdk": "file:mcp-core-sdk/alephscript-mcp-core-sdk-1.2.0.tgz",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "express": "^5.1.0",
     "socket.io-client": "^4.8.1",
