@@ -897,7 +897,7 @@
         {
           "id": "alephscript.hackerControlPanel",
           "type": "webview",
-          "name": "🚀 Panel",
+          "name": "🚀 MENU",
           "icon": "$(pulse)",
           "when": "true",
           "visibility": "visible"
@@ -905,7 +905,7 @@
         {
           "id": "alephscript.hackerCommandPanel",
           "type": "webview",
-          "name": "⚡  Panel",
+          "name": "⚡CMD",
           "icon": "$(terminal-cmd)",
           "when": "true",
           "visibility": "visible"
@@ -913,7 +913,7 @@
         {
           "id": "alephscript.hackerConfigPanel",
           "type": "webview",
-          "name": "⚙️ Panel",
+          "name": "⚙️ SETTINGS",
           "icon": "$(settings-gear)",
           "when": "true",
           "visibility": "visible"
