@@ -15,6 +15,7 @@ import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
 import { HackerControlPanelProvider } from '../views/HackerControlPanelProvider';
 import { HackerCommandPanelProvider } from '../views/HackerCommandPanelProvider';
 import { HackerConfigPanelProvider } from '../views/HackerConfigPanelProvider';
+import { HackerTasksPanelProvider } from '../views/HackerTasksPanelProvider';
 import { HackerStatusBarManager } from './HackerStatusBarManager';
 import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
 import { ConfigurationCommandsService } from './configurationCommandsService';
@@ -54,6 +55,7 @@ export interface ExtensionContext {
     hackerControlPanelProvider: HackerControlPanelProvider;
     hackerCommandPanelProvider: HackerCommandPanelProvider;
     hackerConfigPanelProvider: HackerConfigPanelProvider;
+    hackerTasksPanelProvider: HackerTasksPanelProvider;
     hackerStatusBarManager: HackerStatusBarManager;
     agentContentEditor: AgentContentEditorProvider;
     agentConfigEditor: AgentConfigEditorProvider;
@@ -112,6 +114,7 @@ export class ExtensionBootstrap {
             const hackerControlPanelProvider = new HackerControlPanelProvider(context.extensionUri, context);
             const hackerCommandPanelProvider = new HackerCommandPanelProvider(context.extensionUri, context);
             const hackerConfigPanelProvider = new HackerConfigPanelProvider(context.extensionUri, context);
+            const hackerTasksPanelProvider = new HackerTasksPanelProvider(context.extensionUri, context);
             
             // Initialize Hacker Status Bar Manager
             const hackerStatusBarManager = HackerStatusBarManager.getInstance();
@@ -151,6 +154,7 @@ export class ExtensionBootstrap {
                 hackerControlPanelProvider,
                 hackerCommandPanelProvider,
                 hackerConfigPanelProvider,
+                hackerTasksPanelProvider,
                 hackerStatusBarManager,
                 agentContentEditor,
                 agentConfigEditor,
@@ -408,6 +412,67 @@ export class ExtensionBootstrap {
                     await managers.errorBoundary.handleError(
                         error as Error,
                         'hackerConfigPanel.toggle',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            // ===== Hacker Tasks Panel Commands =====
+            vscode.commands.registerCommand('alephscript.hackerTasksPanel.toggle', async () => {
+                try {
+                    await vscode.commands.executeCommand('alephscript.hackerTasksPanel.focus');
+                    vscode.window.showInformationMessage('📋 Tasks Runner activated');
+                    
+                    if (this.extensionContext?.hackerStatusBarManager) {
+                        this.extensionContext.hackerStatusBarManager.updateButtonStates(['tasks']);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerTasksPanel.toggle',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.hackerTasksPanel.refresh', async () => {
+                try {
+                    if (this.extensionContext?.hackerTasksPanelProvider) {
+                        await this.extensionContext.hackerTasksPanelProvider.refresh();
+                        vscode.window.showInformationMessage('🔄 Tasks refreshed');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerTasksPanel.refresh',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.hackerTasksPanel.runDefault', async () => {
+                try {
+                    // Execute the default build task
+                    await vscode.commands.executeCommand('workbench.action.tasks.build');
+                    vscode.window.showInformationMessage('▶️ Running default build task...');
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerTasksPanel.runDefault',
+                        LogCategory.EXTENSION
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.hackerTasksPanel.stopAll', async () => {
+                try {
+                    // Terminate all running tasks
+                    await vscode.commands.executeCommand('workbench.action.tasks.terminate');
+                    vscode.window.showInformationMessage('⏹️ All tasks stopped');
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'hackerTasksPanel.stopAll',
                         LogCategory.EXTENSION
                     );
                 }
@@ -1542,6 +1607,14 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 vscode.window.registerWebviewViewProvider(
                     HackerConfigPanelProvider.viewType,
                     this.extensionContext.hackerConfigPanelProvider
+                )
+            );
+
+            // Register Hacker Tasks Panel WebView Provider (dynamic tasks.json reader)
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.registerWebviewViewProvider(
+                    HackerTasksPanelProvider.viewType,
+                    this.extensionContext.hackerTasksPanelProvider
                 )
             );
 

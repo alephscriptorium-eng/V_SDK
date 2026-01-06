@@ -415,6 +415,30 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "alephscript.hackerTasksPanel.toggle",
+        "title": "📋 Toggle Tasks Runner",
+        "category": "🎭 Theater Control",
+        "icon": "$(tasklist)"
+      },
+      {
+        "command": "alephscript.hackerTasksPanel.refresh",
+        "title": "🔄 Refresh Tasks",
+        "category": "🎭 Theater Control",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "alephscript.hackerTasksPanel.runDefault",
+        "title": "▶️ Run Default Build Task",
+        "category": "🎭 Theater Control",
+        "icon": "$(play)"
+      },
+      {
+        "command": "alephscript.hackerTasksPanel.stopAll",
+        "title": "⏹️ Stop All Tasks",
+        "category": "🎭 Theater Control",
+        "icon": "$(debug-stop)"
+      },
+      {
         "command": "alephscript.statusBar.animate",
         "title": "🚀 Animate Status Bar",
         "category": "🎭 Theater Control",
@@ -831,6 +855,21 @@
           "group": "navigation@1"
         },
         {
+          "command": "alephscript.hackerTasksPanel.toggle",
+          "when": "view == alephscript.hackerTasksPanel",
+          "group": "navigation@1"
+        },
+        {
+          "command": "alephscript.hackerTasksPanel.refresh",
+          "when": "view == alephscript.hackerTasksPanel",
+          "group": "navigation@2"
+        },
+        {
+          "command": "alephscript.hackerTasksPanel.stopAll",
+          "when": "view == alephscript.hackerTasksPanel",
+          "group": "navigation@3"
+        },
+        {
           "command": "alephscript.mcptree.refresh",
           "when": "view == alephscript.mcptree",
           "group": "navigation"
@@ -915,6 +954,14 @@
           "type": "webview",
           "name": "⚙️ SETTINGS",
           "icon": "$(settings-gear)",
+          "when": "true",
+          "visibility": "visible"
+        },
+        {
+          "id": "alephscript.hackerTasksPanel",
+          "type": "webview",
+          "name": "📋 TASKS",
+          "icon": "$(tasklist)",
           "when": "true",
           "visibility": "visible"
         },
@@ -1036,6 +1083,18 @@
         "command": "alephscript.hackerConfigPanel.toggle",
         "key": "ctrl+alt+3",
         "mac": "cmd+alt+3",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.hackerTasksPanel.toggle",
+        "key": "ctrl+alt+4",
+        "mac": "cmd+alt+4",
+        "when": "true"
+      },
+      {
+        "command": "alephscript.hackerTasksPanel.runDefault",
+        "key": "ctrl+shift+b",
+        "mac": "cmd+shift+b",
         "when": "true"
       },
       {
