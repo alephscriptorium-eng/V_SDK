@@ -1,28 +1,19 @@
-# Source files
+# Source
 src/**
 **/*.ts
 !**/*.d.ts
-!out/**
 
-# Test files
+# Build artifacts (keep only dist/)
+out/**
+
+# Development
+.vscode/**
 tests/**
 coverage/**
-jest.config.js
-*.test.ts
-*.test.js
+node_modules/**
+*.map
 
-# Build/config files
-tsconfig.json
-tsconfig.build.json
-.eslintrc*
-.prettierrc*
-
-# Git
-.git/**
-.gitignore
-.gitmodules
-
-# Documentation (not needed in package)
+# Documentation
 PLANIFICACION/**
 prompts/**
 vibecoding/**
@@ -32,30 +23,19 @@ FEATURE_CONFIGS/**
 !README.md
 !LICENSE.md
 
-# Development files
-.vscode/**
-
-# Exclude devDependencies-related files but keep node_modules for runtime deps
-node_modules/.bin/**
-node_modules/@types/**
-node_modules/typescript/**
-node_modules/@typescript-eslint/**
-node_modules/eslint/**
-node_modules/jest/**
-node_modules/ts-jest/**
-node_modules/@vscode/**
-node_modules/yo/**
-node_modules/generator-code/**
-
-# Submodule mcp-core-sdk in root - EXCLUDE COMPLETELY
-# (only used to generate npm pack, not needed in extension)
-mcp-core-sdk/**
+# Config files
+tsconfig.json
+tsconfig.build.json
+esbuild.config.mjs
+jest.config.js
+.eslintrc*
+.prettierrc*
+.gitignore
 
 # Other
 *.vsix
 *.log
 .DS_Store
 Thumbs.db
-
-# Pics folder (large assets not needed)
 pics/**
+mcp-core-sdk/**
