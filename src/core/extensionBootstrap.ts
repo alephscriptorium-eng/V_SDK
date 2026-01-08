@@ -31,6 +31,7 @@ import { SocketMonitor } from '../socketMonitor';
 import { UIManager } from '../uiManager';
 import { MCPServerManager } from '../mcpServerManager';
 import { MCPWebViewManager } from '../mcpWebViewManager';
+import { AracneBotService } from './AracneBotService';
 // WISH-01/02/03: Copilot Log Exporter
 import { registerCopilotLogCommands } from '../copilotLogs/commands';
 import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
@@ -67,6 +68,7 @@ export interface ExtensionContext {
     logsTreeProvider: LogsTreeDataProvider;
     mcpTreeProvider: MCPTreeDataProvider;
     mcpWebViewManager: MCPWebViewManager;
+    aracneBotService: AracneBotService;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -134,6 +136,14 @@ export class ExtensionBootstrap {
             const logsTreeProvider = new LogsTreeDataProvider();
             const mcpTreeProvider = new MCPTreeDataProvider(mcpServerManager);
             
+            // Initialize AracneBot - Socket.IO client for mesh communication
+            const aracneBotService = AracneBotService.getInstance();
+            aracneBotService.initialize({
+                socketUrl: mcpConfigManager.getDefaultSocketUrl(),
+                botName: 'vscode-extension',
+                autoConnect: false // Will connect when user triggers or on demand
+            });
+            
             this.extensionContext = {
                 managers: {
                     factory: managers.factory,
@@ -166,6 +176,7 @@ export class ExtensionBootstrap {
                 logsTreeProvider,
                 mcpTreeProvider,
                 mcpWebViewManager,
+                aracneBotService,
                 logger
             };
 
@@ -179,6 +190,9 @@ export class ExtensionBootstrap {
             // Initialize Theatrical Chat Participants (Teatro VS Code)
             await this.extensionContext.theatricalChat.initialize();
             logger.info('🎭 Theatrical Chat Participants initialized');
+            
+            // Log AracneBot initialization (connects on demand)
+            logger.info('🕷️ AracneBot initialized - ready to connect to mesh');
             
             // Track extension activation
             await this.extensionContext.managers.analytics.trackEvent(
@@ -1524,6 +1538,53 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
+            // AracneBot Commands - Socket.IO mesh integration
+            vscode.commands.registerCommand('alephscript.aracne.connect', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.aracneBotService.connect();
+                        vscode.window.showInformationMessage('🕷️ AracneBot connecting to mesh...');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'aracne.connect',
+                        LogCategory.SOCKET
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.aracne.disconnect', async () => {
+                try {
+                    if (this.extensionContext) {
+                        this.extensionContext.aracneBotService.disconnect();
+                        vscode.window.showInformationMessage('🕷️ AracneBot disconnected from mesh');
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'aracne.disconnect',
+                        LogCategory.SOCKET
+                    );
+                }
+            }),
+
+            vscode.commands.registerCommand('alephscript.aracne.status', async () => {
+                try {
+                    if (this.extensionContext) {
+                        const connected = this.extensionContext.aracneBotService.isConnected();
+                        const status = connected ? '🟢 Connected' : '🔴 Disconnected';
+                        vscode.window.showInformationMessage(`🕷️ AracneBot: ${status}`);
+                    }
+                } catch (error) {
+                    await managers.errorBoundary.handleError(
+                        error as Error,
+                        'aracne.status',
+                        LogCategory.SOCKET
+                    );
+                }
+            }),
+
             // Configs Commands
             vscode.commands.registerCommand('alephscript.configs.refresh', async () => {
                 try {
@@ -1942,6 +2003,10 @@ AlephScript Extension Status:
                 // Dispose theatrical chat participants
                 this.extensionContext.theatricalChat.dispose();
                 this.extensionContext.logger.info('🎭 Theatrical Chat Participants disposed');
+                
+                // Dispose AracneBot Socket.IO client
+                this.extensionContext.aracneBotService.dispose();
+                this.extensionContext.logger.info('🕷️ AracneBot disposed');
                 
                 // Then dispose all managers
                 await this.extensionContext.managers.factory.disposeAll();

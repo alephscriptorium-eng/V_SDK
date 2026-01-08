@@ -196,6 +196,24 @@
         "icon": "$(mail)"
       },
       {
+        "command": "alephscript.aracne.connect",
+        "title": "Connect AracneBot to Mesh",
+        "category": "AlephScript",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "alephscript.aracne.disconnect",
+        "title": "Disconnect AracneBot from Mesh",
+        "category": "AlephScript",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "alephscript.aracne.status",
+        "title": "AracneBot Status",
+        "category": "AlephScript",
+        "icon": "$(info)"
+      },
+      {
         "command": "alephscript.configs.openInEditor",
         "title": "Open in Editor"
       },
