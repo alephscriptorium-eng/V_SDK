@@ -1,5 +1,11 @@
+/**
+ * Socket Monitor - WebView panel for monitoring Socket.IO connections
+ * 
+ * Refactorizado para usar AlephScriptClient en lugar de socket.io-client directo.
+ * @épica MCP-CHANNELS-1.0.0
+ */
 import * as vscode from 'vscode';
-import { io, Socket } from 'socket.io-client';
+import { AlephScriptClient, AlephScriptClientConfig } from './libs/alephscript-client';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
 
 export interface SocketMessage {
@@ -21,7 +27,7 @@ export interface SocketRoomInfo {
 
 export class SocketMonitor {
     private panel: vscode.WebviewPanel | undefined;
-    private socket: Socket | undefined;
+    private client: AlephScriptClient | undefined;
     private messages: SocketMessage[] = [];
     private isConnected = false;
     private rooms: Map<string, SocketRoomInfo> = new Map();
@@ -92,40 +98,52 @@ export class SocketMonitor {
 
     private async connect(url: string) {
         try {
-            if (this.socket) {
-                this.socket.disconnect();
+            if (this.client) {
+                this.client.disconnect();
             }
 
-            this.socket = io(url, {
-                autoConnect: true,
+            // Parse URL to extract namespace if present
+            const urlObj = new URL(url);
+            const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+            const namespace = urlObj.pathname || '/';
+
+            const config: AlephScriptClientConfig = {
+                name: 'SocketMonitor',
+                url: baseUrl,
+                namespace: namespace,
+                autoConnect: false,
                 reconnection: true,
                 reconnectionAttempts: 5,
                 reconnectionDelay: 1000
-            });
+            };
 
-            this.socket.on('connect', () => {
+            this.client = new AlephScriptClient(config);
+
+            this.client.onConnect((socketId) => {
                 this.isConnected = true;
                 this.panel?.webview.postMessage({
                     command: 'connectionStatus',
                     connected: true,
-                    socketId: this.socket?.id
+                    socketId: socketId
                 });
+                this._onConnectionChange.fire(true);
                 
-                // Subscribe to all public streams
-                this.socket?.emit('join-room', 'Application');
-                this.socket?.emit('join-room', 'System');  
-                this.socket?.emit('join-room', 'UserInterface');
+                // Subscribe to default rooms
+                this.client?.joinRoom('Application');
+                this.client?.joinRoom('System');
+                this.client?.joinRoom('UserInterface');
             });
 
-            this.socket.on('disconnect', () => {
+            this.client.onDisconnect(() => {
                 this.isConnected = false;
                 this.panel?.webview.postMessage({
                     command: 'connectionStatus',
                     connected: false
                 });
+                this._onConnectionChange.fire(false);
             });
 
-            this.socket.on('connect_error', (error) => {
+            this.client.onError((error) => {
                 this.panel?.webview.postMessage({
                     command: 'connectionError',
                     error: error.message
@@ -133,16 +151,19 @@ export class SocketMonitor {
             });
 
             // Listen for all message types
-            this.socket.onAny((eventName, ...args) => {
-                if (eventName !== 'connect' && eventName !== 'disconnect') {
+            this.client.onAny((eventName, ...args) => {
+                if (!['connect', 'disconnect', 'connect_error'].includes(eventName)) {
                     this.handleMessage(eventName, args[0]);
                 }
             });
 
-            // Listen specifically for gamification events
-            this.socket.on('Application', (data) => this.handleMessage('Application', data));
-            this.socket.on('System', (data) => this.handleMessage('System', data));
-            this.socket.on('UserInterface', (data) => this.handleMessage('UserInterface', data));
+            // Listen specifically for channel events
+            this.client.on('Application', (data) => this.handleMessage('Application', data));
+            this.client.on('System', (data) => this.handleMessage('System', data));
+            this.client.on('UserInterface', (data) => this.handleMessage('UserInterface', data));
+
+            // Connect
+            this.client.connect();
 
         } catch (error) {
             this.panel?.webview.postMessage({
@@ -153,9 +174,9 @@ export class SocketMonitor {
     }
 
     private disconnect() {
-        if (this.socket) {
-            this.socket.disconnect();
-            this.socket = undefined;
+        if (this.client) {
+            this.client.disconnect();
+            this.client = undefined;
             this.isConnected = false;
         }
     }
@@ -172,9 +193,8 @@ export class SocketMonitor {
             target: data?.target
         };
 
-        this.messages.unshift(message); // Add to beginning for latest first
+        this.messages.unshift(message);
         
-        // Keep only last 1000 messages
         if (this.messages.length > 1000) {
             this.messages = this.messages.slice(0, 1000);
         }
@@ -183,6 +203,8 @@ export class SocketMonitor {
             command: 'newMessage',
             message: message
         });
+        
+        this._onMessageReceived.fire(message);
     }
 
     private determineChannel(eventName: string, data: any): 'Application' | 'System' | 'UserInterface' {
@@ -190,7 +212,6 @@ export class SocketMonitor {
             return data.channel;
         }
 
-        // Determine channel based on event name patterns
         if (eventName.includes('ui') || eventName.includes('UI') || eventName.includes('interface')) {
             return 'UserInterface';
         } else if (eventName.includes('system') || eventName.includes('server') || eventName.includes('process')) {
@@ -208,27 +229,38 @@ export class SocketMonitor {
     }
 
     private joinRoom(room: string) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit('join-room', room);
+        if (this.client && this.isConnected) {
+            this.client.joinRoom(room);
             this.panel?.webview.postMessage({
                 command: 'roomJoined',
                 room: room
             });
+            
+            const roomInfo: SocketRoomInfo = {
+                name: room,
+                clientCount: 1,
+                isJoined: true
+            };
+            this.rooms.set(room, roomInfo);
+            this._onRoomsChange.fire(this.rooms);
         }
     }
 
     private leaveRoom(room: string) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit('leave-room', room);
+        if (this.client && this.isConnected) {
+            this.client.leaveRoom(room);
             this.panel?.webview.postMessage({
                 command: 'roomLeft',
                 room: room
             });
+            
+            this.rooms.delete(room);
+            this._onRoomsChange.fire(this.rooms);
         }
     }
 
     private sendMessage(room: string, channel: string, data: any) {
-        if (this.socket && this.isConnected) {
+        if (this.client && this.isConnected) {
             const message = {
                 room: room,
                 channel: channel,
@@ -237,7 +269,7 @@ export class SocketMonitor {
                 data: data
             };
             
-            this.socket.emit(channel, message);
+            this.client.emit(channel, message);
         }
     }
 
@@ -298,43 +330,51 @@ export class SocketMonitor {
                     color: var(--vscode-button-foreground);
                     border: none;
                     padding: 6px 12px;
-                    cursor: pointer;
                     border-radius: 4px;
+                    cursor: pointer;
                     font-size: 12px;
                 }
                 .btn:hover {
                     background: var(--vscode-button-hoverBackground);
                 }
-                .btn.small {
-                    padding: 4px 8px;
-                    font-size: 11px;
+                .btn-secondary {
+                    background: var(--vscode-button-secondaryBackground);
+                    color: var(--vscode-button-secondaryForeground);
                 }
                 input, select {
                     background: var(--vscode-input-background);
                     color: var(--vscode-input-foreground);
                     border: 1px solid var(--vscode-input-border);
+                    padding: 6px 10px;
                     border-radius: 4px;
-                    padding: 4px 8px;
+                    font-size: 12px;
+                }
+                input:focus, select:focus {
+                    outline: 1px solid var(--vscode-focusBorder);
+                }
+                .section {
+                    margin-bottom: 20px;
+                }
+                .section-title {
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                    color: var(--vscode-foreground);
                 }
                 .filters {
                     display: flex;
                     gap: 10px;
                     margin-bottom: 15px;
-                    padding: 10px;
-                    background: var(--vscode-panel-background);
-                    border-radius: 4px;
-                    align-items: center;
+                    flex-wrap: wrap;
                 }
                 .messages-container {
-                    height: 400px;
+                    max-height: 500px;
                     overflow-y: auto;
                     border: 1px solid var(--vscode-panel-border);
                     border-radius: 4px;
-                    padding: 10px;
                 }
                 .message {
-                    border-bottom: 1px solid var(--vscode-list-hoverBackground);
-                    padding: 8px 0;
+                    padding: 8px 12px;
+                    border-bottom: 1px solid var(--vscode-panel-border);
                     font-size: 12px;
                 }
                 .message:last-child {
@@ -345,121 +385,116 @@ export class SocketMonitor {
                     justify-content: space-between;
                     margin-bottom: 4px;
                 }
+                .message-type {
+                    font-weight: bold;
+                    color: var(--vscode-textLink-foreground);
+                }
                 .message-time {
                     color: var(--vscode-descriptionForeground);
-                    font-size: 10px;
+                    font-size: 11px;
                 }
                 .message-channel {
+                    display: inline-block;
                     padding: 2px 6px;
-                    border-radius: 2px;
+                    border-radius: 3px;
                     font-size: 10px;
-                    font-weight: bold;
+                    margin-right: 5px;
                 }
-                .channel-Application {
-                    background: var(--vscode-terminal-ansiBlue);
-                    color: white;
-                }
-                .channel-System {
-                    background: var(--vscode-terminal-ansiYellow);
-                    color: black;
-                }
-                .channel-UserInterface {
-                    background: var(--vscode-terminal-ansiMagenta);
-                    color: white;
-                }
+                .channel-Application { background: var(--vscode-terminal-ansiBlue); color: white; }
+                .channel-System { background: var(--vscode-terminal-ansiYellow); color: black; }
+                .channel-UserInterface { background: var(--vscode-terminal-ansiMagenta); color: white; }
                 .message-data {
                     background: var(--vscode-textCodeBlock-background);
-                    padding: 6px;
-                    border-radius: 3px;
+                    padding: 6px 8px;
+                    border-radius: 4px;
                     font-family: var(--vscode-editor-font-family);
                     font-size: 11px;
                     white-space: pre-wrap;
-                    overflow: auto;
-                    max-height: 200px;
+                    word-break: break-all;
+                    max-height: 100px;
+                    overflow-y: auto;
                 }
-                .room-management {
+                .room-controls {
+                    display: flex;
+                    gap: 10px;
                     margin-bottom: 15px;
-                    padding: 10px;
-                    background: var(--vscode-panel-background);
-                    border-radius: 4px;
                 }
-                .send-message {
+                .send-panel {
+                    display: flex;
+                    gap: 10px;
                     margin-top: 15px;
-                    padding: 10px;
-                    background: var(--vscode-panel-background);
-                    border-radius: 4px;
+                    flex-wrap: wrap;
                 }
-                .send-message textarea {
-                    width: 100%;
+                .send-panel textarea {
+                    flex: 1;
+                    min-width: 200px;
                     height: 60px;
+                    resize: vertical;
                     background: var(--vscode-input-background);
                     color: var(--vscode-input-foreground);
                     border: 1px solid var(--vscode-input-border);
+                    padding: 6px 10px;
                     border-radius: 4px;
-                    padding: 8px;
-                    resize: vertical;
+                    font-family: var(--vscode-editor-font-family);
+                    font-size: 12px;
+                }
+                .empty-state {
+                    text-align: center;
+                    padding: 40px;
+                    color: var(--vscode-descriptionForeground);
                 }
             </style>
         </head>
         <body>
             <div class="header">
-                <h2>Socket.io Bus Monitor</h2>
-                <div class="connection-panel">
-                    <input type="text" id="socketUrl" placeholder="${defaultUrl}" value="${defaultUrl}">
-                    <button class="btn" onclick="connect()">Connect</button>
-                    <button class="btn" onclick="disconnect()">Disconnect</button>
-                    <span id="connectionStatus" class="status disconnected">Disconnected</span>
+                <h2>🔌 Socket.io Monitor</h2>
+                <span id="connectionStatus" class="status disconnected">Disconnected</span>
+            </div>
+
+            <div class="connection-panel">
+                <input type="text" id="socketUrl" value="${defaultUrl}" placeholder="Socket URL" style="flex: 1; min-width: 250px;">
+                <button class="btn" onclick="connect()">Connect</button>
+                <button class="btn btn-secondary" onclick="disconnect()">Disconnect</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Room Controls</div>
+                <div class="room-controls">
+                    <input type="text" id="roomName" placeholder="Room name" style="flex: 1;">
+                    <button class="btn" onclick="joinRoom()">Join</button>
+                    <button class="btn btn-secondary" onclick="leaveRoom()">Leave</button>
                 </div>
             </div>
 
-            <div class="room-management">
-                <h4>Room Management</h4>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="roomName" placeholder="Enter room name">
-                    <button class="btn small" onclick="joinRoom()">Join Room</button>
-                    <button class="btn small" onclick="leaveRoom()">Leave Room</button>
-                    <span style="margin-left: 20px; font-size: 12px;">
-                        Auto-joined: Application, System, UserInterface
-                    </span>
-                </div>
-            </div>
-
-            <div class="filters">
-                <label>Filter by Channel:</label>
-                <select id="channelFilter" onchange="filterMessages()">
-                    <option value="all">All Channels</option>
-                    <option value="Application">Application</option>
-                    <option value="System">System</option>
-                    <option value="UserInterface">UserInterface</option>
-                </select>
-                
-                <label>Filter by Room:</label>
-                <input type="text" id="roomFilter" placeholder="Room name" onchange="filterMessages()">
-                
-                <button class="btn small" onclick="clearMessages()">Clear</button>
-                <span style="margin-left: auto; font-size: 12px; color: var(--vscode-descriptionForeground);">
-                    Messages: <span id="messageCount">0</span>
-                </span>
-            </div>
-
-            <div class="messages-container" id="messagesContainer">
-                <div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 20px;">
-                    Connect to socket.io server to monitor messages
-                </div>
-            </div>
-
-            <div class="send-message">
-                <h4>Send Message</h4>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="text" id="sendRoom" placeholder="Room" value="Application">
-                    <select id="sendChannel">
+            <div class="section">
+                <div class="section-title">Messages</div>
+                <div class="filters">
+                    <select id="channelFilter" onchange="filterMessages()">
+                        <option value="">All Channels</option>
                         <option value="Application">Application</option>
                         <option value="System">System</option>
                         <option value="UserInterface">UserInterface</option>
                     </select>
+                    <input type="text" id="searchFilter" placeholder="Search messages..." oninput="filterMessages()">
+                    <button class="btn btn-secondary" onclick="clearMessages()">Clear</button>
+                </div>
+                <div id="messagesContainer" class="messages-container">
+                    <div class="empty-state">No messages yet. Connect to start monitoring.</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Send Message</div>
+                <div class="send-panel">
+                    <input type="text" id="sendRoom" placeholder="Target Room" style="width: 120px;">
+                    <select id="sendChannel" style="width: 120px;">
+                        <option value="Application">Application</option>
+                        <option value="System">System</option>
+                        <option value="UserInterface">UserInterface</option>
+                    </select>
+                    <textarea id="sendData" placeholder='{"type": "test", "message": "Hello"}'></textarea>
                     <button class="btn" onclick="sendMessage()">Send</button>
                 </div>
-                <textarea id="messageData" placeholder="Enter JSON message data...">{"test": "message from VS Code"}</textarea>
             </div>
 
             <script>
@@ -468,7 +503,7 @@ export class SocketMonitor {
 
                 function connect() {
                     const url = document.getElementById('socketUrl').value;
-                    vscode.postMessage({ command: 'connect', url: url });
+                    vscode.postMessage({ command: 'connect', url });
                 }
 
                 function disconnect() {
@@ -482,30 +517,25 @@ export class SocketMonitor {
                 function joinRoom() {
                     const room = document.getElementById('roomName').value;
                     if (room) {
-                        vscode.postMessage({ command: 'joinRoom', room: room });
+                        vscode.postMessage({ command: 'joinRoom', room });
                     }
                 }
 
                 function leaveRoom() {
                     const room = document.getElementById('roomName').value;
                     if (room) {
-                        vscode.postMessage({ command: 'leaveRoom', room: room });
+                        vscode.postMessage({ command: 'leaveRoom', room });
                     }
                 }
 
                 function sendMessage() {
                     const room = document.getElementById('sendRoom').value;
                     const channel = document.getElementById('sendChannel').value;
-                    const dataText = document.getElementById('messageData').value;
+                    const dataStr = document.getElementById('sendData').value;
                     
                     try {
-                        const data = JSON.parse(dataText);
-                        vscode.postMessage({ 
-                            command: 'sendMessage', 
-                            room: room, 
-                            channel: channel, 
-                            data: data 
-                        });
+                        const data = JSON.parse(dataStr);
+                        vscode.postMessage({ command: 'sendMessage', room, channel, data });
                     } catch (e) {
                         alert('Invalid JSON data');
                     }
@@ -513,35 +543,38 @@ export class SocketMonitor {
 
                 function filterMessages() {
                     const channelFilter = document.getElementById('channelFilter').value;
-                    const roomFilter = document.getElementById('roomFilter').value.toLowerCase();
+                    const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
                     
                     const filtered = allMessages.filter(msg => {
-                        const channelMatch = channelFilter === 'all' || msg.channel === channelFilter;
-                        const roomMatch = !roomFilter || msg.room.toLowerCase().includes(roomFilter);
-                        return channelMatch && roomMatch;
+                        if (channelFilter && msg.channel !== channelFilter) return false;
+                        if (searchFilter) {
+                            const dataStr = JSON.stringify(msg.data).toLowerCase();
+                            const typeStr = msg.type.toLowerCase();
+                            if (!dataStr.includes(searchFilter) && !typeStr.includes(searchFilter)) {
+                                return false;
+                            }
+                        }
+                        return true;
                     });
-                    
+
                     renderMessages(filtered);
                 }
 
                 function renderMessages(messages) {
                     const container = document.getElementById('messagesContainer');
-                    document.getElementById('messageCount').textContent = messages.length;
                     
                     if (messages.length === 0) {
-                        container.innerHTML = '<div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 20px;">No messages to display</div>';
+                        container.innerHTML = '<div class="empty-state">No messages match your filter.</div>';
                         return;
                     }
-                    
+
                     container.innerHTML = messages.map(msg => \`
                         <div class="message">
                             <div class="message-header">
-                                <div>
+                                <span>
                                     <span class="message-channel channel-\${msg.channel}">\${msg.channel}</span>
-                                    <strong>\${msg.type}</strong>
-                                    <span style="margin-left: 10px; color: var(--vscode-descriptionForeground);">Room: \${msg.room}</span>
-                                    \${msg.source ? \`<span style="margin-left: 10px; color: var(--vscode-descriptionForeground);">From: \${msg.source}</span>\` : ''}
-                                </div>
+                                    <span class="message-type">\${msg.type}</span>
+                                </span>
                                 <span class="message-time">\${new Date(msg.timestamp).toLocaleTimeString()}</span>
                             </div>
                             <div class="message-data">\${JSON.stringify(msg.data, null, 2)}</div>
@@ -549,7 +582,6 @@ export class SocketMonitor {
                     \`).join('');
                 }
 
-                // Listen for messages from the extension
                 window.addEventListener('message', event => {
                     const message = event.data;
                     switch (message.command) {
@@ -604,7 +636,6 @@ export class SocketMonitor {
     }
 
     public async connectToSocket(url?: string): Promise<boolean> {
-        // Use configuration manager to get default socket URL if not provided
         if (!url) {
             if (!this.configManager.isConfigLoaded()) {
                 await this.configManager.initialize();
@@ -612,15 +643,12 @@ export class SocketMonitor {
             url = this.configManager.getDefaultSocketUrl();
         }
         
-        // Use existing connect logic but return Promise
         return new Promise((resolve, reject) => {
             try {
                 this.connect(url!);
-                // Monitor connection state
                 const checkConnection = setInterval(() => {
                     if (this.isConnected) {
                         clearInterval(checkConnection);
-                        this._onConnectionChange.fire(true);
                         resolve(true);
                     }
                 }, 100);
@@ -646,20 +674,10 @@ export class SocketMonitor {
 
     public joinSocketRoom(roomName: string): void {
         this.joinRoom(roomName);
-        // Update room info
-        const roomInfo: SocketRoomInfo = {
-            name: roomName,
-            clientCount: 1,
-            isJoined: true
-        };
-        this.rooms.set(roomName, roomInfo);
-        this._onRoomsChange.fire(this.rooms);
     }
 
     public leaveSocketRoom(roomName: string): void {
         this.leaveRoom(roomName);
-        this.rooms.delete(roomName);
-        this._onRoomsChange.fire(this.rooms);
     }
 
     public sendSocketMessage(roomName: string, eventType: string, data: any): void {
