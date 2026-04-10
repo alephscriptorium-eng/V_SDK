@@ -5,13 +5,18 @@ import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
 
 /**
  * Default embedded tasks (fallback when tasks.json can't be read)
- * SYNC with .vscode/tasks.json - Last sync: 2026-01-09
+ * SYNC with .vscode/tasks.json - Last sync: 2026-04-11
  */
 const DEFAULT_TASKS = [
     { label: "SCP: Start Full Stack", dependsOn: ["MCP: Start [Launcher]", "APB: Start [Service]", "APB: Start [App]", "NOV: Start [Server]"], detail: "Compound - Full stack" },
     { label: "MCP: Start [Launcher]", type: "shell", command: "npm", args: ["run", "start:launcher"], isBackground: true, detail: "Puerto 3050" },
     { label: "MCP: Start [Model]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 4001" },
     { label: "MCP: Start [DevOps]", type: "shell", command: "npm", args: ["run", "start"], isBackground: true, detail: "Puerto 3003 - DevOps Server con persistencia" },
+    { label: "BHS: Start [Server]", type: "shell", command: "npm", args: ["run", "start:bothub"], isBackground: true, detail: "Puerto 3010 - BotHub MCP Server (BotHubSDK + IACM)" },
+    { label: "BHS: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:3010"], detail: "Abrir BotHub MCP Server health endpoint" },
+    { label: "BHS: Setup [Examples]", type: "shell", command: "npm", args: ["run", "examples:install"], detail: "Instalar dependencias de console-app, dashboard e iacm-demo" },
+    { label: "BHS: Start [Console]", type: "shell", command: "npm", args: ["run", "dev"], detail: "BotHubSDK console-app headless (build:sdk + ejemplo)" },
+    { label: "BHS: Start [Dashboard]", type: "shell", command: "npm", args: ["run", "dev:dashboard"], detail: "BotHubSDK dashboard TUI (build:sdk + ejemplo interactivo)" },
     { label: "APB: Start [Service]", type: "shell", command: "npm", args: ["run", "start:backend"], isBackground: true, detail: "Puerto 8000" },
     { label: "APB: Start [App]", type: "shell", command: "npm", args: ["run", "start:frontend"], isBackground: true, detail: "Puerto 5001" },
     { label: "APB: Build [Chain]", type: "shell", command: "bash", args: ["-c", "npm run build"], detail: "Build chain" },
@@ -121,6 +126,7 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
     private static readonly PREFIX_METADATA: Record<string, { name: string; icon: string; description: string }> = {
         'SCP': { name: 'Scriptorium', icon: '📜', description: 'Main compound tasks' },
         'MCP': { name: 'MCP Servers', icon: '🔌', description: 'Model Context Protocol servers' },
+        'BHS': { name: 'BotHub', icon: '📬', description: 'BotHub SDK examples + MCP server' },
         'AIA': { name: 'AAIA Gallery', icon: '🤖', description: 'Autonomous AI Agents stack' },
         'APB': { name: 'Agent Prolog Brain', icon: '🧠', description: 'PrologEditor stack' },
         'NOV': { name: 'Novelist', icon: '📖', description: 'NovelistEditor services' },
