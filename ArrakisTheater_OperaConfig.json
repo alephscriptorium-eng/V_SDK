@@ -66,6 +66,16 @@
           "start"
         ],
         "desc": "Wiki Content Scrapper"
+      },
+      "firehose-mcp-server": {
+        "port": 3008,
+        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+        "cmd": "npm",
+        "args": [
+          "run",
+          "start:firehose"
+        ],
+        "desc": "Bluesky Firehose + ONFALO CDR Pipeline"
       }
     },
     "webs": {
