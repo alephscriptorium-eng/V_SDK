@@ -6,7 +6,7 @@
 | fecha | 2026-07-25 |
 | rama | `wp/v10-v1-release` |
 | commits | obra `f11ffda` · reporte `29c2759` · tip = HEAD rama |
-| tip SHA | `ca40e4d40794c82b92469f09c46aa53c15c341d9` |
+| tip SHA | `5773b736029c03f945fd5b27a1e0169223484e16` (HEAD al escribir; commits docs posteriores solo tip) |
 | extension-id | `scriptorium.zigurat` |
 | vsix | `scriptorium-zigurat-0.1.0.vsix` (semver **0.1.0**) |
 | eje(s) CA | ninguno (checkpoint release) |
@@ -169,7 +169,7 @@ ejecuta el tick.
 | campo | valor |
 | ----- | ----- |
 | veredicto propuesto | **PASS** (CA automatizable + Release; residuales ⏳ documentados) |
-| SHA tip rama | `ca40e4d40794c82b92469f09c46aa53c15c341d9` |
+| SHA tip rama | `5773b736029c03f945fd5b27a1e0169223484e16` |
 | versión vsix | `0.1.0` · `scriptorium-zigurat-0.1.0.vsix` |
 | CI | https://github.com/alephscriptorium-eng/V_SDK/actions/runs/30158827844 |
 | Release | https://github.com/alephscriptorium-eng/V_SDK/releases/tag/v0.1.0 |
