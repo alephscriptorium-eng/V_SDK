@@ -38,7 +38,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   Brief: `plan/BRIEFS/WP-V01-repo-taller-estacion.md`.
   Reporte: `plan/REPORTES/WP-V01-repo-taller-estacion.md`. Merge
   `90fffd9`.
-- 🔶 **WP-V02 · Semilla del producto** — importar tip de
+- ✅ **WP-V02 · Semilla del producto** — importar tip de
   `escrivivir-co/vscode-alephscript-extension` @
   `integration/beta/scriptorium` según DV-03 (historial preservado +
   tag `import/scriptorium-<sha>`); incorporar el
@@ -46,7 +46,9 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   (*.vsix, dist/, node_modules/). **CA:** tip importado con tag ·
   árbol completo · procedencia documentada en el reporte. Dep:
   V01. Brief: `plan/BRIEFS/WP-V02-semilla-producto.md`.
-  STANDING_GO=true.
+  Reporte: `plan/REPORTES/WP-V02-semilla-producto.md`.
+  Tag: `import/scriptorium-793de5e92527`. Merge tip post-V02 en main.
+  STANDING_GO=true. README-SCRIPTORIUM: no hallado (documentado).
 - ⬜ **WP-V03 · Dependencia standalone + higiene DX** — romper
   `file:../MCPGallery` de `@alephscript/mcp-core-sdk`: preferido
   registry `npm.scriptorium.escrivivir.co` si el paquete existe

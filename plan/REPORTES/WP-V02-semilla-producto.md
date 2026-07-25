@@ -55,7 +55,7 @@ README-SCRIPTORIUM.md búsqueda (no inventado):
   - `@alephscript/mcp-core-sdk`: `file:../MCPGallery/...` (roto standalone;
     alcance **WP-V03**)
 - `INSTALACION_LIMPIA`: `no aplica` V02 (CA = import); V03
-- `VEREDICTO_REVISOR`: `⏳ pendiente`
+- `VEREDICTO_REVISOR`: `PASS` (orquestador-V)
 
 ## Hallazgos fuera de alcance
 
@@ -73,4 +73,8 @@ README-SCRIPTORIUM.md búsqueda (no inventado):
 
 ## Revisión del orquestador
 
-_(pendiente)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión: tag `import/scriptorium-793de5e92527` = tip seed;
+ancestor OK; plan/ preservado; README-SCRIPTORIUM documentado ausente
+(no inventado). Gate V02: **PASS**.
