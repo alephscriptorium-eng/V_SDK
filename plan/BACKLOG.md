@@ -176,7 +176,7 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   **re-verifica la CA de WP-V05** con las claves nuevas (§9·C5). **CA:**
   un solo prefijo en `contributes.commands` salvo excepciones declaradas.
   Dep: V13. **Bloqueado por DV-16.a (abierta).**
-- ⬜ **WP-V16 · Falsedad silenciosa** — ola L1 de
+- ✅ **WP-V16 · Falsedad silenciosa** — ola L1 de
   `HANDOFF-S-COLA-LIMPIEZA-post-R5V.md`: (a) el probe importa el parser
   real en vez de reimplementarlo · (b) nombre del `.vsix` derivado de la
   versión, cero literales `0.1.0` · (c) `lint` que puede fallar o sale del
@@ -185,6 +185,13 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   real **rompe** el probe (demostrado) y `npm version 0.2.0` produce asset
   `…-0.2.0.vsix`. Dep: —.
   Brief: `plan/BRIEFS/WP-V16-falsedad-silenciosa.md`.
+  Reporte: `plan/REPORTES/WP-V16-falsedad-silenciosa.md`. Obra
+  `94653cf`+`28bb869` (retomado tras muerte de sesión; bump 0.2.0
+  transitorio revertido con causa) · contrarrevisión PASS `8183a1c`
+  (probe × parser de main verificado verde; mutación M-A 4 asserts
+  rojos) · merge `513f2c0`. CA (d) ⏳ estática por contrato.
+  F-1/F-2/F-3 (guardas del release) → con H-4 al reactivar el tick
+  público DEFERRED.
 - ✅ **WP-V17 · Puerta de permisos** — (a) la ausencia de información no
   concede permiso: `parseEditorInfo.ts:83` falla abierto mientras `:80`
   falla cerrado, en el mismo literal · (b) pruebas unitarias de los
