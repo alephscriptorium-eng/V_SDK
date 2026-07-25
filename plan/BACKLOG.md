@@ -187,13 +187,22 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   provisional (RES-5 al tick deferred) · `.vsix` 244KB · 26 excepciones
   medidas sobre paquete extraído → V15. Aceptación `48d9267` · merge
   `9690102`.
-- ⬜ **WP-V15 · Espacios de nombres** — lo que sobreviva pasa a un solo
+- ✅ **WP-V15 · Espacios de nombres** — lo que sobreviva pasa a un solo
   prefijo; declarar lo heredado que se quede. Absorbe el renombrado de
   claves de settings si **DV-16.a** se cierra en (b) —
   `extension-id → scriptorium.aleph-0`, claves → `aleph0.*`— y entonces
   **re-verifica la CA de WP-V05** con las claves nuevas (§9·C5). **CA:**
   un solo prefijo en `contributes.commands` salvo excepciones declaradas.
-  Dep: V13. **Bloqueado por DV-16.a (abierta).**
+  Dep: V13. DV-16.a cerrada en (b).
+  Reporte: `plan/REPORTES/WP-V15-espacios-nombres.md`. Obra `808be04`:
+  99/99 comandos `aleph0.*` (4 excepciones `.focus` inevitables) · 13
+  claves · id `scriptorium.aleph-0` · `aleph-0-0.1.0.vsix` derivado
+  (D-3 ratificado) · guía v2 · lockfile regenerado (H-1 cerrado) · CA
+  V05 re-verificada. Contrarrevisión PASS `6d413c7` (2 condiciones
+  documentales aplicadas) · aceptación `e564d04` · merge `2626b7e`.
+  Corrigió 3 premisas del encargo con dato (99/115 · 13/16 ·
+  `teatro.*` vivos). Residual: 5 superficies de marca visibles →
+  micro-tick (DV-16 observación).
 - ✅ **WP-V16 · Falsedad silenciosa** — ola L1 de
   `HANDOFF-S-COLA-LIMPIEZA-post-R5V.md`: (a) el probe importa el parser
   real en vez de reimplementarlo · (b) nombre del `.vsix` derivado de la
