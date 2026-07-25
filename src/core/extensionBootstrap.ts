@@ -35,6 +35,7 @@ import { AracneBotService } from './AracneBotService';
 import { CatalogService } from '../launcher/CatalogService';
 import { RoomIdentityService, IdentityStatusBar } from '../identity';
 import { ResourceProjectionService } from '../resources';
+import { AuthorshipService } from '../mutation';
 // WISH-01/02/03: Copilot Log Exporter
 import { registerCopilotLogCommands } from '../copilotLogs/commands';
 import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
@@ -147,13 +148,22 @@ export class ExtensionBootstrap {
             // WP-V07: identidad (peer-card) + proyección resources MCP
             const identityService = RoomIdentityService.getInstance();
             const resourceService = ResourceProjectionService.getInstance();
+            // WP-V08: autoría linea-editor (gate + motivos_deny desde editor://info)
+            const authorshipService = AuthorshipService.getInstance();
             const identityStatusBar = new IdentityStatusBar(identityService);
-            context.subscriptions.push(identityService, resourceService, identityStatusBar);
+            context.subscriptions.push(
+                identityService,
+                resourceService,
+                authorshipService,
+                identityStatusBar
+            );
             // Join diferido: sin settings → ⏳; no inventa room/mesh.
             void identityService.join().then(async (snap) => {
                 if (snap.availability === 'ready') {
                     await resourceService.refresh();
                 }
+                // Gate autoría: sin linea-editor → ⏳ (no fatal)
+                await authorshipService.refreshGate();
             });
             
             // Initialize AracneBot - Socket.IO client for mesh communication
@@ -1090,6 +1100,80 @@ export class ExtensionBootstrap {
                         ? snap.statusMessage
                         : snap.statusMessage
                 );
+            }),
+
+            // WP-V08 · mutación + autoría (gate visible; motivos_deny desde runtime)
+            vscode.commands.registerCommand('zigurat.authorship.refreshGate', async () => {
+                const snap = await AuthorshipService.getInstance().refreshGate();
+                this.extensionContext?.mcpTreeProvider.refresh();
+                if (snap.availability === 'ready' && snap.gate) {
+                    const motivos = snap.gate.motivosDeny.join(' · ');
+                    vscode.window.showInformationMessage(
+                        `${snap.statusMessage}${motivos ? ` · ${motivos}` : ''}`
+                    );
+                } else {
+                    vscode.window.showWarningMessage(snap.statusMessage);
+                }
+            }),
+            vscode.commands.registerCommand('zigurat.authorship.crearLinea', async () => {
+                const auth = AuthorshipService.getInstance();
+                await auth.refreshGate();
+                const id = await vscode.window.showInputBox({
+                    prompt: 'id de línea (crear_linea)',
+                    placeHolder: 'juguete'
+                });
+                if (!id) {
+                    return;
+                }
+                const token = await vscode.window.showInputBox({
+                    prompt: 'approvalToken (ZEUS_MCP_APPROVAL_TOKEN)',
+                    password: true
+                });
+                if (token == null) {
+                    return;
+                }
+                const result = await auth.crearLinea({
+                    id,
+                    approve: true,
+                    approvalToken: token,
+                    includeSessionCard: true
+                });
+                this.extensionContext?.mcpTreeProvider.refresh();
+                if (result.ok) {
+                    vscode.window.showInformationMessage(`crear_linea OK · ${id}`);
+                } else {
+                    vscode.window.showErrorMessage(auth.formatDenyForUi(result), { modal: true });
+                }
+            }),
+            vscode.commands.registerCommand('zigurat.authorship.exportStoryBoard', async () => {
+                const auth = AuthorshipService.getInstance();
+                await auth.refreshGate();
+                const lineDir = await vscode.window.showInputBox({
+                    prompt: 'lineDir absoluto (export_story_board)',
+                    placeHolder: 'C:/path/to/LINEAS/juguete'
+                });
+                if (!lineDir) {
+                    return;
+                }
+                const token = await vscode.window.showInputBox({
+                    prompt: 'approvalToken (ZEUS_MCP_APPROVAL_TOKEN)',
+                    password: true
+                });
+                if (token == null) {
+                    return;
+                }
+                const result = await auth.exportStoryBoard({
+                    lineDir,
+                    approve: true,
+                    approvalToken: token,
+                    includeSessionCard: true
+                });
+                this.extensionContext?.mcpTreeProvider.refresh();
+                if (result.ok) {
+                    vscode.window.showInformationMessage('export_story_board OK');
+                } else {
+                    vscode.window.showErrorMessage(auth.formatDenyForUi(result), { modal: true });
+                }
             }),
 
             vscode.commands.registerCommand('alephscript.mcptree.start', async (item?: any) => {
