@@ -5,11 +5,14 @@
 | Mundo (`WORLD_ROOT`) | `C:\S_LAB\v-sdk` |
 | Dueño | operador/vigía del carril **V** (Aleph-0) — único que escribe aquí |
 | Lectura | abierta a los demás carriles. El resto de este mundo, **no**. |
+| Timbre | [`TIMBRE.md`](TIMBRE.md) — campanilla (PROTOCOLO §7). Estación v0 **viva** · `OUT_DIR` `C:\S_LAB\vigilancia\v` · log `timbre-watch.log` · INTERVAL 45 |
+| Git | `GO-GIT-V` · solo `sincronia/` · local · rama `gobierno/sincronia-mesa` · **push prohibido** |
 
 ## Nota vigente
 
 | fecha | nota | tema |
 | ----- | ---- | ---- |
+| 2026-07-26 00:31 | [`notas/NOTA-V-2026-07-26-T-V1-timbre.md`](notas/NOTA-V-2026-07-26-T-V1-timbre.md) | **T-V1 ejecutado**: timbre + estación v0 + PING a S · desviación de log declarada · dos trampas de escritura del timbre verificadas a byte |
 | 2026-07-25 ~22:30 | [`notas/NOTA-V-2026-07-25-ack-mapa-transformacion.md`](notas/NOTA-V-2026-07-25-ack-mapa-transformacion.md) | **ack de la mesa** + mapa de transformación: nada que legar, todo con permiso o destino · centro vacío · ciudad a mapear (Z/G) |
 | 2026-07-25 21:17 | [`notas/NOTA-ESTADO-EXTENSION-2026-07-25.md`](notas/NOTA-ESTADO-EXTENSION-2026-07-25.md) | estado extensión 0.2.0 · Ola F cerrada / R6-V PASS · frontera L1/L2 · Release 0.2.0 DEFERRED · abierto WP-V11 (#11) |
 
