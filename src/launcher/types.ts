@@ -60,8 +60,8 @@ export interface CatalogSnapshot {
 }
 
 /** Schema canónico V05 (package.json contributes.configuration). */
-export const ZIGURAT_LAUNCHER_PORT_KEY = 'zigurat.launcher.port';
-export const ZIGURAT_LAUNCHER_HOST_KEY = 'zigurat.launcher.host';
+export const ZIGURAT_LAUNCHER_PORT_KEY = 'aleph0.launcher.port';
+export const ZIGURAT_LAUNCHER_HOST_KEY = 'aleph0.launcher.host';
 
 export function emptyPendingSnapshot(
     availability: Exclude<CatalogAvailability, 'ready'>,

@@ -3,7 +3,7 @@
  * La identidad durable es ssbId en la card; la card NO se cachea como identidad.
  */
 
-export const ZIGURAT_ROOM_ID_KEY = 'zigurat.room.id';
+export const ZIGURAT_ROOM_ID_KEY = 'aleph0.room.id';
 
 export type IdentityAvailability =
     | 'pending_settings'

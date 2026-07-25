@@ -5,7 +5,7 @@
  * - MCPGallery/mcp-mesh-sdk/src/libs/alephscript-client.ts
  * - StateMachine/src/clients/alephscript-client.ts
  * 
- * URL del mesh: caller / zigurat.mesh.* — sin puerto hardcodeado.
+ * URL del mesh: caller / aleph0.mesh.* — sin puerto hardcodeado.
  * Sin url → no se crea Socket (⏳ hostil-omite).
  * 
  * @épica MCP-CHANNELS-1.0.0
@@ -34,7 +34,7 @@ export interface AlephScriptClientConfig {
     reconnectionDelay?: number;
 }
 
-/** Defaults sin host/puerto — la URL la aporta zigurat.mesh.* o el caller. */
+/** Defaults sin host/puerto — la URL la aporta aleph0.mesh.* o el caller. */
 export const DEFAULT_CONFIG: AlephScriptClientConfig = {
     name: "VsCodeExtension",
     url: undefined,
@@ -59,7 +59,7 @@ export class AlephScriptClient {
     private _onConnect: ((socketId: string) => void) | undefined;
     private _onDisconnect: (() => void) | undefined;
     private _onError: ((error: Error) => void) | undefined;
-    private readonly pendingReason = '⏳ zigurat.mesh.baseUrl (o host+port) no configurado';
+    private readonly pendingReason = '⏳ aleph0.mesh.baseUrl (o host+port) no configurado';
 
     constructor(config: AlephScriptClientConfig = DEFAULT_CONFIG) {
         const mergedConfig = { ...DEFAULT_CONFIG, ...config };

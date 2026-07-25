@@ -349,12 +349,12 @@ console.log(`pieza real: ${path.relative(pkgRoot, ARTEFACTO)} ← src/mutation/p
 {
   const pkg = JSON.parse(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
   const cmds = (pkg.contributes?.commands || []).map((c) => c.command);
-  assert(cmds.includes('zigurat.authorship.refreshGate'), 'command refreshGate');
-  assert(cmds.includes('zigurat.authorship.crearLinea'), 'command crearLinea');
-  assert(cmds.includes('zigurat.authorship.exportStoryBoard'), 'command exportStoryBoard');
+  assert(cmds.includes('aleph0.authorship.refreshGate'), 'command refreshGate');
+  assert(cmds.includes('aleph0.authorship.crearLinea'), 'command crearLinea');
+  assert(cmds.includes('aleph0.authorship.exportStoryBoard'), 'command exportStoryBoard');
   assert(
-    pkg.contributes?.configuration?.properties?.['zigurat.lineaEditor.port'] != null,
-    'setting zigurat.lineaEditor.port'
+    pkg.contributes?.configuration?.properties?.['aleph0.lineaEditor.port'] != null,
+    'setting aleph0.lineaEditor.port'
   );
   assert(pkg.scripts?.['probe:v08'] != null, 'script probe:v08');
   assert(pkg.scripts?.['probe:v08:build'] != null, 'script probe:v08:build (compila la pieza real)');

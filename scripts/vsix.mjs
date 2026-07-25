@@ -13,15 +13,18 @@
  *   la versión.
  *
  * FORMA DEL NOMBRE
- *   `<publisher>-<name>-<version>.vsix` — la misma forma que se venía
- *   produciendo a mano. Se conserva a propósito: la marca del producto es
- *   obra de WP-V14 y este WP no la toca. Cuando V14 cambie
- *   `publisher`/`name`/`displayName`, el nombre del artefacto la seguirá
- *   solo, sin editar flujos.
+ *   `<name>-<version>.vsix` — derivado de package.json, sin literales.
  *
- *   (Se descartó `vsce package --out dist/`, que nombra con `<name>-<version>`
- *   y habría dejado caer el prefijo del publisher del asset: eso es un cambio
- *   de marca, y la marca no es de este WP.)
+ *   WP-V16 lo dejó en `<publisher>-<name>-<version>.vsix` a propósito: el
+ *   nombre del asset es marca, y la marca no era de aquel WP. **WP-V15
+ *   (DV-16.a opción b) sí lo es**: con `name` pasando a `aleph-0`, el
+ *   artefacto que el custodio instala se llama `aleph-0-<version>.vsix`,
+ *   que es además el nombre que `vsce package` produce por defecto. El
+ *   publisher sigue viviendo donde importa —el extension-id
+ *   `scriptorium.aleph-0`— y no se repite en el nombre del fichero.
+ *
+ *   La derivación no cambia: ningún script ni flujo repite la versión, y
+ *   una subida de `name`/`version` la sigue sola.
  *
  * PORTABILIDAD
  *   Nada de `$npm_package_version` ni de interpolación de shell: no expande
@@ -37,8 +40,8 @@
  *   solo como respaldo para el caso de que no esté instalado.
  *
  * USO
- *   node scripts/vsix.mjs path                 → dist/<publisher>-<name>-<version>.vsix
- *   node scripts/vsix.mjs name                 → <publisher>-<name>-<version>.vsix
+ *   node scripts/vsix.mjs path                 → dist/<name>-<version>.vsix
+ *   node scripts/vsix.mjs name                 → <name>-<version>.vsix
  *   node scripts/vsix.mjs ensure-dist          → crea dist/ si falta
  *   node scripts/vsix.mjs package [--local]    → vsce package con el nombre derivado
  *                                                (--local: exige vsce instalado, sin respaldo npx)
@@ -69,6 +72,8 @@ function manifest() {
     } catch (err) {
         die(`no se pudo leer ${file}: ${err.message}`);
     }
+    // `publisher` se sigue exigiendo aunque no entre en el nombre: sin él
+    // `vsce package` falla más tarde y con peor mensaje.
     for (const campo of ['publisher', 'name', 'version']) {
         if (typeof pkg[campo] !== 'string' || pkg[campo].trim() === '') {
             die(`package.json sin «${campo}»: no se puede derivar el nombre del .vsix`);
@@ -79,7 +84,7 @@ function manifest() {
 
 function vsixName() {
     const pkg = manifest();
-    return `${pkg.publisher}-${pkg.name}-${pkg.version}.vsix`;
+    return `${pkg.name}-${pkg.version}.vsix`;
 }
 
 /** Ruta relativa a la raíz del repo, con «/» también en Windows. */

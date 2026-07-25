@@ -137,7 +137,7 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                     vscode.TreeItemCollapsibleState.Collapsed,
                     agent,
                     {
-                        command: 'alephscript.teatro.openChatParticipant',
+                        command: 'aleph0.teatro.openChatParticipant',
                         title: 'Abrir en Chat',
                         arguments: [agent.id]
                     }
@@ -152,7 +152,7 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                     vscode.TreeItemCollapsibleState.Collapsed,
                     agent,
                     {
-                        command: 'alephscript.teatro.activateAgent',
+                        command: 'aleph0.teatro.activateAgent',
                         title: 'Activar Agente',
                         arguments: [agent.id]
                     }
@@ -162,17 +162,17 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
             // Show configuration options
             return Promise.resolve([
                 new TeatroTreeItem('📊 Estado del Sistema', vscode.TreeItemCollapsibleState.None, undefined, {
-                    command: 'alephscript.teatro.showAgentInfo',
+                    command: 'aleph0.teatro.showAgentInfo',
                     title: 'Ver Estado del Sistema',
                     arguments: ['system']
                 }),
                 new TeatroTreeItem('🔧 Configurar Agentes', vscode.TreeItemCollapsibleState.None, undefined, {
-                    command: 'alephscript.teatro.openTeatroPanel',
+                    command: 'aleph0.teatro.openTeatroPanel',
                     title: 'Abrir Panel de Configuración',
                     arguments: []
                 }),
                 new TeatroTreeItem('🔄 Reiniciar Teatro', vscode.TreeItemCollapsibleState.None, undefined, {
-                    command: 'alephscript.teatro.refresh',
+                    command: 'aleph0.teatro.refresh',
                     title: 'Reiniciar Teatro',
                     arguments: []
                 })
@@ -186,7 +186,7 @@ export class TeatroTreeDataProvider implements vscode.TreeDataProvider<TeatroTre
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
                     {
-                        command: 'alephscript.teatro.openChatParticipant',
+                        command: 'aleph0.teatro.openChatParticipant',
                         title: 'Ejecutar Comando',
                         arguments: [agent.id, cmd.name]
                     }

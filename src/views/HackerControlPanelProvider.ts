@@ -128,7 +128,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
 
     private async _reloadAllWebviews(): Promise<void> {
         try {
-            await vscode.commands.executeCommand('alephscript.webview.reloadAll');
+            await vscode.commands.executeCommand('aleph0.webview.reloadAll');
             this._updateStatus();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to reload webviews: ${error}`);
@@ -167,7 +167,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'webrtc-ui',
                         name: 'WebRTC Gamify',
-                        command: 'alephscript.webview.openWebRTC',
+                        command: 'aleph0.webview.openWebRTC',
                         icon: '🌐',
                         status: this._getWebViewStatus('webrtc-ui', activeWebviews),
                         port: 4201,
@@ -176,7 +176,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'threejs-ui',
                         name: 'ThreeJS Engine',
-                        command: 'alephscript.webview.openThreeJS',
+                        command: 'aleph0.webview.openThreeJS',
                         icon: '🎯',
                         status: this._getWebViewStatus('threejs-ui', activeWebviews),
                         port: 4202,
@@ -185,7 +185,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'socket-webapp',
                         name: 'Socket Gym',
-                        command: 'alephscript.webview.openSocket',
+                        command: 'aleph0.webview.openSocket',
                         icon: '⚡',
                         status: this._getWebViewStatus('socket-webapp', activeWebviews),
                         port: 4200,
@@ -201,7 +201,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'driver-ui',
                         name: 'State Driver',
-                        command: 'alephscript.webview.openDriver',
+                        command: 'aleph0.webview.openDriver',
                         icon: '🚗',
                         status: this._getWebViewStatus('driver-ui', activeWebviews),
                         description: 'State machine driver interface'
@@ -209,7 +209,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'webview-dashboard',
                         name: 'Main Dashboard',
-                        command: 'alephscript.webview.showDashboard',
+                        command: 'aleph0.webview.showDashboard',
                         icon: '📊',
                         status: 'available',
                         description: 'Central webview management dashboard'
@@ -224,7 +224,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'socket-monitor',
                         name: 'Socket Monitor',
-                        command: 'mcpSocketManager.openSocketMonitor',
+                        command: 'aleph0.mcpSocketManager.openSocketMonitor',
                         icon: '🔌',
                         status: 'available',
                         description: 'Real-time socket.io monitoring'
@@ -232,7 +232,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'mcp-config',
                         name: 'MCP Config',
-                        command: 'mcpSocketManager.openConfigEditor',
+                        command: 'aleph0.mcpSocketManager.openConfigEditor',
                         icon: '⚡',
                         status: 'available',
                         description: 'Model Context Protocol configuration'
@@ -247,7 +247,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
                     {
                         id: 'teatro-panel',
                         name: 'Teatro Panel',
-                        command: 'alephscript.teatro.openTeatroPanel',
+                        command: 'aleph0.teatro.openTeatroPanel',
                         icon: '🎭',
                         status: 'available',
                         description: 'Theatrical agent control panel'

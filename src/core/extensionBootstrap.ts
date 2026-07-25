@@ -296,7 +296,7 @@ export class ExtensionBootstrap {
 
         // WebView commands
         commands.push(
-            vscode.commands.registerCommand('alephscript.webview.showDashboard', () => {
+            vscode.commands.registerCommand('aleph0.webview.showDashboard', () => {
                 const panel = vscode.window.createWebviewPanel(
                     'webview-dashboard',
                     'WebView Dashboard',
@@ -306,7 +306,7 @@ export class ExtensionBootstrap {
                 panel.webview.html = '<h1>WebView Dashboard</h1><p>WebView management interface</p>';
             }),
 
-            vscode.commands.registerCommand('alephscript.webview.openWebRTC', async () => {
+            vscode.commands.registerCommand('aleph0.webview.openWebRTC', async () => {
                 try {
                     const config = managers.webView.getWebRTCConfig();
                     const webview = await managers.webView.createWebView(config);
@@ -324,7 +324,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.webview.openThreeJS', async () => {
+            vscode.commands.registerCommand('aleph0.webview.openThreeJS', async () => {
                 try {
                     const config = managers.webView.getThreeJSConfig();
                     const webview = await managers.webView.createWebView(config);
@@ -342,7 +342,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.webview.openSocket', async () => {
+            vscode.commands.registerCommand('aleph0.webview.openSocket', async () => {
                 try {
                     const config = managers.webView.getSocketWebAppConfig();
                     const webview = await managers.webView.createWebView(config);
@@ -360,7 +360,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.webview.openDriver', async () => {
+            vscode.commands.registerCommand('aleph0.webview.openDriver', async () => {
                 try {
                     const config = managers.webView.getDriverUIConfig();
                     const webview = await managers.webView.createWebView(config);
@@ -378,7 +378,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.webview.reloadAll', async () => {
+            vscode.commands.registerCommand('aleph0.webview.reloadAll', async () => {
                 try {
                     const webviews = managers.webView.getAllWebViews();
                     const reloadPromises = webviews.map((w: any) => managers.webView.reloadWebView(w.id));
@@ -395,7 +395,7 @@ export class ExtensionBootstrap {
             }),
 
             // Hacker Control Panel Commands
-            vscode.commands.registerCommand('alephscript.hackerControlPanel.toggle', async () => {
+            vscode.commands.registerCommand('aleph0.hackerControlPanel.toggle', async () => {
                 try {
                     // Focus the hacker control panel view
                     await vscode.commands.executeCommand('alephscript.hackerControlPanel.focus');
@@ -414,7 +414,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.hackerCommandPanel.toggle', async () => {
+            vscode.commands.registerCommand('aleph0.hackerCommandPanel.toggle', async () => {
                 try {
                     // Focus the hacker command panel view
                     await vscode.commands.executeCommand('alephscript.hackerCommandPanel.focus');
@@ -433,7 +433,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.hackerConfigPanel.toggle', async () => {
+            vscode.commands.registerCommand('aleph0.hackerConfigPanel.toggle', async () => {
                 try {
                     // Focus the hacker config panel view
                     await vscode.commands.executeCommand('alephscript.hackerConfigPanel.focus');
@@ -453,7 +453,7 @@ export class ExtensionBootstrap {
             }),
 
             // ===== Hacker Tasks Panel Commands =====
-            vscode.commands.registerCommand('alephscript.hackerTasksPanel.toggle', async () => {
+            vscode.commands.registerCommand('aleph0.hackerTasksPanel.toggle', async () => {
                 try {
                     await vscode.commands.executeCommand('alephscript.hackerTasksPanel.focus');
                     vscode.window.showInformationMessage('📋 Tasks Runner activated');
@@ -470,7 +470,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.hackerTasksPanel.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.hackerTasksPanel.refresh', async () => {
                 try {
                     if (this.extensionContext?.hackerTasksPanelProvider) {
                         await this.extensionContext.hackerTasksPanelProvider.refresh();
@@ -485,7 +485,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.hackerTasksPanel.runDefault', async () => {
+            vscode.commands.registerCommand('aleph0.hackerTasksPanel.runDefault', async () => {
                 try {
                     // Execute the default build task
                     await vscode.commands.executeCommand('workbench.action.tasks.build');
@@ -499,7 +499,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.hackerTasksPanel.stopAll', async () => {
+            vscode.commands.registerCommand('aleph0.hackerTasksPanel.stopAll', async () => {
                 try {
                     // Terminate all running tasks
                     await vscode.commands.executeCommand('workbench.action.tasks.terminate');
@@ -514,7 +514,7 @@ export class ExtensionBootstrap {
             }),
 
             // Hacker Status Bar Commands
-            vscode.commands.registerCommand('alephscript.statusBar.animate', async () => {
+            vscode.commands.registerCommand('aleph0.statusBar.animate', async () => {
                 try {
                     if (this.extensionContext?.hackerStatusBarManager) {
                         this.extensionContext.hackerStatusBarManager.animateButtons();
@@ -529,7 +529,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.statusBar.toggle', async () => {
+            vscode.commands.registerCommand('aleph0.statusBar.toggle', async () => {
                 try {
                     if (this.extensionContext?.hackerStatusBarManager) {
                         const config = vscode.workspace.getConfiguration('alephscript');
@@ -553,7 +553,7 @@ export class ExtensionBootstrap {
             }),
 
             // Analytics Commands
-            vscode.commands.registerCommand('alephscript.analytics.showDashboard', async () => {
+            vscode.commands.registerCommand('aleph0.analytics.showDashboard', async () => {
                 if (!this.extensionContext) return;
                 
                 const tracker = this.extensionContext.managers.analytics.startTracking('analytics_dashboard_open');
@@ -582,7 +582,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.analytics.export', async () => {
+            vscode.commands.registerCommand('aleph0.analytics.export', async () => {
                 if (!this.extensionContext) return;
                 
                 const tracker = this.extensionContext.managers.analytics.startTracking('analytics_export');
@@ -614,7 +614,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.analytics.clear', async () => {
+            vscode.commands.registerCommand('aleph0.analytics.clear', async () => {
                 if (!this.extensionContext) return;
                 
                 const tracker = this.extensionContext.managers.analytics.startTracking('analytics_clear');
@@ -646,7 +646,7 @@ export class ExtensionBootstrap {
             }),
 
             // Process management commands
-            vscode.commands.registerCommand('alephscript.process.startLauncher', async () => {
+            vscode.commands.registerCommand('aleph0.process.startLauncher', async () => {
                 try {
                     const configPath = managers.config.get('process.configPath');
                     if (!configPath) {
@@ -673,7 +673,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.process.stopLauncher', async () => {
+            vscode.commands.registerCommand('aleph0.process.stopLauncher', async () => {
                 try {
                     await managers.process.stopLauncher();
                     vscode.window.showInformationMessage('Launcher stopped successfully');
@@ -687,7 +687,7 @@ export class ExtensionBootstrap {
             }),
 
             // Demo commands - Run All Servers (DEMO-1.0.0-F002)
-            vscode.commands.registerCommand('alephscript.demo.runAll', async () => {
+            vscode.commands.registerCommand('aleph0.demo.runAll', async () => {
                 try {
                     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                     if (!workspaceRoot) {
@@ -723,7 +723,7 @@ export class ExtensionBootstrap {
                 }
             }),
             
-            vscode.commands.registerCommand('alephscript.demo.stopAll', async () => {
+            vscode.commands.registerCommand('aleph0.demo.stopAll', async () => {
                 try {
                     const demoTerminals = vscode.window.terminals.filter(t => 
                         ['🌐 Jekyll Site', '🚀 MCP Launcher', '🤖 MCP Model', '⚡ Zeus', '📝 Novelist'].includes(t.name)
@@ -744,11 +744,11 @@ export class ExtensionBootstrap {
             }),
 
             // System commands
-            vscode.commands.registerCommand('alephscript.system.showStatus', () => {
+            vscode.commands.registerCommand('aleph0.system.showStatus', () => {
                 this.showSystemStatus();
             }),
 
-            vscode.commands.registerCommand('alephscript.system.restart', async () => {
+            vscode.commands.registerCommand('aleph0.system.restart', async () => {
                 try {
                     await this.restartExtension();
                     vscode.window.showInformationMessage('AlephScript extension restarted successfully');
@@ -762,7 +762,7 @@ export class ExtensionBootstrap {
             }),
 
             // AI Assistant commands
-            vscode.commands.registerCommand('alephscript.ai.askAssistant', async () => {
+            vscode.commands.registerCommand('aleph0.ai.askAssistant', async () => {
                 try {
                     const input = await vscode.window.showInputBox({
                         prompt: 'Ask the AI Assistant a question',
@@ -827,7 +827,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.ai.codeAnalysis', async () => {
+            vscode.commands.registerCommand('aleph0.ai.codeAnalysis', async () => {
                 try {
                     const editor = vscode.window.activeTextEditor;
                     if (!editor) {
@@ -905,7 +905,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.ai.optimizeWorkflow', async () => {
+            vscode.commands.registerCommand('aleph0.ai.optimizeWorkflow', async () => {
                 try {
                     const response = await managers.aiAssistant.processRequest({
                         id: Date.now().toString(),
@@ -962,7 +962,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.ai.viewStats', async () => {
+            vscode.commands.registerCommand('aleph0.ai.viewStats', async () => {
                 try {
                     const stats = managers.aiAssistant.getStatistics();
 
@@ -1030,14 +1030,14 @@ export class ExtensionBootstrap {
             }),
 
             // Teatro Commands
-            vscode.commands.registerCommand('alephscript.teatro.refresh', () => {
+            vscode.commands.registerCommand('aleph0.teatro.refresh', () => {
                 if (!this.extensionContext) return;
                 this.extensionContext.teatroTreeProvider.refresh();
                 vscode.window.showInformationMessage('🎭 Teatro actualizado');
             }),
 
             // MCP Commands
-            vscode.commands.registerCommand('alephscript.mcptree.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.mcptree.refresh', async () => {
                 try {
                     if (this.extensionContext) {
                         const snap = await CatalogService.getInstance().refresh();
@@ -1061,7 +1061,7 @@ export class ExtensionBootstrap {
             }),
 
             // WP-V07 · identidad + resources
-            vscode.commands.registerCommand('zigurat.identity.join', async () => {
+            vscode.commands.registerCommand('aleph0.identity.join', async () => {
                 const snap = await RoomIdentityService.getInstance().join();
                 if (snap.availability === 'ready') {
                     await ResourceProjectionService.getInstance().refresh();
@@ -1071,7 +1071,7 @@ export class ExtensionBootstrap {
                     vscode.window.showWarningMessage(snap.statusMessage);
                 }
             }),
-            vscode.commands.registerCommand('zigurat.identity.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.identity.refresh', async () => {
                 const snap = await RoomIdentityService.getInstance().ensureFresh();
                 if (snap.availability === 'ready') {
                     await ResourceProjectionService.getInstance().refresh();
@@ -1083,7 +1083,7 @@ export class ExtensionBootstrap {
                     vscode.window.showWarningMessage(snap.statusMessage);
                 }
             }),
-            vscode.commands.registerCommand('zigurat.resources.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.resources.refresh', async () => {
                 const snap = await ResourceProjectionService.getInstance().refresh();
                 this.extensionContext?.mcpTreeProvider.refresh();
                 vscode.window.showInformationMessage(
@@ -1094,7 +1094,7 @@ export class ExtensionBootstrap {
             }),
 
             // WP-V08 · mutación + autoría (gate visible; motivos_deny desde runtime)
-            vscode.commands.registerCommand('zigurat.authorship.refreshGate', async () => {
+            vscode.commands.registerCommand('aleph0.authorship.refreshGate', async () => {
                 const snap = await AuthorshipService.getInstance().refreshGate();
                 this.extensionContext?.mcpTreeProvider.refresh();
                 if (snap.availability === 'ready' && snap.gate) {
@@ -1106,7 +1106,7 @@ export class ExtensionBootstrap {
                     vscode.window.showWarningMessage(snap.statusMessage);
                 }
             }),
-            vscode.commands.registerCommand('zigurat.authorship.crearLinea', async () => {
+            vscode.commands.registerCommand('aleph0.authorship.crearLinea', async () => {
                 const auth = AuthorshipService.getInstance();
                 await auth.refreshGate();
                 const id = await vscode.window.showInputBox({
@@ -1136,7 +1136,7 @@ export class ExtensionBootstrap {
                     vscode.window.showErrorMessage(auth.formatDenyForUi(result), { modal: true });
                 }
             }),
-            vscode.commands.registerCommand('zigurat.authorship.exportStoryBoard', async () => {
+            vscode.commands.registerCommand('aleph0.authorship.exportStoryBoard', async () => {
                 const auth = AuthorshipService.getInstance();
                 await auth.refreshGate();
                 const lineDir = await vscode.window.showInputBox({
@@ -1167,13 +1167,13 @@ export class ExtensionBootstrap {
                 }
             }),
             // WP-V09 · elenco (reparto → cast-table); no toca V08
-            vscode.commands.registerCommand('zigurat.elenco.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.elenco.refresh', async () => {
                 const snap = await RepartoElencoService.getInstance().refresh();
                 this.extensionContext?.elencoTreeProvider.refresh();
                 vscode.window.showInformationMessage(snap.statusMessage);
             }),
 
-            vscode.commands.registerCommand('alephscript.mcptree.start', async (item?: any) => {
+            vscode.commands.registerCommand('aleph0.mcptree.start', async (item?: any) => {
                 try {
                     if (this.extensionContext) {
                         const serverId = item?.id || item?.serverId || item?.label;
@@ -1196,7 +1196,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.mcptree.stop', async (item?: any) => {
+            vscode.commands.registerCommand('aleph0.mcptree.stop', async (item?: any) => {
                 try {
                     if (this.extensionContext) {
                         const serverId = item?.id || item?.serverId || item?.label;
@@ -1219,7 +1219,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.mcptree.web.open', async (item?: any) => {
+            vscode.commands.registerCommand('aleph0.mcptree.web.open', async (item?: any) => {
                 try {
                     if (this.extensionContext) {
                         let webId = item?.id || item?.webId || item?.label;
@@ -1252,7 +1252,7 @@ export class ExtensionBootstrap {
             }),
 
             // UIs Commands
-            vscode.commands.registerCommand('alephscript.uis.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.uis.refresh', async () => {
                 try {
                     if (this.extensionContext) {
                         this.extensionContext.uisTreeProvider.refresh();
@@ -1268,7 +1268,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.activateAgent', (arg: any) => {
+            vscode.commands.registerCommand('aleph0.teatro.activateAgent', (arg: any) => {
                 if (!this.extensionContext) return;
                 const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? arg?.label ?? '';
                 if (!agentId || typeof agentId !== 'string') {
@@ -1278,7 +1278,7 @@ export class ExtensionBootstrap {
                 this.extensionContext.teatroTreeProvider.activateAgent(agentId);
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.deactivateAgent', (arg: any) => {
+            vscode.commands.registerCommand('aleph0.teatro.deactivateAgent', (arg: any) => {
                 if (!this.extensionContext) return;
                 const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? arg?.label ?? '';
                 if (!agentId || typeof agentId !== 'string') {
@@ -1288,7 +1288,7 @@ export class ExtensionBootstrap {
                 this.extensionContext.teatroTreeProvider.deactivateAgent(agentId);
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.openChatParticipant', async (arg: any, command?: string) => {
+            vscode.commands.registerCommand('aleph0.teatro.openChatParticipant', async (arg: any, command?: string) => {
                 try {
                     if (!this.extensionContext) return;
                     const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? '';
@@ -1324,7 +1324,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.showAgentInfo', (arg: any) => {
+            vscode.commands.registerCommand('aleph0.teatro.showAgentInfo', (arg: any) => {
                 if (!this.extensionContext) return;
                 const agentId = typeof arg === 'string' ? arg : arg?.agent?.id ?? arg?.id ?? '';
                 if (agentId === 'system') {
@@ -1343,7 +1343,7 @@ export class ExtensionBootstrap {
                         'Abrir Chat'
                     ).then(selection => {
                         if (selection === 'Abrir Chat') {
-                            vscode.commands.executeCommand('alephscript.teatro.openChatParticipant', agentId);
+                            vscode.commands.executeCommand('aleph0.teatro.openChatParticipant', agentId);
                         }
                     });
                 } else {
@@ -1351,7 +1351,7 @@ export class ExtensionBootstrap {
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.teatro.openTeatroPanel', async () => {
+            vscode.commands.registerCommand('aleph0.teatro.openTeatroPanel', async () => {
                 try {
                     if (!this.extensionContext) return;
                     
@@ -1392,7 +1392,7 @@ export class ExtensionBootstrap {
             }),
 
             // Agent Management Commands
-            vscode.commands.registerCommand('alephscript.agents.createNew', async () => {
+            vscode.commands.registerCommand('aleph0.agents.createNew', async () => {
                 try {
                     // Ask for agent ID
                     const agentId = await vscode.window.showInputBox({
@@ -1498,7 +1498,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.agents.editContent', async () => {
+            vscode.commands.registerCommand('aleph0.agents.editContent', async () => {
                 try {
                     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
                     if (!workspaceFolder) {
@@ -1538,7 +1538,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.agents.editConfig', async () => {
+            vscode.commands.registerCommand('aleph0.agents.editConfig', async () => {
                 try {
                     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
                     if (!workspaceFolder) {
@@ -1578,7 +1578,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.agents.validateAll', async () => {
+            vscode.commands.registerCommand('aleph0.agents.validateAll', async () => {
                 try {
                     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
                     if (!workspaceFolder) {
@@ -1649,7 +1649,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
             }),
 
             // Socket.io Gamification Commands (First Era Restoration)
-            vscode.commands.registerCommand('mcpSocketManager.openSocketMonitor', async () => {
+            vscode.commands.registerCommand('aleph0.mcpSocketManager.openSocketMonitor', async () => {
                 try {
                     if (this.extensionContext && this.vsCodeContext) {
                         await this.extensionContext.socketMonitor.createOrShowPanel(this.vsCodeContext.extensionUri);
@@ -1664,7 +1664,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.sockets.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.sockets.refresh', async () => {
                 try {
                     if (this.extensionContext) {
                         this.extensionContext.socketsTreeProvider.refresh();
@@ -1680,7 +1680,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
             }),
 
             // AracneBot Commands - Socket.IO mesh integration
-            vscode.commands.registerCommand('alephscript.aracne.connect', async () => {
+            vscode.commands.registerCommand('aleph0.aracne.connect', async () => {
                 try {
                     if (this.extensionContext) {
                         this.extensionContext.aracneBotService.connect();
@@ -1695,7 +1695,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.aracne.disconnect', async () => {
+            vscode.commands.registerCommand('aleph0.aracne.disconnect', async () => {
                 try {
                     if (this.extensionContext) {
                         this.extensionContext.aracneBotService.disconnect();
@@ -1710,7 +1710,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 }
             }),
 
-            vscode.commands.registerCommand('alephscript.aracne.status', async () => {
+            vscode.commands.registerCommand('aleph0.aracne.status', async () => {
                 try {
                     if (this.extensionContext) {
                         const connected = this.extensionContext.aracneBotService.isConnected();
@@ -1727,7 +1727,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
             }),
 
             // Configs Commands
-            vscode.commands.registerCommand('alephscript.configs.refresh', async () => {
+            vscode.commands.registerCommand('aleph0.configs.refresh', async () => {
                 try {
                     if (this.extensionContext) {
                         this.extensionContext.configsTreeProvider.refresh();

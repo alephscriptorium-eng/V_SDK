@@ -21,7 +21,7 @@ import {
     type ElencoSnapshot,
 } from './types';
 
-const SETTING_PATH = 'zigurat.reparto.path';
+const SETTING_PATH = 'aleph0.reparto.path';
 
 export class RepartoElencoService implements vscode.Disposable {
     private static instance: RepartoElencoService | undefined;
@@ -33,7 +33,7 @@ export class RepartoElencoService implements vscode.Disposable {
     private constructor() {
         this.snapshot = this.buildPendingPath('');
         this.configSub = vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('zigurat.reparto')) {
+            if (e.affectsConfiguration('aleph0.reparto')) {
                 void this.refresh();
             }
         });

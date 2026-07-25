@@ -61,7 +61,7 @@ export class LogsTreeDataProvider implements vscode.TreeDataProvider<LogTreeItem
                 
                 // Command to show full log entry
                 treeItem.command = {
-                    command: 'alephscript.logs.showEntry',
+                    command: 'aleph0.logs.showEntry',
                     title: 'Show Log Entry',
                     arguments: [element.entry]
                 };

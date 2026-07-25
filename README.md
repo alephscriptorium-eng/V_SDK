@@ -17,6 +17,56 @@ Semilla de producto importada desde
 de la extensión se podó en WP-V13; queda en el historial y en el tag
 `archive/pre-poda-ola-f`.
 
+## Migración de ajustes (WP-V15 · DV-16.a)
+
+El extension-id pasa a **`scriptorium.aleph-0`** y los ajustes al espacio de
+nombres **`aleph0.*`**. La v0.1.0 tiene 0 descargas conocidas, así que esto
+no rescata a nadie: se escribe porque un renombrado sin tabla es una
+migración escondida.
+
+**VS Code no migra ajustes solo.** Una clave vieja en `settings.json` queda
+huérfana (aparece como *Unknown Configuration Setting*) y la extensión
+**no** la lee. Hay que reescribirlas a mano.
+
+| clave vieja | clave nueva |
+| ----------- | ----------- |
+| `zigurat.mesh.host` | `aleph0.mesh.host` |
+| `zigurat.mesh.port` | `aleph0.mesh.port` |
+| `zigurat.mesh.baseUrl` | `aleph0.mesh.baseUrl` |
+| `zigurat.launcher.host` | `aleph0.launcher.host` |
+| `zigurat.launcher.port` | `aleph0.launcher.port` |
+| `zigurat.ollama.baseUrl` | `aleph0.ollama.baseUrl` |
+| `zigurat.room.id` | `aleph0.room.id` |
+| `zigurat.lineaEditor.host` | `aleph0.lineaEditor.host` |
+| `zigurat.lineaEditor.port` | `aleph0.lineaEditor.port` |
+| `zigurat.reparto.path` | `aleph0.reparto.path` |
+| `arrakisTheater.configPath` | `aleph0.theater.configPath` |
+| `arrakisTheater.autoStart` | `aleph0.theater.autoStart` |
+| `arrakisTheater.hackerMode` | `aleph0.theater.hackerMode` |
+
+**13 claves.** Las tres `arrakisTheater.*` se renombran porque el panel de
+Ajustes las titulaba «Arrakis Theater: …» — nombre vetado a la vista del
+usuario (RES-2 de WP-V14).
+
+**Claves que NO cambian** (heredadas, sin marca vetada; el brief de V15 no
+las incluye): `alephscript.configurationFile`, `alephscript.autoLoadConfig`,
+`alephscript.configValidation`, `alephscript.statusBar.visible`,
+`alephscript.statusBar.animation`, las siete `alephscript.logging.*` y
+`mcpSocketManager.configPath` (**14 claves**). El espacio de ajustes queda
+por tanto **mixto** hasta que el custodio decida sobre ellas.
+
+### Comandos
+
+Los **99** comandos del manifiesto cuelgan ahora de un prefijo único
+**`aleph0.`** (antes `alephscript.` ×86, `zigurat.` ×7 y
+`mcpSocketManager.` ×6). Los seis heredados de `mcpSocketManager` conservan
+ese segundo segmento (`aleph0.mcpSocketManager.*`) porque es el
+discriminante de categoría del panel de comandos.
+
+Si tenías atajos propios en `keybindings.json` apuntando a
+`alephscript.*` / `zigurat.*` / `mcpSocketManager.*`, cámbialos: el
+identificador viejo ya no existe y el atajo queda mudo.
+
 ## Fronteras
 
 - **z-sdk** y OASIS: solo lectura (contrato / referencia).
@@ -59,7 +109,7 @@ el paso **puede fallar** y falla en cuanto código nuevo lo viola.
 ### `release.yml` — tags `v*` y `workflow_dispatch`
 
 El nombre del `.vsix` lo deriva [`scripts/vsix.mjs`](./scripts/vsix.mjs) de
-`package.json` (`<publisher>-<name>-<version>.vsix`): subir la versión no
-deja flujos apuntando a un fichero inexistente. Dos guardas: el dispatch
+`package.json` (`<name>-<version>.vsix`, hoy `aleph-0-0.1.0.vsix`): subir la
+versión no deja flujos apuntando a un fichero inexistente. Dos guardas: el dispatch
 manual aborta fuera de `main`, y el flujo aborta si el tag resuelto ya tiene
 un release publicado (no se pisa un asset ya distribuido).

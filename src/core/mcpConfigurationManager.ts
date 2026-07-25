@@ -61,7 +61,7 @@ export class McpConfigurationManager {
                 await this.loadConfigFromFile(configPath);
             } else {
                 this.logger.warn(
-                    `${ZIGURAT_PENDING} Sin archivo Opera ni flota inventada — configure zigurat.* o cargue ArrakisTheater_OperaConfig.json`
+                    `${ZIGURAT_PENDING} Sin archivo Opera ni flota inventada — configure aleph0.* o cargue ArrakisTheater_OperaConfig.json`
                 );
                 this.setEmptyPendingConfiguration();
             }
@@ -108,7 +108,7 @@ export class McpConfigurationManager {
             "game": {
                 "id": "",
                 "name": "",
-                "description": `${ZIGURAT_PENDING} sin configuración — zigurat.* / OperaConfig`,
+                "description": `${ZIGURAT_PENDING} sin configuración — aleph0.* / OperaConfig`,
                 "mcpServerId": "",
                 "graphId": "",
                 "userId": "",
@@ -172,7 +172,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get Ollama URL — zigurat.ollama.baseUrl, luego archivo; vacío = ⏳.
+     * Get Ollama URL — aleph0.ollama.baseUrl, luego archivo; vacío = ⏳.
      */
     getOllamaUrl(): string {
         const fromSettings = resolveOllamaBaseUrl();
@@ -183,7 +183,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get MCP service launcher port — zigurat.launcher.port, luego archivo; undefined = ⏳.
+     * Get MCP service launcher port — aleph0.launcher.port, luego archivo; undefined = ⏳.
      */
     getMcpServiceLauncherPort(): number | undefined {
         const fromSettings = resolveLauncherPort();
@@ -212,7 +212,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Socket URL por defecto: zigurat.mesh.*, luego UI primaria del archivo.
+     * Socket URL por defecto: aleph0.mesh.*, luego UI primaria del archivo.
      * Vacío si nada configurado (⏳ — no inventa localhost:puerto).
      */
     getDefaultSocketUrl(): string {

@@ -607,7 +607,7 @@ export class AIAssistantService {
                 priority: 'high',
                 action: {
                     type: 'execute_command',
-                    payload: { command: 'alephscript.webview.openWebRTC' }
+                    payload: { command: 'aleph0.webview.openWebRTC' }
                 },
                 benefits: ['Quick access to WebRTC features', 'Real-time communication'],
                 risks: []
@@ -713,7 +713,7 @@ export class AIAssistantService {
             payload: {
                 config_changes: [{
                     key: 'keybindings',
-                    value: [{ 'key': 'ctrl+shift+a', 'command': 'alephscript.analytics.showDashboard' }],
+                    value: [{ 'key': 'ctrl+shift+a', 'command': 'aleph0.analytics.showDashboard' }],
                     scope: vscode.ConfigurationTarget.Global
                 }]
             }

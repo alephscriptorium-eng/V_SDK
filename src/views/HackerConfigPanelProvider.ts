@@ -155,7 +155,7 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
             {
                 name: "EXTENSION SETTINGS",
                 icon: "⚡",
-                description: "VS Code settings specific to Arrakis Theater",
+                description: "VS Code settings specific to Aleph-0",
                 configs: this._getExtensionSettings()
             },
             {
@@ -192,9 +192,9 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
 
         // Core extension settings (must match contributes.configuration in package.json)
         const extensionSettings = [
-            { key: 'arrakisTheater.configPath', name: 'Theater Config Path', description: 'Path to the Theater configuration file' },
-            { key: 'arrakisTheater.autoStart', name: 'Auto Start Theater', description: 'Auto-start Theater services when opening workspace' },
-            { key: 'arrakisTheater.hackerMode', name: 'Hacker Mode', description: 'Enable hacker-style terminal aesthetics and green color scheme' },
+            { key: 'aleph0.theater.configPath', name: 'Theater Config Path', description: 'Path to the Theater configuration file' },
+            { key: 'aleph0.theater.autoStart', name: 'Auto Start Theater', description: 'Auto-start Theater services when opening workspace' },
+            { key: 'aleph0.theater.hackerMode', name: 'Hacker Mode', description: 'Enable hacker-style terminal aesthetics and green color scheme' },
             { key: 'alephscript.statusBar.visible', name: 'Status Bar: Visible', description: 'Show/hide the hacker panel quick access buttons in status bar' },
             { key: 'alephscript.statusBar.animation', name: 'Status Bar: Animation', description: 'Enable animations and effects for status bar buttons' },
             { key: 'alephscript.logging.level', name: 'Logging Level', description: 'Minimum log level to display' },

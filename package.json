@@ -1,5 +1,5 @@
 {
-  "name": "zigurat",
+  "name": "aleph-0",
   "displayName": "Aleph-0",
   "description": "Aleph-0 (ℵ₀) — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco).",
   "version": "0.1.0",
@@ -38,551 +38,551 @@
   "contributes": {
     "commands": [
       {
-        "command": "mcpSocketManager.openConfigEditor",
+        "command": "aleph0.mcpSocketManager.openConfigEditor",
         "title": "Open Config Editor",
         "category": "MCP Manager"
       },
       {
-        "command": "mcpSocketManager.startLauncher",
+        "command": "aleph0.mcpSocketManager.startLauncher",
         "title": "Start Launcher",
         "category": "MCP Manager"
       },
       {
-        "command": "mcpSocketManager.stopLauncher",
+        "command": "aleph0.mcpSocketManager.stopLauncher",
         "title": "Stop Launcher",
         "category": "MCP Manager"
       },
       {
-        "command": "mcpSocketManager.openSocketMonitor",
+        "command": "aleph0.mcpSocketManager.openSocketMonitor",
         "title": "Open Socket Monitor",
         "category": "MCP Manager"
       },
       {
-        "command": "mcpSocketManager.manageUIs",
+        "command": "aleph0.mcpSocketManager.manageUIs",
         "title": "Manage UIs",
         "category": "MCP Manager"
       },
       {
-        "command": "mcpSocketManager.manageMCPServers",
+        "command": "aleph0.mcpSocketManager.manageMCPServers",
         "title": "Manage MCP Servers",
         "category": "MCP Manager"
       },
       {
-        "command": "zigurat.identity.join",
+        "command": "aleph0.identity.join",
         "title": "Join room (peer-card)",
         "category": "Aleph-0",
         "icon": "$(account)"
       },
       {
-        "command": "zigurat.identity.refresh",
+        "command": "aleph0.identity.refresh",
         "title": "Refresh identity (re-join if expired)",
         "category": "Aleph-0",
         "icon": "$(sync)"
       },
       {
-        "command": "zigurat.resources.refresh",
+        "command": "aleph0.resources.refresh",
         "title": "Refresh MCP resource projection",
         "category": "Aleph-0",
         "icon": "$(library)"
       },
       {
-        "command": "zigurat.authorship.refreshGate",
+        "command": "aleph0.authorship.refreshGate",
         "title": "Refresh authorship gate (editor://info)",
         "category": "Aleph-0",
         "icon": "$(shield)"
       },
       {
-        "command": "zigurat.authorship.crearLinea",
+        "command": "aleph0.authorship.crearLinea",
         "title": "crear_linea (gated)",
         "category": "Aleph-0",
         "icon": "$(add)"
       },
       {
-        "command": "zigurat.authorship.exportStoryBoard",
+        "command": "aleph0.authorship.exportStoryBoard",
         "title": "export_story_board (gated)",
         "category": "Aleph-0",
         "icon": "$(export)"
       },
       {
-        "command": "zigurat.elenco.refresh",
+        "command": "aleph0.elenco.refresh",
         "title": "Refresh elenco (reparto → cast-table)",
         "category": "Aleph-0",
         "icon": "$(organization)"
       },
       {
-        "command": "alephscript.teatro.refresh",
+        "command": "aleph0.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
         "category": "🎭 Teatro"
       },
       {
-        "command": "alephscript.teatro.activateAgent",
+        "command": "aleph0.teatro.activateAgent",
         "title": ">>> Jack In Agent",
         "icon": "$(plug)",
         "category": "🎭 Teatro"
       },
       {
-        "command": "alephscript.teatro.deactivateAgent",
+        "command": "aleph0.teatro.deactivateAgent",
         "title": ">>> Disconnect Agent",
         "icon": "$(debug-disconnect)",
         "category": "🎭 Teatro"
       },
       {
-        "command": "alephscript.teatro.openChatParticipant",
+        "command": "aleph0.teatro.openChatParticipant",
         "title": ">>> Open Neural Link",
         "icon": "$(symbol-method)",
         "category": "🎭 Teatro"
       },
       {
-        "command": "alephscript.teatro.showAgentInfo",
+        "command": "aleph0.teatro.showAgentInfo",
         "title": ">>> Scan Agent Data",
         "icon": "$(search-view-icon)",
         "category": "🎭 Teatro"
       },
       {
-        "command": "alephscript.teatro.openTeatroPanel",
+        "command": "aleph0.teatro.openTeatroPanel",
         "title": "Open",
         "category": "🎭 Teatro",
         "icon": "$(device-desktop)"
       },
       {
-        "command": "alephscript.mcptree.start",
+        "command": "aleph0.mcptree.start",
         "title": "Start MCP Server",
         "icon": "$(play)"
       },
       {
-        "command": "alephscript.mcptree.stop",
+        "command": "aleph0.mcptree.stop",
         "title": "Stop MCP Server",
         "icon": "$(stop)"
       },
       {
-        "command": "alephscript.mcptree.web.open",
+        "command": "aleph0.mcptree.web.open",
         "title": "Open MCP Web Interface",
         "icon": "$(globe)"
       },
       {
-        "command": "alephscript.uis.start",
+        "command": "aleph0.uis.start",
         "title": "Start UI",
         "icon": "$(play)"
       },
       {
-        "command": "alephscript.uis.stop",
+        "command": "aleph0.uis.stop",
         "title": "Stop UI",
         "icon": "$(stop)"
       },
       {
-        "command": "alephscript.uis.openBrowser",
+        "command": "aleph0.uis.openBrowser",
         "title": "Open in Browser",
         "icon": "$(globe)"
       },
       {
-        "command": "alephscript.demo.runAll",
+        "command": "aleph0.demo.runAll",
         "title": "▶️ Run All Demo Servers",
         "category": "AlephScript Demo",
         "icon": "$(run-all)"
       },
       {
-        "command": "alephscript.demo.stopAll",
+        "command": "aleph0.demo.stopAll",
         "title": "⏹️ Stop All Demo Servers",
         "category": "AlephScript Demo",
         "icon": "$(debug-stop)"
       },
       {
-        "command": "alephscript.showStatusPanel",
+        "command": "aleph0.showStatusPanel",
         "title": "Show System Status Panel",
         "category": "AlephScript"
       },
       {
-        "command": "alephscript.refreshStatus",
+        "command": "aleph0.refreshStatus",
         "title": "Refresh System Status",
         "category": "AlephScript"
       },
       {
-        "command": "alephscript.mcptree.refresh",
+        "command": "aleph0.mcptree.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.uis.refresh",
+        "command": "aleph0.uis.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.sockets.refresh",
+        "command": "aleph0.sockets.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.sockets.connect",
+        "command": "aleph0.sockets.connect",
         "title": "Connect to Server",
         "icon": "$(plug)"
       },
       {
-        "command": "alephscript.sockets.disconnect",
+        "command": "aleph0.sockets.disconnect",
         "title": "Disconnect",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "alephscript.sockets.joinRoom",
+        "command": "aleph0.sockets.joinRoom",
         "title": "Join Room",
         "icon": "$(add)"
       },
       {
-        "command": "alephscript.sockets.leaveRoom",
+        "command": "aleph0.sockets.leaveRoom",
         "title": "Leave Room",
         "icon": "$(remove)"
       },
       {
-        "command": "alephscript.sockets.sendMessage",
+        "command": "aleph0.sockets.sendMessage",
         "title": "Send Test Message",
         "icon": "$(mail)"
       },
       {
-        "command": "alephscript.aracne.connect",
+        "command": "aleph0.aracne.connect",
         "title": "Connect AracneBot to Mesh",
         "category": "AlephScript",
         "icon": "$(plug)"
       },
       {
-        "command": "alephscript.aracne.disconnect",
+        "command": "aleph0.aracne.disconnect",
         "title": "Disconnect AracneBot from Mesh",
         "category": "AlephScript",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "alephscript.aracne.status",
+        "command": "aleph0.aracne.status",
         "title": "AracneBot Status",
         "category": "AlephScript",
         "icon": "$(info)"
       },
       {
-        "command": "alephscript.configs.openInEditor",
+        "command": "aleph0.configs.openInEditor",
         "title": "Open in Editor"
       },
       {
-        "command": "alephscript.configs.validate",
+        "command": "aleph0.configs.validate",
         "title": "Validate Configuration",
         "icon": "$(check)"
       },
       {
-        "command": "alephscript.configs.format",
+        "command": "aleph0.configs.format",
         "title": "Format Configuration",
         "icon": "$(symbol-operator)"
       },
       {
-        "command": "alephscript.configs.backup",
+        "command": "aleph0.configs.backup",
         "title": "Create Backup",
         "icon": "$(archive)"
       },
       {
-        "command": "alephscript.configs.createTemplate",
+        "command": "aleph0.configs.createTemplate",
         "title": "Create from Template",
         "icon": "$(new-file)"
       },
       {
-        "command": "alephscript.configs.reload",
+        "command": "aleph0.configs.reload",
         "title": "Reload Configuration",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.configs.refresh",
+        "command": "aleph0.configs.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.analytics.view",
+        "command": "aleph0.analytics.view",
         "title": "Alephscript: View Analytics Dashboard",
         "category": "Analytics"
       },
       {
-        "command": "alephscript.analytics.export",
+        "command": "aleph0.analytics.export",
         "title": "Alephscript: Export Analytics Data",
         "category": "Analytics"
       },
       {
-        "command": "alephscript.ai.askAssistant",
+        "command": "aleph0.ai.askAssistant",
         "title": "Alephscript: Ask AI Assistant",
         "category": "AI"
       },
       {
-        "command": "alephscript.ai.codeAnalysis",
+        "command": "aleph0.ai.codeAnalysis",
         "title": "Alephscript: AI Code Analysis",
         "category": "AI"
       },
       {
-        "command": "alephscript.ai.optimizeWorkflow",
+        "command": "aleph0.ai.optimizeWorkflow",
         "title": "Alephscript: AI Workflow Optimization",
         "category": "AI"
       },
       {
-        "command": "alephscript.ai.viewStats",
+        "command": "aleph0.ai.viewStats",
         "title": "Alephscript: View AI Assistant Stats",
         "category": "AI"
       },
       {
-        "command": "alephscript.logs.refresh",
+        "command": "aleph0.logs.refresh",
         "title": "Refresh Logs",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.logs.clear",
+        "command": "aleph0.logs.clear",
         "title": "Clear All Logs",
         "icon": "$(clear-all)"
       },
       {
-        "command": "alephscript.logs.export",
+        "command": "aleph0.logs.export",
         "title": "Export Logs",
         "icon": "$(save)"
       },
       {
-        "command": "alephscript.logs.toggleAutoRefresh",
+        "command": "aleph0.logs.toggleAutoRefresh",
         "title": "Toggle Auto Refresh",
         "icon": "$(sync)"
       },
       {
-        "command": "alephscript.logs.toggleGroupByCategory",
+        "command": "aleph0.logs.toggleGroupByCategory",
         "title": "Toggle Group by Category",
         "icon": "$(list-tree)"
       },
       {
-        "command": "alephscript.logs.toggleErrorsOnly",
+        "command": "aleph0.logs.toggleErrorsOnly",
         "title": "Toggle Errors Only",
         "icon": "$(error)"
       },
       {
-        "command": "alephscript.logs.setLogLevel",
+        "command": "aleph0.logs.setLogLevel",
         "title": "Set Log Level",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "alephscript.logs.showChannel",
+        "command": "aleph0.logs.showChannel",
         "title": "Show Log Channel",
         "icon": "$(output)"
       },
       {
-        "command": "alephscript.showDashboard",
+        "command": "aleph0.showDashboard",
         "title": ">>> Access Main Terminal",
         "category": "🖥️ Theater System",
         "icon": "$(terminal)"
       },
       {
-        "command": "alephscript.systemStatus",
+        "command": "aleph0.systemStatus",
         "title": ">>> System Diagnostics",
         "category": "🖥️ Theater System",
         "icon": "$(pulse)"
       },
       {
-        "command": "alephscript.quickStart",
+        "command": "aleph0.quickStart",
         "title": ">>> Initialize All Systems",
         "category": "⚡ Quick Hack",
         "icon": "$(zap)"
       },
       {
-        "command": "alephscript.emergencyStop",
+        "command": "aleph0.emergencyStop",
         "title": ">>> EMERGENCY: Kill All Processes",
         "category": "⚡ Quick Hack",
         "icon": "$(stop-circle)"
       },
       {
-        "command": "alephscript.agents.startAll",
+        "command": "aleph0.agents.startAll",
         "title": ">>> Boot All Agents",
         "category": "🤖 Agent Matrix",
         "icon": "$(play-circle)"
       },
       {
-        "command": "alephscript.mcptree.stopAll",
+        "command": "aleph0.mcptree.stopAll",
         "title": ">>> Shutdown Agent Matrix",
         "category": "🤖 Agent Matrix",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "alephscript.uis.startAll",
+        "command": "aleph0.uis.startAll",
         "title": "Start All UIs",
         "category": "AlephScript UIs",
         "icon": "$(browser)"
       },
       {
-        "command": "alephscript.uis.openAllBrowsers",
+        "command": "aleph0.uis.openAllBrowsers",
         "title": "Open All UIs in Browser",
         "category": "AlephScript UIs",
         "icon": "$(globe)"
       },
       {
-        "command": "alephscript.sockets.quickConnect",
+        "command": "aleph0.sockets.quickConnect",
         "title": "Quick Connect to Local Socket",
         "category": "AlephScript Socket.IO",
         "icon": "$(plug)"
       },
       {
-        "command": "alephscript.sockets.disconnectAll",
+        "command": "aleph0.sockets.disconnectAll",
         "title": "Disconnect All Sockets",
         "category": "AlephScript Socket.IO",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "alephscript.configs.validateAll",
+        "command": "aleph0.configs.validateAll",
         "title": "Validate All Configurations",
         "category": "AlephScript Configuration",
         "icon": "$(check-all)"
       },
       {
-        "command": "alephscript.configs.backupAll",
+        "command": "aleph0.configs.backupAll",
         "title": "Backup All Configurations",
         "category": "AlephScript Configuration",
         "icon": "$(archive)"
       },
       {
-        "command": "alephscript.logs.showMainChannel",
+        "command": "aleph0.logs.showMainChannel",
         "title": "Show Main Log Channel",
         "category": "AlephScript Debug & Logs",
         "icon": "$(output)"
       },
       {
-        "command": "alephscript.logs.clearAndRestart",
+        "command": "aleph0.logs.clearAndRestart",
         "title": "Clear Logs & Restart Logging",
         "category": "AlephScript Debug & Logs",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.terminals.showAll",
+        "command": "aleph0.terminals.showAll",
         "title": "Show All AlephScript Terminals",
         "category": "AlephScript Terminals",
         "icon": "$(terminal)"
       },
       {
-        "command": "alephscript.terminals.killAll",
+        "command": "aleph0.terminals.killAll",
         "title": "Kill All Terminals",
         "category": "AlephScript Terminals",
         "icon": "$(trash)"
       },
       {
-        "command": "alephscript.hackerControlPanel.toggle",
+        "command": "aleph0.hackerControlPanel.toggle",
         "title": "🚀 Toggle Neural Control Matrix",
         "category": "🎭 Theater Control",
         "icon": "$(pulse)"
       },
       {
-        "command": "alephscript.hackerCommandPanel.toggle",
+        "command": "aleph0.hackerCommandPanel.toggle",
         "title": "⚡ Toggle Command Terminal",
         "category": "🎭 Theater Control",
         "icon": "$(terminal-cmd)"
       },
       {
-        "command": "alephscript.hackerConfigPanel.toggle",
+        "command": "aleph0.hackerConfigPanel.toggle",
         "title": "⚙️ Toggle Config Matrix",
         "category": "🎭 Theater Control",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "alephscript.hackerTasksPanel.toggle",
+        "command": "aleph0.hackerTasksPanel.toggle",
         "title": "📋 Toggle Tasks Runner",
         "category": "🎭 Theater Control",
         "icon": "$(tasklist)"
       },
       {
-        "command": "alephscript.hackerTasksPanel.refresh",
+        "command": "aleph0.hackerTasksPanel.refresh",
         "title": "🔄 Refresh Tasks",
         "category": "🎭 Theater Control",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.hackerTasksPanel.runDefault",
+        "command": "aleph0.hackerTasksPanel.runDefault",
         "title": "▶️ Run Default Build Task",
         "category": "🎭 Theater Control",
         "icon": "$(play)"
       },
       {
-        "command": "alephscript.hackerTasksPanel.stopAll",
+        "command": "aleph0.hackerTasksPanel.stopAll",
         "title": "⏹️ Stop All Tasks",
         "category": "🎭 Theater Control",
         "icon": "$(debug-stop)"
       },
       {
-        "command": "alephscript.statusBar.animate",
+        "command": "aleph0.statusBar.animate",
         "title": "🚀 Animate Status Bar",
         "category": "🎭 Theater Control",
         "icon": "$(loading~spin)"
       },
       {
-        "command": "alephscript.statusBar.toggle",
+        "command": "aleph0.statusBar.toggle",
         "title": "💫 Toggle Status Bar",
         "category": "🎭 Theater Control",
         "icon": "$(eye)"
       },
       {
-        "command": "alephscript.webview.showDashboard",
+        "command": "aleph0.webview.showDashboard",
         "title": ">>> Theater Dashboard",
         "category": "🎭 Theater Interfaces",
         "icon": "$(browser)"
       },
       {
-        "command": "alephscript.webview.openWebRTC",
+        "command": "aleph0.webview.openWebRTC",
         "title": ">>> Open Neural Video Link",
         "category": "🎭 Theater Interfaces",
         "icon": "$(device-camera-video)"
       },
       {
-        "command": "alephscript.webview.openThreeJS",
+        "command": "aleph0.webview.openThreeJS",
         "title": ">>> Launch 3D Stage",
         "category": "🎭 Theater Interfaces",
         "icon": "$(symbol-color)"
       },
       {
-        "command": "alephscript.webview.openSocket",
+        "command": "aleph0.webview.openSocket",
         "title": ">>> Neural Network Console",
         "category": "🎭 Theater Interfaces",
         "icon": "$(radio-tower)"
       },
       {
-        "command": "alephscript.webview.openDriver",
+        "command": "aleph0.webview.openDriver",
         "title": ">>> Stage Driver Interface",
         "category": "🎭 Theater Interfaces",
         "icon": "$(device-desktop)"
       },
       {
-        "command": "alephscript.webview.reloadAll",
+        "command": "aleph0.webview.reloadAll",
         "title": ">>> Reload All Stages",
         "category": "🎭 Theater Interfaces",
         "icon": "$(refresh)"
       },
       {
-        "command": "alephscript.analytics.showDashboard",
+        "command": "aleph0.analytics.showDashboard",
         "title": "Show Analytics Dashboard",
         "category": "AlephScript Analytics",
         "icon": "$(graph)"
       },
       {
-        "command": "alephscript.analytics.export",
+        "command": "aleph0.analytics.export",
         "title": "Export Analytics Data",
         "category": "AlephScript Analytics",
         "icon": "$(export)"
       },
       {
-        "command": "alephscript.analytics.clear",
+        "command": "aleph0.analytics.clear",
         "title": "Clear Analytics Data",
         "category": "AlephScript Analytics",
         "icon": "$(trash)"
       },
       {
-        "command": "alephscript.agents.createNew",
+        "command": "aleph0.agents.createNew",
         "title": ">>> Spawn New Agent",
         "category": "🤖 Agent Matrix",
         "icon": "$(add)"
       },
       {
-        "command": "alephscript.agents.editContent",
+        "command": "aleph0.agents.editContent",
         "title": ">>> Edit Agent Neural Net",
         "category": "🤖 Agent Matrix",
         "icon": "$(code)"
       },
       {
-        "command": "alephscript.agents.editConfig",
+        "command": "aleph0.agents.editConfig",
         "title": ">>> Hack Agent Config",
         "category": "🤖 Agent Matrix",
         "icon": "$(circuit-board)"
       },
       {
-        "command": "alephscript.agents.validateAll",
+        "command": "aleph0.agents.validateAll",
         "title": ">>> Run Agent Diagnostics",
         "category": "🤖 Agent Matrix",
         "icon": "$(pulse)"
@@ -591,13 +591,13 @@
     "configuration": {
       "title": "Aleph-0",
       "properties": {
-        "zigurat.mesh.host": {
+        "aleph0.mesh.host": {
           "type": "string",
           "default": "",
           "description": "Host del mesh AlephScript (vacío = ⏳ pendiente de configurar)",
           "scope": "window"
         },
-        "zigurat.mesh.port": {
+        "aleph0.mesh.port": {
           "type": [
             "number",
             "null"
@@ -606,19 +606,19 @@
           "description": "Puerto del mesh AlephScript (vacío/null = ⏳ pendiente)",
           "scope": "window"
         },
-        "zigurat.mesh.baseUrl": {
+        "aleph0.mesh.baseUrl": {
           "type": "string",
           "default": "",
-          "description": "URL base HTTP del mesh (p. ej. http://localhost:3010). Si vacío, se compone de zigurat.mesh.host + zigurat.mesh.port; si ambos vacíos = ⏳",
+          "description": "URL base HTTP del mesh (p. ej. http://localhost:3010). Si vacío, se compone de aleph0.mesh.host + aleph0.mesh.port; si ambos vacíos = ⏳",
           "scope": "window"
         },
-        "zigurat.launcher.host": {
+        "aleph0.launcher.host": {
           "type": "string",
           "default": "",
           "description": "Host del MCP service launcher (vacío = ⏳ pendiente)",
           "scope": "window"
         },
-        "zigurat.launcher.port": {
+        "aleph0.launcher.port": {
           "type": [
             "number",
             "null"
@@ -627,25 +627,25 @@
           "description": "Puerto del MCP service launcher (vacío/null = ⏳ pendiente)",
           "scope": "window"
         },
-        "zigurat.ollama.baseUrl": {
+        "aleph0.ollama.baseUrl": {
           "type": "string",
           "default": "",
           "description": "URL base de Ollama (vacío = ⏳ pendiente)",
           "scope": "window"
         },
-        "zigurat.room.id": {
+        "aleph0.room.id": {
           "type": "string",
           "default": "",
           "description": "Room Zeus a la que el IDE hace join para recibir peer-card (vacío = ⏳ pendiente)",
           "scope": "window"
         },
-        "zigurat.lineaEditor.host": {
+        "aleph0.lineaEditor.host": {
           "type": "string",
           "default": "",
           "description": "Host de @zeus/linea-editor (vacío = resolver desde catálogo launcher; sin inventar)",
           "scope": "window"
         },
-        "zigurat.lineaEditor.port": {
+        "aleph0.lineaEditor.port": {
           "type": [
             "number",
             "null"
@@ -654,7 +654,7 @@
           "description": "Puerto de @zeus/linea-editor (vacío/null = catálogo o ⏳; no se inventa 4115)",
           "scope": "window"
         },
-        "zigurat.reparto.path": {
+        "aleph0.reparto.path": {
           "type": "string",
           "default": "",
           "description": "Path a JSON reparto/1 (@zeus/reparto-kit) para el panel elenco / cast-table (vacío = ⏳). SEPARADO de ICompany/teatro.",
@@ -684,17 +684,17 @@
           "description": "Enable configuration validation on load",
           "scope": "window"
         },
-        "arrakisTheater.configPath": {
+        "aleph0.theater.configPath": {
           "type": "string",
           "default": "",
           "description": "Path to the Theater configuration file"
         },
-        "arrakisTheater.autoStart": {
+        "aleph0.theater.autoStart": {
           "type": "boolean",
           "default": false,
           "description": "Auto-start Theater services when opening workspace"
         },
-        "arrakisTheater.hackerMode": {
+        "aleph0.theater.hackerMode": {
           "type": "boolean",
           "default": true,
           "description": "Enable hacker-style terminal aesthetics and green color scheme"
@@ -778,194 +778,194 @@
     "menus": {
       "view/item/context": [
         {
-          "command": "alephscript.mcptree.start",
+          "command": "aleph0.mcptree.start",
           "when": "view == alephscript.mcptree && viewItem == serverStopped",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.mcptree.stop",
+          "command": "aleph0.mcptree.stop",
           "when": "view == alephscript.mcptree && viewItem == serverRunning",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.mcptree.web.open",
+          "command": "aleph0.mcptree.web.open",
           "when": "view == alephscript.mcptree && viewItem == web",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.uis.start",
+          "command": "aleph0.uis.start",
           "when": "view == alephscript.uis && viewItem =~ /^ui/",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.uis.stop",
+          "command": "aleph0.uis.stop",
           "when": "view == alephscript.uis && viewItem =~ /^ui/",
           "group": "inline@2"
         },
         {
-          "command": "alephscript.uis.openBrowser",
+          "command": "aleph0.uis.openBrowser",
           "when": "view == alephscript.uis && viewItem == uiEnabled",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.sockets.joinRoom",
+          "command": "aleph0.sockets.joinRoom",
           "when": "view == alephscript.sockets && viewItem == socketRoom",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.sockets.leaveRoom",
+          "command": "aleph0.sockets.leaveRoom",
           "when": "view == alephscript.sockets && viewItem == socketRoom",
           "group": "inline@2"
         },
         {
-          "command": "alephscript.sockets.sendMessage",
+          "command": "aleph0.sockets.sendMessage",
           "when": "view == alephscript.sockets && viewItem == socketRoom",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.sockets.connect",
+          "command": "aleph0.sockets.connect",
           "when": "view == alephscript.sockets && viewItem == socketServer",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.sockets.disconnect",
+          "command": "aleph0.sockets.disconnect",
           "when": "view == alephscript.sockets && viewItem == socketServer",
           "group": "inline@2"
         },
         {
-          "command": "alephscript.configs.validate",
+          "command": "aleph0.configs.validate",
           "when": "view == alephscript.configs && viewItem =~ /^configFile/",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.configs.format",
+          "command": "aleph0.configs.format",
           "when": "view == alephscript.configs && viewItem =~ /^configFile/",
           "group": "inline@2"
         },
         {
-          "command": "alephscript.configs.backup",
+          "command": "aleph0.configs.backup",
           "when": "view == alephscript.configs && viewItem =~ /^configFile/",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.configs.reload",
+          "command": "aleph0.configs.reload",
           "when": "view == alephscript.configs && viewItem =~ /^configFile/",
           "group": "navigation@2"
         },
         {
-          "command": "alephscript.teatro.activateAgent",
+          "command": "aleph0.teatro.activateAgent",
           "when": "view == alephscript.teatro && viewItem == teatroAgentInactive",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.teatro.deactivateAgent",
+          "command": "aleph0.teatro.deactivateAgent",
           "when": "view == alephscript.teatro && viewItem == teatroAgentActive",
           "group": "inline@1"
         },
         {
-          "command": "alephscript.teatro.openChatParticipant",
+          "command": "aleph0.teatro.openChatParticipant",
           "when": "view == alephscript.teatro && viewItem =~ /^teatroAgent/",
           "group": "inline@2"
         },
         {
-          "command": "alephscript.teatro.showAgentInfo",
+          "command": "aleph0.teatro.showAgentInfo",
           "when": "view == alephscript.teatro && viewItem =~ /^teatroAgent/",
           "group": "navigation@1"
         }
       ],
       "view/title": [
         {
-          "command": "alephscript.hackerControlPanel.toggle",
+          "command": "aleph0.hackerControlPanel.toggle",
           "when": "view == alephscript.hackerControlPanel",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.hackerCommandPanel.toggle",
+          "command": "aleph0.hackerCommandPanel.toggle",
           "when": "view == alephscript.hackerCommandPanel",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.hackerConfigPanel.toggle",
+          "command": "aleph0.hackerConfigPanel.toggle",
           "when": "view == alephscript.hackerConfigPanel",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.hackerTasksPanel.toggle",
+          "command": "aleph0.hackerTasksPanel.toggle",
           "when": "view == alephscript.hackerTasksPanel",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.hackerTasksPanel.refresh",
+          "command": "aleph0.hackerTasksPanel.refresh",
           "when": "view == alephscript.hackerTasksPanel",
           "group": "navigation@2"
         },
         {
-          "command": "alephscript.hackerTasksPanel.stopAll",
+          "command": "aleph0.hackerTasksPanel.stopAll",
           "when": "view == alephscript.hackerTasksPanel",
           "group": "navigation@3"
         },
         {
-          "command": "alephscript.mcptree.refresh",
+          "command": "aleph0.mcptree.refresh",
           "when": "view == alephscript.mcptree",
           "group": "navigation"
         },
         {
-          "command": "alephscript.uis.refresh",
+          "command": "aleph0.uis.refresh",
           "when": "view == alephscript.uis",
           "group": "navigation"
         },
         {
-          "command": "alephscript.configs.refresh",
+          "command": "aleph0.configs.refresh",
           "when": "view == alephscript.configs",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.configs.createTemplate",
+          "command": "aleph0.configs.createTemplate",
           "when": "view == alephscript.configs",
           "group": "navigation@2"
         },
         {
-          "command": "alephscript.sockets.refresh",
+          "command": "aleph0.sockets.refresh",
           "when": "view == alephscript.sockets",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.sockets.connect",
+          "command": "aleph0.sockets.connect",
           "when": "view == alephscript.sockets",
           "group": "navigation@2"
         },
         {
-          "command": "alephscript.logs.refresh",
+          "command": "aleph0.logs.refresh",
           "when": "view == alephscript.logs",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.logs.clear",
+          "command": "aleph0.logs.clear",
           "when": "view == alephscript.logs",
           "group": "navigation@2"
         },
         {
-          "command": "alephscript.logs.toggleAutoRefresh",
+          "command": "aleph0.logs.toggleAutoRefresh",
           "when": "view == alephscript.logs",
           "group": "navigation@3"
         },
         {
-          "command": "alephscript.logs.export",
+          "command": "aleph0.logs.export",
           "when": "view == alephscript.logs",
           "group": "navigation@4"
         },
         {
-          "command": "alephscript.teatro.refresh",
+          "command": "aleph0.teatro.refresh",
           "when": "view == alephscript.teatro",
           "group": "navigation@1"
         },
         {
-          "command": "alephscript.teatro.openTeatroPanel",
+          "command": "aleph0.teatro.openTeatroPanel",
           "when": "view == alephscript.teatro",
           "group": "navigation@2"
         },
         {
-          "command": "zigurat.elenco.refresh",
+          "command": "aleph0.elenco.refresh",
           "when": "view == alephscript.elenco",
           "group": "navigation@1"
         }
@@ -1074,127 +1074,127 @@
     ],
     "keybindings": [
       {
-        "command": "alephscript.showDashboard",
+        "command": "aleph0.showDashboard",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
         "when": "true"
       },
       {
-        "command": "alephscript.systemStatus",
+        "command": "aleph0.systemStatus",
         "key": "ctrl+alt+s",
         "mac": "cmd+alt+s",
         "when": "true"
       },
       {
-        "command": "alephscript.quickStart",
+        "command": "aleph0.quickStart",
         "key": "ctrl+alt+q",
         "mac": "cmd+alt+q",
         "when": "true"
       },
       {
-        "command": "alephscript.emergencyStop",
+        "command": "aleph0.emergencyStop",
         "key": "ctrl+alt+x",
         "mac": "cmd+alt+x",
         "when": "true"
       },
       {
-        "command": "alephscript.hackerControlPanel.toggle",
+        "command": "aleph0.hackerControlPanel.toggle",
         "key": "ctrl+alt+1",
         "mac": "cmd+alt+1",
         "when": "true"
       },
       {
-        "command": "alephscript.hackerCommandPanel.toggle",
+        "command": "aleph0.hackerCommandPanel.toggle",
         "key": "ctrl+alt+2",
         "mac": "cmd+alt+2",
         "when": "true"
       },
       {
-        "command": "alephscript.hackerConfigPanel.toggle",
+        "command": "aleph0.hackerConfigPanel.toggle",
         "key": "ctrl+alt+3",
         "mac": "cmd+alt+3",
         "when": "true"
       },
       {
-        "command": "alephscript.hackerTasksPanel.toggle",
+        "command": "aleph0.hackerTasksPanel.toggle",
         "key": "ctrl+alt+4",
         "mac": "cmd+alt+4",
         "when": "true"
       },
       {
-        "command": "alephscript.hackerTasksPanel.runDefault",
+        "command": "aleph0.hackerTasksPanel.runDefault",
         "key": "ctrl+shift+b",
         "mac": "cmd+shift+b",
         "when": "true"
       },
       {
-        "command": "alephscript.statusBar.animate",
+        "command": "aleph0.statusBar.animate",
         "key": "ctrl+alt+0",
         "mac": "cmd+alt+0",
         "when": "true"
       },
       {
-        "command": "alephscript.uis.openAllBrowsers",
+        "command": "aleph0.uis.openAllBrowsers",
         "key": "ctrl+alt+b",
         "mac": "cmd+alt+b",
         "when": "true"
       },
       {
-        "command": "alephscript.sockets.quickConnect",
+        "command": "aleph0.sockets.quickConnect",
         "key": "ctrl+alt+c",
         "mac": "cmd+alt+c",
         "when": "true"
       },
       {
-        "command": "alephscript.logs.showMainChannel",
+        "command": "aleph0.logs.showMainChannel",
         "key": "ctrl+alt+l",
         "mac": "cmd+alt+l",
         "when": "true"
       },
       {
-        "command": "alephscript.terminals.showAll",
+        "command": "aleph0.terminals.showAll",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
         "when": "true"
       },
       {
-        "command": "alephscript.webview.showDashboard",
+        "command": "aleph0.webview.showDashboard",
         "key": "ctrl+alt+w",
         "mac": "cmd+alt+w",
         "when": "true"
       },
       {
-        "command": "alephscript.webview.openWebRTC",
+        "command": "aleph0.webview.openWebRTC",
         "key": "ctrl+alt+r",
         "mac": "cmd+alt+r",
         "when": "true"
       },
       {
-        "command": "alephscript.webview.openThreeJS",
+        "command": "aleph0.webview.openThreeJS",
         "key": "ctrl+alt+3",
         "mac": "cmd+alt+3",
         "when": "true"
       },
       {
-        "command": "alephscript.analytics.showDashboard",
+        "command": "aleph0.analytics.showDashboard",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a",
         "when": "true"
       },
       {
-        "command": "alephscript.ai.askAssistant",
+        "command": "aleph0.ai.askAssistant",
         "key": "ctrl+alt+i",
         "mac": "cmd+alt+i",
         "when": "true"
       },
       {
-        "command": "alephscript.ai.codeAnalysis",
+        "command": "aleph0.ai.codeAnalysis",
         "key": "ctrl+alt+n",
         "mac": "cmd+alt+n",
         "when": "editorHasSelection"
       },
       {
-        "command": "alephscript.ai.optimizeWorkflow",
+        "command": "aleph0.ai.optimizeWorkflow",
         "key": "ctrl+alt+o",
         "mac": "cmd+alt+o",
         "when": "true"
@@ -1246,12 +1246,12 @@
     "lint:fix": "eslint src --ext ts --fix",
     "package": "npm run package:v1",
     "install:local": "node scripts/vsix.mjs install",
-    "uninstall:local": "code --uninstall-extension scriptorium.zigurat",
+    "uninstall:local": "code --uninstall-extension scriptorium.aleph-0",
     "build:local": "npm run compile && npm run package:local",
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
     "dev:quick": "npm run compile && npm run deploy:local",
     "install:insiders": "node scripts/vsix.mjs install --insiders",
-    "uninstall:insiders": "code-insiders --uninstall-extension scriptorium.zigurat",
+    "uninstall:insiders": "code-insiders --uninstall-extension scriptorium.aleph-0",
     "deploy:insiders": "npm run build:local && npm run uninstall:insiders && npm run install:insiders",
     "dev:insiders": "npm run compile && npm run deploy:insiders",
     "debug:view": "code --extensionDevelopmentPath=. --new-window",
