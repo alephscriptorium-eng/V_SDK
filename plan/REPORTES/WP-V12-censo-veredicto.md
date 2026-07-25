@@ -8,7 +8,7 @@
 | Base | `1c90c43bfeafe6cabbc71a04440b4a962544aa83` |
 | Entregable | `plan/CENSO-V12.md` |
 | Circunstancia | **relevo**: la sesión que despachó este WP murió antes de commitear y dejó `plan/CENSO-V12.md` sin trackear |
-| `VEREDICTO_REVISOR` | **⏳ pendiente** |
+| `VEREDICTO_REVISOR` | **DEVOLUCIÓN** — contrarrevisor-V, §12 |
 
 ---
 
@@ -351,8 +351,284 @@ en este worktree, ni con registros reconocibles ni desconocidos.
 | Fusiones hechas | **ninguna** — no es de mi rol |
 | Push | **no** — el brief lo prohíbe en este relevo |
 | Identidad de commit | `worker-V <alephscriptorium@gmail.com>`, sin placeholders |
-| `VEREDICTO_REVISOR` | **⏳ pendiente** — yo no me apruebo |
+| `VEREDICTO_REVISOR` | **DEVOLUCIÓN** — contrarrevisor-V, §12 |
 
 Nota de proceso: el monitor huérfano que pulsa los worktrees cada 15 s
 estuvo presente durante todo el WP. No interfirió con ninguna
 comprobación y no se ha tocado.
+
+---
+
+## 12 · Contrarrevisión
+
+**Agente:** contrarrevisor-V · **Objeto:** `wp/v12-censo-veredicto`, tip
+`c34022e` (censo `a1fa0c8` + cierre `c34022e`) · **Método:** re-ejecución
+independiente, no relectura.
+
+### Veredicto: DEVOLUCIÓN
+
+Devolución **estrecha y aditiva**. Que quede dicho antes de la lista,
+porque el reparto de culpa importa: **no he encontrado ni un veredicto
+mal puesto, ni un recuento mal hecho, ni una cita falsa** en todo lo que
+he muestreado — y he muestreado duro. Los 69 veredictos se sostienen. El
+motivo de la devolución es **una omisión en §8 del censo**, la sección
+que gobierna cómo V13 ejecuta la amputación, y se arregla añadiendo
+líneas: **ningún veredicto cambia**.
+
+### 1 · [BLOQUEANTE] §8 omite el cableado vivo de las tres podas más pesadas
+
+`plan/CENSO-V12.md:583-594` — la tabla «si V13 poda… / tiene que tocar
+también», que el propio censo define como «la lista de sitios donde
+borrar una entrada rompe otra» (`:581`). Para el caso pequeño la lista es
+explícita; para los tres grandes, calla.
+
+Lo que el censo **sí** dice (`:588`):
+
+> `src/theatrical` → mover `MCPConfiguration` fuera antes:
+> `src/mcpServerManager.ts:4` — **rompe la compilación**
+
+Lo que **no** dice, comprobado con
+`git grep -n "McpChatParticipant\|TheatricalChatManager\|registerCopilotLogCommands\|CopilotMetricsPanelProvider\|getCopilotLogExporterService" -- src/core/extensionBootstrap.ts`:
+
+| poda | sitios vivos que hay que editar y §8 no nombra |
+| ---- | ---------------------------------------------- |
+| `src/copilotLogs` (fila 17 · 15/15 `.ts` en el bundle) | `src/core/extensionBootstrap.ts:41`, `:42` (imports), `:1773` (`registerCopilotLogCommands`), `:1776` (`getCopilotLogExporterService`) |
+| `src/mcpChatParticipant.ts` (fila 19 · vivo) | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de interfaz), `:115` (`new McpChatParticipant`) |
+| parte viva de `src/theatrical` (`TheatricalChatManager`) | `src/core/extensionBootstrap.ts:12`, `:58`, `:118` |
+| los 4 `ArrakisTheater.*` (fila 18, vía `package.json`) | `src/core/configurationCommandsService.ts:256-259` (`registerCommand` × 4) |
+
+Son **14 puntos de edición**, todos dentro de `src/core`, un módulo cuyo
+veredicto es **queda** y del que el propio censo dice que es «el único
+camino por el que nuestros módulos entran en el producto» (`:169`) y
+lleva nuestras +173 líneas.
+
+Por qué esto es devolución y no una nota al pie:
+
+- **La asimetría se lee como permiso.** §8 marca «rompe la compilación»
+  para un import de tipo (`mcpServerManager.ts:4`) y calla sobre catorce
+  sitios de instanciación y registro. Un V13 que trabaje contra §8 —que
+  es para lo que se escribió— concluirá que podar `src/copilotLogs` es
+  manifiesto + `.vscode/mcp.json`, y `:589` se lo confirma por escrito.
+- **El censo ya aplica el estándar correcto en el caso análogo menor.**
+  Eleva `ICompany.ts` (+7 líneas) a «V13 no puede perderla al podar»
+  (`:188`) y no eleva las 14 ediciones en el fichero de +173 líneas del
+  mismo módulo. Es el estándar del propio worker, aplicado desigual.
+- **El coste de arreglarlo ahora es una tabla; después, una pasada de
+  V13** — y, peor, ediciones no anticipadas sobre código nuestro.
+
+Qué debe cambiar: añadir a `plan/CENSO-V12.md:583-594` las cuatro
+entradas de arriba con sus `fichero:línea`, y que el §10·4 del reporte
+(«`src/theatrical` no se poda en bloque») nombre también
+`extensionBootstrap.ts`. La sección DV-11 (`:555-558`), que enumera lo
+que la salida «poda» retira, debe nombrar el mismo cableado.
+
+### 2 · [MENOR] D18 declara 17 ficheros y enumera 14
+
+`plan/CENSO-V12.md:451-466`. `git ls-files src | grep -v '\.ts$'` da
+**17** — lo confirmé, el número es correcto. La enumeración que sigue
+cubre 3 «esperables» + `TheatricalAgent.ts.backup` + 10 de contenido de
+agentes = **14**. Faltan `src/theatrical/core/schemas/agent.schema.json`,
+`company.schema.json` y `play.schema.json`. Importa porque el propósito
+declarado de D18 es enumerar «material de poda que ningún documento había
+enumerado», y esos tres son exactamente eso.
+
+### 3 · [MENOR] La celda `.vsix` de `media` es imprecisa en 1 de 23
+
+`plan/CENSO-V12.md:129`: «**sí** — ningún patrón lo cubre». `*.md`
+(`.vscodeignore:28`) sí cubre `media/ICON_CREATION_GUIDE.md`, y no hay
+re-inclusión para él (`:29-30` sólo reinstauran README y LICENSE). Viajan
+22 de 23. La columna es informativa y está fuera de la CA por el brief;
+se anota porque V14 trabaja sobre esta fila.
+
+---
+
+### Qué comprobé, y con qué comando
+
+Nada de esto se cita del reporte: se volvió a ejecutar.
+
+| comprobación | comando | resultado |
+| ------------ | ------- | --------- |
+| cobertura A | `git ls-tree --name-only HEAD \| wc -l` | **41** |
+| cobertura B | `git ls-tree --name-only HEAD src/ \| wc -l` | **28** |
+| **filas ↔ entradas, una a una** | `diff <(sed -n '106,146p' … \| sed 's/^\| `\([^`]*\)`.*/\1/' \| sort) <(git ls-tree --name-only HEAD \| sort)`, ídem para B | **0 divergencias** (la única línea del diff es un artefacto de mi propio `sed` en la fila `package.json`) |
+| reparto | recuento de veredictos por tabla | A 16/7/18=41 · B 11/12/5=28 · **27/19/23=69** ✅ |
+| CA 2 | `grep -c "<pendiente>" plan/CENSO-V12.md` | **0** |
+| CA 5 · alcance | `git log --stat` de `a1fa0c8` y `c34022e` | sólo `plan/CENSO-V12.md` y el reporte; `git status --porcelain` vacío |
+| control del brief | `git ls-tree --name-only d0323fb \| wc -l` | **40**; la diferencia con 41 es `.gitattributes` ✅ |
+
+**BFS de alcanzabilidad, re-implementado desde cero** (`/tmp/bfs_contra.js`,
+fuera del repo; resuelve `import` / `export … from` / `require()` /
+`import()` relativos, con `.ts`, `.tsx` e `index.ts`):
+
+```
+TOTAL .ts en src: 102 · ALCANZABLES: 83 · NO ALCANZABLES: 19
+```
+
+y la **lista de 19 es idéntica** a la de D4, fichero a fichero. Entry
+point derivado por mi cuenta de `package.json`: `main: ./dist/extension.js`,
+`activationEvents: ["onStartupFinished"]`, `esbuild-base: esbuild
+src/extension.ts --bundle …`.
+
+Como el worker y yo podíamos compartir el mismo punto ciego, ataqué la
+premisa en vez de repetirla:
+
+- **`tsconfig.json` / `tsconfig.build.json` no tienen `baseUrl` ni
+  `paths`** → ningún import no-relativo puede resolver a `src/`. El BFS
+  relativo es completo.
+- **Carga dinámica**: `grep -rE "require\(\s*[^'\")]|import\(\s*[^'\")]|readdirSync|createRequire|__dirname" src` — los únicos casos son
+  `HackerCommandPanelProvider.ts:132` (requiere `package.json`),
+  `ModelConfigService.ts:49-50` (un `.json`) y dos `path.join(__dirname)`
+  en ficheros que ya están muertos. **Ningún módulo `.ts` de `src` se
+  carga por ruta construida.**
+- **Referencias entrantes**, una por una, para las 5 filas que más caro
+  costarían si el «muerto» fuera falso — `ChatParticipantFactory.ts`
+  (sostiene todo el argumento de D5), `TheatricalAgent.ts` (tiene un
+  `.backup` al lado), `TheatricalAgentCore.ts`, `IsaacChatParticipant.ts`
+  y `statusManager.ts` (453 líneas) — con `git grep` sobre **todo el
+  repo**: cero referencias desde código. Sólo las nombran
+  `PLANIFICACION/`, `prompts/`, `vibecoding/` y `test-extension.js`, los
+  cuatro podados. **Los 19 muertos están muertos.**
+- Sub-recuentos por módulo derivados de mi BFS: `views` 7/7 · `treeViews`
+  5/5 · `copilotLogs` 15/15 · `core` 10/10 · `theatrical` **5/19** ·
+  `launcher` **4/5** · `libs` **1/2** · `examples` 0/1 — **los ocho
+  coinciden** con la Tabla B.
+
+**Filas obligatorias del muestreo, verificadas contra el disco:**
+
+- **`sample-config.json` — el desmentido del worker es correcto y lo
+  confirmo línea a línea.** `mcpConfigurationManager.ts:58` es el
+  comentario «look for sample-config.json in workspace»; `:61` construye
+  `path.join(workspaceRoot, 'ArrakisTheater_OperaConfig.json')`; `:63` es
+  el `fs.existsSync`; `:65` registra `Found sample-config.json at:
+  ${configPath}` **sobre la otra ruta**. D16 es exacto, y es un hallazgo
+  de primer orden. `HackerConfigPanelProvider.ts:228`
+  (`workspaceFolders?.[0]?.uri.fsPath`), `:233` (la entrada
+  `sample-config.json`) y `:241` (`if (fs.existsSync(filePath))`):
+  exactos. El panel no puede ofrecer un fichero inexistente. **El
+  borrador estaba mal y el worker tenía razón.**
+- **`src/theatrical`** — `mcpServerManager.ts:4` es
+  `import { MCPConfiguration } from './theatrical/core/interfaces';` ✅.
+  `git diff import/… HEAD -- src/theatrical` devuelve **un solo fichero**,
+  `core/interfaces/ICompany.ts | 7 +++++++`, y las 7 líneas son la
+  declaración de frontera de WP-V09 ✅. `TheatricalAgent.ts.backup`
+  trackeado ✅. 33 ficheros, 19 `.ts` ✅.
+- **`coverage/`** — `git ls-files -i -c --exclude-standard | wc -l` =
+  **72**; `| sed 's|/.*||' | sort -u` = **`coverage`** y nada más. D20
+  queda adjudicado ✅. `.gitignore:2` = `coverage/` ✅.
+  `jest.config.js:12-13` ✅.
+- **`tests/`** — `jest.config.js:33`
+  (`setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']`) y `:36-37`
+  (`moduleNameMapper: {'^vscode$': '<rootDir>/tests/mocks/vscode.mock.js'}`)
+  ✅; ambos ficheros existen en `git ls-files tests` (12 ficheros) ✅.
+  `coverageThreshold` 75/80/85/85 en `:23-28` ✅.
+- **Los 6 `chatParticipants`** — `TheatricalChatManager.ts:42-86` es un
+  array literal con los 5 ids en `:45`, `:53`, `:61`, `:69`, `:77` ✅;
+  `mcpChatParticipant.ts:77-79` crea `mcp-vscode-ext.mcp-assistant` ✅.
+  Y confirmo lo que hace el expediente DV-11 útil: **los 5
+  `agents/*ChatParticipant.ts` no tienen un solo import entrante en todo
+  el repo** — están muertos, como dice el censo.
+
+**Conteos que alimentan a otros WP** (`node -e` sobre `package.json`):
+
+- **115 comandos**, reparto `alephscript` **86** · `copilotLogs` 12 ·
+  `zigurat` 7 · `mcpSocketManager` 6 · `ArrakisTheater` 4. **D17 es
+  correcto y el «~113» de los documentos vigentes es falso**: lo verifiqué
+  también en la fuente, `REPLAN-V-ciudad-zigurat.md:289` y
+  `HANDOFF-…-post-R5V.md:48`. Prefijos legados = 108 ✅.
+- **7 consumidores de `src/config`** — `git grep -n ziguratSettings -- src`
+  devuelve exactamente los 7 de C4, ni uno más ✅. Dimensionado de DV-16.a
+  correcto.
+- **13ª vista** ✅ — `contributes.views`: 12 en `arrakisTheater` + 1 en
+  `explorer` (`arrakisTheater` · `🎭 Theater Engine`).
+
+**Procedencia** — con `MSYS_NO_PATHCONV=1` sobre las 41+28 entradas:
+**31/10** y **22/6**, y las 10 «nuestras» son exactamente las que el
+censo nombra. **D21 es real y lo reproduje**: sin la variable,
+`git cat-file -e import/…:.gitignore` responde
+`fatal: Not a valid object name import\scriptorium-793de5e92527;.gitignore`.
+El aviso del worker evitó un falso desmentido; queda confirmado, no
+heredado. `src/extension.ts` byte-idéntica ✅ (47 líneas).
+
+**Otras citas verificadas** (muestreo ampliado porque salían todas
+limpias): las **34 líneas de `.vscodeignore`** de la columna `.vsix`, una
+por una, sobre el fichero de 64 líneas — **34/34 correctas** salvo el
+matiz de `media` (punto 3); `package.json:1446` y `:1456` (los dos
+`customEditors`) ✅; los **7 puntos de código de `theatrical-content`** de
+C3 ✅ exactos; `LICENSE.md` termina en `Copyright © [Año] [Nombre del
+Autor]` ✅ (D19); `package.json:1494` = `"unix:code": "sh
+./setup-vscode-path"` ✅ (D13); `.vscode/settings.json:2-3` con la ruta
+`/Users/morente/…` ✅ (D12); `.vscode/mcp.json` con `localhost:3100` ✅;
+`esbuild.config` sólo en `.vscodeignore:35-36` ✅ (D6); las **11 cuentas
+de líneas** (511, 411, 686, 453, 423, 232, 427, 513, 398, 205, 102)
+✅ **11/11**; los diffstats (+483, +165, +53, +173, +56, 169) ✅; **17 de
+los 18 conteos por directorio** ✅ (`plan` da 28 y no 26 porque este WP
+añadió sus dos ficheros — coherente con censar `1c90c43`).
+
+**Contra el replan, no contra el censo:** leí §2 completa
+(`REPLAN-V-ciudad-zigurat.md:34-58`). La fila 20 cubre **13** entradas de
+primer nivel, la 21 `tests/` y la 16 `schemas/` = **15**; 31 − 15 = **16**
+sin fila, y la lista de D1 es **exactamente** esas 16. Las «fuentes» de
+las podas caras son fieles: fila 17 = `copilotLogs` ⛔poda, fila 18 =
+`ArrakisTheater.*` ⛔poda, fila 19 = chatParticipants, fila 21 = tests
+«poda + reemplazo», fila 16 = schemas «sustituir». §9·C4 y §9·C5 dicen lo
+que se les atribuye. `plan/DECISIONES.md`: DV-11, DV-12, DV-16 y DV-16.a
+las cuatro ⬜ **abiertas** — el censo no cierra ninguna.
+
+### Hallazgos fuera del alcance de este WP
+
+1. **El brief no pedía el mapa de dependencias.** Su CA (5 puntos) exige
+   cobertura, cero `<pendiente>`, veredicto+motivo, «lo que el disco
+   desmiente» y alcance limpio — **nada que garantice que V13 pueda
+   ejecutar sin romper**. §8 del censo es voluntaria. Es decir: el WP
+   cumple su CA y aun así podía entregar el agujero del punto 1. Si otro
+   WP de esta ola gobierna una ejecución posterior, su CA debería exigir
+   el mapa de arrastre, no confiar en que el worker lo añada de su
+   cosecha. Esto es del vigía-S, no del worker.
+2. **`tests/` engancha con lo podado, y coherentemente.**
+   `tests/DonAlvaroValidation.test.ts:11` importa
+   `DonAlvaroChatParticipant` (uno de los 19 muertos) y
+   `tests/unit/mcpChatParticipant.test.ts:3` importa `McpChatParticipant`
+   (poda). Ambos ficheros están en el contenido legado que se va, así que
+   no hay contradicción — pero **V13 debe retirarlos en la misma pasada**
+   o `tsc -p tsconfig.json` / `compile:tests` se cae. No es defecto del
+   censo; es orden de ejecución que nadie ha escrito.
+3. **`src/core/configurationCommandsService.ts`** no aparece en ningún
+   sitio del censo y es donde vive la fila 18. Ver punto 1.
+4. **D16 confirmado como material de WP-V16** (el reporte ya lo deriva en
+   §10·12): el log que afirma haber encontrado un fichero distinto del
+   que abre es falsedad silenciosa de manual, y está en un camino que
+   V16 no tiene en alcance.
+
+### Qué NO pude comprobar, y por qué
+
+- **La columna «¿viaja en el `.vsix`?» sigue sin contrastarse contra un
+  paquete construido.** He verificado las 34 citas de `.vscodeignore`
+  —que es lo que la columna dice derivar— pero `vsce package` es un
+  comando caro y el brief lo prohíbe; el reporte lo declara en §9 y el
+  brief la deja fuera de la CA. Queda igual de no verificada que antes:
+  no lo cuento como defecto, lo cuento como límite heredado.
+- **D9 (umbral de cobertura) sigue siendo predicción.** He verificado la
+  configuración (`jest.config.js:15-30`) pero **no he corrido `jest`** —
+  economía de CPU. La marca ⏳ del worker es honesta y la mantengo.
+- **Nada de runtime.** «Vivo» aquí significa alcanzable estáticamente
+  desde el punto de entrada; un módulo alcanzable puede no ejecutarse
+  jamás. El censo ya lo declara (§9 del reporte) y no lo he mejorado.
+- **No he auditado las 21 divergencias de §6 una por una**, sino 16 de
+  ellas (D1–D3, D6, D8, D10–D21 completas o en su cita central). D4 y D5
+  los re-derivé enteros. Las no auditadas en profundidad son D7 (leí el
+  cierre del fichero, no la licencia íntegra) y las partes narrativas de
+  D2.
+
+### Lo que esta devolución NO es
+
+No he arreglado nada, no he fusionado, no he cerrado ninguna DV y no he
+tocado `z-sdk`, `scriptorium/**` ni el espejo OASIS. Mi única escritura es
+esta sección y la línea `VEREDICTO_REVISOR`.
+
+Y que conste el reparto: este censo es **bueno**. Reproduje su parte más
+cara —el BFS— desde cero y salió idéntica; ataqué sus dos desmentidos más
+agresivos (C1/D15/D16) y el worker tenía razón contra el borrador;
+comprobé unas 90 citas de `fichero:línea` y **todas menos una** (el
+matiz de `media`) son exactas. Devuelvo por una omisión de 14 líneas en
+la tabla que gobierna la ejecución, no por desconfianza en el juicio.
+Arreglados los tres puntos, esto es PASS sin más discusión.
