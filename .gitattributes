@@ -1,0 +1,4 @@
+# core.autocrlf=true en esta máquina: sin esta regla, los scripts de shell
+# se sacarían con CRLF en cada worktree y Git-Bash los rompería con
+# `$'\r': command not found`. Los .sh viajan y se sacan siempre con LF.
+*.sh text eol=lf
