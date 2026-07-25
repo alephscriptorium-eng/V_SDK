@@ -345,7 +345,9 @@ en este worktree, ni con registros reconocibles ni desconocidos.
 
 | dato | valor |
 | ---- | ----- |
-| Tip de la rama | *(ver §6 y el `git log` del commit de este WP)* |
+| Commit del censo | `a1fa0c8ed2096d19197b4461910f3224570595b6` — `docs(v12): censo con veredicto por entrada, verificado contra el disco` (2 ficheros, ambos del alcance) |
+| Tip de la rama | el commit que cierra este reporte, hijo de `a1fa0c8` |
+| Base | `1c90c43` (sin rebase, sin reescritura de historia) |
 | Fusiones hechas | **ninguna** — no es de mi rol |
 | Push | **no** — el brief lo prohíbe en este relevo |
 | Identidad de commit | `worker-V <alephscriptorium@gmail.com>`, sin placeholders |
