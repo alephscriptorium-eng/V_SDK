@@ -18,6 +18,8 @@ export interface ZiguratSettings {
     /** Override endpoint linea-editor (WP-V08). Vacío = resolver desde catálogo. */
     lineaEditorHost: string;
     lineaEditorPort: number | undefined;
+    /** Path a JSON `reparto/1` para panel elenco (WP-V09). Vacío = ⏳. */
+    repartoPath: string;
 }
 
 function readNumber(value: unknown): number | undefined {
@@ -50,6 +52,7 @@ export function getZiguratSettings(): ZiguratSettings {
         roomId: readString(cfg.get('room.id')),
         lineaEditorHost: readString(cfg.get('lineaEditor.host')),
         lineaEditorPort: readNumber(cfg.get('lineaEditor.port')),
+        repartoPath: readString(cfg.get('reparto.path')),
     };
 }
 

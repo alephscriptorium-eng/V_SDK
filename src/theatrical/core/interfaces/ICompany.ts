@@ -2,6 +2,11 @@
  * Company Interface for Theatrical System
  * Manages collections of theatrical agents as cohesive units
  * Sprint S09-001 - Artillero Alpha Implementation
+ *
+ * WP-V09 · SEPARACIÓN: ICompany es el Modelo B (compañía teatral IDE /
+ * ChatParticipants). NO es `reparto/1` ni alimenta el cast-table.
+ * Elenco de dominio = Modelo A (`src/elenco/`, filasCastDesdeReparto).
+ * Ver `src/elenco/DOS-MODELOS.md`.
  */
 
 import { ITheatricalAgent, VibeCodingIntegration, ValidationResult } from './ITheatricalAgent';
@@ -9,6 +14,8 @@ import { ITheatricalAgent, VibeCodingIntegration, ValidationResult } from './ITh
 /**
  * A Company represents a collection of theatrical agents
  * that work together as a cohesive unit (e.g., Framework Retro crew)
+ *
+ * SEPARADO de reparto/1 (carril Z). Prohibido fusionar con elenco de dominio.
  */
 export interface ICompany {
   // Identity

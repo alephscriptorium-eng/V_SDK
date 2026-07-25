@@ -103,6 +103,12 @@
         "icon": "$(export)"
       },
       {
+        "command": "zigurat.elenco.refresh",
+        "title": "Refresh elenco (reparto → cast-table)",
+        "category": "Zigurat",
+        "icon": "$(organization)"
+      },
+      {
         "command": "alephscript.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
@@ -740,6 +746,12 @@
           "description": "Puerto de @zeus/linea-editor (vacío/null = catálogo o ⏳; no se inventa 4115)",
           "scope": "window"
         },
+        "zigurat.reparto.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path a JSON reparto/1 (@zeus/reparto-kit) para el panel elenco / cast-table (vacío = ⏳). SEPARADO de ICompany/teatro.",
+          "scope": "window"
+        },
         "alephscript.configurationFile": {
           "type": "string",
           "default": "",
@@ -1043,6 +1055,11 @@
           "command": "alephscript.teatro.openTeatroPanel",
           "when": "view == alephscript.teatro",
           "group": "navigation@2"
+        },
+        {
+          "command": "zigurat.elenco.refresh",
+          "when": "view == alephscript.elenco",
+          "group": "navigation@1"
         }
       ]
     },
@@ -1084,6 +1101,12 @@
           "id": "alephscript.teatro",
           "name": "🤖 Automatons",
           "icon": "$(symbol-operator)",
+          "when": "true"
+        },
+        {
+          "id": "alephscript.elenco",
+          "name": "🎭 Elenco",
+          "icon": "$(organization)",
           "when": "true"
         },
         {
@@ -1443,6 +1466,7 @@
     "esbuild-base": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:node:crypto --format=cjs --platform=node",
     "probe:v07": "node scripts/probes/v07-identidad-lectura.mjs",
     "probe:v08": "node scripts/probes/v08-mutacion-autoria.mjs",
+    "probe:v09": "node scripts/probes/v09-elenco-separacion.mjs",
     "watch": "npm run esbuild-base -- --sourcemap --watch",
     "vscode:prepublish": "npm run compile:production",
     "package:local": "vsce package --out mcp-arrakis-theater-ext.vsix",
@@ -1494,6 +1518,7 @@
     "@alephscript/mcp-core-sdk": "1.3.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@zeus/protocol": "^0.4.1",
+    "@zeus/reparto-kit": "^0.1.0",
     "express": "^5.1.0",
     "socket.io-client": "^4.8.1",
     "zod": "^3.23.8"
