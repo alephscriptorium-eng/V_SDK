@@ -6,7 +6,7 @@
 | fecha | 2026-07-25 |
 | rama | `wp/v15-espacios-nombres` |
 | base | `9690102` (main con poda V13 + marca V14) |
-| commits | `808be04` (obra) · tip: ver §12 |
+| commits | `808be04` (obra) · `7fe093a` (reporte) · **tip: el sello de §12** |
 | gobierno | DV-16.a **CERRADA en (b)** — ejecución aquí |
 | riesgo de revisión | **independiente** (config / empaquetado) |
 | `VEREDICTO_REVISOR` | **⏳ pendiente** — contrarrevisión por agente distinto |
@@ -666,7 +666,18 @@ se declaran por separado porque el contrarrevisor las verá en el diff:
    Está en un fichero que este WP ya toca (por `aleph0.identity.join`).
    DV-16 es guía, no gate: se corrige y se declara.
 
-`git status`: **limpio** tras los dos commits.
+`git status`: **limpio** tras los commits.
+
+### 12.1 · Sello de SHAs
+
+| commit | qué |
+| ------ | --- |
+| `808be04df28e37ea89ff284c14471570524960aa` | **obra** — el renombrado completo. Es el HEAD con el que se corrieron `compile`, `jest` y `package` (§8): la huella de la evidencia apunta aquí. |
+| `7fe093a90a04c75bb2bd08df4d1a16137e4d47fa` | **reporte** — este fichero. |
+| *(este commit)* | **sello** — sólo §12.1. Un reporte no puede citar su propio SHA; el tip de la rama se lee con `git log -1 wp/v15-espacios-nombres`. |
+
+No se ha reescrito ningún commit (sin `--amend`, sin rebase, sin
+force-push): el sello es un commit más, no una corrección de historia.
 
 ---
 
