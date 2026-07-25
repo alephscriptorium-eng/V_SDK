@@ -94,13 +94,13 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola C · Contrato IDE fases 1–5 — gate R4-V
 
-- 🔶 **WP-V07 · Identidad + lectura (fases 1-2)** — join de room →
+- ✅ **WP-V07 · Identidad + lectura (fases 1-2)** — join de room →
   peer-card emitida por la autoridad; seat verificado VÍA API del
   protocol (cero cripto propia); card renovada por join (no cacheada
   como identidad); ssbId visible; resources MCP proyectados en
   UI/estado. **CA:** flujo join→card→resources demostrado contra
   z-sdk local · card expirada ⇒ re-join (probado) · contrarrevisión
-  (hostil-omite: sin card, sin seat). Dep: V06. Brief: `plan/BRIEFS/WP-V07-identidad-lectura.md`. R3-V PASS · STANDING_GO.
+  (hostil-omite: sin card, sin seat). Dep: V06. Brief: `plan/BRIEFS/WP-V07-identidad-lectura.md`. R3-V PASS · STANDING_GO. Reporte: `plan/REPORTES/WP-V07-identidad-lectura.md`. Gate V07 PASS.
 - ⬜ **WP-V08 · Mutación + autoría (fases 3-4)** — tools de mutación
   con gate visible en errores/UI; autoría linea-editor
   (`crear_linea`/`export_story_board`); **motivos_deny LEÍDOS de
