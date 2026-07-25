@@ -126,7 +126,7 @@ brief queda como control cumplido, no como discrepancia.
 | `docs` | **queda** | nuestro: `GUIA-PRUEBA-v1.md`, la guía del carril. **V-L5-01..03** la enmiendan (un solo artefacto en el paso 1, fixture adjunto, declarar que su barra de PASS exige runtime); ninguna la poda | disco (§2 no lo lista) | no (`:27`) |
 | `fixtures` | **queda** | nuestro: `reparto-v1-demo.json`, fixture del probe V09 y del paso 10 de la guía. **V-L5-02** pide adjuntarlo al Release **precisamente porque** `.vscodeignore:16` lo excluye del paquete | disco (§2 no lo lista) | no (`:16`) |
 | `jest.config.js` | **queda** | legado intacto, pero es el runner que **WP-V17** necesita para su prueba nueva. Al ejecutar la fila 21, V13 debe revisar `collectCoverageFrom` y el `coverageThreshold` global (75/80/85/85) — ver §6 | disco (§2 no lo lista) | no (`:37`) |
-| `media` | **re-contenido** | **está vivo y viaja en el paquete.** De sus 23 ficheros, **17 son CSS/JS** que cargan superficies vivas (`BaseHackerPanelProvider.ts:84-87` para los 4 paneles, `AgentConfigEditorProvider.ts:83-84` y `AgentContentEditorProvider.ts:80-81` para los editores) y un **18º asset vivo es `mcp.svg`** (`mcpChatParticipant.ts:83`) — el borrador heredado decía «18 son CSS/JS», y son 17 + el svg. Los 5 restantes son marca legada: los 4 `arrakis-theater-icon*.png` que V14 sustituye (`package.json:34` `icon`) más `ICON_CREATION_GUIDE.md` | disco (§2 no lo lista) | **22 de 23**: ningún patrón cubre el directorio, pero `*.md` (`.vscodeignore:28`) sí atrapa `ICON_CREATION_GUIDE.md`, y las re-inclusiones `:29-30` son sólo para README y LICENSE |
+| `media` | **re-contenido** | **está vivo y viaja en el paquete.** De sus 23 ficheros, **17 son CSS/JS** que cargan superficies vivas (`BaseHackerPanelProvider.ts:84-87` para los 4 paneles, `AgentConfigEditorProvider.ts:83-84` y `AgentContentEditorProvider.ts:80-81` para los editores) y un **18º asset vivo es `mcp.svg`** (`mcpChatParticipant.ts:83`) — el borrador heredado decía «18 son CSS/JS», y son 17 + el svg. Los 5 restantes son marca legada: los 4 `arrakis-theater-icon*.png` que V14 sustituye (`package.json:34` `icon`) más `ICON_CREATION_GUIDE.md` | disco (§2 no lo lista) | **23 de 23** *(errata post-fusión, contrarrevisión de V13 con `unzip -l` sobre el paquete real: `ICON_CREATION_GUIDE.md` SÍ viaja — el razonamiento por glob de la contrarrevisión de V12 estaba equivocado; misma semántica que hace real a R-7 de V13)* |
 | `nvm-exec.sh` | **poda** | envoltorio de `nvm` del producto ajeno, intacto desde el import | §2 fila 20 | no (`:60`) |
 | `package-lock.json` | **queda** | lockfile del árbol de dependencias vigente (modificado por nosotros desde el import). V13 lo regenera si la poda quita dependencias | disco (§2 no lo lista) | sí — ningún patrón lo cubre; ruido para V13 |
 | `package.json` | **re-contenido** | el manifiesto, y la mayor concentración de legado del repo: **115 comandos en 5 prefijos** (`alephscript` 86 · `copilotLogs` 12 · `zigurat` 7 · `mcpSocketManager` 6 · `ArrakisTheater` 4), `configuration.title: "Arrakis Theater Configuration"`, contenedor `arrakisTheater` titulado `🎭 Arrakis Theater`, `icon: ./media/arrakis-theater-icon.png`, 6 `chatParticipants`, 3 `jsonValidation` legados y 2 `customEditors`. Lo reescriben V13 (comandos podados), V14 (marca) y V15 (prefijos). **pend. DV-16 / DV-16.a** en lo que toca a nombres. **Dato que V15 necesita y que los documentos vigentes dan mal** (§6·D17): los comandos con prefijo `alephscript.` son **86**, no «~113»; 113 se acerca al total de prefijos legados (108 de 115) | §2 filas 1, 9-14, 16-19 + disco (`node -e` sobre `contributes`) | **sí** (manifiesto obligatorio) |
@@ -676,3 +676,24 @@ sostenido por comprobaciones que se han ejecutado. El detalle de qué se
 corrigió está en `plan/REPORTES/WP-V12-censo-veredicto.md`.
 
 **Este documento no ha borrado nada.** V13 ejecuta.
+
+---
+
+## Errata post-fusión (asentada por el orquestador · 2026-07-25)
+
+Dos correcciones surgidas de la ejecución (V13) y su contrarrevisión;
+los veredictos no cambian:
+
+1. **Celda `.vsix` de `media` (fila :129): viajan 23 de 23**, no 22
+   — verificado con `unzip -l` sobre el paquete real. El «22 de 23»
+   venía del punto 3 de la contrarrevisión de V12 (glob razonado, no
+   mirado). Lección: la columna `.vsix` se verifica contra paquete,
+   no contra `.vscodeignore`.
+2. **§8, arrastre de DV-11: son 11 puntos en `extensionBootstrap.ts`,
+   no 6** (faltaban `:199,:200` literales del objeto, `:231` llamada
+   por campo, `:2170,:2173` dispose) — total real de arrastre vivo
+   **25 puntos, no 20**. Causa: grep por nombres de clase no ve
+   literales ni llamadas por campo. V13 los ejecutó todos (DISC-1,
+   contrarrevisión `78fee64` los confirmó al carácter); esta errata
+   deja el método corregido para las olas siguientes.
+
