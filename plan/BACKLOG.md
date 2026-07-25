@@ -49,14 +49,14 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   Reporte: `plan/REPORTES/WP-V02-semilla-producto.md`.
   Tag: `import/scriptorium-793de5e92527`. Merge tip post-V02 en main.
   STANDING_GO=true. README-SCRIPTORIUM: no hallado (documentado).
-- 🔶 **WP-V03 · Dependencia standalone + higiene DX** — romper
+- ✅ **WP-V03 · Dependencia standalone + higiene DX** — romper
   `file:../MCPGallery` de `@alephscript/mcp-core-sdk`: preferido
   registry `npm.scriptorium.escrivivir.co` si el paquete existe
   (comprobar `npm view`); si no, vendor `vendor/*.tgz` interno.
   Higiene del mismo lote: script `debug:view` con path `oracl`,
   mismatch de uninstall ID. **CA:** `npm ci` limpio en checkout
   fresco sin hermanos externos · `npm run compile` verde ·
-  contrarrevisión (dependencias usadas↔declaradas). Dep: V02. Brief: `plan/BRIEFS/WP-V03-deps-standalone.md`. STANDING_GO=true.
+  contrarrevisión (dependencias usadas↔declaradas). Dep: V02. Brief: `plan/BRIEFS/WP-V03-deps-standalone.md`. STANDING_GO=true. Reporte: `plan/REPORTES/WP-V03-deps-standalone.md`. Gate V03 PASS · R1-V PASS.
 
 ## Ola A · Checkpoint `.vsix` v0 — gate R2-V
 

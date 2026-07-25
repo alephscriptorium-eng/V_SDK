@@ -42,7 +42,7 @@ npm run compile: Done in ~5408ms · dist/extension.js 4.8mb
 - `TEST_AUTOMATIZADO_VS_EVIDENCIA_MANUAL`:
   - Automatizado: npm ci + compile
   - Manual: scripts debug/uninstall inspeccionados
-- `VEREDICTO_REVISOR`: `⏳ pendiente`
+- `VEREDICTO_REVISOR`: `PASS` (orquestador-V)
 
 ## Hallazgos
 
@@ -61,4 +61,8 @@ npm run compile: Done in ~5408ms · dist/extension.js 4.8mb
 
 ## Revisión del orquestador
 
-_(pendiente)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión: registry resolve, cero file:/MCPGallery, npm ci +
+compile verdes, scripts DX corregidos. Gate V03: **PASS**.
+Ola 0 completa → **R1-V PASS** (evidencia V01–V03).
