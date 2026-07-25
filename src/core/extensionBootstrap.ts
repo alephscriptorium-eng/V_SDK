@@ -35,6 +35,7 @@ import { AracneBotService } from './AracneBotService';
 import { CatalogService } from '../launcher/CatalogService';
 import { RoomIdentityService, IdentityStatusBar } from '../identity';
 import { ResourceProjectionService } from '../resources';
+import { RepartoElencoService, ElencoTreeDataProvider } from '../elenco';
 // WISH-01/02/03: Copilot Log Exporter
 import { registerCopilotLogCommands } from '../copilotLogs/commands';
 import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
@@ -72,6 +73,8 @@ export interface ExtensionContext {
     mcpTreeProvider: MCPTreeDataProvider;
     mcpWebViewManager: MCPWebViewManager;
     aracneBotService: AracneBotService;
+    /** WP-V09 · panel elenco (reparto/1 → cast-table); SEPARADO de ICompany */
+    elencoTreeProvider: ElencoTreeDataProvider;
     logger: ReturnType<typeof createLogger>;
 }
 
@@ -155,6 +158,12 @@ export class ExtensionBootstrap {
                     await resourceService.refresh();
                 }
             });
+
+            // WP-V09: elenco desde reparto/1 (cast-table); SEPARADO de ICompany/teatro
+            const elencoService = RepartoElencoService.getInstance();
+            const elencoTreeProvider = new ElencoTreeDataProvider(elencoService);
+            context.subscriptions.push(elencoService, elencoTreeProvider);
+            void elencoService.refresh();
             
             // Initialize AracneBot - Socket.IO client for mesh communication
             const aracneBotService = AracneBotService.getInstance();
@@ -197,6 +206,7 @@ export class ExtensionBootstrap {
                 mcpTreeProvider,
                 mcpWebViewManager,
                 aracneBotService,
+                elencoTreeProvider,
                 logger
             };
 
@@ -1092,6 +1102,13 @@ export class ExtensionBootstrap {
                 );
             }),
 
+            // WP-V09 · elenco (reparto → cast-table); no toca V08
+            vscode.commands.registerCommand('zigurat.elenco.refresh', async () => {
+                const snap = await RepartoElencoService.getInstance().refresh();
+                this.extensionContext?.elencoTreeProvider.refresh();
+                vscode.window.showInformationMessage(snap.statusMessage);
+            }),
+
             vscode.commands.registerCommand('alephscript.mcptree.start', async (item?: any) => {
                 try {
                     if (this.extensionContext) {
@@ -1810,9 +1827,18 @@ Detalles específicos sobre cómo configurar y usar este agente.
                 })
             );
 
+            this.vsCodeContext.subscriptions.push(
+                vscode.window.createTreeView('alephscript.elenco', {
+                    treeDataProvider: this.extensionContext.elencoTreeProvider,
+                    showCollapseAll: true,
+                    canSelectMany: false
+                })
+            );
+
             this.extensionContext.logger.info('🎭 Teatro TreeViews and WebViews registered successfully');
             this.extensionContext.logger.info('🔧 Agent Editors registered successfully');
             this.extensionContext.logger.info('🎮 Gamification TreeViews restored successfully');
+            this.extensionContext.logger.info('🎭 Elenco TreeView (reparto/1 · cast-table) registered');
         } catch (error) {
             this.extensionContext.logger.error('Failed to setup TreeViews:', error);
             throw error;

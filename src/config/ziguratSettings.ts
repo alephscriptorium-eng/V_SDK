@@ -15,6 +15,8 @@ export interface ZiguratSettings {
     ollamaBaseUrl: string;
     /** Room a la que el IDE hace join (WP-V07). Vacío = ⏳. */
     roomId: string;
+    /** Path a JSON `reparto/1` para panel elenco (WP-V09). Vacío = ⏳. */
+    repartoPath: string;
 }
 
 function readNumber(value: unknown): number | undefined {
@@ -45,6 +47,7 @@ export function getZiguratSettings(): ZiguratSettings {
         launcherPort: readNumber(cfg.get('launcher.port')),
         ollamaBaseUrl: readString(cfg.get('ollama.baseUrl')),
         roomId: readString(cfg.get('room.id')),
+        repartoPath: readString(cfg.get('reparto.path')),
     };
 }
 

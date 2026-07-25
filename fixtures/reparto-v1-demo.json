@@ -1,0 +1,17 @@
+{
+  "version": "reparto/1",
+  "personajes": [
+    { "id": "pj-prota", "nombre": "Protagonista", "rol": "protagonista" },
+    { "id": "pj-fig", "nombre": "Figurante", "rol": "figurante" }
+  ],
+  "asignaciones": [
+    {
+      "actorSsbId": "@w8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8M=.ed25519",
+      "personajeId": "pj-prota"
+    }
+  ],
+  "politica": {
+    "protagonista": ["reparto:leer", "reparto:interpretar"],
+    "figurante": ["reparto:leer"]
+  }
+}
