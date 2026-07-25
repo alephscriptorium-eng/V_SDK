@@ -28,7 +28,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola 0 · Fundación (secuencial) — gate R1-V al cierre
 
-- 🔶 **WP-V01 · Repo + taller + estación** — crear
+- ✅ **WP-V01 · Repo + taller + estación** — crear
   `alephscriptorium-eng/V_SDK` (DV-01), clone a `C:\S_LAB\v-sdk`
   PRESERVANDO este `plan/`, primer commit de gobierno (plan/ +
   README misión), calibrar `plan/ESTACION.md`, boot estación-viva +
@@ -36,6 +36,8 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   watcher vivo con lease · identidad-raiz PASS post-commit.
   *(R1-V = cierre Ola 0 tras V01–V03; no inventar R1-V PASS en V01.)*
   Brief: `plan/BRIEFS/WP-V01-repo-taller-estacion.md`.
+  Reporte: `plan/REPORTES/WP-V01-repo-taller-estacion.md`. Merge
+  `90fffd9`.
 - ⬜ **WP-V02 · Semilla del producto** — importar tip de
   `escrivivir-co/vscode-alephscript-extension` @
   `integration/beta/scriptorium` según DV-03 (historial preservado +

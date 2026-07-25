@@ -73,7 +73,7 @@ R1-V = ⏳ (cierra Ola 0 tras V01–V03; no inventado aquí)
 - `TEST_AUTOMATIZADO_VS_EVIDENCIA_MANUAL`:
   - Automatizado: `verificar-identidad-raiz.mjs` → PASS; `verificar-identidad.mjs` → OK
   - Manual: `gh repo view`, `comprobar-vivo`, listado `plan/` remoto
-- `VEREDICTO_REVISOR`: `⏳ pendiente de revisor distinto` (orquestador)
+- `VEREDICTO_REVISOR`: `PASS` (orquestador-V · 2026-07-25)
 
 ## Auto-revisión
 
@@ -100,4 +100,16 @@ R1-V = ⏳ (cierra Ola 0 tras V01–V03; no inventado aquí)
 
 ## Revisión del orquestador
 
-_(pendiente contrarrevisión)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión read-only:
+
+1. Remoto `alephscriptorium-eng/V_SDK` existe; `main` con `plan/` + README.
+2. `verificar-identidad-raiz.mjs` → **PASS** (ya no LOCK).
+3. Commits sin placeholder efectivo (`worker-V` / `orquestador-V`).
+4. Watcher estación-viva **vivo** (lease); no matado.
+5. Cero gitlink a-sdk; z-sdk/atlas no tocados.
+6. R1-V **no** marcado PASS (correcto; cierra Ola 0 tras V01–V03).
+
+Gate V01: **PASS**. No despachar WP-V02 en este cierre (siguiente brief
+separado; DV-03 ya asentada para cuando toque).
