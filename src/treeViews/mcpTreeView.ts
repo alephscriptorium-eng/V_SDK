@@ -3,6 +3,10 @@ import { MCPServerManager } from '../mcpServerManager';
 import { ProcessManager } from '../processManager';
 import { CatalogService } from '../launcher/CatalogService';
 import type { CatalogSnapshot } from '../launcher/types';
+import { RoomIdentityService } from '../identity/RoomIdentityService';
+import type { IdentitySnapshot } from '../identity/types';
+import { ResourceProjectionService } from '../resources/ResourceProjectionService';
+import type { ResourceProjectionSnapshot } from '../resources/types';
 
 export interface MCPTreeItem {
     id: string;
@@ -26,12 +30,20 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
 
     private processManager: ProcessManager;
     private catalogService: CatalogService;
-    private catalogSub: vscode.Disposable;
+    private identityService: RoomIdentityService;
+    private resourceService: ResourceProjectionService;
+    private readonly subs: vscode.Disposable[] = [];
 
     constructor(private mcpServerManager: MCPServerManager) {
         this.processManager = ProcessManager.getInstance();
         this.catalogService = CatalogService.getInstance();
-        this.catalogSub = this.catalogService.onDidChange(() => this.refresh());
+        this.identityService = RoomIdentityService.getInstance();
+        this.resourceService = ResourceProjectionService.getInstance();
+        this.subs.push(
+            this.catalogService.onDidChange(() => this.refresh()),
+            this.identityService.onDidChange(() => this.refresh()),
+            this.resourceService.onDidChange(() => this.refresh())
+        );
     }
 
     refresh(): void {
@@ -39,7 +51,9 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
     }
 
     dispose(): void {
-        this.catalogSub.dispose();
+        for (const s of this.subs) {
+            s.dispose();
+        }
         this._onDidChangeTreeData.dispose();
     }
 
@@ -175,6 +189,20 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         if (!element) {
             return Promise.resolve([
                 {
+                    id: 'mcp-identity',
+                    label: 'Identidad (peer-card)',
+                    description: 'ssbId · seat protocol',
+                    status: 'running',
+                    children: []
+                },
+                {
+                    id: 'mcp-resources',
+                    label: 'Resources MCP',
+                    description: 'proyección fase 2',
+                    status: 'running',
+                    children: []
+                },
+                {
                     id: 'mcp-catalog',
                     label: 'Launcher catalog',
                     description: 'Inventario en caliente (@zeus/mcp-launcher)',
@@ -191,6 +219,14 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
             ]);
         }
 
+        if (element.id === 'mcp-identity') {
+            return Promise.resolve(this.identityNodes(this.identityService.getSnapshot()));
+        }
+
+        if (element.id === 'mcp-resources') {
+            return Promise.resolve(this.resourceNodes(this.resourceService.getSnapshot()));
+        }
+
         if (element.id === 'mcp-catalog') {
             return Promise.resolve(this.nodesFromCatalog(this.catalogService.getSnapshot()));
         }
@@ -200,6 +236,62 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         }
 
         return Promise.resolve([]);
+    }
+
+    private identityNodes(snap: IdentitySnapshot): MCPTreeItem[] {
+        if (snap.availability !== 'ready' || !snap.ssbId) {
+            return [
+                {
+                    id: 'identity-pending',
+                    label: '⏳ Identidad no ready',
+                    description: snap.statusMessage,
+                    status: 'pending'
+                }
+            ];
+        }
+        return [
+            {
+                id: 'identity-ssbid',
+                label: snap.ssbId,
+                description: `ssbId · ${snap.phase} · join#${snap.joinCount}`,
+                status: 'running'
+            },
+            {
+                id: 'identity-room',
+                label: snap.roomId || '(sin room)',
+                description: 'roomId',
+                status: 'running'
+            }
+        ];
+    }
+
+    private resourceNodes(snap: ResourceProjectionSnapshot): MCPTreeItem[] {
+        if (snap.availability !== 'ready') {
+            return [
+                {
+                    id: 'resources-pending',
+                    label: '⏳ Resources no proyectados',
+                    description: snap.statusMessage,
+                    status: 'pending'
+                }
+            ];
+        }
+        if (snap.resources.length === 0) {
+            return [
+                {
+                    id: 'resources-empty',
+                    label: '⏳ Sin resources',
+                    description: snap.statusMessage,
+                    status: 'pending'
+                }
+            ];
+        }
+        return snap.resources.map((r) => ({
+            id: `res-${r.serverId}-${r.uri}`,
+            label: r.name,
+            description: `${r.uri}${r.serverPort != null ? ` · :${r.serverPort}` : ''}`,
+            status: 'running' as const
+        }));
     }
 
     private nodesFromCatalog(snap: CatalogSnapshot): MCPTreeItem[] {
