@@ -12,12 +12,16 @@ export interface ParsedEditorInfo {
     version?: string;
     mutationTools: string[];
     gate: VisibleGate | null;
+    /** Lo DECLARADO por el servidor: true/false explícito, o null = no declarado. */
     requireRepartoLive: boolean | null;
 }
 
 /**
  * Extrae gate + motivos_deny del JSON de editor://info.
  * Hostil-omite: sin info / sin gate.reparto.motivos_deny → no inventa catálogo.
+ * Fail-closed (V-L2-01): una ausencia de dato NUNCA concede permiso. Si el
+ * servidor no declara la exigencia de reparto, el IDE asume lo estricto y lo
+ * dice (`ok:false` + `pendingReason` ⏳); no lo asume en silencio.
  */
 export function parseEditorInfo(raw: unknown): ParsedEditorInfo {
     if (raw == null) {
@@ -76,11 +80,17 @@ export function parseEditorInfo(raw: unknown): ParsedEditorInfo {
               ? (reparto.required as boolean)
               : null;
 
+    // Puerta de permisos: los dos campos de estado fallan en la MISMA dirección
+    // (cerrado). Sólo un `false` EXPLÍCITO del servidor abre; la ausencia no.
+    //   visible         : sin `visible`  ⇒ true  (se asume puerta activa)
+    //   repartoRequired : sin `required` ⇒ true  (se asume reparto exigido)
+    // `requireRepartoLive` conserva aparte el null (no declarado) frente al
+    // false (declarado no requerido): lo asumido no se presenta como declarado.
     const gate: VisibleGate = {
         visible: g.visible !== false,
         gateLine: typeof g.gate_line === 'string' ? g.gate_line : '',
         tokenEnv: typeof g.token_env === 'string' ? g.token_env : 'ZEUS_MCP_APPROVAL_TOKEN',
-        repartoRequired: requireRepartoLive === true,
+        repartoRequired: requireRepartoLive !== false,
         repartoPolicyEnv:
             typeof g.reparto_policy_env === 'string'
                 ? g.reparto_policy_env
@@ -94,6 +104,21 @@ export function parseEditorInfo(raw: unknown): ParsedEditorInfo {
         return {
             ok: false,
             pendingReason: '⏳ editor://info.gate.reparto.motivos_deny ausente (no hardcode)',
+            mutationTools,
+            gate,
+            requireRepartoLive,
+            name: typeof o.name === 'string' ? o.name : undefined,
+            version: typeof o.version === 'string' ? o.version : undefined
+        };
+    }
+
+    // El servidor publicó su catálogo pero no dijo si exige reparto. El IDE
+    // asume lo estricto (arriba) y NO lo da por sincronizado: ⏳ visible.
+    if (requireRepartoLive === null) {
+        return {
+            ok: false,
+            pendingReason:
+                '⏳ editor://info no declara reparto_required — el IDE asume reparto EXIGIDO (la ausencia no concede permiso)',
             mutationTools,
             gate,
             requireRepartoLive,
