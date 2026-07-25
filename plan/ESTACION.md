@@ -45,9 +45,9 @@ DOWNSTREAM_PATTERNS='[".worktrees/*","codebase/*"]' \
 node .claude/skills/vigilancia/scripts/verificar-identidad-raiz.mjs
 ```
 
-Hasta WP-V01 (repo git canónico) el detector **LOCK** exit 23:
-`WORLD_ROOT no acredita git toplevel`. Calibración de params ≠ PASS
-de identidad.
+Tras WP-V01 el detector debe dar **identidad-raiz: PASS** (git
+toplevel = WORLD_ROOT). Si vuelve a LOCK, no hay despacho. Calibración
+de params ≠ omitir el preflight.
 
 ## Espejo de skills
 
