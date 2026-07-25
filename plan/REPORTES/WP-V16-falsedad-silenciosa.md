@@ -231,6 +231,56 @@ vigente: | 2026-07-25T15:41:52Z | probe-v08 | PASS | `28bb869…` | limpio |
 Salida verde completa en `out/probe-final.txt`; cierra con
 `WP-V08 probe PASS (automatizado · pieza real de src/mutation/parseEditorInfo.ts)`.
 
+### La trampa de la FORMA: rojo por assert, no por TypeError
+
+Aviso del orquestador (convergen dos contrarrevisiones de V17). El peligro es
+real y conviene dejarlo documentado, porque es una segunda falsedad silenciosa
+escondida dentro de la primera:
+
+El espejo retirado devolvía `motivosDeny` en el **nivel superior** del objeto
+(`1c90c43:scripts/probes/…:83`), mientras que `ParsedEditorInfo` lo **anida**
+en `gate.motivosDeny`. Los asserts viejos (`p.motivosDeny.length === 0` en
+`:134`, `:145`, `:179`, `:181`…) leían el campo de arriba. Cambiar **solo** el
+import habría hecho que esos asserts lanzaran `TypeError` sobre `undefined` —
+y un probe que revienta no es un probe que demuestra: sería cambiar una mentira
+por un accidente.
+
+**No ocurre aquí: los asserts están reescritos a la forma real.** Los ocho
+accesos del probe actual son todos anidados:
+
+```
+$ grep -n "motivosDeny" scripts/probes/v08-mutacion-autoria.mjs
+153:  assert(p.gate != null && p.gate.motivosDeny.length === 0, …)
+156:  assert(!q.ok && q.gate.motivosDeny.length === 0, …)
+191:  assert(p.gate.motivosDeny.length === 8, …)
+193:    fixtureMotivos.every((m) => p.gate.motivosDeny.includes(m)),
+196:  const texts = p.gate.motivosDeny.map((m) => representMotivoDeny(m, p.gate.motivosDeny));
+199:    representMotivoDeny('inventado', p.gate.motivosDeny).includes(…),
+219:  assert(p.ok && p.gate.motivosDeny.length === 2, …)
+225:    sucia.gate.motivosDeny.length === 2 && …
+```
+
+Cero accesos de nivel superior, y `:153` añade guarda explícita `p.gate != null`.
+Los campos que el probe **sí** lee de arriba (`p.ok`, `p.pendingReason`,
+`p.mutationTools`, `p.requireRepartoLive`, `p.name`, `p.version`) son
+exactamente los que `ParsedEditorInfo` declara en el nivel superior: contrastado
+campo a campo contra la interfaz.
+
+**Prueba de que el rojo de §3 es un assert y no un crash.** El probe **no tiene
+un solo `try`/`catch`** (`grep -c "try {"` → 0), así que un `TypeError` sería
+excepción no capturada: abortaría la corrida en el primer acceso malo y **nunca
+llegaría a imprimir la línea de resumen**. Los conteos dicen lo contrario:
+
+| corrida | PASS | FAIL | línea final |
+| ------- | ---- | ---- | ----------- |
+| verde (parser íntegro) | 55 | 0 | `WP-V08 probe PASS (automatizado · pieza real …)` |
+| rojo (parser mutado) | **54** | **1** | `WP-V08 probe FAIL (1)` |
+
+Los otros 54 asserts siguieron corriendo y pasando, y el resumen se imprimió.
+Eso solo pasa si el fallo es el `assert` que interroga la línea mutada. Es la
+demostración que pide la NOTA: verde con el parser real importado, y **rojo por
+assert** al mutarlo.
+
 ### CA 1 del brief — cero reimplementación
 
 ```
@@ -514,6 +564,33 @@ cambio porque endurecer el flujo de release no es un CA de este WP.
 
 **H-5 · Un `.vsix` de 1.27 MB con `dist/extension.js` de 3.07 MB sin
 comprimir.** Observación al pasar, sin acción.
+
+**H-6 · `coverage/` está TRACKEADO y jest lleva `collectCoverage: true`.**
+Aviso del orquestador, confirmado en este worktree: `git ls-files coverage/`
+devuelve **72 ficheros trackeados** y `jest.config.js:12` fuerza cobertura.
+Consecuencia: **cualquier pasada de jest ensucia el árbol y, por tanto,
+invalida el registro de `evidencia.sh` — no solo el propio, sino el de todos
+los worktrees que compartan la comparación de huella**. Es un tercer caso del
+patrón de este WP: la herramienta de evidencia queda envenenada por un efecto
+secundario que nadie declaró.
+
+Mitigación acordada: ejecutar siempre `jest --coverage=false` (precedente de
+V17). **En este WP no aplicó**: no ejecuté jest ni una vez —las etiquetas de
+`EVIDENCIA.md` son `npm-ci`, `eslint-censo`, `lint`, `lint-demo`, `probe-v08`,
+`probe-v08-demo`, `package`, `package-0.2.0`, ninguna de test— y `git status
+--porcelain coverage/` sale vacío. Lo dejo escrito porque el arreglo de fondo
+(sacar `coverage/` del índice y ponerlo en `.gitignore`) no es de mi alcance y
+va a seguir mordiendo a quien corra la suite.
+
+**H-7 · La identidad git no distingue agentes.** Los tres roles del carril
+firman como `worker-V <alephscriptorium@gmail.com>` / `contrarrevisor-V
+<…>` con el **mismo correo**, y el `git config` del repo sigue con el
+placeholder («Your Name»), así que todos usamos `-c user.name=…` sobre la
+misma cuenta. **Para el incidente de escritor concurrente esto importa: la
+autoría de un commit no permite atribuir una escritura a un agente
+concreto.** Lo único que discrimina hoy es el worktree en que se hizo. Si se
+quiere trazabilidad por agente, hace falta una identidad por sesión (p. ej.
+`worker-V-v16`), y eso es decisión de gobierno, no mía.
 
 ## 11 · Dudas para el custodio / orquestador
 
