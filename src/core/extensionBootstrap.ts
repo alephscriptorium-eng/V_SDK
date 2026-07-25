@@ -8,8 +8,6 @@ import { LoggingManager, LogCategory, LogLevel, createLogger } from '../loggingM
 import { ProcessManager } from '../processManager';
 import { WebViewManager } from '../webViewManager';
 import { CommandPaletteManager } from '../commandPaletteManager';
-import { McpChatParticipant } from '../mcpChatParticipant';
-import { TheatricalChatManager } from '../theatrical/TheatricalChatManager';
 import { TeatroTreeDataProvider } from '../views/TeatroTreeDataProvider';
 import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
 import { HackerControlPanelProvider } from '../views/HackerControlPanelProvider';
@@ -18,7 +16,6 @@ import { HackerConfigPanelProvider } from '../views/HackerConfigPanelProvider';
 import { HackerTasksPanelProvider } from '../views/HackerTasksPanelProvider';
 import { HackerStatusBarManager } from './HackerStatusBarManager';
 import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
-import { ConfigurationCommandsService } from './configurationCommandsService';
 import { AgentConfigEditorProvider } from '../editors/AgentConfigEditorProvider';
 import { McpConfigurationManager } from './mcpConfigurationManager';
 // Gamification TreeDataProviders (First Era)
@@ -37,9 +34,6 @@ import { RoomIdentityService, IdentityStatusBar } from '../identity';
 import { ResourceProjectionService } from '../resources';
 import { AuthorshipService } from '../mutation';
 import { RepartoElencoService, ElencoTreeDataProvider } from '../elenco';
-// WISH-01/02/03: Copilot Log Exporter
-import { registerCopilotLogCommands } from '../copilotLogs/commands';
-import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
 
 export interface ExtensionContext {
     managers: {
@@ -54,8 +48,7 @@ export interface ExtensionContext {
         aiAssistant: AIAssistantService;
     };
     // Segunda Época - Teatralización
-    chatParticipant: McpChatParticipant;
-    theatricalChat: TheatricalChatManager;
+    // WP-V13 (DV-11): chatParticipant/theatricalChat podados; re-lore a wishlist
     teatroTreeProvider: TeatroTreeDataProvider;
     teatroWebViewProvider: TeatroWebViewProvider;
     hackerControlPanelProvider: HackerControlPanelProvider;
@@ -110,12 +103,6 @@ export class ExtensionBootstrap {
             
             // Create all standard managers
             const managers = await createStandardManagers(context);
-            
-            // Initialize the MCP Chat Participant
-            const chatParticipant = new McpChatParticipant(context);
-            
-            // Initialize Theatrical Chat Manager (Teatro VS Code)
-            const theatricalChat = new TheatricalChatManager(context);
             
             // Initialize Teatro components
             const teatroTreeProvider = new TeatroTreeDataProvider();
@@ -196,8 +183,6 @@ export class ExtensionBootstrap {
                     aiAssistant: managers.aiAssistantService
                 },
                 // Segunda Época - Teatralización
-                chatParticipant,
-                theatricalChat,
                 teatroTreeProvider,
                 teatroWebViewProvider,
                 hackerControlPanelProvider,
@@ -226,10 +211,6 @@ export class ExtensionBootstrap {
             // Initialize Hacker Status Bar (must be after core services)
             this.extensionContext.hackerStatusBarManager.initialize(context);
             logger.info('🚀 Hacker Status Bar initialized');
-            
-            // Initialize Theatrical Chat Participants (Teatro VS Code)
-            await this.extensionContext.theatricalChat.initialize();
-            logger.info('🎭 Theatrical Chat Participants initialized');
             
             // Log AracneBot initialization (connects on demand)
             logger.info('🕷️ AracneBot initialized - ready to connect to mesh');
@@ -1766,19 +1747,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
         // Add all commands to context subscriptions
         this.vsCodeContext.subscriptions.push(...commands);
 
-        // Register configuration commands
-        ConfigurationCommandsService.registerCommands(this.vsCodeContext);
-
-        // WISH-01/02/03: Register Copilot Log Exporter commands
-        registerCopilotLogCommands(this.vsCodeContext);
-        
-        // Initialize Copilot Log Exporter service
-        const copilotLogService = getCopilotLogExporterService();
-        copilotLogService.initialize().catch(err => {
-            this.extensionContext?.logger.warn('Failed to initialize Copilot Log Exporter:', err);
-        });
-
-        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands + Copilot Log Exporter`);
+        this.extensionContext.logger.info(`Registered ${commands.length} commands`);
     }
 
     /**
@@ -2166,13 +2135,6 @@ AlephScript Extension Status:
             this.extensionContext.logger.info('AlephScript extension deactivation started');
             
             try {
-                // Dispose chat participant first
-                this.extensionContext.chatParticipant.dispose();
-                
-                // Dispose theatrical chat participants
-                this.extensionContext.theatricalChat.dispose();
-                this.extensionContext.logger.info('🎭 Theatrical Chat Participants disposed');
-                
                 // Dispose AracneBot Socket.IO client
                 this.extensionContext.aracneBotService.dispose();
                 this.extensionContext.logger.info('🕷️ AracneBot disposed');

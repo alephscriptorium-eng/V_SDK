@@ -17,20 +17,9 @@ export class McpConfigurationManager {
     private readonly logger = createLogger(LogCategory.EXTENSION, 'McpConfigurationManager');
 
     private constructor() {
-        console.log(`McpConfigurationManager, to init you can use:
-        {
-            "command": "ArrakisTheater.LoadConfig",
-            "title": "🎭 Load Opera Configuration",
-            "category": "⚙️ Arrakis Configuration",
-            "icon": "$(folder-opened)"
-        },
-        {
-            "command": "ArrakisTheater.DownloadConfig",
-            "title": "🎭 Download Configuration",
-            "category": "⚙️ Arrakis Configuration",
-            "icon": "$(save)"
-        }
-        `)
+        // WP-V13: el console.log heredado anunciaba los comandos
+        // ArrakisTheater.LoadConfig / .DownloadConfig, podados en este WP
+        // (censo V12 §8, fila 18). Sin ellos el mensaje era una instrucción falsa.
     }
 
     static getInstance(): McpConfigurationManager {

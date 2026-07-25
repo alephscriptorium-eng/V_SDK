@@ -586,99 +586,6 @@
         "title": ">>> Run Agent Diagnostics",
         "category": "🤖 Agent Matrix",
         "icon": "$(pulse)"
-      },
-      {
-        "command": "ArrakisTheater.LoadConfig",
-        "title": "🎭 Load Opera Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(folder-opened)"
-      },
-      {
-        "command": "ArrakisTheater.DownloadConfig",
-        "title": "🎭 Download Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(save)"
-      },
-      {
-        "command": "ArrakisTheater.ResetConfig",
-        "title": "🎭 Reset to Defaults",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "ArrakisTheater.ShowCurrentConfig",
-        "title": "🎭 Show Current Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(eye)"
-      },
-      {
-        "command": "copilotLogs.listSessions",
-        "title": "List Copilot Sessions",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.listRequests",
-        "title": "List Copilot Requests",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.viewRequest",
-        "title": "View Copilot Request",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.analyzeSession",
-        "title": "Analyze Context Bloat",
-        "category": "📊 Copilot Logs",
-        "icon": "$(pulse)"
-      },
-      {
-        "command": "copilotLogs.searchRequests",
-        "title": "Search in Copilot Logs",
-        "category": "📊 Copilot Logs",
-        "icon": "$(search)"
-      },
-      {
-        "command": "copilotLogs.exportConversation",
-        "title": "Export Conversation",
-        "category": "📊 Copilot Logs",
-        "icon": "$(export)"
-      },
-      {
-        "command": "copilotLogs.autoDebug",
-        "title": "Auto-Debug Latest Request",
-        "category": "📊 Copilot Logs",
-        "icon": "$(debug)"
-      },
-      {
-        "command": "copilotLogs.refreshMetrics",
-        "title": "Refresh Metrics",
-        "category": "📊 Copilot Logs",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "copilotLogs.diagnostics",
-        "title": "Show Diagnostics",
-        "category": "📊 Copilot Logs",
-        "icon": "$(info)"
-      },
-      {
-        "command": "copilotLogs.startMCPServer",
-        "title": "Start MCP Server",
-        "category": "📊 Copilot Logs",
-        "icon": "$(play)"
-      },
-      {
-        "command": "copilotLogs.stopMCPServer",
-        "title": "Stop MCP Server",
-        "category": "📊 Copilot Logs",
-        "icon": "$(debug-stop)"
-      },
-      {
-        "command": "copilotLogs.mcpServerStatus",
-        "title": "MCP Server Status",
-        "category": "📊 Copilot Logs",
-        "icon": "$(server)"
       }
     ],
     "configuration": {
@@ -1139,14 +1046,6 @@
           "name": "📡 Logs",
           "icon": "$(terminal)",
           "when": "true"
-        },
-        {
-          "id": "copilotMetrics.panel",
-          "type": "webview",
-          "name": "📊 Copilot Metrics",
-          "icon": "$(graph)",
-          "when": "true",
-          "visibility": "visible"
         }
       ],
       "explorer": [
@@ -1309,134 +1208,6 @@
         "when": "true"
       }
     ],
-    "chatParticipants": [
-      {
-        "id": "mcp-vscode-ext.mcp-assistant",
-        "fullName": "MCP Assistant",
-        "name": "mcp",
-        "description": "How can I help you with MCP (Model Context Protocol)?",
-        "isSticky": true,
-        "commands": [
-          {
-            "name": "config",
-            "description": "Help with MCP configuration and setup."
-          },
-          {
-            "name": "troubleshoot",
-            "description": "Troubleshoot MCP server and connection issues."
-          },
-          {
-            "name": "examples",
-            "description": "Provide MCP implementation examples and best practices."
-          },
-          {
-            "name": "socket",
-            "description": "Help with Socket.IO integration and monitoring."
-          }
-        ]
-      },
-      {
-        "id": "mcp-vscode-ext.isaac",
-        "fullName": "Isaac - El Marinero",
-        "name": "isaac",
-        "description": "Tu marinero fiel para navegación técnica y exploración de frameworks",
-        "isSticky": false,
-        "commands": [
-          {
-            "name": "navegar",
-            "description": "Navegar por el código y explorar arquitecturas"
-          },
-          {
-            "name": "bitacora",
-            "description": "Documentar hazañas técnicas y descubrimientos"
-          }
-        ]
-      },
-      {
-        "id": "mcp-vscode-ext.don-alvaro",
-        "fullName": "Don Álvaro - Capataz de Astilleros",
-        "name": "don-alvaro",
-        "description": "Ingeniero especializado en mantenimiento y optimización de frameworks",
-        "isSticky": false,
-        "commands": [
-          {
-            "name": "diagnostico",
-            "description": "Diagnóstico técnico completo de sistemas"
-          },
-          {
-            "name": "optimizar",
-            "description": "Optimización de rendimiento y arquitectura"
-          },
-          {
-            "name": "mantener",
-            "description": "Mantenimiento preventivo y correctivo"
-          }
-        ]
-      },
-      {
-        "id": "mcp-vscode-ext.capitan-didac",
-        "fullName": "Capitán Dídac - Líder de Expedición",
-        "name": "capitan-didac",
-        "description": "Liderazgo técnico para navegación en territorios desconocidos",
-        "isSticky": false,
-        "commands": [
-          {
-            "name": "liderar",
-            "description": "Liderazgo en proyectos complejos"
-          },
-          {
-            "name": "estrategia",
-            "description": "Planificación estratégica técnica"
-          },
-          {
-            "name": "expedicion",
-            "description": "Exploración de nuevas tecnologías"
-          }
-        ]
-      },
-      {
-        "id": "mcp-vscode-ext.indra",
-        "fullName": "Indra - Agente de Integración",
-        "name": "indra",
-        "description": "Especialista en integración cross-component y comunicación entre servicios",
-        "isSticky": false,
-        "commands": [
-          {
-            "name": "integrar",
-            "description": "Integración entre componentes y servicios"
-          },
-          {
-            "name": "comunicar",
-            "description": "Establecer comunicación entre sistemas"
-          },
-          {
-            "name": "sincronizar",
-            "description": "Sincronización de estados y datos"
-          }
-        ]
-      },
-      {
-        "id": "mcp-vscode-ext.backend-agent",
-        "fullName": "Backend Agent - Arquitecto de Backend",
-        "name": "backend-agent",
-        "description": "Especialista en desarrollo de backend, APIs y arquitectura de servidores",
-        "isSticky": false,
-        "commands": [
-          {
-            "name": "api",
-            "description": "Desarrollo y diseño de APIs"
-          },
-          {
-            "name": "servidor",
-            "description": "Configuración y optimización de servidores"
-          },
-          {
-            "name": "base-datos",
-            "description": "Diseño y optimización de bases de datos"
-          }
-        ]
-      }
-    ],
     "customEditors": [
       {
         "viewType": "alephscript.agentContentEditor",
@@ -1492,7 +1263,6 @@
     "deploy:insiders": "npm run build:local && npm run uninstall:insiders && npm run install:insiders",
     "dev:insiders": "npm run compile && npm run deploy:insiders",
     "debug:view": "code --extensionDevelopmentPath=. --new-window",
-    "unix:code": "sh ./setup-vscode-path",
     "dev:tools": "echo 'Ctrl+Shift+I'",
     "skills:sync": "alephscript-skills-sync --runtime claude",
     "package:v1": "npm run compile:production && node scripts/vsix.mjs package",
