@@ -185,13 +185,18 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   real **rompe** el probe (demostrado) y `npm version 0.2.0` produce asset
   `…-0.2.0.vsix`. Dep: —.
   Brief: `plan/BRIEFS/WP-V16-falsedad-silenciosa.md`.
-- ⬜ **WP-V17 · Puerta de permisos** — (a) la ausencia de información no
+- ✅ **WP-V17 · Puerta de permisos** — (a) la ausencia de información no
   concede permiso: `parseEditorInfo.ts:83` falla abierto mientras `:80`
   falla cerrado, en el mismo literal · (b) pruebas unitarias de los
   invariantes del contrato. **CA:** L2-01 y L2-02; casos mínimos
   `required` ausente · `reparto.required` sin `reparto_required` ·
   `motivos_deny` ausente · motivo fuera de lista · `visible` ausente.
   Dep: —. Brief: `plan/BRIEFS/WP-V17-puerta-permisos.md`.
+  Reporte: `plan/REPORTES/WP-V17-puerta-permisos.md`. Obra `411777a` ·
+  doble contrarrevisión convergente (`6208d5e` PASS + `977bea5`
+  devolución documental) · aceptación `8acc409` · merge `2899732`.
+  V17-A → cola Z (contrato debe fijar forma del payload deny) ·
+  V17-B → censo V12/V13 (coverage/).
 
 **Primer lote despachable:** V12 ∥ V16 ∥ V17 (independientes, ficheros en
 alcance disjuntos declarados en los briefs). V13 · V14 · V15 en cuanto
