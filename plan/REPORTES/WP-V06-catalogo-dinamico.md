@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v06-catalogo-dinamico` |
-| commits | _(tip post-push)_ |
+| commits | `ac7eb7a3b94cfacfd5de2b92a3e97ea1efc4a890` |
 | eje(s) CA | hostil-omite (sin launcher → ⏳) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
