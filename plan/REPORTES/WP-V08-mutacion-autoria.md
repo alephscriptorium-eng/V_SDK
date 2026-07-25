@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v08-mutacion-autoria` |
-| commits | _(SHA al push)_ |
+| commits | `80c75b1b49964fef82a7206c27080db6abdd515e` |
 | eje(s) CA | hostil-omite (sin editor://info / sin motivos_deny) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
