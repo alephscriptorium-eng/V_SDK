@@ -101,7 +101,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   UI/estado. **CA:** flujo join→card→resources demostrado contra
   z-sdk local · card expirada ⇒ re-join (probado) · contrarrevisión
   (hostil-omite: sin card, sin seat). Dep: V06. Brief: `plan/BRIEFS/WP-V07-identidad-lectura.md`. R3-V PASS · STANDING_GO. Reporte: `plan/REPORTES/WP-V07-identidad-lectura.md`. Gate V07 PASS.
-- 🔶 **WP-V08 · Mutación + autoría (fases 3-4)** — tools de mutación
+- ✅ **WP-V08 · Mutación + autoría (fases 3-4)** — tools de mutación
   con gate visible en errores/UI; autoría linea-editor
   (`crear_linea`/`export_story_board`); **motivos_deny LEÍDOS de
   `editor://info` en runtime** (cláusula viva del contrato — la
@@ -110,14 +110,14 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   motivos actuales representados desde runtime (no hardcodeados) ·
   demo verde/rojo contra despliegue con
   `ZEUS_LINEA_EDITOR_REQUIRE_REPARTO` activo · contrarrevisión.
-  Dep: V07. Brief: `plan/BRIEFS/WP-V08-mutacion-autoria.md`. Lane ∥ V09.
-- 🔶 **WP-V09 · Elenco (fase 5) + separación** — panel de elenco
+  Dep: V07. Brief: `plan/BRIEFS/WP-V08-mutacion-autoria.md`. Lane ∥ V09. Reporte: `plan/REPORTES/WP-V08-mutacion-autoria.md`. Gate V08 PASS.
+- ✅ **WP-V09 · Elenco (fase 5) + separación** — panel de elenco
   alimentado por datos del carril Z (`filasCastDesdeReparto` /
   contrato cast-table); la compañía teatral IDE (ICompany) queda
   como capa propia SEPARADA — prohibido fusionarla con `reparto/1`
   (cláusula del contrato). **CA:** dos modelos de datos distintos y
   documentados · panel elenco desde reparto real · contrarrevisión.
-  Dep: V07 (∥ V08 posible, zonas UI distintas). Brief: `plan/BRIEFS/WP-V09-elenco-separacion.md`. Lane ∥ V08.
+  Dep: V07 (∥ V08 posible, zonas UI distintas). Brief: `plan/BRIEFS/WP-V09-elenco-separacion.md`. Lane ∥ V08. Reporte: `plan/REPORTES/WP-V09-elenco-separacion.md`. Gate V09 PASS · R4-V PASS.
 
 ## Ola D · Checkpoint `.vsix` v1 «lista para probar» — gate R5-V
 

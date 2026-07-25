@@ -114,4 +114,6 @@ Ninguno para CA automatizable.
 
 ## Revisión del orquestador
 
-_(la rellena el orquestador: aceptado ✅ / devuelto con lista numerada)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+probe:v09 PASS. Gate V09: **PASS**. Ola C → **R4-V PASS**.

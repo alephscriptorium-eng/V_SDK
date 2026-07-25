@@ -107,4 +107,6 @@ Ninguno para CA automatizable. Smoke vivo pendiente de runtime.
 
 ## Revisión del orquestador
 
-_(la rellena el orquestador: aceptado ✅ / devuelto con lista numerada)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+probe:v08 PASS. Demo ZEUS_LINEA ⏳ residual. Gate V08: **PASS**.
