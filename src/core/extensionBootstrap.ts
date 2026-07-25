@@ -32,6 +32,7 @@ import { UIManager } from '../uiManager';
 import { MCPServerManager } from '../mcpServerManager';
 import { MCPWebViewManager } from '../mcpWebViewManager';
 import { AracneBotService } from './AracneBotService';
+import { CatalogService } from '../launcher/CatalogService';
 // WISH-01/02/03: Copilot Log Exporter
 import { registerCopilotLogCommands } from '../copilotLogs/commands';
 import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
@@ -135,6 +136,11 @@ export class ExtensionBootstrap {
             const configsTreeProvider = new ConfigsTreeDataProvider();
             const logsTreeProvider = new LogsTreeDataProvider();
             const mcpTreeProvider = new MCPTreeDataProvider(mcpServerManager);
+
+            // WP-V06: catálogo launcher en caliente (sin launcher → ⏳, no fatal)
+            const catalogService = CatalogService.getInstance();
+            catalogService.start();
+            context.subscriptions.push(catalogService);
             
             // Initialize AracneBot - Socket.IO client for mesh communication
             const aracneBotService = AracneBotService.getInstance();
@@ -1019,9 +1025,16 @@ export class ExtensionBootstrap {
             vscode.commands.registerCommand('alephscript.mcptree.refresh', async () => {
                 try {
                     if (this.extensionContext) {
+                        const snap = await CatalogService.getInstance().refresh();
                         this.extensionContext.mcpTreeProvider.refresh();
-                        this.extensionContext.logger.info('Agents TreeView refreshed');
-                        vscode.window.showInformationMessage('🤖 Agents refreshed');
+                        this.extensionContext.logger.info(
+                            `MCP catalog refresh: ${snap.availability} — ${snap.statusMessage}`
+                        );
+                        vscode.window.showInformationMessage(
+                            snap.availability === 'ready'
+                                ? `📡 Catálogo: ${snap.servers.length} servidor(es)`
+                                : `⏳ ${snap.statusMessage}`
+                        );
                     }
                 } catch (error) {
                     await managers.errorBoundary.handleError(
