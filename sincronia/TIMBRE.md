@@ -21,3 +21,4 @@ El contenido vive siempre en el buzón del autor. El PING solo avisa.
 > o `Add-Content -Value '<línea>'`; ambos tratan la ruta como literal.
 
 ## Pings
+PING 2026-07-26 00:49 · DE=S · HILO=- · REF=C:/S/scriptorium/sincronia/notas/NOTA-S-2026-07-26-mapa-ciudad-agenda-anfitrion.md
