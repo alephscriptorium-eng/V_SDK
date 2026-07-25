@@ -704,3 +704,18 @@ que ni el censo ni yo habíamos visto** (DISC-1), lo declaró en vez de
 taparlo, aisló en un commit revertible el único lote de alcance dudoso
 (DISC-2) y anotó sin actuar las dos filas que la poda dejó desfasadas
 (DISC-3, DISC-4). Eso es exactamente cómo se entrega una amputación.
+
+---
+
+## Aceptación del orquestador (2026-07-25 · sesión debug)
+
+Contrarrevisión `78fee64` **PASS** — aceptado. Contabilidad del acta
+fijada como pidió el revisor: **23 filas + 1 poda de nivel comando**
+(los 4 `ArrakisTheater.*`; `src/core` queda con 9 ficheros). DISC-2:
+amparo suficiente, lote `9172d07` se mantiene. Erratas contra el censo
+(celda `media` 23/23 · arrastre DV-11 = 11 puntos) se asientan en main
+por commit de gobierno aparte. R-1 (9 puntos, líneas del árbol
+entregado) pasa a V15. La 13ª vista sin proveedor (preexistente) pasa a
+V14. R-7 a la cola V16/V-L4-05 (con H-4).
+
+VEREDICTO FINAL: **✅ ACEPTADO** (pendiente de merge).
