@@ -610,75 +610,6 @@
         "title": "🎭 Show Current Configuration",
         "category": "⚙️ Arrakis Configuration",
         "icon": "$(eye)"
-      },
-      {
-        "command": "copilotLogs.listSessions",
-        "title": "List Copilot Sessions",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.listRequests",
-        "title": "List Copilot Requests",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.viewRequest",
-        "title": "View Copilot Request",
-        "category": "📊 Copilot Logs"
-      },
-      {
-        "command": "copilotLogs.analyzeSession",
-        "title": "Analyze Context Bloat",
-        "category": "📊 Copilot Logs",
-        "icon": "$(pulse)"
-      },
-      {
-        "command": "copilotLogs.searchRequests",
-        "title": "Search in Copilot Logs",
-        "category": "📊 Copilot Logs",
-        "icon": "$(search)"
-      },
-      {
-        "command": "copilotLogs.exportConversation",
-        "title": "Export Conversation",
-        "category": "📊 Copilot Logs",
-        "icon": "$(export)"
-      },
-      {
-        "command": "copilotLogs.autoDebug",
-        "title": "Auto-Debug Latest Request",
-        "category": "📊 Copilot Logs",
-        "icon": "$(debug)"
-      },
-      {
-        "command": "copilotLogs.refreshMetrics",
-        "title": "Refresh Metrics",
-        "category": "📊 Copilot Logs",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "copilotLogs.diagnostics",
-        "title": "Show Diagnostics",
-        "category": "📊 Copilot Logs",
-        "icon": "$(info)"
-      },
-      {
-        "command": "copilotLogs.startMCPServer",
-        "title": "Start MCP Server",
-        "category": "📊 Copilot Logs",
-        "icon": "$(play)"
-      },
-      {
-        "command": "copilotLogs.stopMCPServer",
-        "title": "Stop MCP Server",
-        "category": "📊 Copilot Logs",
-        "icon": "$(debug-stop)"
-      },
-      {
-        "command": "copilotLogs.mcpServerStatus",
-        "title": "MCP Server Status",
-        "category": "📊 Copilot Logs",
-        "icon": "$(server)"
       }
     ],
     "configuration": {
@@ -1139,14 +1070,6 @@
           "name": "📡 Logs",
           "icon": "$(terminal)",
           "when": "true"
-        },
-        {
-          "id": "copilotMetrics.panel",
-          "type": "webview",
-          "name": "📊 Copilot Metrics",
-          "icon": "$(graph)",
-          "when": "true",
-          "visibility": "visible"
         }
       ],
       "explorer": [

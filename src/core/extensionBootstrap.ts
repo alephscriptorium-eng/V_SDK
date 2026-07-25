@@ -35,9 +35,6 @@ import { RoomIdentityService, IdentityStatusBar } from '../identity';
 import { ResourceProjectionService } from '../resources';
 import { AuthorshipService } from '../mutation';
 import { RepartoElencoService, ElencoTreeDataProvider } from '../elenco';
-// WISH-01/02/03: Copilot Log Exporter
-import { registerCopilotLogCommands } from '../copilotLogs/commands';
-import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
 
 export interface ExtensionContext {
     managers: {
@@ -1754,16 +1751,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
         // Register configuration commands
         ConfigurationCommandsService.registerCommands(this.vsCodeContext);
 
-        // WISH-01/02/03: Register Copilot Log Exporter commands
-        registerCopilotLogCommands(this.vsCodeContext);
-        
-        // Initialize Copilot Log Exporter service
-        const copilotLogService = getCopilotLogExporterService();
-        copilotLogService.initialize().catch(err => {
-            this.extensionContext?.logger.warn('Failed to initialize Copilot Log Exporter:', err);
-        });
-
-        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands + Copilot Log Exporter`);
+        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands`);
     }
 
     /**
