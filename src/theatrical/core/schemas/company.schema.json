@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://theatrical.vscode.dev/schemas/company.schema.json",
+  "title": "Theatrical Company Configuration Schema",
+  "description": "JSON Schema for validating theatrical company configuration files",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "displayName",
+    "category",
+    "agents", 
+    "authority",
+    "collaboration",
+    "vibeCodingIntegration"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "Unique identifier for the company (kebab-case)",
+      "examples": ["framework-retro-crew", "technical-devops-team", "validation-guild"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Internal name for the company",
+      "examples": ["Framework Retro", "Technical DevOps", "Validation Guild"]
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 150,
+      "description": "Human-readable display name",
+      "examples": ["Framework Retro Crew", "Technical DevOps Team", "Quality Validation Guild"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Detailed description of company purpose and expertise"
+    },
+    "emoji": {
+      "type": "string",
+      "pattern": "^[\\p{Emoji_Presentation}\\p{Emoji}\\u200d\\ufe0f\\u20e3]*$",
+      "maxLength": 10,
+      "description": "Emoji representation of the company",
+      "examples": ["⚓", "🔧", "🎭", "🚀"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["framework-retro", "technical-devops", "validation", "project-management", "custom"],
+      "description": "Company category for organizational purposes"
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$",
+        "description": "Agent ID that belongs to this company"
+      },
+      "description": "List of agent IDs that belong to this company",
+      "examples": [["isaac-marinero", "astilleador-retro", "don-alvaro"]]
+    },
+    "primaryAgent": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Primary agent ID for company leadership"
+    },
+    "supportAgents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "description": "Support agent IDs for specialized tasks"
+    },
+    "expertise": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "description": "Areas of expertise for the company",
+      "examples": [["framework-development", "nautical-metaphors", "quality-assurance", "typescript-development"]]
+    },
+    "authority": {
+      "type": "object",
+      "required": ["level", "canBlockSprints", "canCreateSprints", "canModifyArchitecture", "canOverrideValidation"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["advisory", "executive", "supervisory", "autonomous"],
+          "description": "Authority level within the theatrical system"
+        },
+        "canBlockSprints": {
+          "type": "boolean",
+          "description": "Whether company can block sprint progression"
+        },
+        "canCreateSprints": {
+          "type": "boolean", 
+          "description": "Whether company can create new sprints"
+        },
+        "canModifyArchitecture": {
+          "type": "boolean",
+          "description": "Whether company can make architectural changes"
+        },
+        "canOverrideValidation": {
+          "type": "boolean",
+          "description": "Whether company can override validation requirements"
+        },
+        "reportingStructure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Chain of reporting relationships",
+          "examples": [["captain-didac", "don-alvaro", "framework-retro-crew"]]
+        }
+      },
+      "additionalProperties": false
+    },
+    "collaboration": {
+      "type": "object",
+      "required": ["internal", "external", "conflictResolution", "knowledgeSharing"],
+      "properties": {
+        "internal": {
+          "type": "string",
+          "enum": ["hierarchical", "democratic", "lead-driven", "consensus"],
+          "description": "Internal collaboration style within company"
+        },
+        "external": {
+          "type": "string",
+          "enum": ["cooperative", "independent", "service-provider", "advisory"],
+          "description": "External collaboration style with other companies"
+        },
+        "conflictResolution": {
+          "type": "string",
+          "enum": ["escalation", "voting", "lead-decision", "external-arbitration"],
+          "description": "How conflicts are resolved within company"
+        },
+        "knowledgeSharing": {
+          "type": "string",
+          "enum": ["open", "restricted", "hierarchical", "need-to-know"],
+          "description": "Knowledge sharing approach"
+        }
+      },
+      "additionalProperties": false
+    },
+    "vibeCodingIntegration": {
+      "type": "object",
+      "required": ["companyRole", "companyValidationLevel", "canInfluenceOtherCompanies"],
+      "properties": {
+        "companyRole": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Role of company within VibeCoding system",
+          "examples": ["framework-stewards", "quality-guardians", "implementation-specialists"]
+        },
+        "crossCompanyAuthority": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "quality_oversight",
+              "architecture_review", 
+              "sprint_coordination",
+              "resource_allocation",
+              "conflict_mediation",
+              "standard_enforcement"
+            ]
+          },
+          "description": "Authority this company has over other companies"
+        },
+        "companyValidationLevel": {
+          "type": "string",
+          "enum": ["basic", "comprehensive", "strategic"],
+          "description": "Level of validation authority at company level"
+        },
+        "canInfluenceOtherCompanies": {
+          "type": "boolean",
+          "description": "Whether company can influence other companies' decisions"
+        },
+        "sprintManager": {
+          "type": "object",
+          "properties": {
+            "canCreateSprints": {
+              "type": "boolean"
+            },
+            "canModifySprints": {
+              "type": "boolean" 
+            },
+            "canBlockSprints": {
+              "type": "boolean"
+            }
+          }
+        },
+        "checkpointTracker": {
+          "type": "object",
+          "properties": {
+            "authorizedCheckpoints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "canOverrideCheckpoints": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "expectedSize": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "optimal": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": ["min", "max", "optimal"]
+        },
+        "qualityStandards": {
+          "type": "object",
+          "properties": {
+            "minimumAccuracy": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Minimum accuracy percentage required"
+            },
+            "partnershipHistorico": {
+              "type": "boolean",
+              "description": "Whether Partnership Histórico standards apply"
+            },
+            "customStandards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "enforcement": {
+                    "type": "string",
+                    "enum": ["advisory", "blocking", "automatic"]
+                  }
+                },
+                "required": ["name", "threshold", "enforcement"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "templates": {
+      "type": "object",
+      "properties": {
+        "taskTemplate": {
+          "type": "string",
+          "description": "Default task template for company"
+        },
+        "deliverableTemplates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["architecture", "implementation", "documentation", "validation", "coordination"]
+              },
+              "template": {
+                "type": "string"
+              },
+              "acceptanceCriteria": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["type", "template"]
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version of company configuration"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time", 
+          "description": "Last update timestamp"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Agent or user who created the company"
+        },
+        "maintainedBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Agents responsible for maintaining company configuration"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for categorization and search"
+        },
+        "partnershipHistorico": {
+          "type": "object",
+          "properties": {
+            "validationDate": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "validatedBy": {
+              "type": "string"
+            },
+            "qualityScore": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "complianceLevel": {
+              "type": "string",
+              "enum": ["basic", "standard", "premium", "excellence"]
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+
+  "examples": [
+    {
+      "id": "framework-retro-crew",
+      "name": "Framework Retro",
+      "displayName": "Framework Retro Crew",
+      "description": "Elite crew specialized in Framework Retro development, maintenance, and nautical-themed collaboration patterns",
+      "emoji": "⚓",
+      "category": "framework-retro",
+      "agents": ["isaac-marinero", "astilleador-retro", "artillero-alpha", "captain-didac", "don-alvaro", "githubeador"],
+      "primaryAgent": "captain-didac",
+      "supportAgents": ["isaac-marinero", "don-alvaro"],
+      "expertise": ["framework-development", "nautical-collaboration", "meta-architecture", "quality-assurance"],
+      "authority": {
+        "level": "supervisory",
+        "canBlockSprints": true,
+        "canCreateSprints": true,
+        "canModifyArchitecture": true,
+        "canOverrideValidation": false,
+        "reportingStructure": ["captain-didac", "don-alvaro"]
+      },
+      "collaboration": {
+        "internal": "lead-driven",
+        "external": "cooperative",
+        "conflictResolution": "lead-decision",
+        "knowledgeSharing": "open"
+      },
+      "vibeCodingIntegration": {
+        "companyRole": "framework-stewards",
+        "crossCompanyAuthority": ["quality_oversight", "architecture_review"],
+        "companyValidationLevel": "strategic",
+        "canInfluenceOtherCompanies": true,
+        "sprintManager": {
+          "canCreateSprints": true,
+          "canModifySprints": true,
+          "canBlockSprints": true
+        },
+        "checkpointTracker": {
+          "authorizedCheckpoints": ["architecture", "quality_gates", "sprint_completion"],
+          "canOverrideCheckpoints": true
+        }
+      },
+      "performance": {
+        "expectedSize": {
+          "min": 4,
+          "max": 8,
+          "optimal": 6
+        },
+        "qualityStandards": {
+          "minimumAccuracy": 90,
+          "partnershipHistorico": true,
+          "customStandards": [
+            {
+              "name": "nautical_consistency",
+              "threshold": 85,
+              "enforcement": "advisory"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "version": "1.0.0",
+        "created": "2025-09-29T00:00:00Z",
+        "createdBy": "captain-didac",
+        "maintainedBy": ["don-alvaro", "isaac-marinero"],
+        "tags": ["framework", "retro", "nautical", "elite"],
+        "partnershipHistorico": {
+          "validationDate": "2025-09-29T00:00:00Z",
+          "validatedBy": "don-alvaro",
+          "qualityScore": 95,
+          "complianceLevel": "excellence"
+        }
+      }
+    }
+  ]
+}

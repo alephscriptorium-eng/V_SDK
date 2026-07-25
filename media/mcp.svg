@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+  <defs>
+    <!-- Define gradients for a more modern look while maintaining hacker emblem colors -->
+    <linearGradient id="hackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF4444;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#44FF44;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#4444FF;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+  <g>
+    <!-- Hacker Emblem Hexagon base -->
+    <polygon points="12,2 20.5,7 20.5,17 12,22 3.5,17 3.5,7" 
+             fill="url(#hackGrad)" 
+             stroke="#FFFFFF" 
+             stroke-width="1" 
+             opacity="0.9"/>
+    
+    <!-- Central intersection representing the synthesis of hardware/software/wetware -->
+    <circle cx="12" cy="12" r="3" fill="#FFFFFF" opacity="0.3"/>
+    
+    <!-- Three sectors representing the three domains -->
+    <!-- Hardware sector (top) - Red tint -->
+    <path d="M12,2 L20.5,7 L12,12 Z" fill="#FF4444" opacity="0.6"/>
+    
+    <!-- Software sector (bottom-right) - Green tint -->
+    <path d="M12,12 L20.5,7 L20.5,17 L12,22 Z" fill="#44FF44" opacity="0.6"/>
+    
+    <!-- Wetware sector (bottom-left) - Blue tint -->
+    <path d="M12,12 L12,22 L3.5,17 L3.5,7 Z" fill="#4444FF" opacity="0.6"/>
+    
+    <!-- Central node/connection point -->
+    <circle cx="12" cy="12" r="2" fill="#FFFFFF" stroke="#333333" stroke-width="0.5"/>
+    
+    <!-- Small connection dots at vertices -->
+    <circle cx="12" cy="5" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="17.5" cy="8.5" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="17.5" cy="15.5" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="12" cy="19" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="6.5" cy="15.5" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="6.5" cy="8.5" r="1" fill="#FFFFFF" opacity="0.8"/>
+  </g>
+</svg>

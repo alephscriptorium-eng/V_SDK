@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Theatrical Agent Configuration",
+  "description": "Configuration schema for theatrical agents in VS Code extension",
+  "type": "object",
+  "required": ["agentId", "displayName", "description", "model"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "pattern": "^[a-z-]+$",
+      "description": "Unique identifier for the agent (lowercase, hyphens allowed)"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name for the agent"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Brief description of the agent's purpose"
+    },
+    "emoji": {
+      "type": "string",
+      "pattern": "^.{1,2}$",
+      "description": "Emoji representing the agent"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["framework-retro", "technical", "integration", "specialized"],
+      "description": "Category of the agent"
+    },
+    "model": {
+      "type": "string",
+      "enum": ["Claude Sonnet 4", "Claude Opus", "Claude Haiku"],
+      "description": "AI model to use for this agent"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "edit", "runCommands", "search", "vscodeAPI", "projects", 
+          "analytics", "framework-tools", "mcp-integration", "debugging",
+          "documentation", "testing", "deployment"
+        ]
+      },
+      "description": "Available tools for the agent"
+    },
+    "mcp": {
+      "type": "object",
+      "properties": {
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "MCP servers the agent can connect to"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "MCP tools available to the agent"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "MCP resources the agent can access"
+        },
+        "customIntegrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "endpoint": { "type": "string" },
+              "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE"] },
+              "headers": { "type": "object" }
+            },
+            "required": ["name", "endpoint"]
+          },
+          "description": "Custom MCP integrations"
+        }
+      },
+      "description": "MCP configuration for the agent"
+    },
+    "personality": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "type": "string",
+          "enum": ["formal", "casual", "nautical", "technical", "friendly"],
+          "description": "Communication style of the agent"
+        },
+        "formality": {
+          "type": "string",
+          "enum": ["very-formal", "formal", "neutral", "casual", "very-casual"],
+          "description": "Level of formality in communication"
+        },
+        "emoji_usage": {
+          "type": "string",
+          "enum": ["none", "minimal", "moderate", "frequent", "extensive"],
+          "description": "How often the agent uses emojis"
+        },
+        "relationship": {
+          "type": "string",
+          "enum": ["professional", "friendly", "loyal_crew", "mentor", "peer"],
+          "description": "Relationship dynamic with users"
+        }
+      },
+      "description": "Personality configuration for the agent"
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "project_management": { "type": "boolean" },
+        "documentation": { "type": "boolean" },
+        "debugging": { "type": "boolean" },
+        "architecture": { "type": "boolean" },
+        "frontend": { "type": "boolean" },
+        "backend": { "type": "boolean" },
+        "devops": { "type": "boolean" },
+        "testing": { "type": "boolean" },
+        "integration": { "type": "boolean" },
+        "meta_navigation": { "type": "boolean" },
+        "framework_expertise": { "type": "boolean" }
+      },
+      "description": "Capabilities and specializations of the agent"
+    },
+    "prompts": {
+      "type": "object",
+      "properties": {
+        "welcome": {
+          "type": "string",
+          "description": "Welcome message when agent is activated"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "prompt": { "type": "string" }
+            },
+            "required": ["name", "description", "prompt"]
+          },
+          "description": "Available commands and their prompts"
+        }
+      },
+      "description": "Prompt configuration for the agent"
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "icon": {
+          "type": "string",
+          "description": "VS Code icon identifier"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Theme color in hex format"
+        },
+        "isSticky": {
+          "type": "boolean",
+          "description": "Whether the agent stays active in chat"
+        }
+      },
+      "description": "UI configuration for the agent"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string" },
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "modified": { "type": "string", "format": "date-time" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "description": "Metadata for the agent configuration"
+    }
+  }
+}

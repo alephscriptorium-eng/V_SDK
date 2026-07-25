@@ -1,0 +1,377 @@
+/* Hacker Config Panel Styles - uses hacker-base + hacker-themes */
+
+.config-panels {
+    margin: 20px 0;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.config-group {
+    margin-bottom: 30px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--panel-bg-weak);
+    backdrop-filter: blur(5px);
+    animation: groupGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes groupGlow {
+    0% { box-shadow: 0 0 5px var(--accent-weak); }
+    100% { box-shadow: 0 0 15px var(--accent-weak), inset 0 0 10px var(--accent-weak); }
+}
+
+.config-group-header {
+    padding: 15px 20px;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.config-group-header:hover {
+    background: var(--table-row-hover-bg);
+    box-shadow: inset 0 0 20px var(--accent-weak);
+}
+
+.config-group-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, var(--accent), var(--accent-weak));
+    animation: sidePulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes sidePulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.config-group-icon {
+    font-size: 24px;
+    text-shadow: 0 0 10px var(--accent-weak);
+    animation: iconFloat 4s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.config-group-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent-weak);
+    letter-spacing: 2px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.config-group-description {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.8;
+    margin-left: auto;
+    font-style: italic;
+}
+
+.config-group-content {
+    padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Visibility + animations (CSP-safe: no inline styles) */
+.hidden { display: none !important; }
+.animate-appear { animation: configAppear 0.5s ease-out; }
+.animate-fade-in { animation: fadeIn 1s ease-out; }
+
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: inherit;
+    background: var(--panel-bg-weak);
+}
+
+.config-table th {
+    background: var(--panel-bg);
+    color: var(--accent);
+    padding: 12px 15px;
+    font-weight: bold;
+    text-align: left;
+    border-bottom: 2px solid var(--panel-border);
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px var(--accent-weak);
+}
+
+/* Column widths (no inline styles) */
+.config-table thead th:nth-child(1),
+.config-table tbody td:nth-child(1) { width: 25%; }
+.config-table thead th:nth-child(2),
+.config-table tbody td:nth-child(2) { width: 35%; }
+.config-table thead th:nth-child(3),
+.config-table tbody td:nth-child(3) { width: 15%; }
+.config-table thead th:nth-child(4),
+.config-table tbody td:nth-child(4) { width: 15%; }
+.config-table thead th:nth-child(5),
+.config-table tbody td:nth-child(5) { width: 10%; }
+
+.config-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--panel-border);
+    vertical-align: top;
+    transition: all 0.3s ease;
+}
+
+.config-table tr:hover td {
+    background: var(--table-row-hover-bg);
+    transform: scale(1.01);
+    box-shadow: inset 0 0 10px var(--accent-weak);
+}
+
+.config-name {
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0 0 5px var(--accent-weak);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-name:hover {
+    color: var(--terminal-fg);
+    text-shadow: 0 0 10px var(--accent-weak), 0 0 20px var(--accent-weak);
+    transform: translateX(5px);
+}
+
+.config-icon {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.config-description {
+    color: var(--muted);
+    font-size: 12px;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.config-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.config-type.vscode-setting {
+    background: rgba(2, 132, 199, 0.2);
+    color: var(--info);
+    border: 1px solid var(--info);
+}
+
+.config-type.config-file {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.config-value {
+    color: var(--info);
+    font-family: inherit;
+    font-size: 11px;
+    background: rgba(2, 132, 199, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.config-action {
+    text-align: center;
+}
+
+.config-link {
+    background: var(--panel-bg);
+    color: var(--accent);
+    border: 1px solid var(--panel-border);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.config-link:hover {
+    background: var(--table-row-hover-bg);
+    box-shadow: var(--shadow-accent);
+    transform: translateY(-2px);
+    color: var(--terminal-fg);
+}
+
+.config-link:active {
+    transform: translateY(0);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.config-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: var(--panel-bg-weak);
+    border-top: 1px solid var(--panel-border);
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.config-count {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--accent);
+    font-size: 16px;
+    font-family: inherit;
+}
+
+.system-controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.system-controls .hacker-btn {
+    flex: 1;
+    min-width: 180px;
+    font-size: 12px;
+    padding: 12px 15px;
+}
+
+/* Scrollbar Styling */
+.config-panels::-webkit-scrollbar,
+.config-group-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.config-panels::-webkit-scrollbar-track,
+.config-group-content::-webkit-scrollbar-track {
+    background: var(--panel-bg);
+    border-radius: 4px;
+}
+
+.config-panels::-webkit-scrollbar-thumb,
+.config-group-content::-webkit-scrollbar-thumb {
+    background: var(--accent-weak);
+    border-radius: 4px;
+    box-shadow: var(--shadow-accent);
+}
+
+.config-panels::-webkit-scrollbar-thumb:hover,
+.config-group-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .config-table {
+        font-size: 11px;
+    }
+    
+    .config-table td,
+    .config-table th {
+        padding: 8px 10px;
+    }
+    
+    .config-group-header {
+        padding: 12px 15px;
+    }
+    
+    .system-controls .hacker-btn {
+        min-width: 120px;
+        font-size: 11px;
+        padding: 10px 12px;
+    }
+}
+
+/* Animation for new configs appearing */
+@keyframes configAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.config-table tr {
+    animation: configAppear 0.5s ease-out;
+}
+
+/* Optional stagger using data attribute; keeps CSP intact */
+.config-table tr.stagger-appear[data-appear-index="0"] { animation-delay: 0s; }
+.config-table tr.stagger-appear[data-appear-index="1"] { animation-delay: 0.1s; }
+.config-table tr.stagger-appear[data-appear-index="2"] { animation-delay: 0.2s; }
+.config-table tr.stagger-appear[data-appear-index="3"] { animation-delay: 0.3s; }
+.config-table tr.stagger-appear[data-appear-index="4"] { animation-delay: 0.4s; }
+.config-table tr.stagger-appear[data-appear-index="5"] { animation-delay: 0.5s; }
+.config-table tr.stagger-appear[data-appear-index="6"] { animation-delay: 0.6s; }
+.config-table tr.stagger-appear[data-appear-index="7"] { animation-delay: 0.7s; }
+.config-table tr.stagger-appear[data-appear-index="8"] { animation-delay: 0.8s; }
+.config-table tr.stagger-appear[data-appear-index="9"] { animation-delay: 0.9s; }
+/* For larger tables, animation delay will cap visually after ~1s */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Special styling for different config categories */
+.config-group[data-category="extension"] .config-group-header::before {
+    background: linear-gradient(to bottom, var(--accent), var(--highlight));
+}
+
+.config-group[data-category="webview"] .config-group-header::before {
+    background: linear-gradient(to bottom, var(--accent), var(--info));
+}
+
+.config-group[data-category="schema"] .config-group-header::before {
+    background: linear-gradient(to bottom, var(--accent), var(--warning));
+}
+
+.config-group[data-category="theatrical"] .config-group-header::before {
+    background: linear-gradient(to bottom, var(--accent), #ff00ff);
+}
+
+.config-group[data-category="development"] .config-group-header::before {
+    background: linear-gradient(to bottom, var(--accent), var(--danger));
+}

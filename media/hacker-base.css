@@ -1,0 +1,40 @@
+@layer base, components;
+
+/* Base: minimal reset for terminal-style UI */
+@layer base {
+  :root {
+    /* Fallback tokens; themes override these */
+    --terminal-bg: #0b1020;
+    --terminal-fg: #e5e7eb;
+    --header-bg: #0f172a;
+    --header-border: #1f2937;
+    --status-fg: #93c5fd;
+    --status-online: #38bdf8;
+  }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--terminal-bg); color: var(--terminal-fg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  .hacker-terminal { display: flex; flex-direction: column; min-height: 100vh; background: var(--terminal-bg); color: var(--terminal-fg); }
+  .terminal-header, .terminal-footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--header-border); background: var(--header-bg); }
+  .terminal-footer { border-top: 1px solid var(--header-border); border-bottom: none; }
+  .terminal-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .blinking-cursor { animation: blink 1s steps(2, start) infinite; }
+  @keyframes blink { to { visibility: hidden; } }
+  .terminal-body { flex: 1; position: relative; background: var(--terminal-bg); }
+  .system-status { display: flex; align-items: center; gap: 6px; }
+  .status-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; opacity: 0.9; }
+  .status-indicator.online { background: var(--status-online); }
+  .status-text { color: var(--status-fg); }
+}
+
+/* Components: common buttons and layout bits */
+@layer components {
+  .hacker-btn { padding: 6px 10px; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 4px; cursor: pointer; transition: transform .05s ease, opacity .15s ease; }
+  .hacker-btn:hover { transform: translateY(-1px); opacity: .95; }
+  .hacker-btn.primary { border-color: #22c55e; color: #22c55e; }
+  .hacker-btn.secondary { border-color: #93c5fd; color: #93c5fd; }
+  .hacker-btn.warning { border-color: #eab308; color: #eab308; }
+  .hacker-btn.danger { border-color: #ef4444; color: #ef4444; }
+  .system-controls, .command-controls { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+  .command-stats, .config-panels, .control-panels { padding: 10px 12px; }
+  .loading-message { padding: 16px; opacity: .8; }
+}

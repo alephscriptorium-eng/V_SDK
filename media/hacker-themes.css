@@ -1,0 +1,106 @@
+/* CSS Cascade Layers to control override order without !important */
+@layer base, components, themes;
+
+/* Components: small shared UI bits for the header */
+@layer components {
+	.hacker-terminal .header-controls { display: flex; align-items: center; gap: 8px; }
+	.hacker-terminal .theme-select { background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 4px; padding: 2px 6px; font-size: 0.85rem; }
+	.hacker-terminal .theme-label { opacity: 0.8; font-size: 0.75rem; }
+}
+
+/* Themes: applied last so they override base/components cleanly */
+@layer themes {
+	/* Optional tokens for future adoption by component CSS */
+	body.theme-light {
+		--terminal-bg: #fafafa;
+		--terminal-fg: #111;
+		--header-bg: #ffffff;
+		--header-border: #e5e5e5;
+		--status-fg: #333;
+		--status-online: #22c55e;
+		/* Extended tokens */
+		--accent: #2563eb; /* blue */
+		--accent-weak: rgba(37, 99, 235, 0.6);
+		--panel-bg: #ffffff;
+		--panel-bg-weak: #f5f7fa;
+		--panel-border: #e5e5e5;
+		--muted: #6b7280;
+		--highlight: #ca8a04; /* amber */
+		--danger: #dc2626;
+		--warning: #d97706;
+		--info: #0284c7;
+		--shadow-accent: 0 0 15px rgba(37, 99, 235, 0.25);
+		--table-row-hover-bg: #f1f5f9;
+		color: var(--terminal-fg);
+	}
+	body.theme-dark {
+		--terminal-bg: #0b1020;
+		--terminal-fg: #e5e7eb;
+		--header-bg: #0f172a;
+		--header-border: #1f2937;
+		--status-fg: #93c5fd;
+		--status-online: #38bdf8;
+		/* Extended tokens */
+		--accent: #38bdf8; /* sky */
+		--accent-weak: rgba(56, 189, 248, 0.7);
+		--panel-bg: #0f172a;
+		--panel-bg-weak: #111827;
+		--panel-border: #1f2937;
+		--muted: #9ca3af;
+		--highlight: #facc15; /* yellow */
+		--danger: #f43f5e;
+		--warning: #f59e0b;
+		--info: #60a5fa;
+		--shadow-accent: 0 0 15px rgba(56, 189, 248, 0.4);
+		--table-row-hover-bg: rgba(56, 189, 248, 0.08);
+		color: var(--terminal-fg);
+	}
+	body.theme-matrix {
+		--terminal-bg: #000000;
+		--terminal-fg: #00ff7f;
+		--header-bg: rgba(0, 255, 127, 0.08);
+		--header-border: rgba(0, 255, 127, 0.25);
+		--status-fg: #00ff7f;
+		--status-online: #00ff7f;
+		/* Extended tokens */
+		--accent: #00ff7f; /* neon green */
+		--accent-weak: rgba(0, 255, 127, 0.6);
+		--panel-bg: rgba(0, 50, 0, 0.25);
+		--panel-bg-weak: rgba(0, 50, 0, 0.15);
+		--panel-border: rgba(0, 255, 127, 0.25);
+		--muted: #00aa66;
+		--highlight: #ffff66; /* lime yellow */
+		--danger: #ff4444;
+		--warning: #ffaa00;
+		--info: #00ccff;
+		--shadow-accent: 0 0 15px rgba(0, 255, 127, 0.5);
+		--table-row-hover-bg: rgba(0, 255, 127, 0.1);
+		color: var(--terminal-fg);
+	}
+
+	/* Scoped terminal styles using the tokens */
+	body.theme-light .hacker-terminal,
+	body.theme-dark  .hacker-terminal,
+	body.theme-matrix .hacker-terminal { background: var(--terminal-bg); color: var(--terminal-fg); }
+
+	body.theme-light .hacker-terminal .terminal-header,
+	body.theme-light .hacker-terminal .terminal-footer,
+	body.theme-dark  .hacker-terminal .terminal-header,
+	body.theme-dark  .hacker-terminal .terminal-footer,
+	body.theme-matrix .hacker-terminal .terminal-header,
+	body.theme-matrix .hacker-terminal .terminal-footer { background: var(--header-bg); border-color: var(--header-border); color: var(--terminal-fg); }
+
+	body.theme-light .hacker-terminal .terminal-body,
+	body.theme-dark  .hacker-terminal .terminal-body,
+	body.theme-matrix .hacker-terminal .terminal-body { background: var(--terminal-bg); }
+
+	body.theme-light .hacker-terminal .status-text,
+	body.theme-dark  .hacker-terminal .status-text,
+	body.theme-matrix .hacker-terminal .status-text { color: var(--status-fg); }
+
+	body.theme-light .hacker-terminal .system-status .online,
+	body.theme-dark  .hacker-terminal .system-status .online,
+	body.theme-matrix .hacker-terminal .system-status .online { background: var(--status-online); }
+
+	/* Matrix rain removed across themes */
+}
