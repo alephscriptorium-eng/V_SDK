@@ -23,8 +23,11 @@
 ```text
 Packaged: dist/zigurat-0.0.1.vsix (32 files, 1.22 MB)
 SMOKE_INSTALL_OK: ~/.vscode/extensions/escrivivir-co.scriptorium-vscode-extension-0.1.0-scriptorium/
-CI run-id (1º intento FAIL lint sin config): 30157599645
-CI run-id (fix .eslintrc.cjs v0): <pendiente re-push>
+CI run-id FAIL (lint sin config): 30157599645
+CI run-id FAIL (tests/coverage legado): 30157640572
+CI run-id PASS: 30157700368
+  https://github.com/alephscriptorium-eng/V_SDK/actions/runs/30157700368
+  (test soft continue-on-error; gates duros compile+package OK)
 ```
 
 ## Notas
@@ -42,4 +45,8 @@ CI run-id (fix .eslintrc.cjs v0): <pendiente re-push>
 
 ## Revisión del orquestador
 
-_(pendiente)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión: vsix local + smoke install; CI PASS run-id
+`30157700368`; artifact zigurat-v0-vsix. Tests legado soft (hallazgo).
+Gate V04: **PASS** · **R2-V PASS** (Ola A = V04).

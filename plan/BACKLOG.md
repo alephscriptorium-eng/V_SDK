@@ -60,13 +60,13 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola A · Checkpoint `.vsix` v0 — gate R2-V
 
-- 🔶 **WP-V04 · Empaquetado v0 + CI** — `vsce package` standalone →
+- ✅ **WP-V04 · Empaquetado v0 + CI** — `vsce package` standalone →
   `dist/zigurat-0.0.x.vsix`; smoke install (`code
   --install-extension`: activación sin errores); CI
   (`ci.yml` lint/compile/test + artifact .vsix en Actions). **CA:**
   .vsix instalable en VS Code limpio · CI verde con run-id ·
   smoke documentado en REPORTES. Dep: V03. **Checkpoint v0: el
-  esqueleto vive standalone.** Brief: `plan/BRIEFS/WP-V04-empaquetado-v0.md`. R1-V PASS · STANDING_GO.
+  esqueleto vive standalone.** Brief: `plan/BRIEFS/WP-V04-empaquetado-v0.md`. R1-V PASS · STANDING_GO. Reporte: `plan/REPORTES/WP-V04-empaquetado-v0.md`. CI `30157700368`. R2-V PASS.
 
 ## Ola B · Pedido 2 — desacople (∥ posible entre V05 y V06) — gate R3-V
 
