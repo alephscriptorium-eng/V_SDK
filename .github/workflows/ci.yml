@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'wp/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint (v0 placeholder)
+        run: npm run lint --if-present
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Test (legado — soft en v0)
+        continue-on-error: true
+        run: npm test --if-present
+
+      - name: Package v0 .vsix
+        run: npm run package:v0
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zigurat-v0-vsix
+          path: dist/zigurat-0.0.1.vsix

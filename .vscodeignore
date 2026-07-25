@@ -39,3 +39,19 @@ jest.config.js
 Thumbs.db
 pics/**
 mcp-core-sdk/**
+
+# Gobierno / CI / ruido (no van en el .vsix)
+plan/**
+.github/**
+.config/**
+.claude/**
+coverage/**
+vibecoding/**
+theatrical-content/**
+build-and-install.sh
+nvm-exec.sh
+setup-vscode-path.sh
+test-extension.js
+sample-config.json
+ArrakisTheater_OperaConfig.json
+.esbuild.config.js
