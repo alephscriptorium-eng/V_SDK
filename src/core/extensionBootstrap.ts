@@ -16,7 +16,6 @@ import { HackerConfigPanelProvider } from '../views/HackerConfigPanelProvider';
 import { HackerTasksPanelProvider } from '../views/HackerTasksPanelProvider';
 import { HackerStatusBarManager } from './HackerStatusBarManager';
 import { AgentContentEditorProvider } from '../editors/AgentContentEditorProvider';
-import { ConfigurationCommandsService } from './configurationCommandsService';
 import { AgentConfigEditorProvider } from '../editors/AgentConfigEditorProvider';
 import { McpConfigurationManager } from './mcpConfigurationManager';
 // Gamification TreeDataProviders (First Era)
@@ -1748,10 +1747,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
         // Add all commands to context subscriptions
         this.vsCodeContext.subscriptions.push(...commands);
 
-        // Register configuration commands
-        ConfigurationCommandsService.registerCommands(this.vsCodeContext);
-
-        this.extensionContext.logger.info(`Registered ${commands.length} commands + configuration commands`);
+        this.extensionContext.logger.info(`Registered ${commands.length} commands`);
     }
 
     /**

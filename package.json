@@ -586,30 +586,6 @@
         "title": ">>> Run Agent Diagnostics",
         "category": "🤖 Agent Matrix",
         "icon": "$(pulse)"
-      },
-      {
-        "command": "ArrakisTheater.LoadConfig",
-        "title": "🎭 Load Opera Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(folder-opened)"
-      },
-      {
-        "command": "ArrakisTheater.DownloadConfig",
-        "title": "🎭 Download Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(save)"
-      },
-      {
-        "command": "ArrakisTheater.ResetConfig",
-        "title": "🎭 Reset to Defaults",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "ArrakisTheater.ShowCurrentConfig",
-        "title": "🎭 Show Current Configuration",
-        "category": "⚙️ Arrakis Configuration",
-        "icon": "$(eye)"
       }
     ],
     "configuration": {
