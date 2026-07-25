@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v07-identidad-lectura` |
-| commits | _(SHA al push)_ |
+| commits | `e1647492ef9bf1d2087a942e3f3d5ad62854ca3d` |
 | eje(s) CA | hostil-omite (sin card / sin seat) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
