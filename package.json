@@ -1356,20 +1356,21 @@
     "lint:fix": "eslint src --ext ts --fix",
     "package": "vsce package",
     "install:local": "code --install-extension mcp-arrakis-theater-ext.vsix",
-    "uninstall:local": "code --uninstall-extension arrakis-theater.arrakis-theater-chat",
+    "uninstall:local": "code --uninstall-extension escrivivir-co.scriptorium-vscode-extension",
     "build:local": "npm run compile && npm run package:local",
     "deploy:local": "npm run build:local && npm run uninstall:local && npm run install:local",
     "dev:quick": "npm run compile && npm run deploy:local",
     "install:insiders": "code-insiders --install-extension mcp-arrakis-theater-ext.vsix",
-    "uninstall:insiders": "code-insiders --uninstall-extension arrakis-theater.arrakis-theater-chat",
+    "uninstall:insiders": "code-insiders --uninstall-extension escrivivir-co.scriptorium-vscode-extension",
     "deploy:insiders": "npm run build:local && npm run uninstall:insiders && npm run install:insiders",
     "dev:insiders": "npm run compile && npm run deploy:insiders",
-    "debug:view": "code --extensionDevelopmentPath=c:/Users/oracl/Documents/REPOS/mcp-vscode-ext --new-window",
+    "debug:view": "code --extensionDevelopmentPath=. --new-window",
     "unix:code": "sh ./setup-vscode-path",
     "dev:tools": "echo 'Ctrl+Shift+I'",
     "skills:sync": "alephscript-skills-sync --runtime claude"
   },
   "devDependencies": {
+    "@alephscript/skills-scriptorium": ">=0.11.0 <1.0.0",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.3.1",
@@ -1384,11 +1385,10 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.9.2",
-    "yo": "^5.1.0",
-    "@alephscript/skills-scriptorium": ">=0.11.0 <1.0.0"
+    "yo": "^5.1.0"
   },
   "dependencies": {
-    "@alephscript/mcp-core-sdk": "file:../MCPGallery/mcp-core-sdk/alephscript-mcp-core-sdk-1.3.0.tgz",
+    "@alephscript/mcp-core-sdk": "1.3.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "express": "^5.1.0",
     "socket.io-client": "^4.8.1",
