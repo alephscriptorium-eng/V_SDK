@@ -2,7 +2,7 @@
   "name": "aleph-0",
   "displayName": "Aleph-0",
   "description": "Aleph-0 (ℵ₀) — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco).",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "scriptorium",
   "license": "GPL-3.0-or-later",
   "repository": {
