@@ -11,7 +11,7 @@
 | DV que gobiernan | **DV-11** ✅ poda ahora, re-lore a wishlist · **DV-12** ✅ tag de archivo + `git rm` con acta |
 | Identidad | `worker-V <alephscriptorium@gmail.com>` (verificada tras el primer commit) |
 | SHA del tip de **obra** | `9172d078ac4a4e3e0a3241cdebc309a25d7aba4b` |
-| VEREDICTO_REVISOR | **⏳ pendiente** |
+| VEREDICTO_REVISOR | **PASS** — contrarrevisor-V, §11 (3 observaciones no bloqueantes + 1 hallazgo contra el censo ya fusionado) |
 
 ---
 
@@ -372,5 +372,335 @@ Material para V14.
 
 ---
 
-**VEREDICTO_REVISOR: ⏳ pendiente** — riesgo de revisión independiente
-(amputación del árbol). El worker no se aprueba a sí mismo.
+**VEREDICTO_REVISOR: PASS** — contrarrevisor-V, §11. Riesgo de revisión
+independiente (amputación del árbol) atendido: el worker no se aprobó a sí
+mismo y la revisión la firma otro agente.
+
+---
+
+## 11 · Contrarrevisión
+
+**Agente:** contrarrevisor-V · **Objeto:** `wp/v13-poda`, tip `af85669`
+(obra `9172d07` + reporte) contra `archive/pre-poda-ola-f` = `4766523` ·
+**Método:** derivación independiente y re-ejecución, no relectura.
+
+### Veredicto: PASS
+
+Con **3 observaciones no bloqueantes** y **1 hallazgo contra el censo ya
+fusionado** que el orquestador debe asentar (y del que soy responsable
+yo, no el worker — ver §11.4).
+
+La amputación es correcta en todos los ejes que he sabido atacar,
+incluidos **cinco que el reporte no reclama** y que habrían delatado una
+poda chapucera: imports relativos colgantes, referencias colgantes de
+menús/atajos a comandos borrados, propiedades de configuración huérfanas,
+integridad del barril de `interfaces/` y tipado de los ficheros
+modificados. Ninguno falla.
+
+### 11.1 · Las 23 filas — derivadas por mí, no leídas del reporte
+
+Extraje las filas `poda` del censo con
+`sed -n '106,146p' plan/CENSO-V12.md | awk -F'|' '$3 ~ /poda/ {...}'` y
+lo mismo sobre `165,192p` para la Tabla B: **18 + 5 = 23**, y la lista
+coincide entrada por entrada con la del reporte. Después:
+
+- **Cero filas vivas.** `git ls-files <entrada>` sobre las 23 →
+  `tracked=0` en las 23.
+- **Cero podas sin fila.** Calculé los 252 borrados
+  (`git diff --name-status archive/pre-poda-ola-f 9172d07`) y crucé cada
+  ruta contra las 23 como prefijo: quedan **35 borrados de arrastre**, y
+  los revisé uno a uno contra el texto del censo. Los 35 están amparados
+  por texto **explícito**, no por analogía:
+  - `.vscode/settings.json` y `.vscode/mcp.json` → la fila `.vscode`
+    (re-contenido) los nombra literalmente como «lo legado que se va»;
+    `launch.json` y `tasks.json` sobreviven, que es lo que «re-contenido»
+    exige.
+  - 29 de `src/theatrical/**` → fila `src/theatrical` («el contenido se
+    va»), D4 (los 14 `.ts` muertos), D18 (el `.ts.backup`, los 10 de
+    contenido de agentes **y los 3 `core/schemas/*.json`** que la
+    corrección de V12 añadió a la enumeración).
+  - 3 de `tests/` → la fila `tests/` nombra `DonAlvaroValidation`,
+    `integration/` y `unit/mcpChatParticipant` entre el contenido legado.
+    **Y sólo esos 3**: `basic`, `performance/` y `unit/core/` —también
+    nombrados— siguen en pie porque no los fuerza ninguna poda. Es el
+    recorte conservador correcto para una fila que es re-contenido.
+  - `src/core/configurationCommandsService.ts` → DISC-2, juzgada abajo.
+- Recuentos: **552 → 300** trackeados en `9172d07` (301 en `af85669` por
+  el propio reporte); `git ls-files -i -c --exclude-standard` **72 → 0**;
+  `git diff --shortstat` = `256 files changed … 109772 deletions`, con
+  **252 `D` + 4 `M`**. Los cuatro modificados son los declarados.
+
+Manifiesto tras la poda (`node -e` sobre `package.json`): **99** comandos
+(`alephscript` 86 · `zigurat` 7 · `mcpSocketManager` 6 — los 12
+`copilotLogs.*` y los 4 `ArrakisTheater.*` fuera), clave
+`chatParticipants` **ausente**, **11** vistas en `arrakisTheater`,
+`customEditors` 2 y `jsonValidation` 3 intactos, script `unix:code`
+retirado.
+
+### 11.2 · Fronteras críticas — las tres aguantan
+
+| frontera | comprobación | resultado |
+| -------- | ------------ | --------- |
+| `ICompany.ts` | `git diff archive/pre-poda-ola-f HEAD -- src/theatrical/core/interfaces/ICompany.ts` | **diff vacío**; las +7 líneas de V09 («Modelo B», «NO es `reparto/1`», «Prohibido fusionar con elenco de dominio», puntero a `DOS-MODELOS.md`) siguen en `:6-9,18` |
+| `mcpServerManager.ts:4` | lectura + `ls src/theatrical/core/interfaces/` | `import { MCPConfiguration } from './theatrical/core/interfaces'` **resoluble**: el barril `index.ts` existe, re-exporta `MCPConfiguration` en `:17`, y el tipo vive en `ITheatricalAgent.ts:96`. El barril **sólo** exporta de los 3 ficheros supervivientes: no quedó colgando |
+| andamio de jest | `git ls-files tests` + `jest.config.js:33,36-37` | `tests/setup.ts` y `tests/mocks/vscode.mock.js` **vivos**; y también `tests/unit/parseEditorInfo.test.ts`, la prueba nueva de WP-V17 |
+
+**Comprobación estructural propia** (script node fuera del repo): resolví
+**todos** los imports relativos de **todos** los `.ts` de `src/` contra el
+disco → **cero imports colgantes**. Es la prueba de que la amputación no
+dejó un solo cabo suelto, y no depende de creerle nada al worker.
+
+**Comprobaciones que el reporte no reclama y también pasan:**
+`0` entradas de `menus`/`keybindings` apuntando a comandos no declarados;
+`0` propiedades `copilotLogs.*` huérfanas en `configuration`; las 3
+`arrakisTheater.*` conservadas a propósito (marca → V14/V15);
+`copilotMetrics.panel` retirada del manifiesto **y** su proveedor del
+código, sin residuo (`git grep copilotMetrics` = vacío).
+
+### 11.3 · La preexistencia de los FAIL — verificada por vía propia y más barata
+
+El worker la probó extrayendo el tag a un temporal. El método es válido,
+pero el temporal ya no existe, así que **no lo di por bueno: lo probé de
+otra forma**, que además es más fuerte.
+
+1. **Los ficheros que cargan los fallos son byte-idénticos al tag.**
+   `git diff --quiet archive/pre-poda-ola-f HEAD -- <fichero>` sobre los
+   11 implicados —`RepartoElencoService.ts`, `protocolApi.ts`,
+   `LauncherCatalogClient.ts`, `LineaEditorClient.ts`,
+   `McpResourceClient.ts`, `tests/mocks/vscode.mock.js`,
+   `src/terminalManager.ts`, `managerFactory.test.ts`, `tests/setup.ts`,
+   `jest.config.js`, `tsconfig.json`— sale **INTACTO en los 11**. Si el
+   fichero que falla no ha cambiado y su configuración tampoco, el fallo
+   no puede ser de la poda.
+2. **Re-ejecución dirigida del caso barato**, por ranura
+   (`bash scripts/slot.sh run contrarrev-tsc -- npx tsc -p tsconfig.json --noEmit`;
+   `evidencia.sh vigente compile-tests` daba 1 porque `af85669` movió el
+   HEAD, así que no había registro citable). Resultado: **exactamente 8
+   errores, en exactamente los 5 ficheros declarados, con los códigos
+   declarados** (2 × TS1479 en `RepartoElencoService`, 2 × TS1479 en
+   `protocolApi`, 2 × TS2353 en `LauncherCatalogClient`, 1 × TS2353 en
+   `LineaEditorClient`, 1 × TS2353 en `McpResourceClient`).
+
+Lo decisivo no es el 8: es que **hay cero errores en los cuatro ficheros
+modificados**. `esbuild` no tipa, así que el `compile` verde no lo
+demostraba; esto sí. La edición de 25 puntos sobre `extensionBootstrap.ts`
+tipa limpia.
+
+*Nota de método:* usé `--noEmit` donde el worker usó `tsc -p` a secas.
+Cambia la emisión, no el conjunto de errores. No re-ejecuté `jest`: el
+argumento (1) lo cubre y el reporte declara `--coverage=false`.
+
+**Vigencia de la evidencia.** `evidencia.sh vigente` sale **1** para
+todas las etiquetas porque la huella es por HEAD y `af85669` lo movió.
+Verifiqué que ese commit **sólo añade el reporte**
+(`git diff --stat 9172d07 af85669` → 1 fichero, 376 inserciones), así que
+la huella de `9172d07` cubre el árbol de código exacto que se entrega. No
+es defecto; es cómo está construida la huella.
+
+**El `.vsix` corresponde al HEAD de obra.** `dist/scriptorium-zigurat-0.1.0.vsix`
+son **606.013 bytes = 591,81 KB**, exactamente la cifra del reporte;
+`unzip -l` da **32 ficheros**, con `extension/dist/extension.js` de
+708.928 B (= 692,3 KB, la cifra del `compile`) y **sin ningún `.map`
+dentro**. El paquete entregado está limpio.
+
+### 11.4 · Juicio de las cuatro discrepancias
+
+**DISC-1 · CONFIRMADA al carácter, y es hallazgo contra el censo
+fusionado.** Extraje `src/core/extensionBootstrap.ts` del tag
+(`git show archive/pre-poda-ola-f:…`) y grepeé los identificadores en
+minúscula, no sólo los nombres de clase:
+
+```
+McpChatParticipant/chatParticipant → :11 :57 :115 :199 :2170     (5)
+TheatricalChatManager/theatricalChat → :12 :58 :118 :200 :231 :2173 (6)
+```
+
+**11 puntos**, y los 5 extra son exactamente los que el worker declara.
+§8 del censo dice **6** y presenta el recuento como exhaustivo
+(«`grep -rn` … no muestreo: todas las referencias del repo»). No lo es.
+El total real de arrastre vivo es **25**, no 20.
+
+Y el reparto de culpa, que importa para que esto se asiente bien:
+**la subestimación es sólo de las dos filas de DV-11.** Verifiqué las
+otras dos y son **exactas**: `copilotLogs` → `:41,:42,:1773,:1776-1779,:1781`
+(comprobado, incluida `:1781`, que es el `logger.info` que nombra «Copilot
+Log Exporter») y `ArrakisTheater.*` → `:21,:1770`. La causa del fallo es
+identificable: un grep por nombres de clase encuentra el import, el campo
+y el `new`, pero **no** el literal de objeto (`:199`, `:200`), la llamada
+por campo (`:231`) ni los `dispose()` (`:2170`, `:2173`), que usan el
+identificador en minúscula. **Mi propia contrarrevisión de V12 cometió
+exactamente ese error**: los seis puntos que cité salieron de
+`git grep "McpChatParticipant\|TheatricalChatManager\|…"`, y por eso se me
+escaparon los cinco. El censo heredó mi grep incompleto. Que conste.
+
+**DISC-2 · Amparo suficiente. NO se revierte `9172d07`.** La duda es
+legítima y estaba bien planteada —aislar el lote fue lo correcto—, pero
+la respuesta es que sí:
+
+- La fila `package.json` del censo asigna a este WP, literalmente,
+  «lo reescriben **V13 (comandos podados)**». Es un mandato de fila, no
+  una inferencia.
+- **D17** nombra el caso: «V13 poda 16 de esos comandos por otras filas
+  (12 `copilotLogs.*` de la fila 17 y **4 `ArrakisTheater.*` de la fila
+  18**)». El censo es «la fuente única de qué se poda» según el brief, y
+  D17 es censo.
+- Es **la misma lógica que ya gobierna los 12 `copilotLogs.*`**, que
+  nadie discute. Rechazar una y aceptar la otra sería incoherente.
+- `configurationCommandsService.ts` queda huérfano **por construcción**:
+  §8 documenta que el fichero entero (263 líneas) existe sólo para esos 4
+  comandos (`:25,80,136,167` los documentan uno a uno). Dejarlo habría
+  sido dejar código muerto en el WP cuyo objeto es retirar código muerto.
+
+Lo que sí pido que el orquestador **asiente**, porque afecta a la
+contabilidad que heredan V14/V15: `src/core` tiene veredicto **queda** y
+ha perdido un fichero (10 → 9). El acta honesta de este WP no es «23
+filas» a secas, sino **23 filas de fichero + 1 poda de nivel comando
+amparada en D17/§8, con su fichero huérfano**. Que quede escrito para que
+nadie recuente 23 y crea que `src/core` está intacto.
+
+**DISC-3 · Bien anotada y bien NO actuada.** `git grep` en `src/` de
+`mcp-core-sdk` y `'zod'` → **cero importadores** (los únicos aciertos en
+el repo son `package.json`, `package-lock.json`, `.vscodeignore`,
+`tsconfig.build.json` y documentos de `plan/`). El motivo escrito de la
+fila `.npmrc` ya no es exacto, el veredicto «queda» sí lo sigue siendo
+(los dos scopes `@zeus/*` viven), y **no tocar `dependencies`** es la
+decisión correcta: no hay fila que lo ampare y el brief no lo pide. R-6
+lo recoge.
+
+**DISC-4 · Bien anotada y bien NO actuada.** `git grep "mcp\.svg"` sobre
+todo el árbol: los únicos aciertos son documentos de `plan/`. El asset
+quedó sin consumidor y **viaja igual en el `.vsix`** — lo veo en el
+paquete (`extension/media/mcp.svg`, 2.015 B). `media/` es «no podar ·
+sólo los 4 iconos, en V14» y está **intacto** (`git diff` vs tag vacío,
+23 ficheros). Correcto: anotar y no tocar.
+
+### 11.5 · R-7 — el mecanismo es real, y el paquete entregado está limpio
+
+Verificado por lectura, sin empaquetar:
+
+- `package:v1` = `npm run compile:production && node scripts/vsix.mjs package`;
+  `compile:production` = `esbuild … --minify` (**sin** sourcemap) y
+  `compile` = `esbuild … --sourcemap` (**sí** produce
+  `dist/extension.js.map`).
+- `compile:production` **sobrescribe** `extension.js` pero no borra un
+  `.map` preexistente, y `vsix.mjs` sólo limpia `*.vsix` previos
+  (`limpiarVsixPrevios`, `:97-102`) — no el resto de `dist/`.
+- `.vscodeignore:14` es `*.map`, y **`*` no cruza `/`**, así que no
+  alcanza `dist/extension.js.map`. `dist/` no está excluido (es donde
+  vive el `main`).
+
+Luego sí: un `npm run compile` seguido de `npm run package:v1` mete el
+`.map`. **Hallazgo real y bien clasificado** (`.vscodeignore` es fila
+«queda»; el arreglo sería `**/*.map`, y es de V16/V-L4-05, no de este WP).
+El `.vsix` que se entrega **no** lo lleva: lo confirmé con `unzip -l`.
+No he verificado los 2,3 MB del `.map` ni el 1,02 MB del paquete sucio —
+exigiría compilar, y no hay causa.
+
+### 11.6 · Observaciones no bloqueantes
+
+**1 · Los números de línea de R-1 son de un commit intermedio.**
+`plan/REPORTES/WP-V13-poda.md:318` cita
+`extensionBootstrap.ts:1429,1432,1459,1483-1484,1514,1554,1595,1599`. En
+el árbol entregado las referencias están en
+**`1425,1428,1455,1479,1480,1510,1550,1591,1595`**. Rastreé el desfase
+commit a commit:
+
+```
+f6ae634 → 1429 1432 1459 1483 1484 1514 1554 1595 1599   ← lo que dice R-1
+eea6825 → 1426 1429 1456 1480 1481 1511 1551 1592 1596
+9172d07 → 1425 1428 1455 1479 1480 1510 1550 1591 1595   ← el árbol entregado
+```
+
+R-1 se escribió tras el lote 4 y no se refrescó tras los lotes 5 y 6.
+Está **4 líneas desviado** en lo que se entrega. No rompe nada —el
+residual mismo dice que no rompe nada— pero R-1 es el encargo que recibe
+**V15** para «barrer la convención muerta», y es la clase de literal
+escrito a mano que ya miente el día de la entrega. Recalcular con
+`git grep -n "theatrical-content\|theatricalContent" -- src` cuesta un
+comando. (Dato de paso: son **9** puntos en ese fichero, no 7, porque 4
+usan la variable `theatricalContentPath`.)
+
+**2 · «Ninguna vista declarada quedó sin proveedor» (§5.2) es literalmente
+falsa.** Recorrí las 12 vistas declaradas buscando su id en `src/`: las 11
+del contenedor `arrakisTheater` tienen registro; la 13ª —`arrakisTheater`
+en el contenedor `explorer`, la «🎭 Theater Engine» de **D14**— tiene
+**cero**. Comprobé el tag: **tampoco lo tenía antes**. Es preexistente y
+la poda no la causó, así que el fondo de la frase (la poda no huerfanizó
+ninguna vista) es cierto y está bien probado —`copilotMetrics.panel` se
+fue con su proveedor—. Lo que sobra es el alcance del enunciado, y ese
+enunciado está sosteniendo el ⏳ del smoke de activación. Redáctese como
+«la poda no dejó sin proveedor ninguna vista que lo tuviera», y anótese la
+13ª como material de V14 (ya es D14).
+
+**3 · Material menor para el acta.** El script `test:coverage`
+(`jest --coverage`) sigue en `package.json` y saldrá rojo por el umbral de
+R-5, igual que `npm test` sin `--coverage=false`. Está implícito en R-5;
+nombrarlo ahorra un susto.
+
+### 11.7 · Hallazgo contra el censo ya fusionado — y contra mi propia revisión
+
+**`media/ICON_CREATION_GUIDE.md` SÍ viaja en el `.vsix`.** Está dentro del
+paquete entregado:
+
+```
+$ unzip -l dist/scriptorium-zigurat-0.1.0.vsix | grep -i '\.md'
+   3208  extension/readme.md
+   3610  extension/LICENSE.md
+   1059  extension/media/ICON_CREATION_GUIDE.md
+```
+
+El censo fusionado dice lo contrario. Su fila `media`
+(`plan/CENSO-V12.md:129`) afirma hoy: «**22 de 23**: … pero `*.md`
+(`.vscodeignore:28`) sí atrapa `ICON_CREATION_GUIDE.md`». **Es falso**, y
+por la **misma razón que hace verdadero a R-7**: en `.vscodeignore` el
+comodín `*` no cruza `/`, así que `*.md` sólo alcanza los `.md` de primer
+nivel — por eso las re-inclusiones `:29-30` son también de primer nivel.
+Viajan **23 de 23**.
+
+Esa frase la puso el worker de V12 obedeciendo el **punto 3 de mi
+contrarrevisión de V12**, que estaba equivocado: razoné la semántica del
+glob en vez de mirar un paquete, precisamente el error que mi rol existe
+para cazar («un verde que se refiere a otra cosa»). El worker de V13 tenía
+la prueba delante —construyó el `.vsix` y encontró R-7, que es el mismo
+mecanismo— y no cerró el círculo; se lo apunto como cross-check no hecho,
+no como defecto de su WP, porque `media/` no está en su alcance y no la
+tocó.
+
+**Para el orquestador:** hay que corregir `plan/CENSO-V12.md:129` en
+`main` (volver a «23 de 23, ningún patrón cubre el directorio») y avisar a
+**V14**, que planifica sobre esa celda. Yo no lo toco: es fichero fuera
+del alcance de este WP y de mi rol.
+
+### 11.8 · Qué NO pude comprobar, y por qué
+
+- **El smoke de activación sigue sin hacerse.** Comparto el ⏳ del worker:
+  exige un VS Code interactivo. Lo que sí queda probado por mi parte es
+  más de lo que el reporte reclamaba: el manifiesto no tiene referencias
+  colgantes, `src/` no tiene imports colgantes y los 4 ficheros
+  modificados tipan. Sigue sin probarse que la extensión **arranque**.
+- **`jest` no lo re-ejecuté.** La preexistencia queda probada por la
+  identidad byte a byte de `managerFactory.test.ts`, `vscode.mock.js`,
+  `terminalManager.ts`, `setup.ts` y `jest.config.js` con el tag. Ejecutar
+  no habría añadido nada que ese argumento no dé, y cuesta ranura.
+- **Las cifras de R-7 (2,3 MB de `.map`, 1,02 MB de paquete sucio)** no
+  las verifiqué: exigen compilar con sourcemap y empaquetar. El
+  **mecanismo** sí está verificado; las cifras las firma el worker.
+- **No re-auditté el censo entero**, sólo los puntos que gobiernan esta
+  poda (las 23 filas, §8 completa, D4/D17/D18, las filas de arrastre) más
+  el hallazgo de §11.7.
+- **No he escrito `EVIDENCIA.md`** pese a haber ejecutado por ranura: mi
+  rol acota mi escritura a esta sección. La ejecución queda documentada
+  aquí, con su comando.
+
+### 11.9 · Fronteras de mi propio rol
+
+No he arreglado nada, no he fusionado, no he revertido `9172d07`, no he
+cerrado ninguna DV y no he tocado `z-sdk`, `scriptorium/**` ni el espejo
+OASIS. Mi única escritura es esta sección y la línea `VEREDICTO_REVISOR`.
+No hay push.
+
+Y el reparto, para que quede justo: este WP **encontró un fallo del censo
+que ni el censo ni yo habíamos visto** (DISC-1), lo declaró en vez de
+taparlo, aisló en un commit revertible el único lote de alcance dudoso
+(DISC-2) y anotó sin actuar las dos filas que la poda dejó desfasadas
+(DISC-3, DISC-4). Eso es exactamente cómo se entrega una amputación.
