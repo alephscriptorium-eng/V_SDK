@@ -1,59 +1,27 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
 import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
+import { CatalogService } from '../launcher/CatalogService';
+import type { CatalogSnapshot } from '../launcher/types';
+
+const FALLBACK_MARK = '[FALLBACK MARCADO — no es catálogo launcher]';
 
 /**
- * Default embedded tasks (fallback when tasks.json can't be read)
- * SYNC with .vscode/tasks.json - Last sync: 2026-04-11
+ * FALLBACK MARCADO (WP-V06): tabla estática histórica 3001–3066.
+ * NO es inventario en caliente. Solo si no hay catálogo ni tasks.json.
+ * Puertos aquí son legado embebido, no fuente de verdad de flota.
  */
-const DEFAULT_TASKS = [
-    { label: "SCP: Start Full Stack", dependsOn: ["MCP: Start [Launcher]", "APB: Start [Service]", "APB: Start [App]", "NOV: Start [Server]"], detail: "Compound - Full stack" },
-    { label: "MCP: Start [Launcher]", type: "shell", command: "npm", args: ["run", "start:launcher"], isBackground: true, detail: "Puerto 3050" },
-    { label: "MCP: Start [Model]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 4001" },
-    { label: "MCP: Start [DevOps]", type: "shell", command: "npm", args: ["run", "start"], isBackground: true, detail: "Puerto 3003 - DevOps Server con persistencia" },
-    { label: "BHS: Start [Server]", type: "shell", command: "npm", args: ["run", "start:bothub"], isBackground: true, detail: "Puerto 3010 - BotHub MCP Server (BotHubSDK + IACM)" },
-    { label: "BHS: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:3010"], detail: "Abrir BotHub MCP Server health endpoint" },
-    { label: "BHS: Setup [Examples]", type: "shell", command: "npm", args: ["run", "examples:install"], detail: "Instalar dependencias de console-app, dashboard e iacm-demo" },
-    { label: "BHS: Start [Console]", type: "shell", command: "npm", args: ["run", "dev"], detail: "BotHubSDK console-app headless (build:sdk + ejemplo)" },
-    { label: "BHS: Start [Dashboard]", type: "shell", command: "npm", args: ["run", "dev:dashboard"], detail: "BotHubSDK dashboard TUI (build:sdk + ejemplo interactivo)" },
-    { label: "APB: Start [Service]", type: "shell", command: "npm", args: ["run", "start:backend"], isBackground: true, detail: "Puerto 8000" },
-    { label: "APB: Start [App]", type: "shell", command: "npm", args: ["run", "start:frontend"], isBackground: true, detail: "Puerto 5001" },
-    { label: "APB: Build [Chain]", type: "shell", command: "bash", args: ["-c", "npm run build"], detail: "Build chain" },
-    { label: "APB: Health Check", type: "shell", command: "bash", args: ["./scripts/apb-health-check.sh"], detail: "Verificar" },
-    { label: "APB: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:5001"], detail: "Abrir" },
-    { label: "NOV: Start [Server]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 3066" },
-    { label: "NOV: Start [UI]", type: "shell", command: "npm", args: ["run", "docs:serve"], isBackground: true, detail: "Puerto 8080" },
-    { label: "NOV: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:8080"], detail: "Abrir" },
-    { label: "TPE: Start [Server]", type: "shell", command: "npm", args: ["run", "dev"], isBackground: true, detail: "Puerto 3019" },
-    { label: "TPE: Start [MCP]", type: "shell", command: "npm", args: ["run", "start:typed-prompt"], isBackground: true, detail: "Puerto 3020" },
-    { label: "TPE: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:3019"], detail: "Abrir" },
-    { label: "OAE: Start [Swagger]", type: "shell", command: "npx", args: ["@redocly/cli", "preview-docs"], isBackground: true, detail: "Puerto 3021" },
-    { label: "OAE: Start [AsyncAPI]", type: "shell", command: "npx", args: ["@asyncapi/cli", "start", "studio"], isBackground: true, detail: "Puerto 3022" },
-    { label: "OAE: Open [Swagger]", type: "shell", command: "open", args: ["http://localhost:3021"], detail: "Abrir" },
-    { label: "OAE: Open [AsyncAPI]", type: "shell", command: "open", args: ["http://localhost:3022"], detail: "Abrir" },
-    { label: "NRE: Start [Editor]", type: "shell", command: "node-red", args: [], isBackground: true, detail: "Puerto 1880" },
-    { label: "NRE: Start [GamifyUI]", type: "shell", command: "npm", args: ["run", "dev:ui"], isBackground: true, detail: "Puerto 3088" },
-    { label: "NRE: Open [Editor]", type: "shell", command: "open", args: ["http://localhost:1880"], detail: "Abrir" },
-    { label: "NRE: Open [Dashboard]", type: "shell", command: "open", args: ["http://localhost:1880/ui"], detail: "Abrir" },
-    { label: "BLE: Start [Editor]", type: "shell", command: "npm", args: ["run", "dev:ui"], isBackground: true, detail: "Puerto 4200" },
-    { label: "BLE: Start [Runtime]", type: "shell", command: "npm", args: ["run", "dev:runtime-ui"], isBackground: true, detail: "Puerto 5000" },
-    { label: "BLE: Open [Editor]", type: "shell", command: "open", args: ["http://localhost:4200"], detail: "Abrir" },
-    { label: "JKL: Start [Site]", type: "shell", command: "./scripts/serve-site.sh", isBackground: true, detail: "Puerto 4000" },
-    { label: "JKL: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:4000/aleph-scriptorium/"], detail: "Abrir" },
-    { label: "ZEU: Start [UI]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 3012" },
-    { label: "ZEU: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:3012"], detail: "Abrir" },
-    { label: "AIA: Start [Backend]", type: "shell", command: "npm", args: ["run", "start:dev"], isBackground: true, detail: "Puerto 8007 - AAIA Backend Gateway" },
-    { label: "AIA: Start [Frontend]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 4200 - AAIA Frontend" },
-    { label: "AIA: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:3007"], detail: "Abrir AAIA Server" },
-    { label: "AIA: Open [Frontend]", type: "shell", command: "open", args: ["http://localhost:4200"], detail: "Abrir AAIA Frontend" },
-    { label: "CHS: Start [Server]", type: "shell", command: "npm", args: ["run", "dev"], isBackground: true, detail: "Puerto 3000 - Socket.IO" },
-    { label: "CHS: Start [AdminUI]", type: "shell", command: "npm", args: ["run", "start"], isBackground: true, detail: "Puerto 3100 - Admin UI" },
-    { label: "CHS: Open [Server]", type: "shell", command: "open", args: ["http://localhost:3000"], detail: "Abrir" },
-    { label: "CHS: Open [AdminUI]", type: "shell", command: "open", args: ["http://localhost:3100"], detail: "Abrir" },
-    { label: "INS: Start [Inspector]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: "Puerto 6274" },
-    { label: "INS: Open [Browser]", type: "shell", command: "open", args: ["http://localhost:6274"], detail: "Abrir" },
-    { label: "DMO: Start Full Stack", dependsOn: ["JKL: Start [Site]", "MCP: Start [Launcher]"], detail: "Demo stack" }
+const FALLBACK_DEFAULT_TASKS_MARKED = [
+    { label: "SCP: Start Full Stack", dependsOn: ["MCP: Start [Launcher]", "APB: Start [Service]", "APB: Start [App]", "NOV: Start [Server]"], detail: `${FALLBACK_MARK} Compound` },
+    { label: "MCP: Start [Launcher]", type: "shell", command: "npm", args: ["run", "start:launcher"], isBackground: true, detail: `${FALLBACK_MARK} legado 3050` },
+    { label: "MCP: Start [Model]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: `${FALLBACK_MARK} legado 4001` },
+    { label: "MCP: Start [DevOps]", type: "shell", command: "npm", args: ["run", "start"], isBackground: true, detail: `${FALLBACK_MARK} legado 3003` },
+    { label: "BHS: Start [Server]", type: "shell", command: "npm", args: ["run", "start:bothub"], isBackground: true, detail: `${FALLBACK_MARK} legado 3010` },
+    { label: "APB: Start [Service]", type: "shell", command: "npm", args: ["run", "start:backend"], isBackground: true, detail: `${FALLBACK_MARK} legado 8000` },
+    { label: "APB: Start [App]", type: "shell", command: "npm", args: ["run", "start:frontend"], isBackground: true, detail: `${FALLBACK_MARK} legado 5001` },
+    { label: "NOV: Start [Server]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: `${FALLBACK_MARK} legado 3066` },
+    { label: "NOV: Start [UI]", type: "shell", command: "npm", args: ["run", "docs:serve"], isBackground: true, detail: `${FALLBACK_MARK} legado 8080` },
+    { label: "ZEU: Start [UI]", type: "shell", command: "npm", args: ["start"], isBackground: true, detail: `${FALLBACK_MARK} legado 3012` },
+    { label: "DMO: Start Full Stack", dependsOn: ["MCP: Start [Launcher]"], detail: `${FALLBACK_MARK} Demo stack` }
 ];
 
 /**
@@ -121,9 +89,15 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
     private fileWatcher?: vscode.FileSystemWatcher;
     private taskExecutions: Map<string, vscode.TaskExecution> = new Map();
     private tasksLoadPromise?: Promise<void>;
+    private catalogService = CatalogService.getInstance();
+    private catalogSub?: vscode.Disposable;
+    private catalogStatusMessage = '⏳ catálogo no refrescado';
 
     // Prefix metadata for known categories
     private static readonly PREFIX_METADATA: Record<string, { name: string; icon: string; description: string }> = {
+        'CAT': { name: 'Launcher catalog', icon: '📡', description: 'Tasks from launcher://catalog (hot)' },
+        'WAIT': { name: 'Pending', icon: '⏳', description: 'Honest pending — no live catalog' },
+        'FB': { name: 'Fallback marcado', icon: '⚠️', description: 'Static legacy fallback — NOT live fleet' },
         'SCP': { name: 'Scriptorium', icon: '📜', description: 'Main compound tasks' },
         'MCP': { name: 'MCP Servers', icon: '🔌', description: 'Model Context Protocol servers' },
         'BHS': { name: 'BotHub', icon: '📬', description: 'BotHub SDK examples + MCP server' },
@@ -148,8 +122,13 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected initializePanel(): void {
+        this.catalogSub = this.catalogService.onDidChange(() => {
+            this.tasksLoadPromise = this.loadTasksFromWorkspace();
+            void this.tasksLoadPromise.then(() => this.updateTaskDisplay());
+        });
+        this.context.subscriptions.push(this.catalogSub);
+
         // Load tasks initially - async but we'll update display when 'ready' message comes
-        // The 'ready' message handler will call updateTaskDisplay after ensuring tasks are loaded
         this.tasksLoadPromise = this.loadTasksFromWorkspace();
 
         // Watch for changes to tasks.json
@@ -230,51 +209,104 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
     }
 
     /**
-     * Load tasks from workspace tasks.json or use default fallback
+     * Prioridad (WP-V06):
+     * 1) catálogo launcher en caliente
+     * 2) tasks.json del workspace (autoría usuario)
+     * 3) FALLBACK MARCADO (tabla fija legado) + fila ⏳
      */
     private async loadTasksFromWorkspace(): Promise<void> {
         this.categories.clear();
         this.allTasks.clear();
 
-        let tasksLoaded = false;
+        const snap = this.catalogService.getSnapshot();
+        this.catalogStatusMessage = snap.statusMessage;
+        let catalogLoaded = false;
+
+        if (snap.availability === 'ready' && snap.servers.length > 0) {
+            this.ingestCatalogTasks(snap);
+            catalogLoaded = true;
+            console.log(`Loaded ${snap.servers.length} catalog servers as tasks`);
+        } else {
+            const pending = this.parseTask({
+                label: 'WAIT: Catalog [Pending]',
+                detail: snap.statusMessage,
+                type: 'shell',
+                command: 'echo',
+                args: [snap.statusMessage]
+            });
+            this.allTasks.set(pending.label, pending);
+            this.addTaskToCategory(pending);
+        }
+
+        let workspaceLoaded = false;
         const workspaceFolders = vscode.workspace.workspaceFolders;
-        
+
         if (workspaceFolders) {
-            // Only load from the first (root) workspace folder's .vscode/tasks.json
             const folder = workspaceFolders[0];
             const tasksPath = vscode.Uri.joinPath(folder.uri, '.vscode', 'tasks.json');
             try {
                 const content = await vscode.workspace.fs.readFile(tasksPath);
                 const text = Buffer.from(content).toString('utf8');
-                // Remove comments (JSON with comments support)
                 const jsonText = this.stripJsonComments(text);
                 const tasksJson: TasksJsonContent = JSON.parse(jsonText);
 
                 if (tasksJson.tasks && Array.isArray(tasksJson.tasks)) {
                     for (const rawTask of tasksJson.tasks) {
                         const task = this.parseTask(rawTask);
-                        this.allTasks.set(task.label, task);
-                        this.addTaskToCategory(task);
+                        if (!this.allTasks.has(task.label)) {
+                            this.allTasks.set(task.label, task);
+                            this.addTaskToCategory(task);
+                        }
                     }
-                    tasksLoaded = true;
-                    console.log(`Loaded ${this.allTasks.size} tasks from workspace tasks.json`);
+                    workspaceLoaded = true;
+                    console.log(`Merged workspace tasks.json`);
                 }
             } catch (error) {
                 console.log(`Could not load tasks.json from workspace:`, error);
             }
         }
 
-        // Use default tasks as fallback
-        if (!tasksLoaded) {
-            console.log('Using default embedded tasks');
-            for (const rawTask of DEFAULT_TASKS) {
+        // Fallback MARCADO solo si no hay catálogo ni tasks.json
+        if (!catalogLoaded && !workspaceLoaded) {
+            console.log('Using FALLBACK MARCADO embedded tasks (not live catalog)');
+            for (const rawTask of FALLBACK_DEFAULT_TASKS_MARKED) {
                 const task = this.parseTask(rawTask);
+                // Re-prefix category visually under FB when from marked fallback
+                if (task.prefix !== 'WAIT') {
+                    task.detail = task.detail?.includes(FALLBACK_MARK)
+                        ? task.detail
+                        : `${FALLBACK_MARK} ${task.detail || ''}`.trim();
+                }
                 this.allTasks.set(task.label, task);
                 this.addTaskToCategory(task);
             }
         }
 
         console.log(`Final: ${this.allTasks.size} tasks in ${this.categories.size} categories`);
+    }
+
+    private ingestCatalogTasks(snap: CatalogSnapshot): void {
+        for (const entry of snap.servers) {
+            const barrio = entry.tree?.barrio;
+            const barrioNote = barrio ? ` · barrio ${barrio}` : '';
+            const portNote =
+                entry.port !== undefined
+                    ? `port ${entry.port} (from catalog)`
+                    : '⏳ sin puerto en catálogo (barrio no montado)';
+            const task = this.parseTask({
+                label: `CAT: Start [${entry.id}]`,
+                type: 'shell',
+                command: 'echo',
+                args: [`catalog:${entry.id}`],
+                isBackground: true,
+                detail: `${portNote}${barrioNote} · ${entry.workspace || entry.name}`
+            });
+            if (entry.port !== undefined) {
+                task.port = String(entry.port);
+            }
+            this.allTasks.set(task.label, task);
+            this.addTaskToCategory(task);
+        }
     }
 
     /**
@@ -429,7 +461,8 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
             categories: categoriesData,
             totalTasks: this.allTasks.size,
             totalCategories: this.categories.size,
-            runningCount: Array.from(this.allTasks.values()).filter(t => t.isRunning).length
+            runningCount: Array.from(this.allTasks.values()).filter(t => t.isRunning).length,
+            catalogStatus: this.catalogStatusMessage
         });
     }
 
