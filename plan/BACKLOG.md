@@ -141,6 +141,113 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   (frontera: s-sdk) · nota corta a Z («consumidor IDE materializado;
   contrato v1 sin cambios»). **CA:** según DV-06.
 
+## Ola F · CORTE — prerequisito de todo y de un re-release honesto
+
+Origen: `C:/S/vigilancia/REPLAN-V-ciudad-zigurat.md` §4, transcrito por el
+orquestador-V (§9·C6: el replan es handoff; lo transcribe el orquestador).
+**Renombrado de olas aplicado** (aviso §4 + §9·C1): las olas A–F del replan
+son aquí **F–K**, porque este backlog ya usaba 0·A·B·C·D·E. La **Ola E
+vigente** («Constelación», WP-V11) no se toca: sigue ⬜ y queda reencolada
+tras el re-release de esta ola, por decisión del custodio.
+
+Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
+
+- ⬜ **WP-V12 · Censo y veredicto** — censo de lo absorbido en WP-V02:
+  una fila por **entrada de primer nivel** del repo y por **módulo de
+  `src/`**, con veredicto *queda* / *re-contenido* / *poda* y motivo. Es
+  el documento que **D-1** exige (alcance de la amputación). La tabla §2
+  del replan es **punto de partida, no respuesta**: se verifica contra el
+  disco. **No borra nada — V12 solo decide.** **CA:** cero
+  `<pendiente>` · una fila por entrada y por módulo · cada fila con
+  motivo y con la fuente que la respalda. Dep: —.
+  Brief: `plan/BRIEFS/WP-V12-censo-veredicto.md`.
+- ⬜ **WP-V13 · Poda** — retirar del árbol lo marcado *poda* por el censo
+  (filas 17, 18, 20, 21 de §2 del replan como punto de partida).
+  **CA:** `git rm` con acta · probes V07/V08/V09 siguen PASS · el `.vsix`
+  arranca igual. Dep: V12. **Bloqueado por DV-11 y DV-12 (abiertas).**
+- ⬜ **WP-V14 · Marca del producto** — barra de actividad,
+  `configuration.title`, icono, `README.md`. **CA:** quien lo instala lee
+  **Aleph-0** y no lee «Arrakis Theater» **ni «Zigurat»** en ninguna
+  superficie de usuario (§8 · DV-16; guía de revisión, no gate). Dep: V12.
+- ⬜ **WP-V15 · Espacios de nombres** — lo que sobreviva pasa a un solo
+  prefijo; declarar lo heredado que se quede. Absorbe el renombrado de
+  claves de settings si **DV-16.a** se cierra en (b) —
+  `extension-id → scriptorium.aleph-0`, claves → `aleph0.*`— y entonces
+  **re-verifica la CA de WP-V05** con las claves nuevas (§9·C5). **CA:**
+  un solo prefijo en `contributes.commands` salvo excepciones declaradas.
+  Dep: V13. **Bloqueado por DV-16.a (abierta).**
+- ⬜ **WP-V16 · Falsedad silenciosa** — ola L1 de
+  `HANDOFF-S-COLA-LIMPIEZA-post-R5V.md`: (a) el probe importa el parser
+  real en vez de reimplementarlo · (b) nombre del `.vsix` derivado de la
+  versión, cero literales `0.1.0` · (c) `lint` que puede fallar o sale del
+  CI · (d) guarda del release manual · (e) declarar qué verifica el
+  pipeline. **CA:** los 5 CA de L1; en particular, un cambio en el parser
+  real **rompe** el probe (demostrado) y `npm version 0.2.0` produce asset
+  `…-0.2.0.vsix`. Dep: —.
+  Brief: `plan/BRIEFS/WP-V16-falsedad-silenciosa.md`.
+- ⬜ **WP-V17 · Puerta de permisos** — (a) la ausencia de información no
+  concede permiso: `parseEditorInfo.ts:83` falla abierto mientras `:80`
+  falla cerrado, en el mismo literal · (b) pruebas unitarias de los
+  invariantes del contrato. **CA:** L2-01 y L2-02; casos mínimos
+  `required` ausente · `reparto.required` sin `reparto_required` ·
+  `motivos_deny` ausente · motivo fuera de lista · `visible` ausente.
+  Dep: —. Brief: `plan/BRIEFS/WP-V17-puerta-permisos.md`.
+
+**Primer lote despachable:** V12 ∥ V16 ∥ V17 (independientes, ficheros en
+alcance disjuntos declarados en los briefs). V13 · V14 · V15 en cuanto
+V12 cierre y el custodio resuelva DV-11 / DV-12 / DV-16.a.
+
+## Olas G–K · planificadas, sin desarrollar
+
+Títulos asentados para constancia del plan completo
+(`REPLAN-V-ciudad-zigurat.md` §4, letras ya renombradas). Ninguna se
+desarrolla hasta que su ola previa cierre; el detalle vive en el replan.
+
+- ⬜ **Ola G · MANDO DE CIUDAD** (WP-V18…V22) — gate **R7-V**. Joya 1.
+  Cierra G1, G2, G3. Dep: Ola F. Enmendada por §9·C3: V18 se reduce a
+  enlazar `health` y pintar estado (el árbol ya se alimenta del catálogo,
+  CA de V06); **V19 es el hueco de verdad** (`launch_mcp_server` /
+  `stop_mcp_server` / `restart_mcp_server` / `launch_all` a cero).
+- ⬜ **Ola H · BARRIOS Y VENTANAS** (WP-V23…V26) — gate **R8-V**. Dep: G.
+- ⬜ **Ola I · IDENTIDAD Y AUTORÍA** (WP-V27…V29) — gate **R9-V**. Dep: H.
+  Cierra G7, G8.
+- ⬜ **Ola J · EL MAPA** (WP-V30…V32) — gate **R10-V**. Joya 2. Cierra G9.
+  Dep: G.
+- ⬜ **Ola K · ENTRADA** (WP-V33…V36) — gate **R11-V**. Cierra G4, G5,
+  G6 (rebajado a hueco de UX por §9·C2), G10. Al cerrar K: **re-release**
+  y solo entonces **WP-V11** (atlas), con **DV-06 enmendado** (DV-14).
+
+## Wishlist (§5 del replan · fuera de esta tanda, sin fecha)
+
+- ⬜ Editor de agentes de la ciudad (`customEditors` re-contenido, fila 15)
+- ⬜ Participantes de chat con personajes reales del reparto (fila 19)
+- ⬜ 3D del jugador: player-3d-ui · solar-system · force-system
+- ⬜ Firehose navegable con filtros (firehose-browser)
+- ⬜ Actas y partes como superficie propia (acta-kit · parte-kit)
+- ⬜ Almacén y caché (blobstore-client · cache-browser · blob-sync-harness)
+- ⬜ Visor WebRTC (webrtc-viewer · oasis-webrtc)
+- ⬜ Puente de operador (operator-bridge · operator-ui)
+- ⬜ Volúmenes (volumes-ops) · embajador (embajador-kit) · SSB (ssb-system)
+- ⬜ Marketplace (sigue diferido, DV-10)
+
+## Economía de CPU (obligatoria en todos los WP desde la Ola F)
+
+Señalado por el custodio: tres agentes compilando y probando lo mismo en
+paralelo saturan la máquina y no producen evidencia nueva.
+
+1. **Ranura de proceso caro.** `npm ci`, `compile*`, `test`, `vsce
+   package` y cualquier comando de coste comparable se ejecutan con
+   `bash scripts/slot.sh run <etiqueta> -- <comando…>`. Nunca dos a la
+   vez: la ranura es compartida por todos los worktrees del repo.
+2. **Evidencia con huella.** Todo resultado caro se registra con
+   `bash scripts/evidencia.sh registrar <etiqueta> PASS|FAIL` →
+   `EVIDENCIA.md` del worktree (HEAD + árbol limpio + hash del lockfile +
+   sello).
+3. **No repetir sin causa.** Antes de gastar, `bash scripts/evidencia.sh
+   vigente <etiqueta>`: si sale 0, la huella no ha cambiado desde el
+   último PASS y **se cita el registro anterior en vez de re-ejecutar**.
+   Lo decide el script, no el criterio de cada agente.
+
 ## Fuera de alcance (heredado del borrador, vigente)
 
 Reabrir U73/U172-U177 en Z · publish npm de paquetes Z · capa
