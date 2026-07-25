@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v09-elenco-separacion` |
-| commits | `<pendiente SHA post-commit>` |
+| commits | `bbbfd2185201686d08137bc59cd5c8aa05cef1a4` |
 | eje(s) CA | hostil-omite (sin path / shape inválido / ICompany≠reparto) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
