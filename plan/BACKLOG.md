@@ -70,7 +70,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola B · Pedido 2 — desacople (∥ posible entre V05 y V06) — gate R3-V
 
-- ⬜ **WP-V05 · Config única** — settings schema del workspace
+- 🔶 **WP-V05 · Config única** — settings schema del workspace
   (`zigurat.*`): hosts/puertos/baseUrl; ELIMINAR defaults absolutos y
   de otra máquina. Cirugía mínima conocida (del censo Zigurat):
   `src/libs/alephscript-client.ts:36` (3010 fijo) ·
@@ -80,8 +80,8 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   **CA:** grep de rutas absolutas de máquina y puertos hardcodeados
   fuera de defaults de schema = 0 · extensión arranca con settings
   vacíos mostrando ⏳ honesto · contrarrevisión (eje hostil-omite:
-  ¿qué pasa sin settings?). Dep: V04.
-- ⬜ **WP-V06 · Catálogo dinámico** — cliente MCP a
+  ¿qué pasa sin settings?). Dep: V04. Brief: `plan/BRIEFS/WP-V05-config-unica.md`. Lane ∥ V06.
+- 🔶 **WP-V06 · Catálogo dinámico** — cliente MCP a
   `launcher://info|catalog|ports` + tools
   `resolve_capability`/`list_capabilities` de `@zeus/mcp-launcher`
   (puerto por settings); árbol MCP y tasks alimentados por catálogo
@@ -90,7 +90,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   **CA:** con launcher vivo, inventario en caliente · sin launcher,
   ⏳ honesto (no error fatal, no datos inventados) · cero puertos
   fijos nuevos. Dep: V04 (∥ V05, ficheros disjuntos declarados en
-  briefs).
+  briefs). Brief: `plan/BRIEFS/WP-V06-catalogo-dinamico.md`. Lane ∥ V05.
 
 ## Ola C · Contrato IDE fases 1–5 — gate R4-V
 
