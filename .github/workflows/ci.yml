@@ -17,24 +17,53 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Detect registry credentials
+        id: creds
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          if [ -n "${NPM_USERNAME}" ] && [ -n "${NPM_PASSWORD}" ]; then
+            echo "has_npm=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_npm=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_USERNAME/NPM_PASSWORD absent — npm ci may fail on private @zeus/@alephscript"
+          fi
+
+      - name: Configure registry basic-auth (_password)
+        if: steps.creds.outputs.has_npm == 'true'
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          # DV-09 / D-24 (a): username + _password base64 — no JWT.
+          # Do not echo secret values.
+          HOST='npm.scriptorium.escrivivir.co'
+          {
+            echo "//${HOST}/:username=${NPM_USERNAME}"
+            echo "//${HOST}/:_password=${NPM_PASSWORD}"
+            echo "//${HOST}/:email=ci@scriptorium.escrivivir.co"
+            echo "//${HOST}/:always-auth=true"
+          } >> .npmrc
+
       - name: Install
         run: npm ci
 
       - name: Lint (v0 placeholder)
         run: npm run lint --if-present
 
-      - name: Compile
-        run: npm run compile
+      - name: Compile production
+        run: npm run compile:production
 
-      - name: Test (legado — soft en v0)
+      - name: Test (legado — soft)
         continue-on-error: true
         run: npm test --if-present
 
-      - name: Package v0 .vsix
-        run: npm run package:v0
+      - name: Package v1 .vsix
+        run: npm run package:v1
 
       - name: Upload .vsix artifact
         uses: actions/upload-artifact@v4
         with:
-          name: zigurat-v0-vsix
-          path: dist/zigurat-0.0.1.vsix
+          name: scriptorium-zigurat-v1-vsix
+          path: dist/scriptorium-zigurat-0.1.0.vsix

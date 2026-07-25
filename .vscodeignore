@@ -1,4 +1,4 @@
-# Source
+# Source (bundle lives in dist/)
 src/**
 **/*.ts
 !**/*.d.ts
@@ -12,13 +12,19 @@ tests/**
 coverage/**
 node_modules/**
 *.map
+scripts/**
+fixtures/**
+**/*.test.ts
+**/*.spec.ts
+**/__mocks__/**
 
-# Documentation
+# Documentation (keep README + LICENSE for vsce)
 PLANIFICACION/**
 prompts/**
 vibecoding/**
 demo/**
 FEATURE_CONFIGS/**
+docs/**
 *.md
 !README.md
 !LICENSE.md
@@ -27,10 +33,12 @@ FEATURE_CONFIGS/**
 tsconfig.json
 tsconfig.build.json
 esbuild.config.mjs
+.esbuild.config.js
 jest.config.js
 .eslintrc*
 .prettierrc*
 .gitignore
+.npmrc
 
 # Other
 *.vsix
@@ -54,4 +62,3 @@ setup-vscode-path.sh
 test-extension.js
 sample-config.json
 ArrakisTheater_OperaConfig.json
-.esbuild.config.js

@@ -1,0 +1,102 @@
+# WP-V10 · GitHub Release con .vsix v1 (DV-08 GO Release = v1).
+# Marketplace (VS Marketplace / Open VSX): deferred (DV-10) — NO publicar.
+# Secrets: NPM_USERNAME + NPM_PASSWORD (DV-09); valores nunca se imprimen.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Motivo del release manual (p. ej. WP-V10)'
+        required: false
+        default: 'manual'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Detect registry credentials
+        id: creds
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          if [ -n "${NPM_USERNAME}" ] && [ -n "${NPM_PASSWORD}" ]; then
+            echo "has_npm=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_npm=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM secrets absent — npm ci may fail"
+          fi
+
+      - name: Configure registry basic-auth (_password)
+        if: steps.creds.outputs.has_npm == 'true'
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          HOST='npm.scriptorium.escrivivir.co'
+          {
+            echo "//${HOST}/:username=${NPM_USERNAME}"
+            echo "//${HOST}/:_password=${NPM_PASSWORD}"
+            echo "//${HOST}/:email=ci@scriptorium.escrivivir.co"
+            echo "//${HOST}/:always-auth=true"
+          } >> .npmrc
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile production
+        run: npm run compile:production
+
+      - name: Package v1 .vsix
+        run: npm run package:v1
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            VER=$(node -p "require('./package.json').version")
+            echo "name=v${VER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release with .vsix
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Zigurat ${{ steps.tag.outputs.name }}
+          body: |
+            ## Zigurat v1 (extension-id `scriptorium.zigurat`)
+
+            - Artifact: `scriptorium-zigurat-0.1.0.vsix`
+            - Pipeline: `npm ci` → `compile:production` → `vsce package`
+            - Marketplace: **deferred** (DV-10) — not published to VS Marketplace / Open VSX
+            - Install: `code --install-extension scriptorium-zigurat-0.1.0.vsix`
+
+            Guía de prueba: ver `plan/REPORTES/WP-V10-v1-release.md` / `docs/GUIA-PRUEBA-v1.md`.
+          files: dist/scriptorium-zigurat-0.1.0.vsix
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
