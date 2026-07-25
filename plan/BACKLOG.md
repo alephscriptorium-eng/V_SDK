@@ -152,6 +152,13 @@ tras el re-release de esta ola, por decisión del custodio.
 
 Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
 
+**R6-V: PASS (2026-07-25)** — acta y evidencia:
+`plan/REPORTES/ACTA-RE-RELEASE-0.2.0.md`. Re-release **local** 0.2.0
+(`aleph-0-0.2.0.vsix` · 28 ficheros · sha256 `3500AC80…D8480B`),
+instalada y con runtime verificado (contrato contra servidor vivo).
+Release público **DEFERRED** (DV-14) — reencolado en el plan de S.
+Pasos interactivos de la guía v2 → ojo del custodio.
+
 - ✅ **WP-V12 · Censo y veredicto** — censo de lo absorbido en WP-V02:
   una fila por **entrada de primer nivel** del repo y por **módulo de
   `src/`**, con veredicto *queda* / *re-contenido* / *poda* y motivo. Es
