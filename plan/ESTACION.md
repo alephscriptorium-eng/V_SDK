@@ -82,4 +82,17 @@ OUT_DIR=C:/S_LAB/vigilancia/v INTERVAL=45 \
 Serie `Rn-V` (vigía del carril V). Sin PASS no hay 🔶. Cadencia por
 ola: R1-V fundación · R2-V checkpoint v0 · R3-V desacople · R4-V
 contrato · R5-V «lista para probar» (dispara el tick de validación
-del vigía-S, asentado en el plan de S).
+del vigía-S, asentado en el plan de S) · R6-V corte Ola F (sin R6-V
+no hay re-release; tick público del vigía-S = DEFERRED, DV-14).
+
+## Dos registros de nombre (precedente DV-16)
+
+Cara al usuario: **Aleph-0** (símbolo **ℵ₀**; nunca «Aleph 0»,
+«Aleph0», «A0»). **Zigurat** es registro interno: carril, `plan/`,
+briefs, reportes, identificadores y rutas de código. Alcance de la
+revisión: lo que viaja en el `.vsix` + notas de release; `plan/`,
+estación y cantera quedan fuera por construcción. NO entra en el
+vocabulario de la prueba de ceguera — incumplimiento = observación,
+no devolución ni fallo de gate. Profundidad: DV-16.a opción (b)
+dentro de WP-V15 (extension-id `scriptorium.aleph-0`, claves
+`aleph0.*`; identificadores de código no se renombran).
