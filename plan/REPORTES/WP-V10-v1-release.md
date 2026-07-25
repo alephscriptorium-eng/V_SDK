@@ -180,4 +180,15 @@ ejecuta el tick.
 
 ## Revisión del orquestador
 
-_(la rellena el orquestador: aceptado ✅ / devuelto con lista numerada)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión: `publisher=scriptorium` · `scriptorium.zigurat@0.1.0` ·
+CI [30158827844](https://github.com/alephscriptorium-eng/V_SDK/actions/runs/30158827844) ·
+Release [v0.1.0](https://github.com/alephscriptorium-eng/V_SDK/releases/tag/v0.1.0)
+(run 30158829091). Marketplace no publicado. Gate V10: **PASS** ·
+**R5-V PASS**.
+
+### Aviso a vigía-S (tick validación)
+`.vsix` v1 lista para probar: descargar
+`scriptorium-zigurat-0.1.0.vsix` del Release v0.1.0 + seguir
+`docs/GUIA-PRUEBA-v1.md`. Residuales runtime V07/V08 ⏳ no bloquean pack.
