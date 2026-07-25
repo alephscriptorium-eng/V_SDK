@@ -85,6 +85,24 @@
         "icon": "$(library)"
       },
       {
+        "command": "zigurat.authorship.refreshGate",
+        "title": "Refresh authorship gate (editor://info)",
+        "category": "Zigurat",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "zigurat.authorship.crearLinea",
+        "title": "crear_linea (gated)",
+        "category": "Zigurat",
+        "icon": "$(add)"
+      },
+      {
+        "command": "zigurat.authorship.exportStoryBoard",
+        "title": "export_story_board (gated)",
+        "category": "Zigurat",
+        "icon": "$(export)"
+      },
+      {
         "command": "alephscript.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
@@ -705,6 +723,21 @@
           "type": "string",
           "default": "",
           "description": "Room Zeus a la que el IDE hace join para recibir peer-card (vacío = ⏳ pendiente)",
+          "scope": "window"
+        },
+        "zigurat.lineaEditor.host": {
+          "type": "string",
+          "default": "",
+          "description": "Host de @zeus/linea-editor (vacío = resolver desde catálogo launcher; sin inventar)",
+          "scope": "window"
+        },
+        "zigurat.lineaEditor.port": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "description": "Puerto de @zeus/linea-editor (vacío/null = catálogo o ⏳; no se inventa 4115)",
           "scope": "window"
         },
         "alephscript.configurationFile": {
@@ -1409,6 +1442,7 @@
     "compile:production": "npm run esbuild-base -- --minify",
     "esbuild-base": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:node:crypto --format=cjs --platform=node",
     "probe:v07": "node scripts/probes/v07-identidad-lectura.mjs",
+    "probe:v08": "node scripts/probes/v08-mutacion-autoria.mjs",
     "watch": "npm run esbuild-base -- --sourcemap --watch",
     "vscode:prepublish": "npm run compile:production",
     "package:local": "vsce package --out mcp-arrakis-theater-ext.vsix",

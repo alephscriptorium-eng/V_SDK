@@ -67,6 +67,17 @@ export class RoomIdentityService implements vscode.Disposable {
     }
 
     /**
+     * Copia de la peer-card de sesión para tools de autoría (WP-V08).
+     * null si no hay sesión ready — el caller no inventa card.
+     */
+    getSessionCardRaw(): Record<string, unknown> | null {
+        if (!this.sessionCard || this.snapshot.availability !== 'ready') {
+            return null;
+        }
+        return { ...this.sessionCard };
+    }
+
+    /**
      * Join de room → recibe peer-card de autoridad → verifica seat.
      * Sin settings/mesh/card/seat → ⏳ / seat_invalid (hostil-omite).
      */

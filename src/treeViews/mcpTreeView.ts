@@ -7,6 +7,8 @@ import { RoomIdentityService } from '../identity/RoomIdentityService';
 import type { IdentitySnapshot } from '../identity/types';
 import { ResourceProjectionService } from '../resources/ResourceProjectionService';
 import type { ResourceProjectionSnapshot } from '../resources/types';
+import { AuthorshipService } from '../mutation/AuthorshipService';
+import type { AuthorshipSnapshot } from '../mutation/types';
 
 export interface MCPTreeItem {
     id: string;
@@ -32,6 +34,7 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
     private catalogService: CatalogService;
     private identityService: RoomIdentityService;
     private resourceService: ResourceProjectionService;
+    private authorshipService: AuthorshipService;
     private readonly subs: vscode.Disposable[] = [];
 
     constructor(private mcpServerManager: MCPServerManager) {
@@ -39,10 +42,12 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
         this.catalogService = CatalogService.getInstance();
         this.identityService = RoomIdentityService.getInstance();
         this.resourceService = ResourceProjectionService.getInstance();
+        this.authorshipService = AuthorshipService.getInstance();
         this.subs.push(
             this.catalogService.onDidChange(() => this.refresh()),
             this.identityService.onDidChange(() => this.refresh()),
-            this.resourceService.onDidChange(() => this.refresh())
+            this.resourceService.onDidChange(() => this.refresh()),
+            this.authorshipService.onDidChange(() => this.refresh())
         );
     }
 
@@ -203,6 +208,13 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
                     children: []
                 },
                 {
+                    id: 'mcp-authorship',
+                    label: 'Autoría (linea-editor)',
+                    description: 'gate + motivos_deny · editor://info',
+                    status: 'running',
+                    children: []
+                },
+                {
                     id: 'mcp-catalog',
                     label: 'Launcher catalog',
                     description: 'Inventario en caliente (@zeus/mcp-launcher)',
@@ -225,6 +237,10 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
 
         if (element.id === 'mcp-resources') {
             return Promise.resolve(this.resourceNodes(this.resourceService.getSnapshot()));
+        }
+
+        if (element.id === 'mcp-authorship') {
+            return Promise.resolve(this.authorshipNodes(this.authorshipService.getSnapshot()));
         }
 
         if (element.id === 'mcp-catalog') {
@@ -263,6 +279,68 @@ export class MCPTreeDataProvider implements vscode.TreeDataProvider<MCPTreeItem>
                 status: 'running'
             }
         ];
+    }
+
+    /**
+     * Gate visible + motivos_deny desde runtime (WP-V08).
+     * PROHIBIDO panel elenco / cast / ICompany (V09).
+     */
+    private authorshipNodes(snap: AuthorshipSnapshot): MCPTreeItem[] {
+        if (snap.availability !== 'ready' || !snap.gate) {
+            return [
+                {
+                    id: 'auth-pending',
+                    label: '⏳ Autoría no ready',
+                    description: snap.statusMessage,
+                    status: 'pending'
+                }
+            ];
+        }
+
+        const nodes: MCPTreeItem[] = [
+            {
+                id: 'auth-gate-line',
+                label: snap.gate.gateLine || '(gate_line vacío)',
+                description: 'gate_line visible',
+                status: 'running'
+            },
+            {
+                id: 'auth-reparto-policy',
+                label: snap.gate.repartoRequired
+                    ? `${snap.gate.repartoPolicyEnv}=ON`
+                    : `${snap.gate.repartoPolicyEnv}=off`,
+                description: snap.gate.repartoRequired
+                    ? 'reparto_required'
+                    : '⏳ flag off — demo verde/rojo pendiente de despliegue',
+                status: snap.gate.repartoRequired ? 'running' : 'pending'
+            },
+            {
+                id: 'auth-tools',
+                label: snap.mutationTools.join(', ') || 'crear_linea, export_story_board',
+                description: 'mutationTools',
+                status: 'running'
+            }
+        ];
+
+        if (snap.gate.motivosDeny.length === 0) {
+            nodes.push({
+                id: 'auth-motivos-empty',
+                label: '⏳ motivos_deny vacíos',
+                description: 'sin lista en editor://info',
+                status: 'pending'
+            });
+        } else {
+            for (const motivo of snap.gate.motivosDeny) {
+                nodes.push({
+                    id: `auth-motivo-${motivo}`,
+                    label: motivo,
+                    description: 'motivos_deny · runtime',
+                    status: 'error'
+                });
+            }
+        }
+
+        return nodes;
     }
 
     private resourceNodes(snap: ResourceProjectionSnapshot): MCPTreeItem[] {

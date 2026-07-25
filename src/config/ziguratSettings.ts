@@ -15,6 +15,9 @@ export interface ZiguratSettings {
     ollamaBaseUrl: string;
     /** Room a la que el IDE hace join (WP-V07). Vacío = ⏳. */
     roomId: string;
+    /** Override endpoint linea-editor (WP-V08). Vacío = resolver desde catálogo. */
+    lineaEditorHost: string;
+    lineaEditorPort: number | undefined;
 }
 
 function readNumber(value: unknown): number | undefined {
@@ -45,6 +48,8 @@ export function getZiguratSettings(): ZiguratSettings {
         launcherPort: readNumber(cfg.get('launcher.port')),
         ollamaBaseUrl: readString(cfg.get('ollama.baseUrl')),
         roomId: readString(cfg.get('room.id')),
+        lineaEditorHost: readString(cfg.get('lineaEditor.host')),
+        lineaEditorPort: readNumber(cfg.get('lineaEditor.port')),
     };
 }
 
