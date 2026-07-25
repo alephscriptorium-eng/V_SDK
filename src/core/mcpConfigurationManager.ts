@@ -2,7 +2,13 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AlephScriptConfiguration, MCPServerConfig, MCPServersConfig, MCPWebsConfig, UIConfig } from '../mcpTypes';
-import { LoggingManager, LogCategory, createLogger } from '../loggingManager';
+import { LogCategory, createLogger } from '../loggingManager';
+import {
+    resolveMeshSocketUrl,
+    resolveOllamaBaseUrl,
+    resolveLauncherPort,
+    ZIGURAT_PENDING,
+} from '../config/ziguratSettings';
 
 export class McpConfigurationManager {
     private static instance: McpConfigurationManager;
@@ -65,12 +71,14 @@ export class McpConfigurationManager {
             if (configPath && fs.existsSync(configPath)) {
                 await this.loadConfigFromFile(configPath);
             } else {
-                this.logger.warn('No configuration file found, using default values');
-                this.setDefaultConfiguration();
+                this.logger.warn(
+                    `${ZIGURAT_PENDING} Sin archivo Opera ni flota inventada — configure zigurat.* o cargue ArrakisTheater_OperaConfig.json`
+                );
+                this.setEmptyPendingConfiguration();
             }
         } catch (error) {
             this.logger.error('Failed to initialize configuration:', error);
-            this.setDefaultConfiguration();
+            this.setEmptyPendingConfiguration();
         }
     }
 
@@ -90,111 +98,49 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Set default configuration values
+     * Configuración vacía / pendiente (hostil-omite).
+     * Sin rutas absolutas de otra máquina, sin flota fija, sin puertos inventados.
      */
-    private setDefaultConfiguration(): void {
+    private setEmptyPendingConfiguration(): void {
+        const ollamaFromSettings = resolveOllamaBaseUrl();
+        const launcherPort = resolveLauncherPort();
+
         this.config = {
             "app": {
                 "type": "arrakis-theater-opera"
             },
             "launcher": {
-                "ollamaUrl": "http://localhost:11434",
-                "requiredModel": "GPT-OSS:20b",
-                "mcpServiceLauncherPort": 3050,
+                "ollamaUrl": ollamaFromSettings,
+                "requiredModel": "",
+                "mcpServiceLauncherPort": launcherPort ?? 0,
                 "healthCheckTimeout": 30000,
                 "shutdownGracePeriod": 5000
             },
             "game": {
-                "id": "arrakis-theater-opera-demo",
-                "name": "X+1 Demo Game",
-                "description": "Demo configuration for testing the VS Code extension",
-                "mcpServerId": "state-machine-server",
-                "graphId": "arrakis-theater-opera-game",
-                "userId": "player-1",
-                "sessionId": "demo-session",
-                "agentConfigs": [
-                    {
-                        "id": "test-agent",
-                        "name": "TestAgent",
-                        "role": "narrator",
-                        "description": "Test agent for demonstration",
-                        "mcpServerId": "state-machine-server",
-                        "autoStart": true,
-                        "priority": 10
-                    }
-                ]
+                "id": "",
+                "name": "",
+                "description": `${ZIGURAT_PENDING} sin configuración — zigurat.* / OperaConfig`,
+                "mcpServerId": "",
+                "graphId": "",
+                "userId": "",
+                "sessionId": "",
+                "agentConfigs": []
             },
             "mcp": {
-                "servers": {
-                    "state-machine-server": {
-                        "port": 3001,
-                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
-                        "cmd": "npm",
-                        "args": ["start"],
-                        "desc": ""
-                    },
-                    "wiki-mcp-browser": {
-                        "port": 3002,
-                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
-                        "cmd": "npm",
-                        "args": ["start"],
-                        "desc": ""
-                    },
-                    "devops-mcp-server": {
-                        "port": 3003,
-                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
-                        "cmd": "npm",
-                        "args": ["start"],
-                        "desc": ""
-                    },
-                    "mcp-mesh-sdk": {
-                        "port": 3010,
-                        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
-                        "cmd": "npm",
-                        "args": ["start"],
-                        "desc": ""
-                    }
-                },
-                "webs": {
-                        "mcp-presets-site": {
-                        "host": "localhost",
-                        "port": 3012,
-                        "args": [],
-                        "desc": ""
-                    }
-                }
+                "servers": {},
+                "webs": {}
             },
             "orchestration": {
-                "enableReplay": true,
-                "replayBufferSize": 200,
+                "enableReplay": false,
+                "replayBufferSize": 0,
                 "enableLogging": true,
-                "enableCrossChannelRouting": true,
+                "enableCrossChannelRouting": false,
                 "messageTimeout": 10000
             },
-            "ui": [
-                {
-                    "id": "console-demo",
-                    "name": "Demo Console UI",
-                    "type": "custom",
-                    "enabled": true,
-                    "config": {
-                        "isPrimary": true,
-                        "autoStart": true,
-                        "port": 8080
-                    }
-                },
-                {
-                    "id": "web-demo",
-                    "name": "Demo Web UI",
-                    "type": "html5",
-                    "enabled": true,
-                    "config": {
-                        "port": 8081,
-                        "autoStart": false
-                    }
-                }
-            ]
-        }
+            "ui": []
+        };
+        this.configPath = null;
+        this.logger.info(`${ZIGURAT_PENDING} McpConfigurationManager en modo pendiente (servers/webs vacíos)`);
     }
 
     /**
@@ -237,17 +183,29 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get Ollama URL from launcher config
+     * Get Ollama URL — zigurat.ollama.baseUrl, luego archivo; vacío = ⏳.
      */
     getOllamaUrl(): string {
-        return this.config?.launcher?.ollamaUrl || 'http://localhost:11434';
+        const fromSettings = resolveOllamaBaseUrl();
+        if (fromSettings) {
+            return fromSettings;
+        }
+        return this.config?.launcher?.ollamaUrl || '';
     }
 
     /**
-     * Get MCP service launcher port
+     * Get MCP service launcher port — zigurat.launcher.port, luego archivo; undefined = ⏳.
      */
-    getMcpServiceLauncherPort(): number {
-        return this.config?.launcher?.mcpServiceLauncherPort || 3050;
+    getMcpServiceLauncherPort(): number | undefined {
+        const fromSettings = resolveLauncherPort();
+        if (fromSettings !== undefined) {
+            return fromSettings;
+        }
+        const fromFile = this.config?.launcher?.mcpServiceLauncherPort;
+        if (typeof fromFile === 'number' && fromFile > 0) {
+            return fromFile;
+        }
+        return undefined;
     }
 
     /**
@@ -265,13 +223,20 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get default socket URL for WebSocket connections
+     * Socket URL por defecto: zigurat.mesh.*, luego UI primaria del archivo.
+     * Vacío si nada configurado (⏳ — no inventa localhost:puerto).
      */
     getDefaultSocketUrl(): string {
-        // Look for the primary UI port, fallback to 3000
+        const fromSettings = resolveMeshSocketUrl();
+        if (fromSettings) {
+            return fromSettings;
+        }
         const primaryUi = this.config?.ui?.find(ui => ui.config.isPrimary);
-        const port = primaryUi?.config.port || 3000;
-        return `ws://localhost:${port}`;
+        const port = primaryUi?.config?.port;
+        if (typeof port === 'number' && port > 0) {
+            return `ws://localhost:${port}`;
+        }
+        return '';
     }
 
     /**

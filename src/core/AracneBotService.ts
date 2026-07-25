@@ -5,14 +5,14 @@
  * con el AlephScript mesh, permitiendo comunicación bidireccional
  * entre el IDE y los servidores MCP.
  * 
- * Sigue el patrón de:
- * - ProserpinaBot (DevOpsServer)
- * - EuridiceBot (MCPPrologServer)
+ * URL: zigurat.mesh.* / config.socketUrl — sin puerto hardcodeado.
+ * Sin settings → ⏳ honesto, sin crash.
  * 
  * @épica MCP-CHANNELS-1.0.0
  */
 import * as vscode from 'vscode';
 import { AlephScriptClient, AlephScriptClientConfig } from '../libs/alephscript-client';
+import { resolveMeshBaseUrl, ZIGURAT_PENDING } from '../config/ziguratSettings';
 
 export interface AracneBotConfig {
     socketUrl?: string;
@@ -22,8 +22,9 @@ export interface AracneBotConfig {
     capabilities?: string[];
 }
 
+/** Defaults sin URL — se resuelve desde zigurat.mesh.* en initialize. */
 export const DEFAULT_ARACNE_CONFIG: AracneBotConfig = {
-    socketUrl: "http://localhost:3010",
+    socketUrl: undefined,
     botName: "vscode-extension",
     namespace: "/runtime",
     autoConnect: false,
@@ -44,6 +45,7 @@ export class AracneBotService {
     private client: AlephScriptClient | undefined;
     private config: AracneBotConfig;
     private roomName: string;
+    private pending = true;
     
     // VS Code event emitters
     private _onConnectionChange = new vscode.EventEmitter<boolean>();
@@ -55,7 +57,7 @@ export class AracneBotService {
     public readonly onError = this._onError.event;
 
     private constructor() {
-        this.config = DEFAULT_ARACNE_CONFIG;
+        this.config = { ...DEFAULT_ARACNE_CONFIG };
         this.roomName = `${this.config.botName}_ROOM`;
     }
 
@@ -66,14 +68,43 @@ export class AracneBotService {
         return AracneBotService.instance;
     }
 
+    /** true si falta zigurat.mesh.* / socketUrl (hostil-omite). */
+    public isPending(): boolean {
+        return this.pending;
+    }
+
+    public getPendingStatus(): string {
+        return this.pending ? ZIGURAT_PENDING : 'ready';
+    }
+
     /**
      * Initialize AracneBot with custom configuration
      */
     public initialize(config?: Partial<AracneBotConfig>): void {
-        if (config) {
-            this.config = { ...DEFAULT_ARACNE_CONFIG, ...config };
-            this.roomName = `${this.config.botName}_ROOM`;
+        this.config = { ...DEFAULT_ARACNE_CONFIG, ...config };
+        this.roomName = `${this.config.botName}_ROOM`;
+
+        const fromSettings = resolveMeshBaseUrl();
+        const explicit = (this.config.socketUrl || '').trim();
+        // Prefer settings; accept explicit non-empty caller URL (incl. ws→http)
+        let socketUrl = fromSettings || explicit;
+        if (socketUrl.startsWith('ws://')) {
+            socketUrl = 'http://' + socketUrl.slice('ws://'.length);
+        } else if (socketUrl.startsWith('wss://')) {
+            socketUrl = 'https://' + socketUrl.slice('wss://'.length);
         }
+        this.config.socketUrl = socketUrl || undefined;
+
+        if (!this.config.socketUrl) {
+            this.pending = true;
+            this.client = undefined;
+            console.warn(
+                `[AracneBot] ${ZIGURAT_PENDING} zigurat.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
+            );
+            return;
+        }
+
+        this.pending = false;
 
         try {
             const clientConfig: AlephScriptClientConfig = {
@@ -118,7 +149,8 @@ export class AracneBotService {
             }
         } catch (error) {
             console.error(`[AracneBot] Failed to initialize:`, error);
-            throw error;
+            this.pending = true;
+            this.client = undefined;
         }
     }
 
@@ -209,8 +241,10 @@ export class AracneBotService {
      * Connect to the AlephScript mesh
      */
     public connect(): void {
-        if (!this.client) {
-            console.warn("[AracneBot] Not initialized. Call initialize() first.");
+        if (this.pending || !this.client) {
+            console.warn(
+                `[AracneBot] ${ZIGURAT_PENDING} sin mesh configurado. Configure zigurat.mesh.baseUrl (o host+port).`
+            );
             return;
         }
         console.log(`[AracneBot] Connecting to ${this.config.socketUrl}${this.config.namespace}...`);

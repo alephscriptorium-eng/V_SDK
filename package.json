@@ -641,6 +641,42 @@
     "configuration": {
       "title": "Arrakis Theater Configuration",
       "properties": {
+        "zigurat.mesh.host": {
+          "type": "string",
+          "default": "",
+          "description": "Host del mesh AlephScript (vacío = ⏳ pendiente de configurar)",
+          "scope": "window"
+        },
+        "zigurat.mesh.port": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Puerto del mesh AlephScript (vacío/null = ⏳ pendiente)",
+          "scope": "window"
+        },
+        "zigurat.mesh.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "URL base HTTP del mesh (p. ej. http://localhost:3010). Si vacío, se compone de zigurat.mesh.host + zigurat.mesh.port; si ambos vacíos = ⏳",
+          "scope": "window"
+        },
+        "zigurat.launcher.host": {
+          "type": "string",
+          "default": "",
+          "description": "Host del MCP service launcher (vacío = ⏳ pendiente)",
+          "scope": "window"
+        },
+        "zigurat.launcher.port": {
+          "type": ["number", "null"],
+          "default": null,
+          "description": "Puerto del MCP service launcher (vacío/null = ⏳ pendiente)",
+          "scope": "window"
+        },
+        "zigurat.ollama.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "URL base de Ollama (vacío = ⏳ pendiente)",
+          "scope": "window"
+        },
         "alephscript.configurationFile": {
           "type": "string",
           "default": "",

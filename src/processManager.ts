@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { TerminalManager } from './terminalManager';
+import { resolveLauncherPort, ZIGURAT_PENDING } from './config/ziguratSettings';
 
 export interface ProcessInfo {
     id?: string;
@@ -174,8 +175,18 @@ export class ProcessManager {
 
     // Launcher-specific methods
     async startLauncher(configPath: string): Promise<boolean> {
+        const launcherPort = resolveLauncherPort();
+        if (launcherPort === undefined) {
+            console.warn(
+                `${ZIGURAT_PENDING} zigurat.launcher.port no configurado — no se arranca launcher con puerto inventado`
+            );
+            vscode.window.showWarningMessage(
+                `${ZIGURAT_PENDING} Configure zigurat.launcher.port antes de arrancar el launcher`
+            );
+            return false;
+        }
         const workingDir = path.dirname(configPath);
-        return await this.startProcess('launcher', 'node', ['launcher.js', configPath], workingDir, 3050);
+        return await this.startProcess('launcher', 'node', ['launcher.js', configPath], workingDir, launcherPort);
     }
 
     async stopLauncher(): Promise<boolean> {
