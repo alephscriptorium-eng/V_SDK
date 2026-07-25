@@ -154,7 +154,7 @@ en el `.vsix`** (verificado en §7.2).
 | Convención de ruta `theatrical-content/` | **14 puntos** | §5 (R-1 de V13). Ninguna marca vetada; no es clave ni comando. |
 | Identificadores `ZIGURAT_*` / `ZiguratSettings` / `getZiguratSettings` / fichero `src/config/ziguratSettings.ts` | — | **DV-16.a, ambos caminos: los identificadores de código NO se renombran.** |
 | Nombres de cliente MCP `zigurat-launcher-catalog`, `zigurat-launcher-resolve`, `zigurat-linea-editor`, `zigurat-resource-projection` | **4** | Identificadores de protocolo que se envían al servidor; cambiarlos es cambiar lo que el servidor ve. Fuera de DV-16.a. |
-| `ARRAKIS_*` (4 títulos de webview, 2 variables de entorno), `arrakis-theater-opera`, `arrakis-mcp-web-`, `ArrakisTheater_OperaConfig.json` ×2, `Arrakis: ${name}` | **11** | Identificadores de código. **`Arrakis: ${name}` es la excepción incómoda: es el nombre de terminal que ve el usuario** (`processManager.ts:47`). Se declara como residual de marca, no se toca: la marca fue WP-V14 y ya está aceptada. Ver R-V15-1. |
+| `ARRAKIS_*` (4 títulos de webview, 2 variables de entorno), `arrakis-theater-opera`, `arrakis-mcp-web-`, `ArrakisTheater_OperaConfig.json` ×2, `Arrakis: ${name}` | **11** | *(clasificación corregida en la aceptación — condición 1 de la contrarrevisión)*: **5 de estos 11 son superficies de usuario, no identificadores de código**: los 4 títulos `ARRAKIS_*` llegan a `<title>` y `.terminal-title` de los cuatro paneles (`BaseHackerPanelProvider.generateBaseHtml:101,107`) y `Arrakis: ${name}` nombra los terminales (`processManager.ts:47`). Los 6 restantes sí son identificadores/env internos. Residual de marca declarado, no se toca desde un WP de nombres. Ver R-V15-1. |
 | `ci.yml:81` nombre de artefacto de CI `zigurat-vsix` | **1** | RES-6 acota a «el texto de **notas** de release». Es un nombre interno de artefacto de Actions, no viaja en el `.vsix`. |
 
 ---
@@ -685,7 +685,7 @@ force-push): el sello es un commit más, no una corrección de historia.
 
 | id | residual | dueño |
 | -- | -------- | ----- |
-| **R-V15-1** | `processManager.ts:47` nombra los terminales **`Arrakis: <nombre>`** — marca vetada **visible al usuario** y viaja en el bundle. Es el residual de marca de mayor cara de usuario que queda tras V14+V15. No se toca: la marca fue WP-V14 y está aceptada; cambiarla ahora sería decidir marca desde un WP de nombres | custodio / DV-16 |
+| **R-V15-1** | *(corregido en la aceptación — condición 2)* **CINCO superficies de marca vetada visibles al usuario** viajan en el bundle, no una: `processManager.ts:47` nombra los terminales **`Arrakis: <nombre>`** + los **4 títulos `ARRAKIS_*`** que `BaseHackerPanelProvider.generateBaseHtml` emite en `<title>` y `.terminal-title` de los cuatro paneles (`:101`, `:107`). No se tocan desde un WP de nombres: marca = familia V14. Por DV-16 el incumplimiento es observación, no gate; queda encolado como micro-tick de marca | custodio / DV-16 |
 | **R-V15-2** | `aleph0.teatro.openChatParticipant` (`extensionBootstrap.ts:1291`) tiene handler vivo pero abre chat con participantes que DV-11 retiró: **promete algo que no puede cumplir** | **WP-V16** (falsedades silenciosas) |
 | **R-V15-3** | `aleph0.analytics.export` está **declarado dos veces** en `contributes.commands` (99 entradas, 98 ids). Preexistente; VS Code se queda con una | sin fila; material de V16 / limpieza de manifiesto |
 | **R-V15-4** | **31 comandos declarados sin `registerCommand`** (§4.1) + **1 referencia colgante** (`aleph0.logs.showEntry`, `logsTreeView.ts:64`). Salen en la paleta y fallan al invocarse. Preexistente | **WP-V16** |
@@ -1028,3 +1028,23 @@ justamente el tipo de error que DV-16 existe para impedir.
 Para el orquestador, en orden: aplicar §D antes de aceptar; **ratificar D-3**;
 llevar **D-1** a decisión con la cita de E-2; **F-1** y **R-V15-6** al WP que
 recoja H-4/V-L4-05; y **E-1** al vigía como nota de método.
+
+---
+
+## Aceptación del orquestador (2026-07-25 · sesión debug)
+
+Contrarrevisión `6d413c7` **PASS** con 2 condiciones documentales —
+**aplicadas en este commit** (§3.1 reclasificado: 5 superficies de
+usuario, no identificadores · R-V15-1 corregido a 5). **D-3
+RATIFICADO** con el juicio del contrarrevisor de V16: la invariante era
+la derivación, no la forma; CA (b) de V16 sigue viva; la forma nueva
+además converge con el default de vsce (cierra vía de divergencia).
+Dudas del worker resueltas: **D-1** (espacio de ajustes partido en
+tres) — alcance del brief cumplido; unificación total → wishlist Ola G
+(cara concreta: E-2, HackerConfigPanelProvider:194-208). Los 5
+residuales de marca visibles → micro-tick de marca encolado (DV-16:
+observación). Las tres premisas del encargo que el worker corrigió con
+dato (99/115 · 13/16 · teatro.* vivos) quedan asentadas a su favor.
+E-1 (sello deja evidencia no-vigente; tercer caso) → wishlist método.
+
+VEREDICTO FINAL: **✅ ACEPTADO** — cierra la obra de la Ola F.
