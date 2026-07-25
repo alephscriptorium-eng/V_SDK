@@ -9,7 +9,7 @@
 | commits | `808be04` (obra) · `7fe093a` (reporte) · **tip: el sello de §12** |
 | gobierno | DV-16.a **CERRADA en (b)** — ejecución aquí |
 | riesgo de revisión | **independiente** (config / empaquetado) |
-| `VEREDICTO_REVISOR` | **⏳ pendiente** — contrarrevisión por agente distinto |
+| `VEREDICTO_REVISOR` | **PASS** (`contrarrevisor-V`) — 2 condiciones documentales · **D-3 ratificado** · ver §Contrarrevisión |
 
 ---
 
@@ -760,5 +760,271 @@ force-push): el sello es un commit más, no una corrección de historia.
 
 ---
 
-**`VEREDICTO_REVISOR: ⏳ pendiente`** — contrarrevisión independiente
-obligatoria (config / empaquetado), por agente distinto de este worker.
+**`VEREDICTO_REVISOR: PASS`** — contrarrevisión independiente realizada por
+`contrarrevisor-V` (ver §Contrarrevisión). Código y empaquetado aceptados sin
+cambios; **2 condiciones documentales** al aceptar. **D-3 ratificado.**
+
+---
+
+## Contrarrevisión
+
+| dato | valor |
+| ---- | ----- |
+| agente | contrarrevisor-V (distinto del worker) |
+| fecha | 2026-07-25 |
+| objeto | `9690102..ecec5f4` · obra `808be04` · reporte `7fe093a` · sello `ecec5f4` |
+| árbol al empezar | limpio · ranura libre · **sin escritor concurrente** (`.slot.log` comprobado antes de tocar nada) |
+| **veredicto** | **PASS** con **2 condiciones documentales** (§D). El código y el empaquetado se aceptan **sin cambios**. |
+| **D-3** | **RATIFICADO** — §A |
+
+---
+
+### A · D-3 · Juicio explícito sobre el cambio de forma del nombre del `.vsix`
+
+Contrarrevisé WP-V16, que fijó `<publisher>-<name>-<version>` **a propósito**.
+V15 lo cambia a `<name>-<version>`. Emito el juicio que se me pide.
+
+**Ratifico el cambio.** Cuatro razones, las tres primeras verificadas:
+
+1. **La invariante de V16 no era la forma: era la derivación.** Lo que V16
+   instaló —y lo que yo certifiqué en su CA (b)— es *«el nombre se deriva del
+   manifiesto; ningún script ni flujo repite la versión»*. Esa invariante
+   **sigue viva**. La probé con el fichero real de V15, sin tocar este árbol:
+   copié `scripts/vsix.mjs` a una raíz falsa y le di manifiestos distintos.
+
+   ```
+   version=0.1.0      -> aleph-0-0.1.0.vsix      path: dist/aleph-0-0.1.0.vsix
+   version=0.2.0      -> aleph-0-0.2.0.vsix      path: dist/aleph-0-0.2.0.vsix
+   version=9.9.9-rc1  -> aleph-0-9.9.9-rc1.vsix  path: dist/aleph-0-9.9.9-rc1.vsix
+   {publisher:otro, name:renombrado, 3.1.4} -> renombrado-3.1.4.vsix
+   ```
+
+   **La CA (b) de V16 sigue en pie con la forma nueva**, incluida una versión
+   de prerrelease. Y el `name` también manda: el motivo original de V16
+   —«cuando cambie la marca, el nombre la seguirá solo»— se conserva **en
+   sustancia**, que es lo que importaba.
+
+2. **`publisher` se sigue exigiendo aunque no entre en el nombre**, con un
+   fallo limpio y explicado (`vsix.mjs:72-77`):
+
+   ```
+   $ node vsix.mjs name        # manifiesto sin publisher
+   vsix.mjs: package.json sin «publisher»: no se puede derivar el nombre del .vsix   (rc=1)
+   ```
+
+   Falla cerrado y en voz alta. No produce un nombre malo en silencio.
+
+3. **Cero literales nuevos y cero flujos rotos.** `ci.yml` y `release.yml`
+   siguen consumiendo por `node scripts/vsix.mjs name|path`; el `release.yml`
+   sólo cambia el **texto** de las notas (RES-6). El grep de literales de
+   nombre de artefacto sigue en 0.
+
+4. **La autoridad existía y el worker no la dio por supuesta.** La CA-3 del
+   **brief** exige literalmente `aleph-0-<version>.vsix`; V15 no improvisó.
+   Y en vez de pisar la decisión de V16 en silencio, citó su docstring,
+   explicó por qué DV-16.a (b) sí hace suya la marca del id, y elevó **D-3
+   para confirmación**. Ese es exactamente el protocolo correcto cuando un WP
+   toca una decisión deliberada de otro.
+
+**Efecto sobre F-1** (el hallazgo que dejé en V16: un tag puede no
+corresponderse con la versión del artefacto): **ni mejora ni empeora**. El
+desajuste vive entre el tag y la *versión*, y la versión sigue en el nombre.
+F-1 permanece abierto, exactamente igual de abierto que antes.
+
+**Un efecto lateral favorable, no declarado por el worker:** la forma nueva
+coincide con la que `vsce package` produce **por defecto** — el propio
+docstring de V16 lo decía al descartarla. Consecuencia: si alguien invoca
+`vsce package --out dist/` saltándose `vsix.mjs`, el fichero resultante tendrá
+**el mismo nombre** que `vsix.mjs path` predice, y el glob `dist/*.vsix` de
+`ci.yml` seguirá cuadrando. Bajo la forma de V16 ese atajo producía dos
+nombres distintos. **El cambio cierra una vía de divergencia.**
+
+---
+
+### B · Qué comprobé, y **cómo**
+
+Ninguna fila se apoya en el reporte: todas contra el manifiesto, el `git`, un
+script propio o el `.vsix` real.
+
+| # | afirmación | cómo la comprobé | resultado |
+| - | ---------- | ---------------- | --------- |
+| 1 | 99 entradas · 98 ids únicos · 1 duplicado | script propio sobre `contributes.commands` | ✅ `entradas: 99 · únicos: 98 · byPrefix {"aleph0":99}` · duplicado = `aleph0.analytics.export`. **100 % con prefijo único** |
+| 2 | reparto 86+7+6 | recuento sobre el diff del manifiesto | ✅ coherente; y **`byPrefix` no deja ni un prefijo viejo** en los 99 |
+| 3 | CA-2 · claves viejas = 0 | los tres greps del CA, míos | ✅ `zigurat\.` **rc=1** · `arrakisTheater\.` **rc=1** · `getConfiguration('zigurat'` **rc=1** |
+| 4 | 13 claves, no 16 | script sobre `contributes.configuration` | ✅ **26 totales**: `aleph0` **13** · `alephscript` **12** · `mcpSocketManager` **1**. El hallazgo 4 del worker es correcto y el encargo estaba equivocado |
+| 5 | integridad del manifiesto | script: `menus`+`keybindings` contra declarados | ✅ **0** comandos referenciados sin declarar |
+| 6 | las 4 excepciones `.focus` son inevitables | ids de vista extraídos de `contributes.views` | ✅ **verificado, no aceptado**: los viewId son `alephscript.hackerControlPanel`, `…CommandPanel`, `…ConfigPanel`, `…TasksPanel`; VS Code genera `<viewId>.focus`, así que el id correcto es exactamente el no renombrado. Además **no figuran en `contributes.commands`** (son puntos de invocación, no entradas): no inflan el 99 |
+| 7 | cruce manifiesto ↔ registros | script propio con **los dos** mecanismos de registro | ✅ **31 declarados sin `registerCommand`** y **5 registrados sin declarar** — las dos listas coinciden **exactamente** con §4.1 |
+| 8 | los 6 `mcpSocketManager.*` | mismo cruce | ✅ el punto caliente 3 queda respondido: **sólo 1 de los 6 tenía handler** (`openSocketMonitor`) y **fue renombrado en ambos lados**. Los otros 5 ya estaban muertos **antes** de este WP. **No se creó ni un comando muerto nuevo**; y `grep "'mcpSocketManager\."` en `src/` = **0** |
+| 9 | 104 ids mapeados | mismo cruce | ✅ 103 (declarados ∪ registrados) **+1** colgante (`aleph0.logs.showEntry`) = **104**. Reconcilia |
+| 10 | prefijo único también en el runtime | prefijos de todo lo registrado | ✅ `{"aleph0": 72}` — **ni un registro con prefijo viejo sobrevive** |
+| 11 | los 6 `teatro.*` están vivos | extracción de `registerCommand` | ✅ los seis registrados. **Retirar 0 fue correcto**: borrar del manifiesto comandos con handler vivo habría sido poda sin acta (DV-12) |
+| 12 | CA-5 de V05 · caminos no literales | `grep getConfiguration(` **excluyendo** la forma literal | ✅ **el punto caliente 5 aguanta.** Sólo hay dos formas dinámicas y las dos resuelven: `configurationService.ts` usa `this.configSection`, que es **`'alephscript'`** (`:58`, sección heredada, declarada); y `HackerConfigPanelProvider:190` usa `getConfiguration()` sin ámbito con claves **totalmente cualificadas** (`:196-208`). **Ninguna clave vieja sobrevive por template literal ni por concatenación.** Literales totales: `alephscript` ×5, `mcpSocketManager` ×3, `alephscript.logging` ×1, `aleph0` ×1, **`zigurat` ×0** |
+| 13 | el `.vsix` cubre el árbol | `git diff --name-only 808be04 ecec5f4` | ✅ sólo el reporte: el paquete construido en `808be04` **sigue cubriendo** el árbol del tip |
+| 14 | 28 ficheros · extension-id | `unzip` del `.vsix` real | ✅ `28 files` · `<Identity Id="aleph-0" Version="0.1.0" Publisher="scriptorium" />` ⇒ **`scriptorium.aleph-0`**. Fichero en disco 250 664 B = 244.79 KB |
+| 15 | 17 líneas `zigurat\|arrakis` en el paquete | `grep -rniE` sobre el `.vsix` extraído, excluyendo `dist` | ✅ **17, y las 17 en `extension/readme.md`** — la tabla de migración. **Cero en cualquier otro fichero del paquete** |
+| 16 | `dist` re-medido | greps sobre el bundle **empaquetado** | ✅ exacto: `zigurat` **4** · `arrakis` **11** · `zigurat\.` **0** · `arrakisTheater\.` **0** · `aleph0\.` **148** |
+| 17 | los 4 `zigurat` son legales | **muestreo** con contexto | ✅ los cuatro son `name:"zigurat-launcher-catalog\|-resolve\|zigurat-linea-editor\|zigurat-resource-projection"` — **identificadores de protocolo** que viajan al servidor. Legales por DV-16.a y bien no renombrados |
+| 18 | los 5 fallos de jest son preexistentes | estructural, **sin re-ejecutar** | ✅ `terminalManager.ts`, `managerFactory.test.ts` y `vscode.mock.js` **no están en el diff**; y la única referencia de `tests/` a un espacio de nombres es `managerFactory.test.ts:28 → 'alephscript.logging'`, **clave que este WP no renombra**. El renombrado **no puede** haber causado esos fallos |
+| 19 | guía v2 (punto caliente 6) | lectura y greps | ✅ apunta al **`.vsix` LOCAL** y dice que el Release `v0.1.0` lleva el artefacto **viejo**; desinstala **los dos** ids viejos (`scriptorium.zigurat` **y** `escrivivir-co.scriptorium-vscode-extension`); las únicas menciones a `zigurat.*` son la **tabla de migración** y «las `zigurat.*` quedan huérfanas» — contexto correcto, no instrucción caduca; cierra declarando lo que **no** demuestra |
+
+**Economía.** `evidencia.sh vigente package` → **rc=1**, pero **no re-empaqueté**:
+comprobé antes que entre `808be04` y el tip sólo cambia el reporte, así que el
+`.vsix` en `dist/` **es** el artefacto de la evidencia, y lo medí a él (fila 13).
+Medir el paquete en vez de reconstruirlo es además la lección de la errata que
+el propio §8.2 aplica. Mi única ejecución fue la prueba de derivación de §A,
+que corre **fuera del repo** y no gasta ranura.
+
+---
+
+### C · Hallazgo · los 4 `ARRAKIS_*` **no** son identificadores de código: se los ve el usuario
+
+Es mi hallazgo principal y va contra una clasificación del reporte, no contra
+el código.
+
+`§3.1` clasifica «`ARRAKIS_*` (4 títulos de webview, 2 variables de entorno)»
+como **«Identificadores de código»**, y `R-V15-1` afirma que
+`Arrakis: ${name}` (el nombre de terminal) es *«el residual de marca de mayor
+cara de usuario que queda tras V14+V15»*.
+
+**Los 4 títulos se renderizan en pantalla.** Seguí el parámetro hasta el HTML:
+`BaseHackerPanelProvider.generateBaseHtml()` lo recibe en un argumento llamado
+literalmente **`title`** (`:77-82`) y lo emite **dos veces visibles**:
+
+```
+<title>${title}</title>                                        (:101)
+<div class="terminal-title">
+    <span class="blinking-cursor">█</span> ${title}            (:107)
+</div>
+```
+
+Los cuatro que llegan ahí son `ARRAKIS_COMMAND_TERMINAL`
+(`HackerCommandPanelProvider.ts:86`), `ARRAKIS_CONFIG_MATRIX`
+(`HackerConfigPanelProvider.ts:68`), `ARRAKIS_THEATER_CONTROL_MATRIX`
+(`HackerControlPanelProvider.ts:70`) y `ARRAKIS_TASK_RUNNER`
+(`HackerTasksPanelProvider.ts:519`). Son **la cabecera de los cuatro paneles**
+y viajan en el bundle (los vi en el muestreo del `.vsix`, fila 17 de §B).
+
+Por qué importa, y por qué no lo dejo pasar como detalle:
+
+- **La dirección del error es la peligrosa.** No es una alarma de más (como el
+  R-1 que devolví en V17): es una **sub-declaración** de marca vetada visible
+  al usuario. El custodio que lea `R-V15-1` cerrará la cuestión de marca
+  creyendo que queda **una** cadena visible; quedan **cinco**.
+- **El propio worker descubrió este punto ciego y no lo aplicó aquí.** En §12
+  corrige el tooltip `Zigurat identidad` razonando —con acierto— que el método
+  de V14 (grepear el `.vsix` excluyendo `dist/`) **no puede ver** cadenas que
+  sólo existen en el bundle. Es exactamente el mismo punto ciego que deja los
+  cuatro `ARRAKIS_*` mal clasificados en el mismo reporte.
+- **No es una CA fallada.** Los cuatro **están declarados y bien contados**
+  («4 títulos de webview»); lo que falla es la **etiqueta**, no la
+  divulgación. Por eso es condición documental y no devolución: quien
+  verifique los encuentra.
+
+*(Adyacente y menos grave: el mensaje `«… o cargue ArrakisTheater_OperaConfig.json»`
+también es texto de usuario, pero nombra un fichero real que el usuario puede
+tener en disco; ahí la marca es descriptiva y no la cuento.)*
+
+---
+
+### D · Condiciones de aceptación (del orquestador — no exigen re-ejecutar nada)
+
+1. **Reclasificar los 4 `ARRAKIS_*` en `§3.1`**: de «Identificadores de
+   código» a **marca vetada visible al usuario**, con la cita
+   `BaseHackerPanelProvider.ts:77-82,101,107` que demuestra que se renderizan.
+   Su fila actual los cuenta bien; sólo el motivo es incorrecto.
+2. **Corregir `R-V15-1`**: hoy dice que el nombre de terminal es «el residual
+   de marca de mayor cara de usuario». Son **5** superficies visibles
+   (1 terminal + 4 cabeceras de panel). El dueño no cambia (custodio / DV-16);
+   cambia el tamaño de lo que se le eleva.
+
+Con eso, la tabla de «heredado declarado» vuelve a ser cierta y el custodio
+decide sobre marca con el número real.
+
+---
+
+### E · Hallazgos fuera de alcance
+
+- **E-1 · El patrón del «commit sello» garantiza que la evidencia nunca esté
+  vigente en el tip.** Tercer WP seguido en que `evidencia.sh vigente <x>` sale
+  **1** no porque el artefacto cambiara, sino porque el HEAD avanzó con
+  commits de documentación posteriores a la obra. Aquí es **benigno** —lo
+  verifiqué: entre `808be04` y `ecec5f4` sólo cambia el reporte— pero obliga a
+  cada revisor a re-demostrar la inocuidad a mano, y en el peor caso invita a
+  re-ejecutar lo caro sin motivo. **Para el vigía:** la huella podría ignorar
+  rutas declaradas como no-artefacto (`plan/**`), o el sello podría ir antes
+  que la evidencia. No es de este WP.
+- **E-2 · R-V15-5 / D-1 tiene una cara concreta que conviene citar.**
+  `HackerConfigPanelProvider._getExtensionSettings()` (`:194-208`) lista en un
+  mismo panel **3 claves `aleph0.theater.*` junto a 9 `alephscript.*`**. Es
+  exactamente dónde el usuario ve el espacio de ajustes partido. Si se ratifica
+  el mixto (D-1), ese es el sitio donde se nota; si se completa, ese es el
+  fichero que hay que tocar además del schema.
+- **E-3 · Confirmo R-V15-6 (R-7 de V13) como trampa viva** y su gravedad:
+  `compile` + `package:v1` seguidos triplican el paquete (29 ficheros /
+  701.75 KB) porque `*.map` de `.vscodeignore` no alcanza a `dist/`. El
+  worker lo reprodujo hoy y entregó el paquete limpio. Es de `V-L4-05`.
+- **E-4 · F-1 sigue abierto** (mi hallazgo de V16): ninguna guarda de
+  `release.yml` compara el tag con la versión del manifiesto. V15 no lo
+  empeora (§A), pero al cambiar el nombre del asset el desajuste sería ahora
+  «release `v9.9.9` con `aleph-0-0.1.0.vsix`», igual de silencioso.
+
+---
+
+### F · Qué NO pude comprobar, y por qué
+
+- **Arranque en un VS Code real** — **⏳**. No hay Extension Host en esta
+  sesión, igual que para el worker. Su §9.4 lo declara como verificación **por
+  lectura** y no como PASS, que es lo correcto; verifiqué **su** cruce (fila 12
+  de §B) y aguanta, pero *que la extensión active sin error tras el cambio de
+  extension-id sigue sin estar probado por nadie*. Con D-4 (dos extensiones
+  conviviendo) encima, éste es el **riesgo residual principal** del WP y la
+  razón de existir de la guía v2.
+- **`jest` no lo re-ejecuté.** Lo sustituí por una comprobación **estructural**
+  (fila 18) que me parece más informativa que repetir el rojo: ni el fichero
+  que falla, ni su mock, ni `terminalManager.ts` están en el diff, y la única
+  referencia de `tests/` a un espacio de nombres apunta a una clave que este WP
+  no toca. **No afirmo el 5/90/95**; afirmo que el renombrado no puede haberlo
+  causado.
+- **`compile:tests` (`tsc`)** — no ejecutado, igual que el worker, y por el
+  mismo motivo declarado (8 errores preexistentes ajenos a nombres).
+- **Las guardas de `release.yml`** — **no disparé nada contra GitHub**, como
+  manda el encargo. Sólo verifiqué que V15 no toca su mecánica (§A.3).
+- **Equivalencia con el asset público del Release `v0.1.0`** —
+  ARTEFACTO-NO-EQUIVALENTE sigue sin re-verificar; la guía v2 lo dice
+  explícitamente en vez de esconderlo.
+
+---
+
+### G · Veredicto
+
+**PASS**, con las dos condiciones documentales de §D. **El renombrado es
+correcto, exhaustivo y comprobable**, y lo comprobé por vías que no dependen
+del reporte: el prefijo es único en el manifiesto **y en el runtime**
+(`{"aleph0": 72}` registros, cero prefijos viejos), las claves viejas están a
+cero incluso por los dos caminos dinámicos de `getConfiguration`, el paquete
+real lleva el extension-id nuevo y confina las 17 menciones de marca a la
+tabla de migración, y los supervivientes del bundle son —muestreados uno a
+uno— identificadores de protocolo legales.
+
+**D-3 queda ratificado** (§A): la invariante que instaló V16 era la
+derivación, no la forma, y sigue viva y probada; el cambio tenía autoridad en
+la CA-3 del brief, se hizo citando la decisión que pisaba y elevándola para
+confirmación, y de paso cierra una vía de divergencia con el nombre por
+defecto de `vsce`.
+
+Lo que sube este reporte por encima del cumplimiento: **corrigió tres premisas
+del encargo con dato en vez de obedecerlas** —el 115 contra el 99, el 16
+contra el 13, y los `teatro.*` «podados» que tenían handler vivo— y en los
+tres casos verifiqué que **el worker tiene razón y el encargo estaba
+equivocado**. Retirar 0 comandos fue la decisión correcta.
+
+La única falla es de etiqueta, no de obra: cuatro cadenas de marca vetada
+clasificadas como código cuando se le muestran al usuario (§C). Va como
+condición y no como devolución porque están declaradas y bien contadas —pero
+va como condición **obligatoria**, porque sub-declarar marca visible es
+justamente el tipo de error que DV-16 existe para impedir.
+
+Para el orquestador, en orden: aplicar §D antes de aceptar; **ratificar D-3**;
+llevar **D-1** a decisión con la cita de E-2; **F-1** y **R-V15-6** al WP que
+recoja H-4/V-L4-05; y **E-1** al vigía como nota de método.
