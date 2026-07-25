@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v05-config-unica` |
-| commits | `3514f63` |
+| commits | `3514f63` (obra) · tip `ff41b53` |
 | eje(s) CA | hostil-omite (sin settings → ⏳) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
