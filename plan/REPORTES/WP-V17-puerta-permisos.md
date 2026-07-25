@@ -13,7 +13,7 @@
 | riesgo de revisión | `independiente` — WP de contrato |
 | revisor distinto del worker | **obligatorio** |
 | estado propuesto | listo para contrarrevisión |
-| VEREDICTO_REVISOR | ⏳ pendiente |
+| VEREDICTO_REVISOR | **PASS** — dos contrarrevisiones independientes (§Contrarrevisión y §Contrarrevisión · segunda pasada) convergen. Código aceptado sin cambios; 2 condiciones documentales al aceptar (R-1 vacío · cita `:169-171`→`:194-196`) |
 
 ---
 
@@ -635,3 +635,257 @@ de fusionar V16, **C-1** al depurar el backlog, y **C-2 + V17-A** a cola Z
 como una sola pieza — el contrato tiene que nombrar los campos de los que
 ya depende el IDE. **V17-B** es higiene del swarm y cuanto antes, mejor:
 cada día que siga trackeado, los tres carriles repiten la pasada cara.
+
+---
+
+## Contrarrevisión · segunda pasada independiente
+
+| dato | valor |
+| ---- | ----- |
+| agente | contrarrevisor-V · **segundo**, despachado en paralelo sin saberlo (ver §G) |
+| fecha | 2026-07-25 |
+| objeto | diff `1c90c43..02467b5` · obra `411777a` · reporte `02467b5` |
+| **veredicto** | **PASS con condiciones** (§D) — coincide con la primera pasada |
+
+> Esta sección es de un **segundo** contrarrevisor. Trabajé sobre
+> `02467b5` sin conocer la sección anterior, que se commiteó (`6208d5e`)
+> mientras yo revisaba. **No la he tocado ni una coma.** Las
+> coincidencias de abajo son convergencia independiente, no copia; lo
+> anoto donde ocurre porque dos rutas distintas al mismo hallazgo valen
+> más que una.
+
+### A · Declaración de honestidad: cambié de veredicto, y por qué
+
+**Formé DEVOLUCIÓN antes de ver la primera contrarrevisión, y la
+convertí en PASS con condiciones.** No por deferencia —eso sería el
+fallo exacto que este rol existe para evitar— sino porque cambió un
+hecho del mundo.
+
+Mi devolución era **documental**: el residual R-1 del §11 afirma lo
+contrario de lo que hace el WP, y el worker lo **elevó al custodio** en
+§12. Mi motivo era impedir **deuda fantasma**: que se abriera una DV para
+arreglar un camino que este mismo WP ya cerró.
+
+Ese riesgo lo neutraliza ahora el propio documento: R-1 queda refutado
+**dos veces, por dos revisores independientes** (C-1 de la primera pasada
+y §C.1 de ésta). Ningún lector del reporte final puede creerse R-1. Como
+la prevención ya está lograda sin round-trip, forzar al worker a reabrir
+el WP para corregir dos párrafos es coste sin ganancia de seguridad.
+Mantengo la corrección como **condición de aceptación** (§D), que es del
+orquestador, no del worker.
+
+La prueba que me apliqué: *¿mantendría DEVOLUCIÓN si la otra sección no
+existiera?* Sí. *¿Cambió algún hecho?* Sí, el de si la falsedad puede
+engañar a alguien. Converger ante evidencia nueva es revisar; converger
+ante un veredicto ajeno sería confirmar.
+
+### B · Lo que aporto que no estaba: el verde sellado al artefacto
+
+El fallo que define este rol es *un verde que se refiere a otra cosa*.
+Así que no me bastó ejecutar: sellé el artefacto **a ambos lados** de la
+pasada.
+
+`evidencia.sh vigente jest-parseEditorInfo` → **rc=1** (no vigente: el
+PASS del worker está sellado en `411777a` y el tip es `02467b5`).
+Comprobé antes que `git diff 411777a 02467b5 -- src tests` es **vacío**
+—sólo cambia el `.md`— pero la nota del vigía §3 manda fiarse del «no
+vigente» y no del criterio propio. Ejecuté por ranura:
+
+```
+blob commiteado : 50416186df499f531831fa503423f23316cd1023
+blob antes      : 50416186df499f531831fa503423f23316cd1023
+Tests:       36 passed, 36 total
+blob despues    : 50416186df499f531831fa503423f23316cd1023
+status: []
+```
+
+`git hash-object src/mutation/parseEditorInfo.ts` coincide con
+`git rev-parse 02467b5:src/mutation/parseEditorInfo.ts` **antes y
+después** de la pasada. El verde cubre el fichero commiteado — no una
+copia, no un árbol mutado. Dado el §G, esta precaución dejó de ser
+ceremonial.
+
+| sello (UTC) | etiqueta | resultado | HEAD | árbol | lockfile | nota |
+| ----------- | -------- | --------- | ---- | ----- | -------- | ---- |
+| 2026-07-25T15:42:52Z | jest-parseEditorInfo-contrarrevision | PASS | `02467b5fd04fb7cbb8f88c6bb8a4e5ab82faf270` | limpio | `sha256:363c08ffd4f544da` | 36/36 · segundo contrarrevisor · blob src=5041618 idéntico antes y después |
+
+Otras comprobaciones mías, todas contra el mundo y no contra el reporte:
+
+| # | qué | cómo | resultado |
+| - | --- | ---- | --------- |
+| 1 | alcance | `git diff --name-status 1c90c43..02467b5` | ✅ 3 ficheros, los del brief. `types.ts` **no** tocado: la autorización condicional no se ejerció, y no hacía falta |
+| 2 | las líneas «antes» eran `:80`/`:83` | `git show 1c90c43:src/mutation/parseEditorInfo.ts \| sed -n '78,86p'` | ✅ cita exacta del brief y del §2 |
+| 3 | CA 4 · cero motivos en `src/` | `git grep -cE "<los ocho>" -- src` → **rc=1** | ✅ cero. Viven en `test.ts:20-29` |
+| 4 | la premisa de V-L2-02 | `git grep -c parseEditorInfo 1c90c43 -- tests` → **rc=1** | ✅ el módulo no tenía **ninguna** prueba antes |
+| 5 | M1/M2 del worker | mutación **mental** sobre el test leído | ✅ M1 debe romper `test.ts:61,84-85,112,176,323` = **5**; M2 debe romper `:73,:99,:177` = **3**. Ambas listas cuadran línea a línea con el §7: el worker **las ejecutó**, no las narró |
+| 6 | el probe no atestigua nada | `grep -n "^import\|require(" scripts/probes/v08-*.mjs` | ✅ sólo `node:*`. Ni una importación de `src/`. La autodenuncia del §7 es correcta |
+| 7 | C-2 de la primera pasada | `grep -nE "required" CONTRATO-IDE-OPT-IN-v1.md` → **rc=1** | ✅ **confirmado por mi cuenta**: el contrato nombra `gate.reparto.motivos_deny` (`:71`,`:77`) y **cero** veces `required`. El campo del que cuelga la puerta no está en el contrato |
+
+### C · Convergencias independientes (llegué solo, coincide)
+
+1. **R-1 no existe** (= C-1 de la primera pasada). `mcpTreeView.ts:289`
+   abre `authorshipNodes` con
+   `if (snap.availability !== 'ready' || !snap.gate)` → retorno temprano
+   *«⏳ Autoría no ready»* (`:293`). Con `required` no declarado ⇒
+   `ok:false` ⇒ `emptyAuthorshipSnapshot('pending_info', …)`
+   (`AuthorshipService.ts:176`; `types.ts:59-66` copia el argumento a
+   `availability`) ⇒ **`:309-315` inalcanzable**. Y es estructural: en el
+   camino `ready`, `requireRepartoLive !== null`, luego
+   `repartoRequired === requireRepartoLive` **exactamente**. El §3 del
+   reporte razona esto bien; el §11 se contradice con él.
+2. **El probe se romperá en la fusión por FORMA, no por semántica**
+   (= C-3). El espejo devuelve `motivosDeny` en el nivel superior
+   (`v08-mutacion-autoria.mjs:84`) y el parser real lo anida en
+   `gate.motivosDeny`: `p.motivosDeny.length` será `undefined.length` →
+   **TypeError**. Verifiqué aparte los cuatro fixtures (`:142`, `:168`,
+   `:212` con `true`; `:197` con `false`): la lectura de **valores** del
+   §7 es exacta, la de **forma** falta.
+
+### D · Condiciones de aceptación (del orquestador, no del worker)
+
+Ninguna exige re-ejecutar nada ni tocar código.
+
+1. **Retirar o reescribir R-1** (`§11`, líneas `366-375`) y retirar en
+   consecuencia la parte del §12 que lo eleva al custodio. Si se quiere
+   dejar constancia del riesgo latente, el enunciado **cierto** es otro:
+   *«el `gate` con `repartoRequired` asumido se publica en el snapshot
+   `pending_info` (`AuthorshipService.ts:183`); hoy ningún consumidor lo
+   lee sin comprobar `availability` antes, pero un consumidor futuro que
+   lo hiciera vería la asunción como declaración».*
+2. **Corregir la cita de V17-A** (`§10`, líneas `346-347`): dice
+   `parseEditorInfo.ts:169-171`, que es la numeración **pre-cambio**
+   (verificado con `git show 1c90c43:…`). En el árbol entregado el
+   recorte está en **`:194-196`**. El §2 sí usa numeración post-cambio
+   (`:90`, `:93` ✅), así que el reporte mezcla dos numeraciones sin
+   decirlo — en un documento cuyo valor es ser **citable**, y para un
+   hallazgo que se va a cola, la cita debe apuntar al árbol entregado.
+
+### E · Hallazgos míos, fuera de alcance del WP
+
+- **FA-1 · Queda una puerta que falla abierta en el mismo fichero, y ya
+  tiene dueño.** `isDeniedWithoutWrite` (`:152-170`) es el **mismo patrón**
+  que este WP vino a matar, en el vecino de al lado: la **ausencia** de
+  `lineDir`/`outPath`/`refs.linea` se interpreta como «no hubo escritura»
+  (`return true`). Ausencia de prueba de escritura tratada como prueba de
+  no-escritura. Está correctamente identificado como **V-L2-04**, depende
+  de Z-02 (`wrote:false` afirmativo) y el docstring lo declara inferencia.
+  **El worker hizo bien en no tocarlo.** Lo dejo escrito porque, a la
+  pregunta «¿hay más puertas que fallan abiertas aquí?», la respuesta es
+  **sí, ésta**, y conviene que no se pierda de vista mientras Z-02 no
+  exista.
+- **FA-2 · Hasta que V16 aterrice, el probe firma a favor del bug.**
+  `v08-mutacion-autoria.mjs:84` es `requireRepartoLive: !!g.reparto_required`
+  — el **mismo fail-open** que V17 acaba de cerrar en `src/`. Un
+  `probe:v08` verde hoy certifica la semántica **vieja**. No es fichero de
+  V17; que quede anotado para el orden de fusión.
+
+### F · Cuestionamiento del brief (distinto del C-4 de la primera pasada)
+
+**El brief infla el modelo de amenaza.** Lo titula *«una puerta de
+permisos fallando abierta»*, lo que sugiere escalada de privilegio. No lo
+es: el grep completo de `gate.repartoRequired` en `src/` da **sólo**
+`types.ts:25` (tipo) y `mcpTreeView.ts:309-315` (**presentación**).
+**Ningún consumidor decide nada con ese campo.** La autorización real es
+servidor-side, como fija el contrato en Fase 4 (*«La política es del
+servidor (env fresco, no debilitable por args); con ella activa, toda
+mutación sin reparto deniega antes de escribir»*).
+
+El defecto real es de **representación**: el IDE afirmaba «no se exige
+reparto» cuando lo que tenía era *silencio*. Eso viola la cláusula
+transversal 1 y el mandato de Fase 3 (*«el IDE debe representar el estado
+del gate, no ocultarlo»*). **Sigue siendo un bug real y el arreglo es el
+correcto** — pero su gravedad es «el IDE miente sobre lo que sabe», no
+«el IDE deja pasar mutaciones». Esto **no resta** al WP: ordena la
+prioridad de lo que queda en cola, y evita que el siguiente brief herede
+una alarma calibrada de más.
+
+### G · Incidencia de aislamiento — **para el vigía**
+
+**Dos contrarrevisores fueron despachados sobre WP-V17 y trabajamos a la
+vez en el MISMO worktree, sin saberlo.** Lo detecté porque sus mutaciones
+me contaminaron una pasada:
+
+- `.slot.log` registra `15:39:39Z TOMA … etiqueta=jest-parseEditorInfo-contrarrevision
+  pid=6928 wt=…/v-sdk-wp-v17` — una pasada que **yo no lancé**.
+- Mi primera pasada (`15:40:14Z`, pid 7162) salió **rc=1 con 3 fallos**,
+  todos en los casos `reparto.required: false`.
+- `git status` mostró `M src/mutation/parseEditorInfo.ts`; siete segundos
+  después el fichero estaba **restaurado** (mtime `15:40:32Z`).
+- Después apareció en `EVIDENCIA.md` una fila ajena con mi misma etiqueta
+  y la nota *«36/36 … + M3/M4/M5 mutaciones adversariales revertidas»*.
+
+Eran las mutaciones **M3/M4/M5** de la primera pasada, hechas por Vía A
+(mutar · ejecutar · revertir) — impecables **en un worktree de un solo
+escritor**. Lo que sigue no es reproche a ese agente, que no podía saber
+que yo estaba dentro.
+
+Por qué importa:
+
+1. **Mi rc=1 de las 15:40:22Z es basura y NO cuenta como hallazgo contra
+   el código.** Lo dejo escrito para que nadie lo recupere luego como «un
+   contrarrevisor vio fallos». No los vio: vio el árbol de otro. Mi
+   evidencia válida es la de §B, sellada por hash a ambos lados.
+2. **`evidencia.sh` no puede detectar esto, y conviene que el vigía lo
+   sepa.** Su huella es HEAD + árbol limpio + lockfile; una mutación
+   *revertida antes de sellar* deja huella **idéntica** a la limpia. La
+   herramienta falla cerrado ante cambios que **persisten**, no ante
+   mutaciones **transitorias de un tercero**. Cualquier fila sellada
+   mientras dos agentes comparten worktree es indistinguible de una
+   limpia. No es un fallo de diseño —la herramienta es buena— sino un
+   supuesto que hay que hacer explícito: **un escritor por worktree**.
+3. La nota del vigía §1 corrige que «cada WP trabaja en su propio
+   worktree, un directorio distinto». Cierto **entre WP**; **falso entre
+   dos agentes del mismo WP**, que es lo que acaba de pasar. La regla de
+   mutación-temporal-y-revertida es segura sólo bajo ese supuesto.
+
+**Recomendación:** un solo agente escritor por worktree; y que el
+despacho no duplique contrarrevisión sin coordinarla. Aquí salió bien
+—dos revisiones independientes que **convergen**, lo cual es evidencia
+fuerte a favor del WP— pero fue por suerte: la primera pasada declaró
+«`EVIDENCIA.md` sin filas ajenas ✅» y para entonces ya éramos dos.
+
+### H · Qué NO pude comprobar, y por qué
+
+- **`npm test` completo, `tests/integration`, `tests/performance`:** ⏳
+  **no comprobados.** Caros y con rojo garantizado por el umbral global
+  heredado; además ejecutarlos habría ensuciado los 72 ficheros de
+  **V17-B**. `git diff 411777a 02467b5 -- src tests` es vacío, así que una
+  pasada completa tampoco habría hablado de este WP. No afirmo nada.
+- **`tsc` completo:** ⏳ **no ejecutado.** Acepto la evidencia parcial por
+  ser verificable: `ts-jest` typechequea en `strict: true`
+  `parseEditorInfo.ts`, `types.ts` y el test en cada pasada, y la mía
+  pasó limpia. Del resto del legado, nada.
+- **Servidor `linea-editor` vivo:** ⏳ **imposible** (ECONNREFUSED en
+  `:4115`). Suscribo y subrayo la mejor autodenuncia del reporte:
+  **ningún payload real ha pasado nunca por este parser**. Con **C-2**
+  encima (el contrato no fija la clave), éste es el **riesgo residual
+  principal** del WP.
+- **`lint` con las reglas futuras de V16:** ⏳ **no verificable aquí**
+  (`.eslintrc.cjs` con `ignorePatterns: ['**/*']`; `npm run lint` es un
+  `console.log` que no puede fallar). Sí verifiqué **por lectura** que el
+  test cumple la nota del vigía §2: importa explícito de `@jest/globals`,
+  tipa `MOTIVOS_FIXTURE: string[]` y los helpers como
+  `Record<string, unknown>`, sin `any`, sin variables sin usar, comillas
+  simples, punto y coma, indentación de 4. Juicio de lectura, no pasada
+  de lint.
+- **M1/M2 no las re-ejecuté**: las reproduje por lectura (§B.5) y cuadran
+  línea a línea. Con otro escritor vivo en el worktree (§G), re-mutar
+  `src/` habría sido temerario — y mi rol me prohíbe escribir código.
+- **Ramas V12 y V16:** no inspeccionadas. FA-2 está dicho desde la copia
+  de V17.
+
+### I · Resumen para el orquestador
+
+- **Código: aceptado.** Fusionable tal cual. CA 1-5 verificadas de forma
+  independiente; 36/36 con el artefacto **sellado por hash**.
+- **Dos contrarrevisiones independientes convergen en PASS** y en los
+  mismos hallazgos (R-1 vacío, probe roto por forma, contrato mudo sobre
+  el campo). Eso es la señal más fuerte de este reporte.
+- **Al aceptar:** aplicar las 2 condiciones de §D (R-1 y la cita
+  obsoleta). No requieren re-ejecución.
+- **Antes de fusionar V16:** C-3 / §C.2 — el probe **no** quedará verde
+  sólo con cambiar el import.
+- **A cola Z, como una pieza:** V17-A + C-2 — el contrato debe **nombrar**
+  los campos de los que ya depende el IDE.
+- **Higiene del swarm:** V17-B (`git rm -r --cached coverage/`) y §G (un
+  escritor por worktree).
