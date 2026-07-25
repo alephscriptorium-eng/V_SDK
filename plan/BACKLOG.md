@@ -177,10 +177,16 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   demostrados preexistentes · contrarrevisión PASS `78fee64` · merge
   `3c4ce52` · errata del censo asentada `fb6a28e`. R-1 (9 puntos) → V15
   · 13ª vista sin proveedor → V14 · R-7 sourcemap → cola V16/H-4.
-- ⬜ **WP-V14 · Marca del producto** — barra de actividad,
+- ✅ **WP-V14 · Marca del producto** — barra de actividad,
   `configuration.title`, icono, `README.md`. **CA:** quien lo instala lee
   **Aleph-0** y no lee «Arrakis Theater» **ni «Zigurat»** en ninguna
   superficie de usuario (§8 · DV-16; guía de revisión, no gate). Dep: V12.
+  Reporte: `plan/REPORTES/WP-V14-marca-producto.md`. Obra `d409e0a`:
+  14 superficies · icono ℵ₀ propio (PNG+SVG path) · vista fantasma
+  `arrakisTheater` retirada · `mcp.svg` retirado · LICENSE UNLICENSED
+  provisional (RES-5 al tick deferred) · `.vsix` 244KB · 26 excepciones
+  medidas sobre paquete extraído → V15. Aceptación `48d9267` · merge
+  `9690102`.
 - ⬜ **WP-V15 · Espacios de nombres** — lo que sobreviva pasa a un solo
   prefijo; declarar lo heredado que se quede. Absorbe el renombrado de
   claves de settings si **DV-16.a** se cierra en (b) —
