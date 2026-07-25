@@ -81,7 +81,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   fuera de defaults de schema = 0 · extensión arranca con settings
   vacíos mostrando ⏳ honesto · contrarrevisión (eje hostil-omite:
   ¿qué pasa sin settings?). Dep: V04. Brief: `plan/BRIEFS/WP-V05-config-unica.md`. Lane ∥ V06. Reporte: `plan/REPORTES/WP-V05-config-unica.md`. Gate V05 PASS.
-- 🔶 **WP-V06 · Catálogo dinámico** — cliente MCP a
+- ✅ **WP-V06 · Catálogo dinámico** — cliente MCP a
   `launcher://info|catalog|ports` + tools
   `resolve_capability`/`list_capabilities` de `@zeus/mcp-launcher`
   (puerto por settings); árbol MCP y tasks alimentados por catálogo
@@ -90,7 +90,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   **CA:** con launcher vivo, inventario en caliente · sin launcher,
   ⏳ honesto (no error fatal, no datos inventados) · cero puertos
   fijos nuevos. Dep: V04 (∥ V05, ficheros disjuntos declarados en
-  briefs). Brief: `plan/BRIEFS/WP-V06-catalogo-dinamico.md`. Lane ∥ V05.
+  briefs). Brief: `plan/BRIEFS/WP-V06-catalogo-dinamico.md`. Lane ∥ V05. Reporte: `plan/REPORTES/WP-V06-catalogo-dinamico.md`. Gate V06 PASS · R3-V PASS.
 
 ## Ola C · Contrato IDE fases 1–5 — gate R4-V
 

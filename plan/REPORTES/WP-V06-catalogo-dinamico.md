@@ -105,7 +105,7 @@ Ninguno.
 
 ## Revisión del orquestador
 
-### Devolución 1 (2026-07-25)
-Keys flat incorrectas → corregidas a nested canónicas V05 tras rebase main.
+**Aceptado ✅** (2026-07-25 · orquestador-V).
 
-_(aceptado ✅ / nueva devolución — orquestador)_
+Devolución 1 corregida (keys canónicas V05). Gate V06: **PASS**.
+Ola B completa → **R3-V PASS**.
