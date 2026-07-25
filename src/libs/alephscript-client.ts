@@ -5,6 +5,9 @@
  * - MCPGallery/mcp-mesh-sdk/src/libs/alephscript-client.ts
  * - StateMachine/src/clients/alephscript-client.ts
  * 
+ * URL del mesh: caller / zigurat.mesh.* — sin puerto hardcodeado.
+ * Sin url → no se crea Socket (⏳ hostil-omite).
+ * 
  * @épica MCP-CHANNELS-1.0.0
  */
 import { io, Socket } from 'socket.io-client';
@@ -31,9 +34,10 @@ export interface AlephScriptClientConfig {
     reconnectionDelay?: number;
 }
 
+/** Defaults sin host/puerto — la URL la aporta zigurat.mesh.* o el caller. */
 export const DEFAULT_CONFIG: AlephScriptClientConfig = {
     name: "VsCodeExtension",
-    url: "http://localhost:3010",
+    url: undefined,
     namespace: "/runtime",
     autoConnect: false,
     reconnection: true,
@@ -42,7 +46,7 @@ export const DEFAULT_CONFIG: AlephScriptClientConfig = {
 };
 
 export class AlephScriptClient {
-    public io: Socket;
+    public io: Socket | undefined;
     public name: string;
     public url: string;
     public namespace: string;
@@ -55,13 +59,19 @@ export class AlephScriptClient {
     private _onConnect: ((socketId: string) => void) | undefined;
     private _onDisconnect: (() => void) | undefined;
     private _onError: ((error: Error) => void) | undefined;
+    private readonly pendingReason = '⏳ zigurat.mesh.baseUrl (o host+port) no configurado';
 
     constructor(config: AlephScriptClientConfig = DEFAULT_CONFIG) {
         const mergedConfig = { ...DEFAULT_CONFIG, ...config };
         
         this.name = mergedConfig.name!;
-        this.url = mergedConfig.url!;
+        this.url = (mergedConfig.url || '').trim();
         this.namespace = mergedConfig.namespace!;
+
+        if (!this.url) {
+            console.warn(`[${this.name}] ${this.pendingReason} — cliente diferido`);
+            return;
+        }
         
         const fullUrl = this.url + this.namespace;
         
@@ -73,7 +83,7 @@ export class AlephScriptClient {
         });
 
         this.io.on("connect", () => {
-            console.log(`[${this.name}] Connected to ${fullUrl} (id: ${this.io.id})`);
+            console.log(`[${this.name}] Connected to ${fullUrl} (id: ${this.io?.id})`);
             this.configurationSet = true;
             this.initTriggers = [...this.initTriggersDefinition];
             
@@ -85,7 +95,7 @@ export class AlephScriptClient {
             }, 1000);
             
             if (this._onConnect) {
-                this._onConnect(this.io.id || '');
+                this._onConnect(this.io?.id || '');
             }
         });
 
@@ -107,6 +117,10 @@ export class AlephScriptClient {
         });
     }
 
+    isConfigured(): boolean {
+        return !!this.url && !!this.io;
+    }
+
     // Event handlers
     onConnect(callback: (socketId: string) => void): void {
         this._onConnect = callback;
@@ -121,6 +135,10 @@ export class AlephScriptClient {
     }
 
     connect(): void {
+        if (!this.io) {
+            console.warn(`[${this.name}] ${this.pendingReason}`);
+            return;
+        }
         if (!this.io.connected) {
             this.io.connect();
         }
@@ -130,32 +148,39 @@ export class AlephScriptClient {
         if (this.interval) {
             clearInterval(this.interval);
         }
-        this.io.disconnect();
+        this.io?.disconnect();
     }
 
     isConnected(): boolean {
-        return this.io.connected;
+        return this.io?.connected || false;
     }
 
     getSocketId(): string | undefined {
-        return this.io.id;
+        return this.io?.id;
     }
 
     // Room operations (AlephScript protocol)
     room(event: string, data: any, roomName?: string): void {
+        if (!this.io) {
+            console.warn(`[${this.name}] ${this.pendingReason}`);
+            return;
+        }
         const targetRoom = roomName || `${this.name}_ROOM`;
         this.io.emit("room", { event, data, room: targetRoom });
     }
 
     joinRoom(roomName: string): void {
-        this.io.emit("CLIENT_SUSCRIBE", { room: roomName });
+        this.io?.emit("CLIENT_SUSCRIBE", { room: roomName });
     }
 
     leaveRoom(roomName: string): void {
-        this.io.emit("CLIENT_UNSUSCRIBE", { room: roomName });
+        this.io?.emit("CLIENT_UNSUSCRIBE", { room: roomName });
     }
 
     register(usuario?: string): void {
+        if (!this.io) {
+            return;
+        }
         const payload: IUserDetails = { 
             usuario: usuario || this.name, 
             sesion: this.getHash("xS")
@@ -175,18 +200,18 @@ export class AlephScriptClient {
 
     // Raw socket access for custom events
     on(event: string, callback: (...args: any[]) => void): void {
-        this.io.on(event, callback);
+        this.io?.on(event, callback);
     }
 
     off(event: string, callback?: (...args: any[]) => void): void {
-        this.io.off(event, callback);
+        this.io?.off(event, callback);
     }
 
     emit(event: string, ...args: any[]): void {
-        this.io.emit(event, ...args);
+        this.io?.emit(event, ...args);
     }
 
     onAny(callback: (eventName: string, ...args: any[]) => void): void {
-        this.io.onAny(callback);
+        this.io?.onAny(callback);
     }
 }
