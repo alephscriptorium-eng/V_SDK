@@ -126,7 +126,7 @@ brief queda como control cumplido, no como discrepancia.
 | `docs` | **queda** | nuestro: `GUIA-PRUEBA-v1.md`, la guía del carril. **V-L5-01..03** la enmiendan (un solo artefacto en el paso 1, fixture adjunto, declarar que su barra de PASS exige runtime); ninguna la poda | disco (§2 no lo lista) | no (`:27`) |
 | `fixtures` | **queda** | nuestro: `reparto-v1-demo.json`, fixture del probe V09 y del paso 10 de la guía. **V-L5-02** pide adjuntarlo al Release **precisamente porque** `.vscodeignore:16` lo excluye del paquete | disco (§2 no lo lista) | no (`:16`) |
 | `jest.config.js` | **queda** | legado intacto, pero es el runner que **WP-V17** necesita para su prueba nueva. Al ejecutar la fila 21, V13 debe revisar `collectCoverageFrom` y el `coverageThreshold` global (75/80/85/85) — ver §6 | disco (§2 no lo lista) | no (`:37`) |
-| `media` | **re-contenido** | **está vivo y viaja en el paquete.** De sus 23 ficheros, **17 son CSS/JS** que cargan superficies vivas (`BaseHackerPanelProvider.ts:84-87` para los 4 paneles, `AgentConfigEditorProvider.ts:83-84` y `AgentContentEditorProvider.ts:80-81` para los editores) y un **18º asset vivo es `mcp.svg`** (`mcpChatParticipant.ts:83`) — el borrador heredado decía «18 son CSS/JS», y son 17 + el svg. Los 5 restantes son marca legada: los 4 `arrakis-theater-icon*.png` que V14 sustituye (`package.json:34` `icon`) más `ICON_CREATION_GUIDE.md` | disco (§2 no lo lista) | **sí** — ningún patrón lo cubre, y el código vivo lo necesita |
+| `media` | **re-contenido** | **está vivo y viaja en el paquete.** De sus 23 ficheros, **17 son CSS/JS** que cargan superficies vivas (`BaseHackerPanelProvider.ts:84-87` para los 4 paneles, `AgentConfigEditorProvider.ts:83-84` y `AgentContentEditorProvider.ts:80-81` para los editores) y un **18º asset vivo es `mcp.svg`** (`mcpChatParticipant.ts:83`) — el borrador heredado decía «18 son CSS/JS», y son 17 + el svg. Los 5 restantes son marca legada: los 4 `arrakis-theater-icon*.png` que V14 sustituye (`package.json:34` `icon`) más `ICON_CREATION_GUIDE.md` | disco (§2 no lo lista) | **22 de 23**: ningún patrón cubre el directorio, pero `*.md` (`.vscodeignore:28`) sí atrapa `ICON_CREATION_GUIDE.md`, y las re-inclusiones `:29-30` son sólo para README y LICENSE |
 | `nvm-exec.sh` | **poda** | envoltorio de `nvm` del producto ajeno, intacto desde el import | §2 fila 20 | no (`:60`) |
 | `package-lock.json` | **queda** | lockfile del árbol de dependencias vigente (modificado por nosotros desde el import). V13 lo regenera si la poda quita dependencias | disco (§2 no lo lista) | sí — ningún patrón lo cubre; ruido para V13 |
 | `package.json` | **re-contenido** | el manifiesto, y la mayor concentración de legado del repo: **115 comandos en 5 prefijos** (`alephscript` 86 · `copilotLogs` 12 · `zigurat` 7 · `mcpSocketManager` 6 · `ArrakisTheater` 4), `configuration.title: "Arrakis Theater Configuration"`, contenedor `arrakisTheater` titulado `🎭 Arrakis Theater`, `icon: ./media/arrakis-theater-icon.png`, 6 `chatParticipants`, 3 `jsonValidation` legados y 2 `customEditors`. Lo reescriben V13 (comandos podados), V14 (marca) y V15 (prefijos). **pend. DV-16 / DV-16.a** en lo que toca a nombres. **Dato que V15 necesita y que los documentos vigentes dan mal** (§6·D17): los comandos con prefijo `alephscript.` son **86**, no «~113»; 113 se acerca al total de prefijos legados (108 de 115) | §2 filas 1, 9-14, 16-19 + disco (`node -e` sobre `contributes`) | **sí** (manifiesto obligatorio) |
@@ -461,9 +461,17 @@ esperables (`src/views/README.md`, `src/elenco/DOS-MODELOS.md`,
   `.config.json`), que son lore ajeno viviendo dentro del código fuente,
   y que **casan con el `filenamePattern` `*.agent.md` de
   `package.json:1446`**.
+- **3 schemas de teatro** en `src/theatrical/core/schemas/`:
+  `agent.schema.json`, `company.schema.json` y `play.schema.json` — los
+  valida `validation.ts`, que está en los 19 muertos (D4), así que son
+  contrato ajeno sin lector vivo. **No se confundan con `schemas/` de
+  primer nivel** (fila re-contenido, cableada en
+  `contributes.jsonValidation`): éstos no los referencia el manifiesto.
 
-Ninguno cambia el veredicto de `src/theatrical` (re-contenido), pero son
-material de poda que ningún documento había enumerado.
+Enumeración: 3 esperables + `TheatricalAgent.ts.backup` + 10 de contenido
++ 3 schemas = **17**, que cuadra con el recuento. Ninguno cambia el
+veredicto de `src/theatrical` (re-contenido), pero son material de poda
+que ningún documento había enumerado.
 
 ### D19 · La licencia que viaja en el paquete lleva un marcador sin rellenar
 
@@ -553,7 +561,12 @@ esos mismos literales (`:175-190` y `:293-317`).
 Lo que eso significa para las dos salidas de DV-11:
 
 - **Poda:** retirar `src/mcpChatParticipant.ts`, la parte viva de
-  `src/theatrical` y las 6 entradas de `contributes.chatParticipants`.
+  `src/theatrical` y las 6 entradas de `contributes.chatParticipants`
+  — **más su cableado vivo en `src/core/extensionBootstrap.ts`**, que es
+  donde se instancian los dos gestores: `:11`, `:57`, `:115`
+  (`McpChatParticipant`) y `:12`, `:58`, `:118`
+  (`TheatricalChatManager`). Seis puntos de edición en un módulo cuyo
+  veredicto es «queda»; sin ellos no compila. Ver §8.
   Los 14 ficheros muertos del módulo (D4) caen sin efecto observable.
 - **Re-lore:** el coste **no** es sustituir datos por los del
   `reparto-kit`, porque no hay ningún camino que lea datos: hay literales
@@ -585,18 +598,55 @@ entrada rompe otra.
 | `ArrakisTheater_OperaConfig.json` | `.vscode/settings.json:2-3`, `demo/dummy_workspace/.vscode/settings.json` y `src/core/mcpConfigurationManager.ts:58-65` | las dos primeras citan la ruta; la tercera la abre si existe en el workspace (guardada con `fs.existsSync`: degrada, no rompe) |
 | `sample-config.json` | **nada obligatorio.** `HackerConfigPanelProvider.ts:233` la lista, pero contra el workspace y con `fs.existsSync` (D15); `src/mcpTypes.ts:15` sólo la nombra en un comentario | el borrador heredado decía que el panel «ofrecería un fichero inexistente»: **falso**, D15 |
 | `theatrical-content/` | `package.json:1446` **y** `:1456` (los dos `customEditors`), `extensionBootstrap.ts:1444,1529,1569,1610,1614`, `AgentConfigEditorProvider.ts:371`, `AgentContentEditorProvider.ts:249`, `HackerConfigPanelProvider.ts:291-293` | convención ajena que sobrevive al borrado — 7 puntos de código y 2 del manifiesto, no los 3+1 del borrador |
-| `src/theatrical` | mover `MCPConfiguration` fuera antes: `src/mcpServerManager.ts:4` | rompe la compilación |
-| `src/copilotLogs` | `.vscode/mcp.json` (`localhost:3100`) y los 12 comandos `copilotLogs.*` de `package.json` | manifiesto y config quedan huérfanos |
+| `src/theatrical` | mover `MCPConfiguration` fuera antes: `src/mcpServerManager.ts:4`. **Y la parte viva** (`TheatricalChatManager`) está cableada en `src/core/extensionBootstrap.ts:12` (import), `:58` (campo de `ExtensionContext`) y `:118` (`new TheatricalChatManager`) | rompe la compilación en los cuatro sitios |
+| `src/copilotLogs` | **no basta con el manifiesto.** Código vivo: `src/core/extensionBootstrap.ts:41` y `:42` (imports), `:1773` (`registerCopilotLogCommands`), `:1776-1779` (`getCopilotLogExporterService()` + `initialize().catch`), `:1781` (el log nombra «Copilot Log Exporter»). Y además `.vscode/mcp.json` (`localhost:3100`) y los 12 comandos `copilotLogs.*` de `package.json` | **rompe la compilación** de `src/core`, que es módulo «queda». El manifiesto y la config sólo quedan huérfanos |
+| `src/mcpChatParticipant.ts` | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de `ExtensionContext`), `:115` (`new McpChatParticipant`) | rompe la compilación de `src/core` |
+| los 4 comandos `ArrakisTheater.*` (fila 18) | `src/core/configurationCommandsService.ts:256-259` (los 4 `registerCommand`) **y sus dos llamadores**: `extensionBootstrap.ts:21` (import) y `:1770` (`ConfigurationCommandsService.registerCommands`). El fichero entero (**263 líneas**) existe sólo para esos 4 comandos —`:25,80,136,167` los documentan uno a uno— así que la poda lo deja huérfano **dentro de `src/core`, módulo «queda»**. Además `src/core/mcpConfigurationManager.ts:22,28` los cita como cadenas dentro de un `console.log` | §2 fila 18 poda los comandos; nadie había dicho dónde viven |
 | `tests/` (contenido legado) | conservar `tests/setup.ts` y `tests/mocks/`; decidir el `coverageThreshold` | `jest.config.js:23-28,33,36-37` |
 | `coverage/` | `git rm -r --cached coverage`, no sólo borrar | está en `.gitignore:2` y jest lo regenera |
 | `schemas/` | **no podar sin sustituir**: `contributes.jsonValidation` (3 entradas, rutas `./schemas/*` relativas al paquete). `HackerConfigPanelProvider.ts:234-236` está guardado y no cuenta (D15) | §2 fila 16 dice «sustituir» |
 | `media/` | **no podar**: sólo los 4 iconos `arrakis-theater-icon*.png` y `ICON_CREATION_GUIDE.md`, en V14 | 18 de 23 ficheros los cargan paneles y editores vivos (17 CSS/JS + `mcp.svg`) |
 | `README-LEGACY-EXTENSION.md` | `README.md:13` | único enlace vivo |
 
+**Dónde se concentra el arrastre: `src/core/extensionBootstrap.ts`.** Las
+tres podas más pesadas (`copilotLogs`, `mcpChatParticipant`, la parte viva
+de `theatrical`) más la fila 18 convergen en **un solo fichero de un
+módulo cuyo veredicto es «queda»** y que lleva nuestras +173 líneas.
+Recuento de puntos de edición vivos, verificados con
+`grep -rn` sobre `src/` (no muestreo: todas las referencias del repo):
+
+| poda | puntos en `extensionBootstrap.ts` | otros |
+| ---- | --------------------------------- | ----- |
+| `src/copilotLogs` | `:41`, `:42`, `:1773`, `:1776-1779`, `:1781` | — |
+| `src/mcpChatParticipant.ts` | `:11`, `:57`, `:115` | — |
+| `TheatricalChatManager` | `:12`, `:58`, `:118` | — |
+| 4 × `ArrakisTheater.*` | `:21`, `:1770` | `configurationCommandsService.ts:256-259` (+ fichero entero) · `mcpConfigurationManager.ts:22,28` |
+
+**Anomalía encontrada al recontar** (no la tenía ni el censo ni la
+contrarrevisión): `extensionBootstrap.ts:42` importa
+`CopilotMetricsPanelProvider` **y no lo usa nunca** — el registro real de
+la vista `copilotMetrics.panel` ocurre en
+`src/copilotLogs/commands.ts:485-488`. Es un import muerto en código
+vivo; irrelevante para el veredicto, pero V13 debe saber que esa línea se
+borra entera y no hay que re-cablear nada detrás.
+
+**Orden de ejecución de la poda** (observación, no cambio de veredicto):
+`tests/DonAlvaroValidation.test.ts:11` importa `DonAlvaroChatParticipant`
+y `tests/unit/mcpChatParticipant.test.ts:3` importa `McpChatParticipant`.
+Los dos ficheros están en el contenido legado que se va, así que no hay
+contradicción — pero **la poda de esos tests tiene que ir en el mismo
+commit que la de su código, o antes**, o `compile:tests`
+(`tsc -p tsconfig.json`) se cae entre commits. Nota adyacente:
+`tests/integration/extensionChatIntegration.test.ts:3` importa
+`ExtensionBootstrap`, así que también acusa las ediciones de la tabla de
+arriba.
+
 Y el dato que abarata el resto: los **19 ficheros `.ts` que no entran en
 `dist/extension.js`** (D4) se pueden retirar sin que el comportamiento
 del paquete cambie, porque ya no estaban dentro. Es el tramo de la
 amputación con riesgo más bajo, y es verificable antes de ejecutarla.
+Nótese el contraste con lo anterior: **lo muerto sale gratis; lo vivo de
+las filas 17, 18 y 19 se paga en `src/core`.**
 
 ---
 

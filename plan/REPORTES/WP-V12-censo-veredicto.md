@@ -300,8 +300,14 @@ en este worktree, ni con registros reconocibles ni desconocidos.
    con el siguiente `npm test` (D8) — y con él se ensucia la huella de
    `evidencia.sh` para todo el lote.
 4. `src/theatrical` no se poda en bloque: `mcpServerManager.ts:4` importa
-   `MCPConfiguration` de ahí (D11), y `ICompany.ts` lleva una
-   declaración de frontera de V09 (C8).
+   `MCPConfiguration` de ahí (D11), `ICompany.ts` lleva una declaración
+   de frontera de V09 (C8), y su parte viva está instanciada en
+   `src/core/extensionBootstrap.ts:12,58,118`. **Y lo mismo vale para las
+   otras dos podas pesadas**: `copilotLogs` (`:41,:42,:1773,:1776-1779`)
+   y `mcpChatParticipant` (`:11,:57,:115`), más la fila 18 en
+   `configurationCommandsService.ts:256-259` con sus llamadores
+   `:21,:1770`. Todo eso vive en `src/core`, módulo **«queda»**: si no se
+   edita, no compila. Mapa completo en el §8 del censo.
 5. `tests/` no se poda entera: `jest.config.js` depende de
    `tests/setup.ts` y `tests/mocks/vscode.mock.js` (D10), y WP-V17 está
    escribiendo sobre ese andamio ahora mismo.
@@ -632,3 +638,91 @@ comprobé unas 90 citas de `fichero:línea` y **todas menos una** (el
 matiz de `media`) son exactas. Devuelvo por una omisión de 14 líneas en
 la tabla que gobierna la ejecución, no por desconfianza en el juicio.
 Arreglados los tres puntos, esto es PASS sin más discusión.
+
+---
+
+## 13 · Corrección post-devolución
+
+Los tres puntos, atendidos en la misma rama y con el mismo alcance (sólo
+`plan/CENSO-V12.md` y este reporte). **Ningún veredicto cambia**; el
+reparto sigue siendo **27 / 19 / 23 = 69**.
+
+Método: la devolución trae una lista de `fichero:línea`. **No la he
+copiado.** He aplicado la misma disciplina que apliqué al borrador
+heredado —re-medir en vez de heredar— y he buscado *todas* las
+referencias, no sólo las nombradas, para no arreglar el agujero a medias:
+
+```
+$ grep -rn "copilotLogs\|CopilotMetrics\|registerCopilotLogCommands\|\
+getCopilotLogExporterService\|CopilotLogExporter" src/ --include='*.ts' \
+  | grep -v "^src/copilotLogs/"
+$ grep -rn "mcpChatParticipant\|McpChatParticipant" src/ --include='*.ts' \
+  | grep -v "^src/mcpChatParticipant.ts"
+$ grep -rn "TheatricalChatManager" src/ --include='*.ts' | grep -v "^src/theatrical/"
+$ grep -rn "ArrakisTheater\." src/ --include='*.ts'
+$ grep -rn "ConfigurationCommandsService" src/ --include='*.ts'
+```
+
+### Punto 1 · [BLOQUEANTE] mapa de arrastre — resuelto, y ampliado
+
+Los **14 puntos** de la devolución: **verificados uno a uno, los 14
+exactos**. `extensionBootstrap.ts:41,42,1773,1776` · `:11,57,115` ·
+`:12,58,118` · `configurationCommandsService.ts:256-259`.
+
+Al recontar aparecieron **6 puntos más** que la devolución no listaba, y
+los añado porque el defecto era precisamente ése —que V13 creyera que la
+lista está completa—:
+
+| añadido | qué es | por qué importa |
+| ------- | ------ | --------------- |
+| `extensionBootstrap.ts:21` y `:1770` | import y llamada de `ConfigurationCommandsService.registerCommands` | la fila 18 no se ejecuta sólo en `configurationCommandsService.ts`: tiene dos llamadores |
+| `configurationCommandsService.ts` **entero (263 líneas)** | el fichero existe **sólo** para los 4 `ArrakisTheater.*` (`:25,80,136,167` los documentan) | podar los 4 comandos deja 263 líneas huérfanas **dentro de `src/core`**, módulo «queda» |
+| `mcpConfigurationManager.ts:22,28` | los dos ids como cadenas en un `console.log` de constructor | sobreviven al borrado y siguen imprimiendo comandos que ya no existen |
+| `extensionBootstrap.ts:1776-1779` (no sólo `:1776`) | la llamada arrastra `initialize().catch(…)` | se borra el bloque, no la línea |
+| `extensionBootstrap.ts:1781` | el log dice «+ Copilot Log Exporter» | texto que miente tras la poda |
+
+Y una **anomalía nueva**: `extensionBootstrap.ts:42` importa
+`CopilotMetricsPanelProvider` **y no lo usa nunca** — el registro real de
+la vista `copilotMetrics.panel` está en `copilotLogs/commands.ts:485-488`.
+Import muerto en código vivo. No cambia veredicto; evita que V13 busque
+un re-cableado que no existe.
+
+Escrito en `plan/CENSO-V12.md` §8: cuatro filas nuevas en la tabla de
+arrastre, una tabla-resumen de puntos de edición por poda, la anomalía
+del import muerto, y el cierre que contrasta «lo muerto sale gratis; lo
+vivo de las filas 17, 18 y 19 se paga en `src/core`». El expediente
+DV-11 (§7) nombra ahora el mismo cableado en su salida «poda».
+
+### Punto 2 · [MENOR] D18 — resuelto
+
+`git ls-files src | grep -v '\.ts$'` = **17** (re-verificado). Añadidos
+los 3 que faltaban: `src/theatrical/core/schemas/{agent,company,play}.schema.json`,
+con la aritmética explícita (3 + 1 + 10 + 3 = 17) y una precisión que la
+devolución no pedía pero evita un error caro: **no son el `schemas/` de
+primer nivel** —ése es re-contenido y está cableado en
+`contributes.jsonValidation`—; a éstos sólo los leería `validation.ts`,
+que está entre los 19 muertos.
+
+### Punto 3 · [MENOR] celda `.vsix` de `media` — resuelto
+
+Verificado: `.vscodeignore:28` es `*.md`, y `:29-30` re-incluyen **sólo**
+README y LICENSE. `git ls-files media | grep -c '\.md$'` = **1**
+(`ICON_CREATION_GUIDE.md`). La celda pasa de «sí — ningún patrón lo
+cubre» a **«22 de 23»**, con el patrón citado.
+
+### Observación de orden de ejecución para V13 — anotada
+
+Verificada en el disco: `tests/DonAlvaroValidation.test.ts:11` importa
+`DonAlvaroChatParticipant` y `tests/unit/mcpChatParticipant.test.ts:3`
+importa `McpChatParticipant`. Ambos van en el contenido legado que se
+poda, así que no hay contradicción, pero **la poda de esos tests debe ir
+en el mismo commit que la de su código, o antes**, o `compile:tests` se
+cae entre commits. Añadido en §8 del censo, junto con el dato adyacente
+de que `tests/integration/extensionChatIntegration.test.ts:3` importa
+`ExtensionBootstrap` y por tanto también acusa las ediciones de la tabla.
+
+### Lo que esta corrección NO toca
+
+Ni un veredicto, ni un recuento, ni `src/`, ni el alcance. Sigue sin
+ejecutarse un solo comando caro y sin `git rm`. `VEREDICTO_REVISOR` se
+deja **como está**: lo levanta el contrarrevisor al verificar, no yo.
