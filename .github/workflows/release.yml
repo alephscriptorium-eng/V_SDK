@@ -25,6 +25,17 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # WP-V16 (d) · V-L1-05 — guarda 1 de 2.
+      # `workflow_dispatch` no restringía la rama y softprops/action-gh-release
+      # ACTUALIZA un release existente: un dispatch accidental desde una rama
+      # de trabajo pisaba el asset ya publicado. Primer paso del job, antes
+      # incluso del checkout, para que aborte en voz alta.
+      - name: Guarda · dispatch manual solo desde main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::workflow_dispatch solo permitido desde main (ref actual: ${GITHUB_REF}). Abortado sin tocar el release publicado."
+          exit 1
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -33,6 +44,40 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            VER=$(node -p "require('./package.json').version")
+            echo "name=v${VER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # WP-V16 (b) · V-L1-02 — el nombre del asset se DERIVA de package.json
+      # (scripts/vsix.mjs). No se repite la versión en este fichero.
+      - name: Resolve .vsix name
+        id: vsix
+        run: |
+          echo "name=$(node scripts/vsix.mjs name)" >> "$GITHUB_OUTPUT"
+          echo "path=$(node scripts/vsix.mjs path)" >> "$GITHUB_OUTPUT"
+
+      # WP-V16 (d) · V-L1-05 — guarda 2 de 2.
+      # No se pisa un release ya publicado, venga de tag o de dispatch. Va
+      # ANTES de `npm ci` para abortar sin gastar el runner. Sin interruptor
+      # de bypass: un botón para saltarse la guarda la anula. Republicar
+      # exige retirar el release a mano — decisión consciente y con rastro.
+      - name: Guarda · el tag no puede tener release publicado
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::ya existe un release publicado para ${TAG} — abortado para no pisar el asset. Retíralo a mano si de verdad quieres republicar."
+            exit 1
+          fi
+          echo "sin release previo para ${TAG} — se puede crear"
 
       - name: Detect registry credentials
         id: creds
@@ -70,31 +115,23 @@ jobs:
       - name: Package v1 .vsix
         run: npm run package:v1
 
-      - name: Resolve release tag
-        id: tag
-        run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          else
-            VER=$(node -p "require('./package.json').version")
-            echo "name=v${VER}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create GitHub Release with .vsix
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.name }}
           name: Zigurat ${{ steps.tag.outputs.name }}
           body: |
-            ## Zigurat v1 (extension-id `scriptorium.zigurat`)
+            ## Zigurat ${{ steps.tag.outputs.name }} (extension-id `scriptorium.zigurat`)
 
-            - Artifact: `scriptorium-zigurat-0.1.0.vsix`
-            - Pipeline: `npm ci` → `compile:production` → `vsce package`
+            - Artifact: `${{ steps.vsix.outputs.name }}`
+            - Pipeline de ESTE flujo: `npm ci` → `compile:production` → `vsce package`.
+              Sin lint, sin tests y sin probes: eso corre en `ci.yml`. Ver
+              README §«Qué verifica el pipeline».
             - Marketplace: **deferred** (DV-10) — not published to VS Marketplace / Open VSX
-            - Install: `code --install-extension scriptorium-zigurat-0.1.0.vsix`
+            - Install: `code --install-extension ${{ steps.vsix.outputs.name }}`
 
             Guía de prueba: ver `plan/REPORTES/WP-V10-v1-release.md` / `docs/GUIA-PRUEBA-v1.md`.
-          files: dist/scriptorium-zigurat-0.1.0.vsix
+          files: ${{ steps.vsix.outputs.path }}
           draft: false
           prerelease: false
           generate_release_notes: true
