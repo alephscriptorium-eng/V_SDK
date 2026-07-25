@@ -236,7 +236,7 @@ propio y sin un solo lector.
 
 ### 4.3 · `LICENSE.md` → **puntero a la composite Animus Iocandi + GPL-3.0-or-later**
 
-> ⚠️ **Esta decisión se rehízo en `55a9018` por corrección del custodio en
+> ⚠️ **Esta decisión se rehízo en `7ab97a0` por corrección del custodio en
 > sesión. Léase el §4.3-bis: el primer intento fue `UNLICENSED` y estaba
 > mal.** Lo que sigue describe el estado **final**.
 
@@ -778,13 +778,47 @@ vista, `mcp.svg` y las 26 excepciones **quedan exactamente como se aceptaron**.
 Tras el cambio se repitieron los comandos caros por ranura (el árbol cambió,
 así que la huella anterior **no** estaba vigente y no se podía citar):
 
-| sello (UTC) | etiqueta | resultado | HEAD | árbol | nota |
-| ----------- | -------- | --------- | ---- | ----- | ---- |
-| *(ver §11.6)* | `compile` | **PASS** | `55a9018…` | limpio | `dist/extension.js` 692,3 kb — **sin cambio**: `license` no entra en el bundle |
-| *(ver §11.6)* | `package` | **PASS** | `55a9018…` | limpio | 28 ficheros · 243,9 KB |
+`bash scripts/evidencia.sh vigente compile` salió **1** (no vigente): el árbol
+había cambiado, así que **no se podía citar** la corrida anterior. Se ejecutó.
 
-Y se re-corrieron los dos greps de la CA sobre el **paquete real** nuevo:
-CA-1 sigue en **26 líneas**, todas excepción declarada; CA-2 sigue en **0**.
-`LICENSE.md` **sigue viajando**.
+| sello (UTC) | etiqueta | resultado | HEAD | árbol | lockfile | nota |
+| ----------- | -------- | --------- | ---- | ----- | -------- | ---- |
+| 2026-07-25T17:36:19Z | `compile` | **PASS** | `7ab97a0004ea7acff717894daba575a82f5caf53` | limpio | `sha256:363c08ffd4f544da` | `dist/extension.js` 692,3 kb — **byte a byte sin cambio**: `license` no entra en el bundle |
+| 2026-07-25T17:36:34Z | `package` | **PASS** | `7ab97a0004ea7acff717894daba575a82f5caf53` | limpio | `sha256:363c08ffd4f544da` | 28 ficheros · **243,82 KB** (antes 243,92 KB: −100 B, la licencia corta) |
+
+Re-corridos los dos greps de la CA sobre el **paquete real nuevo**:
+
+```
+$ grep -rniE "arrakis|zigurat" /tmp/v14pkg2 --exclude-dir=dist | wc -l
+26                      ← idéntico: las mismas 26 excepciones declaradas de §3
+
+$ grep -rnE "Aleph ?0|Aleph0|A0\b" /tmp/v14pkg2 --exclude-dir=dist
+(sin resultados)        ← CA-2 sigue en 0
+```
+
+Y comprobado que la licencia **viaja y es la correcta**, no sólo que el
+comando salió 0:
+
+```
+$ unzip -l dist/scriptorium-zigurat-0.1.0.vsix | grep -i license
+      432  2026-07-25 19:32   extension/LICENSE.md      ← viaja (antes 665 B)
+
+$ grep -n '"license"' /tmp/v14pkg2/extension/package.json
+7:  "license": "GPL-3.0-or-later",
+
+$ grep -i license /tmp/v14pkg2/extension.vsixmanifest
+… <Asset Type="Microsoft.VisualStudio.Services.Content.License"
+       Path="extension/LICENSE.md" …>   ← vsce la registra como asset de licencia
+```
+
+El texto extraído del `.vsix` es el puntero canónico íntegro (§4.3),
+con `SPDX: GPL-3.0-or-later` y `Copyright © 2026 alephscriptorium`.
+
+> Nota de huella: las filas de §6 (sello `16:58`, HEAD `d409e0a`) **quedan
+> obsoletas** y se conservan sólo como historia de la primera pasada. Las
+> vigentes son estas dos. Y las de `7ab97a0` quedarán a su vez con HEAD
+> anterior al tip final de la rama, porque el commit que arregla este mismo
+> reporte mueve HEAD sin tocar código: es el límite conservador que
+> `evidencia.sh` declara en su cabecera, no una discrepancia.
 
 `VEREDICTO_REVISOR (de esta corrección): ⏳ pendiente`
