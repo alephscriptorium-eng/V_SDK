@@ -152,7 +152,7 @@ tras el re-release de esta ola, por decisión del custodio.
 
 Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
 
-- ⬜ **WP-V12 · Censo y veredicto** — censo de lo absorbido en WP-V02:
+- ✅ **WP-V12 · Censo y veredicto** — censo de lo absorbido en WP-V02:
   una fila por **entrada de primer nivel** del repo y por **módulo de
   `src/`**, con veredicto *queda* / *re-contenido* / *poda* y motivo. Es
   el documento que **D-1** exige (alcance de la amputación). La tabla §2
@@ -161,6 +161,12 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   `<pendiente>` · una fila por entrada y por módulo · cada fila con
   motivo y con la fuente que la respalda. Dep: —.
   Brief: `plan/BRIEFS/WP-V12-censo-veredicto.md`.
+  Entregable: `plan/CENSO-V12.md` (69 filas: 27 queda / 19
+  re-contenido / 23 poda). Obra `a1fa0c8`+`c34022e` (retomado tras
+  muerte de sesión; 8 filas del borrador corregidas) · contrarrevisión
+  DEVOLUCIÓN estrecha `99159ff` · corrección `48cc874` (+6 puntos de
+  arrastre extra) · aceptación `6939f43` · merge `9d753c4`. El «~113»
+  del replan corregido: **86** comandos `alephscript.*` de 115.
 - ⬜ **WP-V13 · Poda** — retirar del árbol lo marcado *poda* por el censo
   (filas 17, 18, 20, 21 de §2 del replan como punto de partida).
   **CA:** `git rm` con acta · probes V07/V08/V09 siguen PASS · el `.vsix`
