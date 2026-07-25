@@ -1367,7 +1367,9 @@
     "debug:view": "code --extensionDevelopmentPath=. --new-window",
     "unix:code": "sh ./setup-vscode-path",
     "dev:tools": "echo 'Ctrl+Shift+I'",
-    "skills:sync": "alephscript-skills-sync --runtime claude"
+    "skills:sync": "alephscript-skills-sync --runtime claude",
+    "package:v0": "npm run compile:production && npx --yes @vscode/vsce package --no-dependencies --out dist/zigurat-0.0.1.vsix",
+    "package:v0:npx": "npm run compile:production && npx --yes @vscode/vsce package --no-dependencies --out dist/zigurat-0.0.1.vsix"
   },
   "devDependencies": {
     "@alephscript/skills-scriptorium": ">=0.11.0 <1.0.0",
