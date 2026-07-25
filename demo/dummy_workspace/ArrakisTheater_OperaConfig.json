@@ -1,0 +1,110 @@
+{
+  "app": {
+    "type": "arrakis-theater-opera"
+  },
+  "launcher": {
+    "ollamaUrl": "http://localhost:11434",
+    "requiredModel": "GPT-OSS:20b",
+    "mcpServiceLauncherPort": 3050,
+    "healthCheckTimeout": 30000,
+    "shutdownGracePeriod": 5000
+  },
+  "game": {
+    "id": "arrakis-theater-opera-demo",
+    "name": "X+1 Demo Game",
+    "description": "Demo configuration for testing the VS Code extension",
+    "mcpServerId": "state-machine-server",
+    "graphId": "arrakis-theater-opera-game",
+    "userId": "player-1",
+    "sessionId": "demo-session",
+    "agentConfigs": [
+      {
+        "id": "test-agent",
+        "name": "TestAgent",
+        "role": "narrator",
+        "description": "Test agent for demonstration",
+        "mcpServerId": "state-machine-server",
+        "autoStart": true,
+        "priority": 10
+      }
+    ]
+  },
+  "mcp": {
+    "servers": {
+      "mcp-mesh-sdk": {
+        "port": 3010,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-mesh-sdk",
+        "cmd": "npm",
+        "args": [
+          "start"
+        ],
+        "desc": "MCP Servers Hub"
+      },
+      "mcp-model-sdk": {
+        "port": 4001,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-model-sdk",
+        "cmd": "npm",
+        "args": [
+          "start"
+        ],
+        "desc": "SLMs Conversation Hub"
+      },
+      "mcp-presets-site": {
+        "port": 3012,
+        "wdir": "C:\\Users\\oracl\\Documents\\REPOS\\mcp-presets-site\\zeus",
+        "cmd": "npm",
+        "args": [
+          "start"
+        ],
+        "desc": "MCP Presets Editor"
+      },
+      "wiki-mcp-browser": {
+        "port": 3002,
+        "wdir": "/c/Users/oracl/Documents/REPOS/mcp-mesh-sdk",
+        "cmd": "npm",
+        "args": [
+          "start"
+        ],
+        "desc": "Wiki Content Scrapper"
+      }
+    },
+    "webs": {
+      "mcp-presets-site": {
+        "host": "localhost",
+        "port": 3012,
+        "args": [],
+        "desc": "MCP Presets Editor"
+      }
+    }
+  },
+  "orchestration": {
+    "enableReplay": true,
+    "replayBufferSize": 200,
+    "enableLogging": true,
+    "enableCrossChannelRouting": true,
+    "messageTimeout": 10000
+  },
+  "ui": [
+    {
+      "id": "console-demo",
+      "name": "Demo Console UI",
+      "type": "custom",
+      "enabled": true,
+      "config": {
+        "isPrimary": true,
+        "autoStart": true,
+        "port": 8080
+      }
+    },
+    {
+      "id": "web-demo",
+      "name": "Demo Web UI",
+      "type": "html5",
+      "enabled": true,
+      "config": {
+        "port": 8081,
+        "autoStart": false
+      }
+    }
+  ]
+}

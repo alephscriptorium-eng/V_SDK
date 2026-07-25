@@ -1,0 +1,41 @@
+# Source
+src/**
+**/*.ts
+!**/*.d.ts
+
+# Build artifacts (keep only dist/)
+out/**
+
+# Development
+.vscode/**
+tests/**
+coverage/**
+node_modules/**
+*.map
+
+# Documentation
+PLANIFICACION/**
+prompts/**
+vibecoding/**
+demo/**
+FEATURE_CONFIGS/**
+*.md
+!README.md
+!LICENSE.md
+
+# Config files
+tsconfig.json
+tsconfig.build.json
+esbuild.config.mjs
+jest.config.js
+.eslintrc*
+.prettierrc*
+.gitignore
+
+# Other
+*.vsix
+*.log
+.DS_Store
+Thumbs.db
+pics/**
+mcp-core-sdk/**

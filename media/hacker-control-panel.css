@@ -1,0 +1,373 @@
+/* Hacker Control Panel CSS - Matrix/Terminal Aesthetic */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
+    overflow: hidden;
+    height: 100vh;
+    position: relative;
+}
+
+.hacker-terminal {
+    height: 100vh;
+    background: linear-gradient(45deg, rgba(0,0,0,0), rgba(0,0,0,0.15));
+    border: 2px solid var(--panel-border);
+    box-shadow: var(--shadow-accent);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Matrix rain removed */
+
+/* Terminal Header */
+.terminal-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    position: relative;
+}
+
+.terminal-title {
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0 0 5px var(--accent-weak);
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.online {
+    background: var(--status-online);
+    box-shadow: 0 0 5px var(--accent-weak);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Terminal Body */
+.terminal-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    z-index: 10;
+    position: relative;
+    background: var(--panel-bg-weak);
+}
+
+.control-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 14px;
+    padding: 20px;
+}
+
+.webview-group {
+    border: 1px solid var(--panel-border);
+    border-radius: 5px;
+    margin-bottom: 15px;
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-accent);
+}
+
+.group-header {
+    background: var(--panel-bg-weak);
+    padding: 10px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.group-header:hover {
+    background: var(--table-row-hover-bg);
+    text-shadow: 0 0 8px var(--accent-weak);
+}
+
+.group-header.collapsed .group-icon {
+    transform: rotate(-90deg);
+}
+
+.group-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.group-icon {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.group-title {
+    font-weight: bold;
+    font-size: 13px;
+    flex: 1;
+}
+
+.group-description {
+    font-size: 11px;
+    opacity: 0.7;
+    flex: 2;
+}
+
+.webview-list {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.webview-list.collapsed {
+    display: none;
+}
+
+.webview-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid var(--panel-border);
+    border-radius: 3px;
+    background: var(--panel-bg-weak);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.webview-item:hover {
+    background: var(--table-row-hover-bg);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-accent);
+    transform: translateX(5px);
+}
+
+.webview-icon {
+    font-size: 16px;
+    min-width: 20px;
+}
+
+.webview-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.webview-name {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.webview-description {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.webview-port {
+    font-size: 10px;
+    color: var(--highlight);
+}
+
+.webview-status {
+    min-width: 60px;
+    text-align: center;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.webview-status.available {
+    background: rgba(0,0,0,0.2);
+    color: var(--accent);
+    border: 1px solid var(--panel-border);
+}
+
+.webview-status.active {
+    background: var(--panel-bg-weak);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    box-shadow: var(--shadow-accent);
+    animation: glow 2s infinite;
+}
+
+.webview-status.error {
+    background: rgba(68,0,0,0.5);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px #00ff00; }
+    50% { box-shadow: 0 0 15px #00ff00; }
+    100% { box-shadow: 0 0 5px #00ff00; }
+}
+
+.webview-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: 1px solid var(--panel-border);
+    color: var(--accent);
+    padding: 2px 6px;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.action-btn:hover {
+    background: var(--accent-weak);
+    color: #000;
+    box-shadow: var(--shadow-accent);
+}
+
+.action-btn.danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.action-btn.danger:hover {
+    background: #ff4444;
+    color: #000;
+}
+
+/* System Controls */
+.system-controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.hacker-btn {
+    background: rgba(0, 100, 0, 0.2);
+    border: 2px solid #00aa00;
+    color: #00ff00;
+    padding: 10px 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.hacker-btn:hover {
+    background: rgba(0, 150, 0, 0.3);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.hacker-btn.primary {
+    border-color: #00ff00;
+}
+
+.hacker-btn.danger {
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+.hacker-btn.danger:hover {
+    background: rgba(150, 0, 0, 0.3);
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+}
+
+/* Terminal Footer */
+.terminal-footer {
+    background: var(--header-bg);
+    border-top: 1px solid var(--panel-border);
+    padding: 8px 15px;
+    font-size: 10px;
+    z-index: 10;
+    position: relative;
+}
+
+.system-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-text {
+    color: var(--status-fg);
+    font-weight: bold;
+    text-shadow: 0 0 3px var(--accent-weak);
+}
+
+/* Animations */
+.blinking-cursor {
+    animation: blink 1s infinite;
+}
+
+.blinking-text {
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track { background: var(--terminal-bg); }
+
+::-webkit-scrollbar-thumb { background: var(--accent-weak); border-radius: 4px; }
+
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+    .webview-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .system-controls {
+        flex-direction: column;
+    }
+    
+    .hacker-btn {
+        width: 100%;
+    }
+}
