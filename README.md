@@ -1,6 +1,10 @@
-# V_SDK · Zigurat
+# Aleph-0 · ℵ₀
 
-**V · Zigurat: host IDE de la ciudad — consumidor opt-in del contrato Z**
+**Aleph-0: host IDE de la ciudad — consumidor opt-in del contrato Z**
+
+Extensión de VS Code que consume el contrato Z de la ciudad: identidad
+(peer-card), catálogo MCP, autoría y elenco. Se instala desde el `.vsix`;
+todavía **no** está publicada en ningún marketplace (deferred, DV-10).
 
 Repo canónico: [`alephscriptorium-eng/V_SDK`](https://github.com/alephscriptorium-eng/V_SDK)
 

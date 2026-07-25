@@ -327,7 +327,7 @@
     }
 
     // Add some console styling for fun
-    console.log('%c>>> ARRAKIS CONFIG MATRIX INITIALIZED <<<', 
+    console.log('%c>>> ALEPH-0 CONFIG MATRIX INITIALIZED <<<',
                 'color: #00ff00; font-family: Courier New; font-weight: bold; font-size: 14px;');
     console.log('%cQuantum configuration interface online. Neural pathways synchronized.', 
                 'color: #00cc00; font-family: Courier New; font-size: 12px;');
