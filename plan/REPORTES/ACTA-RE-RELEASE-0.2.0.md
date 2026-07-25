@@ -65,6 +65,15 @@
 - Ola E (WP-V11 atlas) desbloqueada por **DV-14: R6-V PASS + esta acta**
   — queda ⬜ a criterio del custodio (gitlink = GO DA-S11 aparte).
 
+## Runner (regla 16)
+
+CI del tip `3bffa37` en main: run **30168538511** — **success**
+(1m04s · 2026-07-25T17:53:34Z). Release workflow: no disparado
+(sin tag, DV-14). Nota: los servicios z-sdk del tramo runtime se
+arrancaron para el gate y quedaron parados después; la pasada
+interactiva de la guía v2 los rearranca (`npm run start:mcp-launcher`
+y `npm run start:linea-editor` en `C:\S_LAB\z-sdk`).
+
 ## Residuales que heredan las olas siguientes
 
 Ver `plan/BACKLOG.md` (filas ✅ de la ola) y
