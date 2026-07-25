@@ -1,10 +1,10 @@
 {
   "name": "zigurat",
-  "displayName": "Zigurat",
-  "description": "Zigurat — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco). Publisher scriptorium (DV-05).",
+  "displayName": "Aleph-0",
+  "description": "Aleph-0 (ℵ₀) — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco).",
   "version": "0.1.0",
   "publisher": "scriptorium",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "UNLICENSED",
   "repository": {
     "type": "git",
     "url": "https://github.com/alephscriptorium-eng/V_SDK.git"
@@ -31,7 +31,7 @@
     "markdown",
     "fundacion"
   ],
-  "icon": "./media/arrakis-theater-icon.png",
+  "icon": "./media/aleph-0-icon.png",
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -70,79 +70,79 @@
       {
         "command": "zigurat.identity.join",
         "title": "Join room (peer-card)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(account)"
       },
       {
         "command": "zigurat.identity.refresh",
         "title": "Refresh identity (re-join if expired)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(sync)"
       },
       {
         "command": "zigurat.resources.refresh",
         "title": "Refresh MCP resource projection",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(library)"
       },
       {
         "command": "zigurat.authorship.refreshGate",
         "title": "Refresh authorship gate (editor://info)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(shield)"
       },
       {
         "command": "zigurat.authorship.crearLinea",
         "title": "crear_linea (gated)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(add)"
       },
       {
         "command": "zigurat.authorship.exportStoryBoard",
         "title": "export_story_board (gated)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(export)"
       },
       {
         "command": "zigurat.elenco.refresh",
         "title": "Refresh elenco (reparto → cast-table)",
-        "category": "Zigurat",
+        "category": "Aleph-0",
         "icon": "$(organization)"
       },
       {
         "command": "alephscript.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
-        "category": "🎭 Arrakis Theater"
+        "category": "🎭 Teatro"
       },
       {
         "command": "alephscript.teatro.activateAgent",
         "title": ">>> Jack In Agent",
         "icon": "$(plug)",
-        "category": "🎭 Arrakis Theater"
+        "category": "🎭 Teatro"
       },
       {
         "command": "alephscript.teatro.deactivateAgent",
         "title": ">>> Disconnect Agent",
         "icon": "$(debug-disconnect)",
-        "category": "🎭 Arrakis Theater"
+        "category": "🎭 Teatro"
       },
       {
         "command": "alephscript.teatro.openChatParticipant",
         "title": ">>> Open Neural Link",
         "icon": "$(symbol-method)",
-        "category": "🎭 Arrakis Theater"
+        "category": "🎭 Teatro"
       },
       {
         "command": "alephscript.teatro.showAgentInfo",
         "title": ">>> Scan Agent Data",
         "icon": "$(search-view-icon)",
-        "category": "🎭 Arrakis Theater"
+        "category": "🎭 Teatro"
       },
       {
         "command": "alephscript.teatro.openTeatroPanel",
         "title": "Open",
-        "category": "🎭 Arrakis Theater",
+        "category": "🎭 Teatro",
         "icon": "$(device-desktop)"
       },
       {
@@ -589,7 +589,7 @@
       }
     ],
     "configuration": {
-      "title": "Arrakis Theater Configuration",
+      "title": "Aleph-0",
       "properties": {
         "zigurat.mesh.host": {
           "type": "string",
@@ -663,7 +663,7 @@
         "alephscript.configurationFile": {
           "type": "string",
           "default": "",
-          "description": "Path to the Arrakis Theater configuration file (ArrakisTheater_OperaConfig.json)",
+          "description": "Ruta al fichero de configuración de la ópera MCP. Vacío = se busca en la raíz del workspace el fichero de configuración heredado (convención legada, pendiente de barrer).",
           "scope": "window"
         },
         "mcpSocketManager.configPath": {
@@ -972,7 +972,7 @@
       ]
     },
     "views": {
-      "arrakisTheater": [
+      "aleph0": [
         {
           "id": "alephscript.hackerControlPanel",
           "type": "webview",
@@ -1047,22 +1047,14 @@
           "icon": "$(terminal)",
           "when": "true"
         }
-      ],
-      "explorer": [
-        {
-          "id": "arrakisTheater",
-          "name": "🎭 Theater Engine",
-          "icon": "$(symbol-operator)",
-          "when": "resourceExtname == .json || resourceExtname == .md"
-        }
       ]
     },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "arrakisTheater",
-          "title": "🎭 Arrakis Theater",
-          "icon": "./media/arrakis-theater-icon.png"
+          "id": "aleph0",
+          "title": "Aleph-0",
+          "icon": "./media/aleph-0-activitybar.svg"
         }
       ]
     },
