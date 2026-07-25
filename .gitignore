@@ -4,3 +4,14 @@ dist/
 out/
 *.vsix
 .DS_Store
+
+# Despachador de ranura para procesos caros (scripts/slot.sh)
+.slot.lock/
+.slot.log
+
+# Registro de evidencia con huella (scripts/evidencia.sh).
+# Es un libro de a bordo POR WORKTREE: si se trackeara, las tres ramas del
+# lote crearían el mismo fichero y chocarían en cada fusión, y cada
+# `registrar` ensuciaría el árbol invalidando su propia huella. Lo que
+# perdura es la tabla transcrita al reporte del WP.
+EVIDENCIA.md
