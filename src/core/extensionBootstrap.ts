@@ -33,6 +33,8 @@ import { MCPServerManager } from '../mcpServerManager';
 import { MCPWebViewManager } from '../mcpWebViewManager';
 import { AracneBotService } from './AracneBotService';
 import { CatalogService } from '../launcher/CatalogService';
+import { RoomIdentityService, IdentityStatusBar } from '../identity';
+import { ResourceProjectionService } from '../resources';
 // WISH-01/02/03: Copilot Log Exporter
 import { registerCopilotLogCommands } from '../copilotLogs/commands';
 import { CopilotMetricsPanelProvider, getCopilotLogExporterService } from '../copilotLogs';
@@ -141,6 +143,18 @@ export class ExtensionBootstrap {
             const catalogService = CatalogService.getInstance();
             catalogService.start();
             context.subscriptions.push(catalogService);
+
+            // WP-V07: identidad (peer-card) + proyección resources MCP
+            const identityService = RoomIdentityService.getInstance();
+            const resourceService = ResourceProjectionService.getInstance();
+            const identityStatusBar = new IdentityStatusBar(identityService);
+            context.subscriptions.push(identityService, resourceService, identityStatusBar);
+            // Join diferido: sin settings → ⏳; no inventa room/mesh.
+            void identityService.join().then(async (snap) => {
+                if (snap.availability === 'ready') {
+                    await resourceService.refresh();
+                }
+            });
             
             // Initialize AracneBot - Socket.IO client for mesh communication
             const aracneBotService = AracneBotService.getInstance();
@@ -1043,6 +1057,39 @@ export class ExtensionBootstrap {
                         LogCategory.EXTENSION
                     );
                 }
+            }),
+
+            // WP-V07 · identidad + resources
+            vscode.commands.registerCommand('zigurat.identity.join', async () => {
+                const snap = await RoomIdentityService.getInstance().join();
+                if (snap.availability === 'ready') {
+                    await ResourceProjectionService.getInstance().refresh();
+                    this.extensionContext?.mcpTreeProvider.refresh();
+                    vscode.window.showInformationMessage(`Identidad: ${snap.ssbId}`);
+                } else {
+                    vscode.window.showWarningMessage(snap.statusMessage);
+                }
+            }),
+            vscode.commands.registerCommand('zigurat.identity.refresh', async () => {
+                const snap = await RoomIdentityService.getInstance().ensureFresh();
+                if (snap.availability === 'ready') {
+                    await ResourceProjectionService.getInstance().refresh();
+                    this.extensionContext?.mcpTreeProvider.refresh();
+                    vscode.window.showInformationMessage(
+                        `Identidad vigente: ${snap.ssbId} (join #${snap.joinCount})`
+                    );
+                } else {
+                    vscode.window.showWarningMessage(snap.statusMessage);
+                }
+            }),
+            vscode.commands.registerCommand('zigurat.resources.refresh', async () => {
+                const snap = await ResourceProjectionService.getInstance().refresh();
+                this.extensionContext?.mcpTreeProvider.refresh();
+                vscode.window.showInformationMessage(
+                    snap.availability === 'ready'
+                        ? snap.statusMessage
+                        : snap.statusMessage
+                );
             }),
 
             vscode.commands.registerCommand('alephscript.mcptree.start', async (item?: any) => {

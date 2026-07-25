@@ -67,6 +67,24 @@
         "category": "MCP Manager"
       },
       {
+        "command": "zigurat.identity.join",
+        "title": "Join room (peer-card)",
+        "category": "Zigurat",
+        "icon": "$(account)"
+      },
+      {
+        "command": "zigurat.identity.refresh",
+        "title": "Refresh identity (re-join if expired)",
+        "category": "Zigurat",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "zigurat.resources.refresh",
+        "title": "Refresh MCP resource projection",
+        "category": "Zigurat",
+        "icon": "$(library)"
+      },
+      {
         "command": "alephscript.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
@@ -648,7 +666,10 @@
           "scope": "window"
         },
         "zigurat.mesh.port": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Puerto del mesh AlephScript (vacío/null = ⏳ pendiente)",
           "scope": "window"
@@ -666,7 +687,10 @@
           "scope": "window"
         },
         "zigurat.launcher.port": {
-          "type": ["number", "null"],
+          "type": [
+            "number",
+            "null"
+          ],
           "default": null,
           "description": "Puerto del MCP service launcher (vacío/null = ⏳ pendiente)",
           "scope": "window"
@@ -675,6 +699,12 @@
           "type": "string",
           "default": "",
           "description": "URL base de Ollama (vacío = ⏳ pendiente)",
+          "scope": "window"
+        },
+        "zigurat.room.id": {
+          "type": "string",
+          "default": "",
+          "description": "Room Zeus a la que el IDE hace join para recibir peer-card (vacío = ⏳ pendiente)",
           "scope": "window"
         },
         "alephscript.configurationFile": {
@@ -1377,7 +1407,8 @@
   "scripts": {
     "compile": "npm run esbuild-base -- --sourcemap",
     "compile:production": "npm run esbuild-base -- --minify",
-    "esbuild-base": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild-base": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:node:crypto --format=cjs --platform=node",
+    "probe:v07": "node scripts/probes/v07-identidad-lectura.mjs",
     "watch": "npm run esbuild-base -- --sourcemap --watch",
     "vscode:prepublish": "npm run compile:production",
     "package:local": "vsce package --out mcp-arrakis-theater-ext.vsix",
@@ -1428,6 +1459,7 @@
   "dependencies": {
     "@alephscript/mcp-core-sdk": "1.3.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
+    "@zeus/protocol": "^0.4.1",
     "express": "^5.1.0",
     "socket.io-client": "^4.8.1",
     "zod": "^3.23.8"

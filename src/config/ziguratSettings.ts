@@ -13,6 +13,8 @@ export interface ZiguratSettings {
     launcherHost: string;
     launcherPort: number | undefined;
     ollamaBaseUrl: string;
+    /** Room a la que el IDE hace join (WP-V07). Vacío = ⏳. */
+    roomId: string;
 }
 
 function readNumber(value: unknown): number | undefined {
@@ -42,6 +44,7 @@ export function getZiguratSettings(): ZiguratSettings {
         launcherHost: readString(cfg.get('launcher.host')),
         launcherPort: readNumber(cfg.get('launcher.port')),
         ollamaBaseUrl: readString(cfg.get('ollama.baseUrl')),
+        roomId: readString(cfg.get('room.id')),
     };
 }
 
