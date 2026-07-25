@@ -154,4 +154,8 @@ Ninguno. PAUSED=false. No merge a main.
 
 ## Revisión del orquestador
 
-_(la rellena el orquestador: aceptado ✅ / devuelto con lista numerada)_
+**Aceptado ✅** (2026-07-25 · orquestador-V).
+
+Contrarrevisión: cero overlap con V06; greps censo 0; compile verde
+(worker). Schema canónico: `zigurat.launcher.host` / `zigurat.launcher.port`.
+Gate V05: **PASS**.

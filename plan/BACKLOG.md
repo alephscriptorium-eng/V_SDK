@@ -70,7 +70,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola B · Pedido 2 — desacople (∥ posible entre V05 y V06) — gate R3-V
 
-- 🔶 **WP-V05 · Config única** — settings schema del workspace
+- ✅ **WP-V05 · Config única** — settings schema del workspace
   (`zigurat.*`): hosts/puertos/baseUrl; ELIMINAR defaults absolutos y
   de otra máquina. Cirugía mínima conocida (del censo Zigurat):
   `src/libs/alephscript-client.ts:36` (3010 fijo) ·
@@ -80,7 +80,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   **CA:** grep de rutas absolutas de máquina y puertos hardcodeados
   fuera de defaults de schema = 0 · extensión arranca con settings
   vacíos mostrando ⏳ honesto · contrarrevisión (eje hostil-omite:
-  ¿qué pasa sin settings?). Dep: V04. Brief: `plan/BRIEFS/WP-V05-config-unica.md`. Lane ∥ V06.
+  ¿qué pasa sin settings?). Dep: V04. Brief: `plan/BRIEFS/WP-V05-config-unica.md`. Lane ∥ V06. Reporte: `plan/REPORTES/WP-V05-config-unica.md`. Gate V05 PASS.
 - 🔶 **WP-V06 · Catálogo dinámico** — cliente MCP a
   `launcher://info|catalog|ports` + tools
   `resolve_capability`/`list_capabilities` de `@zeus/mcp-launcher`
