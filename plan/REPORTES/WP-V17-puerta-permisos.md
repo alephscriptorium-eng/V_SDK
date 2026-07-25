@@ -414,3 +414,224 @@ elevo como **V17-B**.
 **VEREDICTO_REVISOR: ⏳ pendiente** — el worker no se aprueba a sí mismo.
 Contrarrevisión obligatoria por agente distinto (riesgo `independiente`,
 WP de contrato).
+
+---
+
+## Contrarrevisión
+
+| dato | valor |
+| ---- | ----- |
+| agente | contrarrevisor-V (distinto del worker) |
+| fecha | 2026-07-25 |
+| rango revisado | `1c90c43..02467b5` (obra en `411777a`) |
+| **VEREDICTO** | **PASS** |
+
+> Nota de alcance: sólo escribo esta sección. La fila
+> `VEREDICTO_REVISOR` de la cabecera y el cierre del §13 quedan con el
+> texto del worker a propósito — cambiarlos es acto del orquestador al
+> aceptar, no mío.
+
+### A · Qué comprobé, y CÓMO
+
+Ninguna comprobación de abajo se apoya en lo que dice este reporte: cada
+una se contrasta contra el fichero, el `git` o una ejecución.
+
+| # | afirmación | cómo la comprobé | resultado |
+| - | ---------- | ---------------- | --------- |
+| 1 | alcance = 3 ficheros | `git diff --name-status 1c90c43..02467b5`; `git diff --name-only 411777a^ 411777a` | ✅ `parseEditorInfo.ts` + `parseEditorInfo.test.ts` en la obra, el reporte en el commit de docs. **Cero ficheros de más.** `package.json`, `jest.config.js`, `.github/**`, `scripts/probes/**`: intactos |
+| 2 | las dos caras fallan cerrado | leído en el fichero real, no en el reporte: `:90 visible: g.visible !== false` · `:93 repartoRequired: requireRepartoLive !== false` | ✅ mismo operador, misma dirección. `null ⇒ true` en ambas; sólo un `false` explícito abre |
+| 3 | la distinción `null`/`false` sigue intacta | leídas `:76-81` (las `:72-77` del brief, desplazadas por los comentarios) | ✅ `reparto_required` booleano → él; si no, `reparto?.required` booleano → él; si no, `null`. Sin colapsar |
+| 4 | el argumento de `AuthorshipService.ts:174-186` | leído `:173-206` | ✅ **cierto**: `pendingReason` se lee sólo en `:178`, dentro de `if (!parsed.ok \|\| !parsed.gate)`. La rama `ready` (`:195-206`) construye su `statusMessage` a mano en `:197` y nunca mira `pendingReason`. Un `ok:true` + `pendingReason` **se descarta en silencio** — el worker no exagera |
+| 5 | CA 4 · cero motivos en `src/` | grep de los ocho sobre `src/`, sin filtros | ✅ **0** |
+| 6 | los 36 tests pasan hoy | **reejecutados por mí**: `evidencia.sh vigente jest-parseEditorInfo` → **rc=1** (HEAD se movió a `02467b5`), así que no cité el registro: `slot.sh run jest-parseEditorInfo-contrarrevision -- npx jest … --coverage=false` | ✅ **36/36**, 2.555 s, en el HEAD actual. Registrado en `EVIDENCIA.md` |
+| 7 | sin residuo de las mutaciones M1/M2 | `git status --porcelain` al abrir y tras cada ejecución mía | ✅ vacío siempre. `src/` nunca aparece |
+| 8 | `EVIDENCIA.md` no tiene filas ajenas | `cat EVIDENCIA.md` contra la tabla del §8 | ✅ transcripción **literal**, 3 filas, todas del worker. Ninguna que no reconozca (nota del vigía §3) |
+| 9 | identidad de los commits | `git log -3 --format='%an <%ae>'` | ✅ `worker-V`, no el placeholder |
+
+### B · Los 5 casos mínimos del CA — y si prueban lo que dicen
+
+Comprobé uno por uno que el fixture **omite** el campo, no que lo
+malforme (es el eje del método y era fácil colarla aquí):
+
+| caso | test | ¿prueba ausencia? |
+| ---- | ---- | ----------------- |
+| 1 · `required` ausente | `:52-62` | ✅ `repartoConMotivos()` no lleva `required` y el gate no lleva `reparto_required` — ausencia real |
+| 2 · `reparto.required` sin `reparto_required` | `:130-141` | ✅ `reparto_required` omitido |
+| 3 · `motivos_deny` ausente | `:182-194` | ✅ `reparto` presente **sin** `motivos_deny`; y `:196-203` va más lejos: bloque `reparto` entero ausente |
+| 4 · motivo fuera de lista | `:263-268` | ✅ y en los dos sentidos (`:259`, `:270`) |
+| 5 · `visible` ausente | `:78-86` | ✅ y `:116-126` fija que la simetría **no** es «siempre true» |
+
+**Hostil-omite, veredicto:** la suite prueba la AUSENCIA además de la
+malformación, y esa era mi sospecha principal. Ausencias cubiertas: `raw`
+(`:276`), `gate` (`:301`), `reparto` (`:196`), `motivos_deny` (`:182`),
+`required` (`:52`,`:78`,`:102`), `reparto_required` (`:130`), `visible`
+(`:78`). Malformaciones cubiertas aparte (array, cadena, no-booleano,
+no-string). Único hueco menor: `mutationTools` **ausente** no tiene aserto
+propio (`:326` prueba basura y no-array, no omisión). Trivial, no lo
+devuelvo.
+
+### C · ¿Pueden fallar los 36 tests? — tres mutaciones MÍAS
+
+El worker aportó M1 (fail-open) y M2 (rama ⏳ muerta). Ésas demuestran que
+la puerta no se puede **abrir** sin que salte la alarma. No demuestran lo
+contrario: que no se pueda **tapiar**. Un `repartoRequired: true` constante
+pasaría M1 y M2 y sería igual de falso — un muro no es una puerta. Así que
+corrí tres que el worker no corrió, por Vía A de la nota del vigía §2
+(mutar · ejecutar · `git checkout --` · verificar árbol):
+
+| # | mutación | resultado | qué demuestra |
+| - | -------- | --------- | ------------- |
+| **M3** | `repartoRequired: true` (constante) | **3 failed / 33 passed** — *sólo un `false` EXPLÍCITO…* · *no confunde «no declarado» (null)…* · *lee `reparto.required: false`…* | la suite distingue **fallar cerrado** de **estar siempre cerrado**. Es una puerta, no un muro |
+| **M4** | `visible: true` (constante) | **1 failed / 35 passed** — *`visible: false` explícito se respeta* | la cara `visible` está fijada en los dos sentidos, no sólo en la ausencia |
+| **M5** | eliminado el fallback a `reparto.required` | **2 failed / 34 passed** — los dos de *divergencia que el espejo del probe no ve* | el caso mínimo 2 del CA está realmente vigilado, no decorado |
+
+Tras cada una, `git status --porcelain` **vacío**. Árbol limpio al cerrar.
+Con M1+M2 del worker son **cinco** mutaciones independientes: las dos
+mitades del arreglo y las dos direcciones de cada cara están cubiertas.
+Descarto que estas pruebas sean de las que no pueden fallar.
+
+### D · La decisión de diseño (`ok:false` en vez de `ok:true` + ⏳)
+
+**Es la lectura correcta del contrato. No la devuelvo.** Tres razones,
+comprobadas:
+
+1. El argumento del worker es **verdadero en el código** (fila 4 de §A):
+   con `ok:true` el ⏳ se pierde. El brief `:52-54` ofrecía esa salida
+   como admisible — y **no lo era**: ver §F.
+2. La cláusula transversal 1 del contrato («lo no desplegado se muestra
+   ⏳; el IDE nunca presenta como sincronizado lo que no lo está») se
+   aplica de lleno: un `reparto_required` no declarado es exactamente
+   estado no sabido.
+3. El precio está **declarado** (§3) y es el correcto para una puerta de
+   permisos: un servidor que calle queda en `pending_info` con motivo
+   visible, no en `ready` con una suposición. Un permiso que se degrada a
+   «pendiente y dicho» es un buen fallo; uno que se degrada a «concedido y
+   callado» es el que este WP existe para matar.
+
+**Además cierra un fail-open que el brief no nombró** (nadie lo declaró,
+lo encontré leyendo aguas abajo): `AuthorshipService.ts:191`
+`const policy = parsed.requireRepartoLive ? '…=ON' : '…=off …'` es un test
+de *truthiness* sobre `boolean | null`. **Antes** de este WP el `null`
+llegaba a esa línea y la barra de estado afirmaba `=off` a partir de una
+ausencia. **Después**, `ready` es inalcanzable con `null`, así que `:191`
+sólo ve booleanos de verdad. Segundo orden a favor del cambio; conviene
+que quede escrito para que un refactor futuro no lo reintroduzca.
+
+### E · Hallazgos declarados — verificados de facto
+
+- **V17-A · confirmado, y la gravedad está bien acotada.**
+  `parseEditorInfo.ts:194-196` recorta los 21 caracteres de
+  `'linea-editor.reparto_'`, así que `'linea-editor.reparto_requerido'` →
+  `'requerido'`, que no está en los ocho. **Sí llega al usuario**: lo seguí
+  hasta la UI — `AuthorshipService.ts:279` `motivo: extractMotivoFromDeny(data)`
+  → `:118` `representMotivoDeny(result.motivo, known)` → el usuario lee
+  *«no estaba en motivos_deny de editor://info»* de un motivo que el
+  servidor **sí** publica. La contención que alega el worker es real: leí
+  el orden de precedencia en `:177-197` y `decision.motivo` gana, así que
+  sólo muerde cuando llega `rule` a solas. Acotación correcta; a cola,
+  no a este WP.
+- **V17-B · confirmado, y su alcance es MAYOR que «invalida la huella».**
+  `git ls-files coverage | wc -l` = **72** ficheros trackeados, y
+  `coverage/` está en `.gitignore:2` — inerte, porque `.gitignore` no
+  aplica a lo ya trackeado. Con `jest.config.js:12 collectCoverage: true`,
+  **toda** pasada completa los reescribe y ensucia el árbol. Consecuencia
+  real: ninguna etiqueta que lleve cobertura podrá registrar jamás un PASS
+  con árbol limpio, **en ninguno de los tres worktrees**, así que
+  `evidencia.sh` exigirá repetir para siempre el comando más caro del
+  lote. No es una fila fea: **anula la función de caché de la herramienta
+  de economía**. Se arregla con `git rm -r --cached coverage/`.
+  **¿Invalida la huella de evidencia del lote? NO la de V17.** La fila
+  decisiva (`jest-parseEditorInfo`) se corrió con `--coverage=false` y
+  árbol limpio, y yo la reproduje aparte en el HEAD actual. La única fila
+  `sucio(66)` es un **FAIL** declarado, no sostiene ninguna afirmación.
+
+### F · Hallazgos NUEVOS (míos)
+
+1. **C-1 · `R-1` es un residual que no existe. Bórrese antes de que
+   alguien abra un WP para él.** `mcpTreeView.ts:288-289` abre con
+   `if (snap.availability !== 'ready' || !snap.gate)` → devuelve el nodo
+   *«⏳ Autoría no ready»*. Como el caso no declarado ahora da `ok:false` →
+   `pending_info`, las líneas `:309-315` son **inalcanzables justo en el
+   caso que R-1 teme**. En `ready`, `gate.repartoRequired` es siempre
+   declaración genuina del servidor. La propia decisión del worker dejó R-1
+   sin objeto y él no lo advirtió: el arreglo que propone
+   (`repartoRequiredDeclared` + rama en el árbol) sería trabajo tirado.
+   Comprobado también que no hay otro consumidor: el grep de
+   `gate.repartoRequired` en `src/` da sólo `mcpTreeView.ts:309,312,315`.
+2. **C-2 · El campo del que cuelga toda la puerta NO está en el contrato.**
+   `grep -n "reparto_required\|reparto\.required"` sobre
+   `CONTRATO-IDE-OPT-IN-v1.md` = **0 aciertos**; lo único parecido es
+   `resolveRequireReparto` en `:110`, que es el nombre de una función del
+   servidor, no una clave del payload. El contrato fija
+   `gate.reparto.motivos_deny` y el env del operador, pero **nunca fija la
+   clave que transporta la exigencia**. Es decir: los fixtures del worker
+   no salen del contrato (como dice §9) sino de la forma que asume el
+   espejo del probe. Efecto de V17 sobre este hueco: si el servidor real
+   publica la bandera con otra clave, **todo servidor real queda ahora
+   permanentemente en `pending_info`** (antes el mismo desajuste producía
+   apertura silenciosa). La dirección sigue siendo la correcta —cerrado y
+   dicho— pero el radio creció, y eso refuerza la duda 1 del §12 con el
+   motivo que allí falta. **A cola Z, junto con V17-A: el contrato debe
+   nombrar el campo.** Mientras no lo haga, el prefijo y la clave son
+   adivinables, no citables.
+3. **C-3 · Aviso de fusión para el orquestador (toca a V16, no a V17).**
+   Cuando V16 haga que el probe importe el parser real, no basta con
+   cambiar el import: el espejo devuelve `motivosDeny` **en el nivel
+   superior** (`scripts/probes/v08-mutacion-autoria.mjs:75,84`) mientras
+   que `ParsedEditorInfo` (`parseEditorInfo.ts:8-17`) **no tiene** ese
+   campo — lo anida en `gate.motivosDeny`. El probe lee `p.motivosDeny` en
+   `:134, :145, :179, :181, :184, :201`. Con el parser real eso es
+   `undefined.length` → **TypeError, no un probe verde**. La lectura
+   estática del worker (§7) comprobó los **valores** de los cuatro
+   fixtures —la verifiqué y es exacta: `:142`, `:168`, `:212` con
+   `reparto_required: true` y `:197` con `false`— pero no la **forma**.
+   Sólo lo miré en la copia de la rama V17; V16 puede haberlo resuelto ya
+   en su worktree.
+4. **C-4 · Defecto del brief (§8 de mi encargo, y lo mismo que le pasó a
+   V16).** El brief `:52-54` ofrece como salida admisible «(1) con
+   `ok:true` + `pendingReason` u otro canal visible». Esa opción **no era
+   implementable dentro del alcance del WP**: `pendingReason` con `ok:true`
+   es código muerto aguas abajo (`AuthorshipService.ts:174-188`) y el otro
+   canal, `statusMessage`, está escrito a mano en `:197`. El brief ofrecía
+   una elección con una rama trampa, igual que el criterio de V16 que el
+   propio vigía corrigió. **El worker lo detectó y eligió bien**; lo dejo
+   escrito porque el acierto fue suyo y el defecto del brief no debe
+   heredarse al siguiente WP que cite este patrón. Lo demás del brief lo
+   verifiqué correcto: la conducta pre-arreglo que describe (`:26-27`,
+   `ok:true` + `repartoRequired:false`) es exactamente lo que hacía
+   `requireRepartoLive === true` con `null`.
+
+### G · Qué NO pude comprobar, y por qué
+
+- **Nada ha pasado nunca por este parser desde un servidor real.** Sin
+  `linea-editor` vivo (ECONNREFUSED en `:4115`) no pude remediarlo, y con
+  **C-2** encima —el contrato no fija la clave— éste es el riesgo residual
+  principal del WP. El worker lo declara honestamente en §9; lo confirmo y
+  lo subo de importancia.
+- **`npm test` completo y `tsc` completo:** no ejecutados. Caros y rojos
+  por el umbral heredado, y ejecutarlos habría ensuciado los 72 ficheros de
+  **V17-B**. Acepto la observación del §8 como del worker: **no la
+  reproduje**.
+- **`lint` con las reglas futuras de V16:** no verificable aquí
+  (`.eslintrc.cjs` con `ignorePatterns: ['**/*']`). Lo que sí verifiqué de
+  la nota del vigía §2: el test no tiene `any` (0 aciertos de `: any`,
+  `as any`, `<any>`), no tiene tabuladores (0), usa comillas simples y la
+  indentación de 4 de `src/`. Estilo conservador **cumplido**.
+- **Ramas V12 y V16:** no las inspeccioné. **C-3** está dicho desde la
+  copia de V17 y puede estar ya resuelto en el worktree de V16.
+
+### H · Veredicto
+
+**PASS.** El arreglo hace lo que dice, en el fichero que dice, y las
+pruebas que lo respaldan pueden fallar —lo demostré con tres mutaciones
+propias además de las dos del worker—. El alcance es exacto, los cinco
+casos mínimos existen y prueban ausencia y no sólo malformación, el CA se
+cumple punto por punto, y el reporte no contiene ninguna afirmación que se
+me haya caído al contrastarla con el mundo: la única corrección es que el
+worker se declaró **un residual de más** (C-1), no de menos.
+
+Sin condiciones de bloqueo. Para el orquestador, en orden: **C-3** antes
+de fusionar V16, **C-1** al depurar el backlog, y **C-2 + V17-A** a cola Z
+como una sola pieza — el contrato tiene que nombrar los campos de los que
+ya depende el IDE. **V17-B** es higiene del swarm y cuanto antes, mejor:
+cada día que siga trackeado, los tres carriles repiten la pasada cara.
