@@ -23,7 +23,8 @@
 ```text
 Packaged: dist/zigurat-0.0.1.vsix (32 files, 1.22 MB)
 SMOKE_INSTALL_OK: ~/.vscode/extensions/escrivivir-co.scriptorium-vscode-extension-0.1.0-scriptorium/
-CI run-id: <pendiente tras push — ver cierre orquestador>
+CI run-id (1º intento FAIL lint sin config): 30157599645
+CI run-id (fix .eslintrc.cjs v0): <pendiente re-push>
 ```
 
 ## Notas
