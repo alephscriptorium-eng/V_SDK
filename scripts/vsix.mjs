@@ -28,11 +28,20 @@
  *   en cmd.exe y el custodio prueba en Windows mientras el CI corre en
  *   ubuntu. Toda la resolución ocurre en node.
  *
+ *   Tampoco se pasa por `npx`: en la máquina del custodio (Windows, node
+ *   22.21.1 sin `node_modules/npm` en el árbol) `npx` aborta con
+ *   `Cannot find module …/node_modules/npm/bin/npx-cli.js` y el empaquetado
+ *   moría DESPUÉS de derivar bien el nombre. `@vscode/vsce` es
+ *   devDependency: se resuelve su `bin` con `createRequire` y se lanza con
+ *   `process.execPath`. Sin shim `.cmd`, sin PATH, sin shell. `npx` queda
+ *   solo como respaldo para el caso de que no esté instalado.
+ *
  * USO
  *   node scripts/vsix.mjs path                 → dist/<publisher>-<name>-<version>.vsix
  *   node scripts/vsix.mjs name                 → <publisher>-<name>-<version>.vsix
  *   node scripts/vsix.mjs ensure-dist          → crea dist/ si falta
  *   node scripts/vsix.mjs package [--local]    → vsce package con el nombre derivado
+ *                                                (--local: exige vsce instalado, sin respaldo npx)
  *   node scripts/vsix.mjs install [--insiders] → code --install-extension <derivado>
  *
  *   `package` borra los `*.vsix` previos de dist/ antes de empaquetar, para
@@ -41,6 +50,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -106,14 +116,57 @@ function run(cmd, args) {
     return r.status ?? 1;
 }
 
+/**
+ * Ruta absoluta al `bin` de `@vscode/vsce` instalado en este árbol, o null.
+ * Se lee del propio manifiesto del paquete: si upstream renombra su bin, esto
+ * lo sigue sin editar nada aquí.
+ */
+function vsceLocalBin() {
+    const require_ = createRequire(import.meta.url);
+    let manifiesto;
+    try {
+        manifiesto = require_.resolve('@vscode/vsce/package.json');
+    } catch {
+        return null;
+    }
+    let bin;
+    try {
+        bin = JSON.parse(fs.readFileSync(manifiesto, 'utf8')).bin;
+    } catch {
+        return null;
+    }
+    const rel = typeof bin === 'string' ? bin : bin && bin.vsce;
+    if (typeof rel !== 'string') {
+        return null;
+    }
+    const abs = path.join(path.dirname(manifiesto), rel);
+    return fs.existsSync(abs) ? abs : null;
+}
+
 function cmdPackage(argv) {
     const dir = ensureDist();
     limpiarVsixPrevios(dir);
     const destino = vsixPath();
-    const usarLocal = argv.includes('--local');
-    const [cmd, args] = usarLocal
-        ? ['vsce', ['package', '--no-dependencies', '--out', destino]]
-        : ['npx', ['--yes', '@vscode/vsce', 'package', '--no-dependencies', '--out', destino]];
+    const exigirLocal = argv.includes('--local');
+    const vsceArgs = ['package', '--no-dependencies', '--out', destino];
+
+    // Preferido siempre: el vsce del árbol, lanzado con este mismo node.
+    const bin = vsceLocalBin();
+    let cmd, args;
+    if (bin) {
+        cmd = process.execPath;
+        args = [bin, ...vsceArgs];
+        console.log(`vsix.mjs: vsce local ${path.relative(REPO_ROOT, bin)}`);
+    } else if (exigirLocal) {
+        die('@vscode/vsce no está instalado en este árbol y se pidió --local (ejecuta `npm ci`)');
+    } else {
+        // Respaldo. Ojo: `npx` falla en instalaciones de node sin
+        // `node_modules/npm` — por eso no es el camino por defecto.
+        cmd = 'npx';
+        args = ['--yes', '@vscode/vsce', ...vsceArgs];
+        console.log('vsix.mjs: @vscode/vsce no instalado — respaldo por npx');
+    }
+
     console.log(`vsix.mjs: empaquetando → ${destino}`);
     const rc = run(cmd, args);
     if (rc !== 0) {
