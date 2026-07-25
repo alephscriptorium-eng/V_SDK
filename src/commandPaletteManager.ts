@@ -54,7 +54,7 @@ export class CommandPaletteManager {
 
         // System Control Commands
         this.registerCommand({
-            id: 'alephscript.showDashboard',
+            id: 'aleph0.showDashboard',
             title: 'Show AlephScript Dashboard',
             category: CommandCategory.SYSTEM,
             description: 'Open the main AlephScript control dashboard',
@@ -64,7 +64,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.systemStatus',
+            id: 'aleph0.systemStatus',
             title: 'System Status Overview',
             category: CommandCategory.SYSTEM,
             description: 'Display comprehensive system status',
@@ -75,7 +75,7 @@ export class CommandPaletteManager {
 
         // Quick Actions
         this.registerCommand({
-            id: 'alephscript.quickStart',
+            id: 'aleph0.quickStart',
             title: 'Quick Start - Launch Everything',
             category: CommandCategory.QUICK_ACTIONS,
             description: 'Start all essential services with one command',
@@ -85,7 +85,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.emergencyStop',
+            id: 'aleph0.emergencyStop',
             title: 'Emergency Stop - Kill All Processes',
             category: CommandCategory.QUICK_ACTIONS,
             description: 'Immediately stop all running processes and services',
@@ -96,7 +96,7 @@ export class CommandPaletteManager {
 
         // Agent Management
         this.registerCommand({
-            id: 'alephscript.agents.startAll',
+            id: 'aleph0.agents.startAll',
             title: 'Start All Agents',
             category: CommandCategory.AGENTS,
             description: 'Launch all configured MCP agents',
@@ -105,7 +105,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.agents.stopAll',
+            id: 'aleph0.agents.stopAll',
             title: 'Stop All Agents',
             category: CommandCategory.AGENTS,
             description: 'Stop all running MCP agents',
@@ -115,7 +115,7 @@ export class CommandPaletteManager {
 
         // UI Management
         this.registerCommand({
-            id: 'alephscript.uis.startAll',
+            id: 'aleph0.uis.startAll',
             title: 'Start All UIs',
             category: CommandCategory.UIS,
             description: 'Launch all configured UI applications',
@@ -124,7 +124,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.uis.openAllBrowsers',
+            id: 'aleph0.uis.openAllBrowsers',
             title: 'Open All UIs in Browser',
             category: CommandCategory.UIS,
             description: 'Open browser tabs for all running UIs',
@@ -135,7 +135,7 @@ export class CommandPaletteManager {
 
         // Socket.IO Commands
         this.registerCommand({
-            id: 'alephscript.sockets.quickConnect',
+            id: 'aleph0.sockets.quickConnect',
             title: 'Quick Connect to Local Socket',
             category: CommandCategory.SOCKETS,
             description: 'Connect to default socket server from configuration',
@@ -145,7 +145,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.sockets.disconnectAll',
+            id: 'aleph0.sockets.disconnectAll',
             title: 'Disconnect All Sockets',
             category: CommandCategory.SOCKETS,
             description: 'Disconnect from all socket servers',
@@ -155,7 +155,7 @@ export class CommandPaletteManager {
 
         // Configuration Commands  
         this.registerCommand({
-            id: 'alephscript.configs.validateAll',
+            id: 'aleph0.configs.validateAll',
             title: 'Validate All Configurations',
             category: CommandCategory.CONFIGS,
             description: 'Run validation on all configuration files',
@@ -164,7 +164,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.configs.backupAll',
+            id: 'aleph0.configs.backupAll',
             title: 'Backup All Configurations',
             category: CommandCategory.CONFIGS,
             description: 'Create timestamped backup of all config files',
@@ -174,7 +174,7 @@ export class CommandPaletteManager {
 
         // Debug & Logs Commands
         this.registerCommand({
-            id: 'alephscript.logs.showMainChannel',
+            id: 'aleph0.logs.showMainChannel',
             title: 'Show Main Log Channel',
             category: CommandCategory.LOGS,
             description: 'Display the main aggregated log channel',
@@ -184,7 +184,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.logs.clearAndRestart',
+            id: 'aleph0.logs.clearAndRestart',
             title: 'Clear Logs & Restart Logging',
             category: CommandCategory.LOGS,
             description: 'Clear all logs and restart the logging system',
@@ -194,7 +194,7 @@ export class CommandPaletteManager {
 
         // Terminal Commands
         this.registerCommand({
-            id: 'alephscript.terminals.showAll',
+            id: 'aleph0.terminals.showAll',
             title: 'Show All AlephScript Terminals',
             category: CommandCategory.TERMINALS,
             description: 'Display all active AlephScript terminals',
@@ -204,7 +204,7 @@ export class CommandPaletteManager {
         });
 
         this.registerCommand({
-            id: 'alephscript.terminals.killAll',
+            id: 'aleph0.terminals.killAll',
             title: 'Kill All Terminals',
             category: CommandCategory.TERMINALS,
             description: 'Close all AlephScript-managed terminals',
@@ -284,7 +284,7 @@ export class CommandPaletteManager {
         this.logger.info('Showing system status overview');
         
         // This would integrate with StatusManager
-        vscode.commands.executeCommand('alephscript.showStatusPanel');
+        vscode.commands.executeCommand('aleph0.showStatusPanel');
     }
 
     private async quickStart(): Promise<void> {
@@ -346,7 +346,7 @@ export class CommandPaletteManager {
     private async startAllAgents(): Promise<void> {
         this.logger.info('Starting all agents');
         // Integration with AgentsTreeDataProvider
-        vscode.commands.executeCommand('alephscript.mcptree.refresh');
+        vscode.commands.executeCommand('aleph0.mcptree.refresh');
     }
 
     private async stopAllAgents(): Promise<void> {
@@ -356,7 +356,7 @@ export class CommandPaletteManager {
 
     private async startAllUIs(): Promise<void> {
         this.logger.info('Starting all UIs');
-        vscode.commands.executeCommand('alephscript.uis.refresh');
+        vscode.commands.executeCommand('aleph0.uis.refresh');
     }
 
     private async openAllBrowsers(): Promise<void> {
@@ -367,7 +367,7 @@ export class CommandPaletteManager {
     private async quickConnectSocket(): Promise<void> {
         this.logger.info('Quick connecting to local socket');
         try {
-            await vscode.commands.executeCommand('alephscript.sockets.connect');
+            await vscode.commands.executeCommand('aleph0.sockets.connect');
         } catch (error) {
             this.logger.error('Quick socket connection failed', { error });
         }
@@ -375,7 +375,7 @@ export class CommandPaletteManager {
 
     private async disconnectAllSockets(): Promise<void> {
         this.logger.info('Disconnecting all sockets');
-        vscode.commands.executeCommand('alephscript.sockets.disconnect');
+        vscode.commands.executeCommand('aleph0.sockets.disconnect');
     }
 
     private async validateAllConfigs(): Promise<void> {
@@ -384,10 +384,10 @@ export class CommandPaletteManager {
         // Check if the command exists before trying to execute it
         try {
             const availableCommands = await vscode.commands.getCommands();
-            if (availableCommands.includes('alephscript.configs.refresh')) {
-                vscode.commands.executeCommand('alephscript.configs.refresh');
+            if (availableCommands.includes('aleph0.configs.refresh')) {
+                vscode.commands.executeCommand('aleph0.configs.refresh');
             } else {
-                this.logger.warn('alephscript.configs.refresh command not yet available, skipping refresh');
+                this.logger.warn('aleph0.configs.refresh command not yet available, skipping refresh');
             }
         } catch (error) {
             this.logger.error('Error checking for configs.refresh command:', error);
@@ -401,12 +401,12 @@ export class CommandPaletteManager {
 
     private async showMainLogChannel(): Promise<void> {
         this.logger.info('Showing main log channel');
-        vscode.commands.executeCommand('alephscript.logs.showChannel', 'main');
+        vscode.commands.executeCommand('aleph0.logs.showChannel', 'main');
     }
 
     private async clearAndRestartLogging(): Promise<void> {
         this.logger.info('Clearing and restarting logging system');
-        vscode.commands.executeCommand('alephscript.logs.clear');
+        vscode.commands.executeCommand('aleph0.logs.clear');
     }
 
     private async showAllTerminals(): Promise<void> {
@@ -444,16 +444,16 @@ export class CommandPaletteManager {
         <div class="section">
             <h2>🎯 Quick Actions</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('alephscript.quickStart')">
+                <button class="command-button" onclick="executeCommand('aleph0.quickStart')">
                     🚀 Quick Start<br><span class="shortcut">Ctrl+Alt+Q</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('alephscript.emergencyStop')">
+                <button class="command-button" onclick="executeCommand('aleph0.emergencyStop')">
                     🛑 Emergency Stop<br><span class="shortcut">Ctrl+Alt+X</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('alephscript.systemStatus')">
+                <button class="command-button" onclick="executeCommand('aleph0.systemStatus')">
                     📊 System Status<br><span class="shortcut">Ctrl+Alt+S</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('alephscript.logs.showMainChannel')">
+                <button class="command-button" onclick="executeCommand('aleph0.logs.showMainChannel')">
                     📋 Main Logs<br><span class="shortcut">Ctrl+Alt+L</span>
                 </button>
             </div>
@@ -462,24 +462,24 @@ export class CommandPaletteManager {
         <div class="section">
             <h2>🤖 Agent Management</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('alephscript.agents.startAll')">▶️ Start All Agents</button>
-                <button class="command-button" onclick="executeCommand('alephscript.agents.stopAll')">⏹️ Stop All Agents</button>
+                <button class="command-button" onclick="executeCommand('aleph0.agents.startAll')">▶️ Start All Agents</button>
+                <button class="command-button" onclick="executeCommand('aleph0.agents.stopAll')">⏹️ Stop All Agents</button>
             </div>
         </div>
 
         <div class="section">
             <h2>🖥️ UI Management</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('alephscript.uis.startAll')">▶️ Start All UIs</button>
-                <button class="command-button" onclick="executeCommand('alephscript.uis.openAllBrowsers')">🌐 Open All in Browser</button>
+                <button class="command-button" onclick="executeCommand('aleph0.uis.startAll')">▶️ Start All UIs</button>
+                <button class="command-button" onclick="executeCommand('aleph0.uis.openAllBrowsers')">🌐 Open All in Browser</button>
             </div>
         </div>
 
         <div class="section">
             <h2>🔌 Socket.IO</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('alephscript.sockets.quickConnect')">🔌 Quick Connect</button>
-                <button class="command-button" onclick="executeCommand('alephscript.sockets.disconnectAll')">🔌 Disconnect All</button>
+                <button class="command-button" onclick="executeCommand('aleph0.sockets.quickConnect')">🔌 Quick Connect</button>
+                <button class="command-button" onclick="executeCommand('aleph0.sockets.disconnectAll')">🔌 Disconnect All</button>
             </div>
         </div>
     </div>

@@ -302,7 +302,7 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
         // Make config files clickable to open in editor
         if (element.resourceUri && !element.children) {
             treeItem.command = {
-                command: 'alephscript.configs.openInEditor',
+                command: 'aleph0.configs.openInEditor',
                 title: 'Open Configuration',
                 arguments: [element.resourceUri, element.configType]
             };

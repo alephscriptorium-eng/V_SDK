@@ -5,7 +5,7 @@
  * con el AlephScript mesh, permitiendo comunicación bidireccional
  * entre el IDE y los servidores MCP.
  * 
- * URL: zigurat.mesh.* / config.socketUrl — sin puerto hardcodeado.
+ * URL: aleph0.mesh.* / config.socketUrl — sin puerto hardcodeado.
  * Sin settings → ⏳ honesto, sin crash.
  * 
  * @épica MCP-CHANNELS-1.0.0
@@ -22,7 +22,7 @@ export interface AracneBotConfig {
     capabilities?: string[];
 }
 
-/** Defaults sin URL — se resuelve desde zigurat.mesh.* en initialize. */
+/** Defaults sin URL — se resuelve desde aleph0.mesh.* en initialize. */
 export const DEFAULT_ARACNE_CONFIG: AracneBotConfig = {
     socketUrl: undefined,
     botName: "vscode-extension",
@@ -68,7 +68,7 @@ export class AracneBotService {
         return AracneBotService.instance;
     }
 
-    /** true si falta zigurat.mesh.* / socketUrl (hostil-omite). */
+    /** true si falta aleph0.mesh.* / socketUrl (hostil-omite). */
     public isPending(): boolean {
         return this.pending;
     }
@@ -99,7 +99,7 @@ export class AracneBotService {
             this.pending = true;
             this.client = undefined;
             console.warn(
-                `[AracneBot] ${ZIGURAT_PENDING} zigurat.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
+                `[AracneBot] ${ZIGURAT_PENDING} aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
             );
             return;
         }
@@ -243,7 +243,7 @@ export class AracneBotService {
     public connect(): void {
         if (this.pending || !this.client) {
             console.warn(
-                `[AracneBot] ${ZIGURAT_PENDING} sin mesh configurado. Configure zigurat.mesh.baseUrl (o host+port).`
+                `[AracneBot] ${ZIGURAT_PENDING} sin mesh configurado. Configure aleph0.mesh.baseUrl (o host+port).`
             );
             return;
         }

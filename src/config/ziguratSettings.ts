@@ -1,5 +1,5 @@
 /**
- * Lectura tipada de settings workspace `zigurat.*`.
+ * Lectura tipada de settings workspace `aleph0.*`.
  * Defaults vacíos en schema → ⏳ honesto (hostil-omite); sin inventar hosts/puertos.
  */
 import * as vscode from 'vscode';
@@ -39,9 +39,9 @@ function readString(value: unknown): string {
     return typeof value === 'string' ? value.trim() : '';
 }
 
-/** Lee configuración zigurat.* (defaults de schema = vacío). */
+/** Lee configuración aleph0.* (defaults de schema = vacío). */
 export function getZiguratSettings(): ZiguratSettings {
-    const cfg = vscode.workspace.getConfiguration('zigurat');
+    const cfg = vscode.workspace.getConfiguration('aleph0');
     return {
         meshHost: readString(cfg.get('mesh.host')),
         meshPort: readNumber(cfg.get('mesh.port')),

@@ -9,7 +9,7 @@ export interface RoomEndpointSettings {
 }
 
 /**
- * Settings para join: zigurat.room.id + mesh endpoint (zigurat.mesh.*).
+ * Settings para join: aleph0.room.id + mesh endpoint (aleph0.mesh.*).
  * Sin room o sin mesh → ⏳ (hostil-omite).
  */
 export function readRoomEndpointSettings(): RoomEndpointSettings {
@@ -30,7 +30,7 @@ export function readRoomEndpointSettings(): RoomEndpointSettings {
             configured: false,
             roomId,
             endpoint: '',
-            reason: `${ZIGURAT_PENDING} zigurat.mesh.baseUrl (o host+port) no configurado`
+            reason: `${ZIGURAT_PENDING} aleph0.mesh.baseUrl (o host+port) no configurado`
         };
     }
     return { configured: true, roomId, endpoint };

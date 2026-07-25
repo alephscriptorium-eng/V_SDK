@@ -158,9 +158,12 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
         const allCommands = await vscode.commands.getCommands(true);
         
         // Filter for our extension commands
-        const extensionCommands = allCommands.filter(cmd => 
-            cmd.startsWith('alephscript.') || 
-            cmd.startsWith('mcpSocketManager.') ||
+        // WP-V15 · prefijo único: todos los comandos de la extensión cuelgan
+        // de `aleph0.`. Se conserva `theatrical.` porque nunca fue nuestro
+        // espacio de nombres declarado (ningún comando `theatrical.*` existe
+        // en el manifiesto; el filtro queda como estaba, sin efecto).
+        const extensionCommands = allCommands.filter(cmd =>
+            cmd.startsWith('aleph0.') ||
             cmd.startsWith('theatrical.')
         );
 
@@ -219,7 +222,7 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
     }
 
     private generateTitleFromId(commandId: string): string {
-        // Convert alephscript.webview.openWebRTC -> "Open WebRTC"
+        // Convert aleph0.webview.openWebRTC -> "Open WebRTC"
         const parts = commandId.split('.');
         const lastPart = parts[parts.length - 1];
         
@@ -231,16 +234,18 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
     }
 
     private getCategoryFromId(commandId: string): string {
-        if (commandId.startsWith('alephscript.webview')) return '🎭 Theater Interfaces';
-        if (commandId.startsWith('alephscript.teatro')) return '🎭 Theater Control';
-        if (commandId.startsWith('alephscript.agents')) return '🤖 Agent Management';
-        if (commandId.startsWith('alephscript.mcptree')) return '🤖 MCP Management';
-        if (commandId.startsWith('alephscript.sockets')) return '🔌 Neural Networks';
-        if (commandId.startsWith('alephscript.configs')) return '⚙️ Configuration';
-        if (commandId.startsWith('alephscript.logs')) return '📡 System Logs';
-        if (commandId.startsWith('alephscript.uis')) return '🖥️ UI Management';
-        if (commandId.startsWith('alephscript.analytics')) return '📊 Analytics';
-        if (commandId.startsWith('mcpSocketManager')) return '🔌 MCP Socket';
+        // WP-V15 · los ids viven bajo el prefijo único `aleph0.`; el segundo
+        // segmento sigue siendo el discriminante de categoría.
+        if (commandId.startsWith('aleph0.mcpSocketManager')) return '🔌 MCP Socket';
+        if (commandId.startsWith('aleph0.webview')) return '🎭 Theater Interfaces';
+        if (commandId.startsWith('aleph0.teatro')) return '🎭 Theater Control';
+        if (commandId.startsWith('aleph0.agents')) return '🤖 Agent Management';
+        if (commandId.startsWith('aleph0.mcptree')) return '🤖 MCP Management';
+        if (commandId.startsWith('aleph0.sockets')) return '🔌 Neural Networks';
+        if (commandId.startsWith('aleph0.configs')) return '⚙️ Configuration';
+        if (commandId.startsWith('aleph0.logs')) return '📡 System Logs';
+        if (commandId.startsWith('aleph0.uis')) return '🖥️ UI Management';
+        if (commandId.startsWith('aleph0.analytics')) return '📊 Analytics';
         if (commandId.startsWith('theatrical')) return '🎭 Theatrical';
         return '⚡ General Commands';
     }

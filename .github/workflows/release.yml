@@ -119,9 +119,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.name }}
-          name: Zigurat ${{ steps.tag.outputs.name }}
+          name: Aleph-0 ${{ steps.tag.outputs.name }}
           body: |
-            ## Zigurat ${{ steps.tag.outputs.name }} (extension-id `scriptorium.zigurat`)
+            ## Aleph-0 (ℵ₀) ${{ steps.tag.outputs.name }} (extension-id `scriptorium.aleph-0`)
 
             - Artifact: `${{ steps.vsix.outputs.name }}`
             - Pipeline de ESTE flujo: `npm ci` → `compile:production` → `vsce package`.
@@ -130,7 +130,7 @@ jobs:
             - Marketplace: **deferred** (DV-10) — not published to VS Marketplace / Open VSX
             - Install: `code --install-extension ${{ steps.vsix.outputs.name }}`
 
-            Guía de prueba: ver `plan/REPORTES/WP-V10-v1-release.md` / `docs/GUIA-PRUEBA-v1.md`.
+            Guía de prueba: ver `plan/REPORTES/WP-V10-v1-release.md` / `docs/GUIA-PRUEBA-v2.md`.
           files: ${{ steps.vsix.outputs.path }}
           draft: false
           prerelease: false

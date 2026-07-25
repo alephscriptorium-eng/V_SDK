@@ -53,7 +53,7 @@ export class HackerStatusBarManager {
             vscode.StatusBarAlignment.Left, 
             200
         );
-        controlButton.command = 'alephscript.hackerControlPanel.toggle';
+        controlButton.command = 'aleph0.hackerControlPanel.toggle';
         controlButton.text = '$(pulse) Neural';
         controlButton.tooltip = '🚀 Open Neural Control Matrix - Manage Webviews';
         controlButton.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
@@ -64,7 +64,7 @@ export class HackerStatusBarManager {
             vscode.StatusBarAlignment.Left, 
             199
         );
-        commandButton.command = 'alephscript.hackerCommandPanel.toggle';
+        commandButton.command = 'aleph0.hackerCommandPanel.toggle';
         commandButton.text = '$(terminal-cmd) Terminal';
         commandButton.tooltip = '⚡ Open Command Terminal - Execute Commands';
         commandButton.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
@@ -75,7 +75,7 @@ export class HackerStatusBarManager {
             vscode.StatusBarAlignment.Left, 
             198
         );
-        configButton.command = 'alephscript.hackerConfigPanel.toggle';
+        configButton.command = 'aleph0.hackerConfigPanel.toggle';
         configButton.text = '$(settings-gear) Config';
         configButton.tooltip = '⚙️ Open Config Matrix - Manage Settings';
         configButton.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
