@@ -12,7 +12,10 @@ tests/**
 coverage/**
 node_modules/**
 *.map
+**/*.map
 scripts/**
+.slot.lock/**
+EVIDENCIA.md
 fixtures/**
 **/*.test.ts
 **/*.spec.ts
