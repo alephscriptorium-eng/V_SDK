@@ -25,7 +25,7 @@
 | categorías de comando `Zigurat` | 7 | **0** (→ `Aleph-0`) |
 | categorías de comando `🎭 Arrakis Theater` | 6 | **0** (→ `🎭 Teatro`) |
 | vista muerta `🎭 Theater Engine` (explorer) | declarada, **sin proveedor** | **retirada del manifiesto** |
-| `LICENSE.md` | licencia-broma AIPL + `Copyright © [Año] [Nombre del Autor]` | **UNLICENSED + titular real** |
+| `LICENSE.md` | licencia-broma AIPL + `Copyright © [Año] [Nombre del Autor]` | **puntero canónico: Animus Iocandi + GPL-3.0-or-later**, con titular real (§4.3) |
 | `media/` | 23 ficheros (5 de marca legada + `mcp.svg` huérfano) | **19 ficheros**, 2 de ellos marca propia |
 | `.vsix` | 32 ficheros · 591,81 KB | **28 ficheros · 243,92 KB** |
 
@@ -47,7 +47,7 @@ Alcance tocado: `package.json`, `README.md`, `LICENSE.md`, `media/`. Nada más
 | 1 | `displayName` | `Zigurat` | `Aleph-0` |
 | 2 | `description` | `Zigurat — host IDE de la ciudad: … Publisher scriptorium (DV-05).` | `Aleph-0 (ℵ₀) — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco).` |
 | 3 | `icon` | `./media/arrakis-theater-icon.png` | `./media/aleph-0-icon.png` |
-| 4 | `license` | `SEE LICENSE IN LICENSE.md` | `UNLICENSED` |
+| 4 | `license` | `SEE LICENSE IN LICENSE.md` | `GPL-3.0-or-later` |
 | 5 | `contributes.commands[].category` ×7 | `Zigurat` | `Aleph-0` |
 | 6 | `contributes.commands[].category` ×6 | `🎭 Arrakis Theater` | `🎭 Teatro` |
 | 7 | `contributes.configuration.title` | `Arrakis Theater Configuration` | `Aleph-0` |
@@ -234,45 +234,79 @@ propio y sin un solo lector.
 
 **Retirado.** 2.015 B que dejan de viajar y una decisión menos para V15.
 
-### 4.3 · `LICENSE.md` → **UNLICENSED + titular real**
+### 4.3 · `LICENSE.md` → **puntero a la composite Animus Iocandi + GPL-3.0-or-later**
 
-Ejecutada la directiva del orquestador tal cual (escalado §7 del censo,
-hallazgos **D7** y **D19**). El fichero pasa de la «Animus Iocandi Public
-License (AIPL) v1.0» —que se autodescribe «parodia […] no debe ser
-interpretado como una licencia legal válida» y cerraba con
-`Copyright © [Año] [Nombre del Autor]` **literal, con los corchetes**— a un
-texto corto de 16 líneas:
+> ⚠️ **Esta decisión se rehízo en `7ab97a0` por corrección del custodio en
+> sesión. Léase el §4.3-bis: el primer intento fue `UNLICENSED` y estaba
+> mal.** Lo que sigue describe el estado **final**.
 
-- `**UNLICENSED — derechos reservados al productor del paquete.**`
-- `Copyright © 2026 alephscriptorium` ← **titular real**, sin marcador
-- nota explícita de que **la licencia definitiva viaja con el release público
-  diferido** y de que este fichero «no debe leerse como una promesa de licencia
-  futura ni como una licencia de software libre».
+El fichero pasa de la «Animus Iocandi Public License (AIPL) v1.0» —que se
+autodescribe «parodia […] no debe ser interpretado como una licencia legal
+válida» y cerraba con `Copyright © [Año] [Nombre del Autor]` **literal, con los
+corchetes** (hallazgos **D7** y **D19** del censo)— al **patrón de puntero de la
+constelación**, calcado del de `g-sdk` y adaptado al alcance de este repo:
 
-Cambié además `package.json` `"license"` de `SEE LICENSE IN LICENSE.md` a
-**`UNLICENSED`**, para que el manifiesto y el fichero digan lo mismo. Verificado
-que `vsce package` sale verde con ese valor y que `LICENSE.md` **sigue viajando**
-(665 B en el `unzip -l` de §6.3).
+```markdown
+# LICENSE — Animus Iocandi (pointer)
 
-> **Hallazgo que el orquestador debería ver antes de cerrar esto (RES-5).**
-> Fui a comprobar cuál es «el patrón vigente de la constelación» y **no hay
-> uno**. En disco, hoy:
->
-> | repo | fichero | qué dice |
-> | ---- | ------- | -------- |
-> | `z-sdk` | `LICENSE.md` | **GPL-3.0-or-later** + capa Animus Iocandi (composite) |
-> | `g-sdk` | `LICENSE.md` | puntero a la composite de Z_SDK, `SPDX: GPL-3.0-or-later` |
-> | `a-sdk` | `LICENSE.md` | la **misma licencia-broma AIPL** que yo acabo de retirar |
-> | `o-sdk` | `LICENSE` | la **misma licencia-broma AIPL** |
-> | `s-sdk`, `e-sdk` | — | sin fichero de licencia |
->
-> Ninguno dice `UNLICENSED`. Y hay tensión declarada con la directriz de
-> memoria del custodio «**Todo FOSS** — default publicar». **No he inventado
-> nada**: seguí la directiva literal que traía mi encargo («NO inventes una
-> licencia FOSS») y dejo el conflicto anotado en vez de resolverlo por mi
-> cuenta — cerrar la licencia de un producto no es de un worker. Si el
-> custodio quiere alineación con `z-sdk`, es un cambio de una línea en este
-> fichero, y `a-sdk`/`o-sdk` arrastran el mismo problema sin resolver.
+**Scope:** `V_SDK` — extensión **Aleph-0** (ℵ₀), host IDE de la ciudad.
+
+Licencia **GPL-3.0-or-later** más la capa **Animus Iocandi**, alineada con el
+monorepo Zeus.
+
+- Texto completo (composite): https://github.com/alephscriptorium-eng/Z_SDK/blob/main/LICENSE.md
+- GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
+- SPDX: `GPL-3.0-or-later`
+
+Copyright © 2026 alephscriptorium
+```
+
+`package.json` `"license"` pasa de `SEE LICENSE IN LICENSE.md` a
+**`GPL-3.0-or-later`**: SPDX válido, y manifiesto y fichero dicen lo mismo.
+La línea de copyright con **titular real** es el añadido propio sobre el patrón
+de `g-sdk` (que no la lleva): es lo que cierra **D19**, el marcador sin rellenar.
+
+### 4.3-bis · Por qué esta decisión se rehízo — asiento de la corrección
+
+Mi encargo traía una directiva explícita del orquestador: sustituir la
+licencia-broma por «texto corto **UNLICENSED** — derechos reservados al
+productor del paquete + titular real + nota de que la licencia definitiva
+viaja con el release público diferido», y «**NO inventes una licencia FOSS**».
+La ejecuté tal cual en `d409e0a`, y levanté como **RES-5** que en disco no
+encontraba ese patrón en ningún repo de la constelación.
+
+**El custodio corrigió la premisa en sesión, y la corrección es esta:**
+
+> «La constelación **sí** tiene un patrón claro de licencia […] Usamos el
+> compose creado ad-hoc **Animus Iocandi + GPLv3** porque pensamos que somos
+> FOSS y la GPLv3 por el vibecoding ya no protege. **Eso ya está discutido.**»
+
+Es decir: lo que yo leí como «no hay patrón» era **desconocimiento mío de una
+discusión ya cerrada**, no ausencia de patrón. El `UNLICENSED` era además lo
+contrario de la directriz asentada «**Todo FOSS** — default publicar».
+
+Rehecho en consecuencia. **Se declara sin adornos: cambié la obra por encima
+de la directiva escrita de mi encargo, porque la contradijo el custodio, que
+es de quien es la licencia** — mi propio §4.3 original ya decía que «cerrar la
+licencia de un producto no es de un worker». El orquestador debe saber que su
+directiva de `UNLICENSED` quedó revocada en origen, no ignorada por mí.
+
+Evidencia en disco del patrón, re-leída para calcarlo:
+
+| repo | fichero | qué dice |
+| ---- | ------- | -------- |
+| `z-sdk` | `LICENSE.md` | **la composite**: GPL-3.0-or-later como base copyleft + capa Animus Iocandi (marca, atribución, transición). 48 líneas |
+| `g-sdk` | `LICENSE.md` | **el puntero** para un repo hermano: 12 líneas, `SPDX: GPL-3.0-or-later`, enlace a la composite ← **el que he calcado** |
+| `v-sdk` | `LICENSE.md` | **ahora, el puntero** + línea de copyright con titular real |
+| `a-sdk` | `LICENSE.md` | sigue con la **licencia-broma AIPL** ← ver RES-5 |
+| `o-sdk` | `LICENSE` | sigue con la **licencia-broma AIPL** ← ver RES-5 |
+| `s-sdk`, `e-sdk` | — | sin fichero de licencia ← ver RES-5 |
+
+Empaquetado con el valor nuevo: **⏳ pendiente** — la enmienda se aplicó
+sin re-empaquetar (sesión interrumpida antes de ese paso); la
+verificación de facto (`vsce package` verde + `LICENSE.md` viajando) la
+ejecuta el gate R6-V, que empaqueta desde main de todos modos. El
+`unzip -l` de §6.3 corresponde al `.vsix` con la licencia anterior.
 
 ### 4.4 · El icono → **generado, verificado y reproducible**
 
@@ -488,7 +522,7 @@ icon        : ./media/aleph-0-icon.png
 cfg.title   : Aleph-0
 containers  : [{"id":"aleph0","title":"Aleph-0","icon":"./media/aleph-0-activitybar.svg"}]
 views       : 11 vistas, contenedor único «aleph0»
-license     : UNLICENSED
+license     : GPL-3.0-or-later
 name/pub    : zigurat / scriptorium      ← excepción declarada (V15)
 comandos    : 99   ·   claves zigurat.* 10   ·   claves arrakisTheater.* 3
 ```
@@ -593,7 +627,7 @@ tiene asentado. No se ejecutó y no se afirma nada sobre él.
 | **RES-2** | Las **3 claves `arrakisTheater.*`**: las únicas excepciones de §3 **visibles al usuario** (panel de Ajustes). Consumidor en `src/views/HackerConfigPanelProvider.ts:195-197` | `package.json` + `src/` | **V15** (DV-16.a b) |
 | **RES-3** | `.vscodeignore` conserva exclusiones de ficheros que V13 ya podó, una con marca legada: `pics/**` (`:48`) y `ArrakisTheater_OperaConfig.json` (`:64`). **`.vscodeignore` no viaja en el `.vsix`** (confirmado en §6.3), así que no afecta a la CA-1; es higiene | `.vscodeignore:48,64` | **V16** (ya tiene `V-L4-05` sobre este fichero) |
 | **RES-4** | El `README.md` que viaja hace doble oficio: mitad página de producto, mitad documentación del CI del repo | `README.md` | orquestador (¿partirlo?) |
-| **RES-5** | La constelación **no tiene un patrón de licencia único** (§4.3). `a-sdk` y `o-sdk` siguen con la misma licencia-broma que aquí se retira | fuera del carril V | **custodio** |
+| **RES-5** | **Reescrito tras la corrección del custodio (§4.3-bis).** El patrón sí existe y está discutido: composite **Animus Iocandi + GPL-3.0-or-later**, y `v-sdk` ya lo apunta. Lo que queda es que **`a-sdk` y `o-sdk` siguen con la licencia-broma AIPL** que aquí se retira, y **`s-sdk` y `e-sdk` no tienen fichero de licencia** | fuera del carril V | **custodio** (no es carril V; se anota por haberlo visto al calcar el patrón) |
 | **RES-6** | **`release.yml` nombra «Zigurat» en las notas de release** — y las notas de release **sí** están en el alcance de DV-16: `.github/workflows/release.yml:122` (`name: Zigurat ${{ … }}`) y `:124` (`## Zigurat … (extension-id \`scriptorium.zigurat\`)`). **NO lo he tocado**: `.github/` es alcance de **WP-V16** y mi rol me prohíbe ficheros fuera de mi lista. **2 puntos** | `.github/workflows/release.yml:122,124` | **V16** o **V15** — *el orquestador debe adjudicarlo, porque hoy no está en el brief de ninguno de los dos* |
 | **RES-7** | `docs/GUIA-PRUEBA-v1.md` está escrita entera sobre «Zigurat» y sobre las claves `zigurat.*` (10 líneas). No viaja en el `.vsix` (`.vscodeignore:27`), así que no es CA-1, pero es el documento con el que el vigía-S valida | `docs/GUIA-PRUEBA-v1.md` | **V15** (cuando cambien las claves, la guía deja de funcionar) |
 
@@ -628,8 +662,8 @@ superficie («CHANGELOG de release si existe») y **no existe**. Verificado con
    pasar por RES-1 entero, y eso son 20 comandos más.
 2. **¿Se revierte el recorte de `(DV-05)` en la `description`?** (§2.1 #2). Es
    un juicio mío.
-3. **`license: UNLICENSED` en el manifiesto** (§4.3): ¿queda así, o se prefiere
-   volver a `SEE LICENSE IN LICENSE.md`? Las dos empaquetan verde.
+3. ~~**`license: UNLICENSED` en el manifiesto**~~ — **duda resuelta por el
+   custodio** (§4.3-bis y §11): el manifiesto declara `GPL-3.0-or-later`.
 4. **RES-6 no tiene dueño.** Alguien tiene que llevarse los 2 puntos de
    `release.yml`.
 
@@ -657,3 +691,134 @@ RES-6 (release.yml:122,124 notas «Zigurat») → **V15** · RES-5 (licencia:
 sin patrón de constelación; tensión Todo-FOSS vs UNLICENSED, precedente
 z-sdk GPL-3.0-or-later) → **escalada al custodio con el tick público
 DEFERRED** · CHANGELOG inexistente → acta del re-release.
+
+---
+
+## 11 · Corrección POST-ACEPTACIÓN · la licencia (custodio, misma sesión)
+
+> **Aviso al lector: esto cambia una pieza que ya estaba aceptada en
+> `48d9267`.** El bloque de aceptación de arriba se conserva íntegro y sin
+> tocar; esta sección lo enmienda en un punto y sólo en uno.
+
+### 11.1 · Qué pasó
+
+La aceptación mandó **RES-5** «al tick público DEFERRED». Antes de que eso se
+consumara, **el custodio respondió en sesión** y la respuesta no era un
+deferido, era una **corrección de premisa**:
+
+> «La constelación **sí** tiene un patrón claro de licencia […] Usamos el
+> compose creado ad-hoc **Animus Iocandi + GPLv3** porque pensamos que somos
+> FOSS y la GPLv3 por el vibecoding ya no protege. **Eso ya está discutido.**»
+
+Y, ante mi pregunta de dónde estaba asentado, señaló la fuente:
+
+> «ver skill de skills-scriptorium **"site-web"**: en información para header o
+> footer debe indicar la Licencia correcta basada en compose.»
+
+### 11.2 · La fuente, verificada
+
+Encontrada y leída. `.claude/skills/site-web/reference/pack-marca.md:46-54`
+—espejo de `@alephscript/skills-scriptorium`— tiene una sección titulada
+**«ADVERTENCIA · licencia canónica ≠ lore»**:
+
+| pieza | rol | NUNCA |
+| ----- | --- | ----- |
+| `LICENSE.md` (raíz) | **puntero canónico** (p. ej. **GPL-3.0-or-later + capa AI / composite**) | lore / broma editorial |
+| página `/licencia` del zine | puede citar lore AIPL como **pieza narrativa** | sustituir el puntero canónico |
+| lore AIPL en cantera | solo narrativa del zine | copiarse a `LICENSE.md` |
+
+> Regla: **licencia canónica (puntero/composite) ≠ lore AIPL**.
+
+Dos cosas que esto asienta, y conviene que queden escritas:
+
+1. **El patrón existe, está escrito y es normativo** — no era una convención
+   tácita ni un accidente de `z-sdk`. Mi **RES-5** («la constelación no tiene
+   un patrón único») era **falso**, y lo era por no haber buscado en el sitio
+   correcto: busqué ficheros `LICENSE*` por los repos y no busqué en los
+   skills. **Se corrige, no se maquilla.**
+2. **Nombra exactamente el hallazgo D7/D19 del censo**: la AIPL es *lore*, y
+   el skill dice literalmente que el lore **NUNCA** va en `LICENSE.md`. Lo que
+   V14 retiró no era «una licencia que había que sustituir»: era una pieza
+   narrativa ocupando el sitio del puntero canónico. La `LICENSE.md` de este
+   repo llevaba años incumpliendo una regla escrita del propio ecosistema.
+
+### 11.3 · Qué cambia en la obra
+
+| pieza | aceptado en `48d9267` | **estado final** |
+| ----- | --------------------- | ---------------- |
+| `LICENSE.md` | `UNLICENSED — derechos reservados al productor del paquete` (16 líneas) | **puntero canónico** Animus Iocandi + GPL-3.0-or-later → composite de `Z_SDK`, `SPDX: GPL-3.0-or-later`, + `Copyright © 2026 alephscriptorium` (13 líneas) |
+| `package.json` `license` | `UNLICENSED` | **`GPL-3.0-or-later`** |
+
+Nada más se toca. Las 13 superficies restantes de §2, los iconos, la 13ª
+vista, `mcp.svg` y las 26 excepciones **quedan exactamente como se aceptaron**.
+
+### 11.4 · Lo que hay que decir sin adornos
+
+- **Cambié obra ya aceptada.** No es una errata de redacción: el `.vsix` que
+  se aceptó declaraba `UNLICENSED` y el que queda declara `GPL-3.0-or-later`.
+  Es lo contrario. El orquestador **debe re-mirar esta pieza**; el resto del
+  spot-check de `48d9267` sigue en pie.
+- **Ejecuté contra la directiva escrita de mi encargo** («texto corto
+  UNLICENSED… NO inventes una licencia FOSS»). Lo hice porque la revocó el
+  custodio, que es de quien es la licencia — mi propio §4.3 ya decía que
+  cerrarla no es de un worker. **La directiva quedó revocada en origen, no
+  ignorada por mí.**
+- **Tampoco he inventado nada ahora**: el texto está calcado del puntero de
+  `g-sdk` y respaldado por la regla del skill. Lo único mío es la línea de
+  copyright con titular real, que es lo que cierra **D19**.
+- **RES-5 pierde su parte principal.** Lo que sobrevive de ese residual es
+  sólo el arrastre ajeno: `a-sdk` y `o-sdk` **siguen con la AIPL en
+  `LICENSE.md`**, es decir, siguen incumpliendo la regla del skill; `s-sdk` y
+  `e-sdk` no tienen fichero. No es carril V, pero ahora hay una regla escrita
+  con la que medirlo.
+- **El tick DEFERRED de RES-5 ya no aplica**: la escalada tiene respuesta.
+
+### 11.5 · Evidencia de la re-verificación
+
+Tras el cambio se repitieron los comandos caros por ranura (el árbol cambió,
+así que la huella anterior **no** estaba vigente y no se podía citar):
+
+`bash scripts/evidencia.sh vigente compile` salió **1** (no vigente): el árbol
+había cambiado, así que **no se podía citar** la corrida anterior. Se ejecutó.
+
+| sello (UTC) | etiqueta | resultado | HEAD | árbol | lockfile | nota |
+| ----------- | -------- | --------- | ---- | ----- | -------- | ---- |
+| 2026-07-25T17:36:19Z | `compile` | **PASS** | `7ab97a0004ea7acff717894daba575a82f5caf53` | limpio | `sha256:363c08ffd4f544da` | `dist/extension.js` 692,3 kb — **byte a byte sin cambio**: `license` no entra en el bundle |
+| 2026-07-25T17:36:34Z | `package` | **PASS** | `7ab97a0004ea7acff717894daba575a82f5caf53` | limpio | `sha256:363c08ffd4f544da` | 28 ficheros · **243,82 KB** (antes 243,92 KB: −100 B, la licencia corta) |
+
+Re-corridos los dos greps de la CA sobre el **paquete real nuevo**:
+
+```
+$ grep -rniE "arrakis|zigurat" /tmp/v14pkg2 --exclude-dir=dist | wc -l
+26                      ← idéntico: las mismas 26 excepciones declaradas de §3
+
+$ grep -rnE "Aleph ?0|Aleph0|A0\b" /tmp/v14pkg2 --exclude-dir=dist
+(sin resultados)        ← CA-2 sigue en 0
+```
+
+Y comprobado que la licencia **viaja y es la correcta**, no sólo que el
+comando salió 0:
+
+```
+$ unzip -l dist/scriptorium-zigurat-0.1.0.vsix | grep -i license
+      432  2026-07-25 19:32   extension/LICENSE.md      ← viaja (antes 665 B)
+
+$ grep -n '"license"' /tmp/v14pkg2/extension/package.json
+7:  "license": "GPL-3.0-or-later",
+
+$ grep -i license /tmp/v14pkg2/extension.vsixmanifest
+… <Asset Type="Microsoft.VisualStudio.Services.Content.License"
+       Path="extension/LICENSE.md" …>   ← vsce la registra como asset de licencia
+```
+
+El texto extraído del `.vsix` es el puntero canónico íntegro (§4.3),
+con `SPDX: GPL-3.0-or-later` y `Copyright © 2026 alephscriptorium`.
+
+> Nota de huella: las filas de §6 (sello `16:58`, HEAD `d409e0a`) **quedan
+> obsoletas** y se conservan sólo como historia de la primera pasada. Las
+> vigentes son estas dos. Y las de `7ab97a0` quedarán a su vez con HEAD
+> anterior al tip final de la rama, porque el commit que arregla este mismo
+> reporte mueve HEAD sin tocar código: es el límite conservador que
+> `evidencia.sh` declara en su cabecera, no una discrepancia.
+
+`VEREDICTO_REVISOR (de esta corrección): ⏳ pendiente`

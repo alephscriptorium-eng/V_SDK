@@ -1,17 +1,13 @@
-# LICENCIA
+# LICENSE — Animus Iocandi (pointer)
 
-**UNLICENSED — derechos reservados al productor del paquete.**
+**Scope:** `V_SDK` — extensión **Aleph-0** (ℵ₀), host IDE de la ciudad.
+
+Licencia **GPL-3.0-or-later** más la capa **Animus Iocandi**, alineada con el
+monorepo Zeus.
+
+- Texto completo (composite):  
+  https://github.com/alephscriptorium-eng/Z_SDK/blob/main/LICENSE.md
+- GPL-3.0: https://www.gnu.org/licenses/gpl-3.0.html
+- SPDX: `GPL-3.0-or-later`
 
 Copyright © 2026 alephscriptorium
-
-Este paquete se distribuye **sin licencia de uso otorgada**. No se concede
-permiso para usar, copiar, modificar ni redistribuir la obra más allá de lo
-que la ley conceda por defecto. Todos los derechos quedan reservados al
-titular indicado arriba.
-
-La licencia definitiva viaja con el **release público**, que está diferido:
-hasta que ese release exista, este fichero es el único término aplicable y
-no debe leerse como una promesa de licencia futura ni como una licencia de
-software libre.
-
-Sin garantía de ningún tipo, expresa o implícita.
