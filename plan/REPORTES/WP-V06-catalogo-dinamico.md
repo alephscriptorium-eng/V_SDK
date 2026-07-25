@@ -5,7 +5,7 @@
 | agente | worker-V |
 | fecha | 2026-07-25 |
 | rama | `wp/v06-catalogo-dinamico` |
-| commits | `4157e72` |
+| commits | _(tip post-push)_ |
 | eje(s) CA | hostil-omite (sin launcher → ⏳) |
 | riesgo de revisión | `independiente` |
 | revisor distinto del worker | `sí` |
@@ -16,106 +16,96 @@
 - Cliente MCP Streamable HTTP bajo `src/launcher/` hacia contrato
   `@zeus/mcp-launcher`: resources `launcher://info|catalog|ports` + tools
   `list_capabilities` / `resolve_capability` (vía `@modelcontextprotocol/sdk`
-  ya declarado; **no** se añadió dep npm `@zeus/mcp-launcher` — es el
-  servidor remoto, no librería cliente).
-- Puerto/host leídos de settings esperados `zigurat.launcherPort` /
-  `zigurat.launcherHost` (schema V05 aún no en main → sin setting = ⏳
-  `pending_settings`, **cero puerto fijo nuevo inventado**).
-- Árbol MCP (`mcpTreeView`) y panel tasks alimentados por
-  `CatalogService` (poll 15s + refresh comando); sin launcher → nodos/tareas
-  ⏳ honestos, no error fatal de activación.
-- `DEFAULT_TASKS` degradado a `FALLBACK_DEFAULT_TASKS_MARKED` (marca
-  explícita); solo si no hay catálogo ni `tasks.json`.
-- Wiring mínimo en `extensionBootstrap` (arranca feed; no toca lane V05).
+  ya declarado; **no** se añadió dep npm `@zeus/mcp-launcher`).
+- Settings canónicos V05: `zigurat.launcher.port` + `zigurat.launcher.host`
+  vía `getZiguratSettings()` (`src/config/ziguratSettings.ts`); sin setting →
+  ⏳ `pending_settings`, **cero host/puerto inventado**.
+- Árbol MCP y tasks alimentados por `CatalogService`; sin launcher → ⏳.
+- `DEFAULT_TASKS` → `FALLBACK_DEFAULT_TASKS_MARKED`.
+- **Devolución orquestador:** rebase `origin/main` (V05 ✅) + corrección keys
+  flat `launcherPort`/`launcherHost` → nested `launcher.port`/`launcher.host`.
 
 ## Archivos tocados
 
-- `src/launcher/types.ts` — creado: snapshot / keys zigurat.*
-- `src/launcher/settings.ts` — creado: lectura settings fail-closed
-- `src/launcher/LauncherCatalogClient.ts` — creado: cliente MCP
-- `src/launcher/CatalogService.ts` — creado: feed singleton + poll
-- `src/launcher/index.ts` — creado: reexport
-- `src/treeViews/mcpTreeView.ts` — modificado: árbol desde catálogo
-- `src/views/HackerTasksPanelProvider.ts` — modificado: catálogo + fallback marcado
-- `src/core/extensionBootstrap.ts` — modificado: start CatalogService + refresh
-- `plan/REPORTES/WP-V06-catalogo-dinamico.md` — creado: este reporte
+- `src/launcher/types.ts` — keys `zigurat.launcher.port` / `.host`
+- `src/launcher/settings.ts` — lectura vía helper V05; host vacío = ⏳
+- `src/launcher/LauncherCatalogClient.ts` — mensajes con keys canónicas
+- `src/launcher/CatalogService.ts` / `index.ts` — feed (sin cambio keys)
+- `src/treeViews/mcpTreeView.ts` — árbol desde catálogo
+- `src/views/HackerTasksPanelProvider.ts` — catálogo + fallback marcado
+- `src/core/extensionBootstrap.ts` — start CatalogService
+- `plan/REPORTES/WP-V06-catalogo-dinamico.md` — este reporte
 
 ## Evidencia
 
 ```text
-identidad-raiz: PASS (preflight despacho)
-PAUSED=false (OUT_DIR C:/S_LAB/vigilancia/v)
+identidad-raiz: PASS
+PAUSED=false
 
-npm run compile
-  dist/extension.js  5.1mb
-  Done in ~700ms–5s (verde)
+git rebase origin/main → OK (base 5c11b85 aceptar WP-V05 ✅)
 
-SMOKE sin launcher (puerto 59999 sin listener):
-  SMOKE_LAUNCHER_ABSENT_OK: fetch failed
-  → path de cliente captura error → snapshot pending_launcher / ⏳
-    (no throw fatal al caller UI)
+grep keys erróneas en src/launcher:
+  (vacío — cero launcherPort/launcherHost)
 
-Settings sin zigurat.launcherPort:
-  → pending_settings + mensaje con key esperada
-  → servers[] vacío (no inventa flota 3001–3066)
+keys canónicas en types.ts:
+  ZIGURAT_LAUNCHER_PORT_KEY = 'zigurat.launcher.port'
+  ZIGURAT_LAUNCHER_HOST_KEY = 'zigurat.launcher.host'
 
-package.json: sin cambios a contributes.configuration / zigurat.*
-  (lane V05). Sin dep nueva @zeus/mcp-launcher.
+settings.ts lee:
+  getZiguratSettings() → launcher.port / launcher.host
+  (mismo path que package.json contributes.configuration V05)
+
+npm run compile → verde (ver tip)
+
+SMOKE sin launcher (:59999):
+  SMOKE_LAUNCHER_ABSENT_OK: fetch failed → pending_launcher / ⏳
+
+schema main (lectura):
+  "zigurat.launcher.host" / "zigurat.launcher.port" presentes tras V05
 ```
 
-### Keys settings documentadas (⏳ hasta merge V05)
+### Keys settings (canónicas V05)
 
 | key | uso |
 | --- | --- |
-| `zigurat.launcherPort` | requerido para conectar |
-| `zigurat.launcherHost` | opcional; si hay port y no host → `127.0.0.1` |
+| `zigurat.launcher.port` | requerido (null/ausente → ⏳) |
+| `zigurat.launcher.host` | requerido (vacío → ⏳; no default 127.0.0.1) |
 
 ## Evidencia de riesgo y contrarrevisión
 
 - `CASOS_ADVERSARIALES`:
-  - `[automatizado]` launcher ausente (connect a :59999) →
-    `SMOKE_LAUNCHER_ABSENT_OK: fetch failed` (no flota inventada)
-  - `[manual / código]` sin `zigurat.launcherPort` → `pending_settings`
+  - `[automatizado]` launcher ausente → fetch failed / ⏳
+  - `[código]` sin `zigurat.launcher.port` o host vacío → `pending_settings`
   - `[sin verificar]` launcher z-sdk vivo con inventario en caliente
-    (requiere runtime z-sdk local; no arrancado en este WP)
-- `DEPENDENCIAS_DIRECTAS_VERIFICADAS`:
-  `@modelcontextprotocol/sdk` (ya en package.json) para Client +
-  StreamableHTTPClientTransport. Contrato leído SOLO LECTURA en
-  `C:/S_LAB/z-sdk/packages/mesh/mcp-launcher`.
-- `INSTALACION_LIMPIA`: `npm ci` en worktree → OK (compile posterior verde)
+- `DEPENDENCIAS_DIRECTAS_VERIFICADAS`: `@modelcontextprotocol/sdk` + helper
+  `src/config/ziguratSettings.ts` (V05, solo lectura/consumo)
+- `INSTALACION_LIMPIA`: npm ci previo en worktree; compile post-fix
 - `TEST_AUTOMATIZADO_VS_EVIDENCIA_MANUAL`:
-  - Automatizado: `npm run compile` verde; smoke connect ausente
-  - Manual: UI tree/tasks con/sin launcher en VS Code = ⏳ sin verificar
-    en este agente (sin host IDE)
+  - Automatizado: compile + smoke ausente + grep keys
+  - Manual UI: ⏳ sin verificar (sin host IDE)
 - `VEREDICTO_REVISOR`: `⏳ pendiente de revisor distinto`
 
-## Auto-revisión (PRACTICAS del mundo — con honestidad)
+## Auto-revisión
 
-- [x] Diff solo dentro de ALCANCE_DIFF V06 (launcher + treeViews + tasks +
-      bootstrap wiring; sin V05 files / sin schema zigurat.*)
-- [x] Cero copia de árboles ajenos
-- [x] Sellos con fuente; z-sdk solo lectura
-- [x] Sin promesa de flota sin launcher
-- [x] Eje hostil-omite: sin launcher → ⏳
-- [x] Gate compile ejecutado de verdad
-- [x] Commits convencionales (post-commit)
-- [x] Riesgo independiente dejado a revisor distinto
-- [x] Automatizado vs manual separados arriba
+- [x] Diff V06 + consumo schema V05 (sin reeditar package.json / lane V05)
+- [x] Keys alineadas a `zigurat.launcher.port` / `zigurat.launcher.host`
+- [x] Hostil-omite: sin settings/launcher → ⏳
+- [x] Compile verde
+- [x] Rebase main con V05
 
 ## Hallazgos fuera de alcance
 
-- Schema `zigurat.*` aún no en main (V05 paralelo) — documentado, no inventado.
-- Jest soft / README-SCRIPTORIUM: sin impacto directo en este WP.
-- Smoke con launcher z-sdk vivo: ⏳ (runtime no levantado aquí).
+- Smoke con launcher z-sdk vivo: ⏳
 
 ## Dudas / bloqueos
 
-- Ninguno bloqueante. Dep implícita: merge V05 para que el setting exista
-  en contributes.configuration; hasta entonces el usuario puede setear
-  `zigurat.launcherPort` en settings.json user/workspace y el cliente lo lee.
+Ninguno.
 
 ---
 
 ## Revisión del orquestador
 
-_(la rellena el orquestador: aceptado ✅ / devuelto con lista numerada)_
+### Devolución 1 (2026-07-25)
+Keys flat incorrectas → corregidas a nested canónicas V05 tras rebase main.
+
+_(aceptado ✅ / nueva devolución — orquestador)_

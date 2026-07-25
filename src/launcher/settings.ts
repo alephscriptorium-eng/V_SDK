@@ -1,17 +1,17 @@
-import * as vscode from 'vscode';
+import { getZiguratSettings } from '../config/ziguratSettings';
 import {
     ZIGURAT_LAUNCHER_HOST_KEY,
     ZIGURAT_LAUNCHER_PORT_KEY
 } from './types';
 
 /**
- * Lectura de settings zigurat.* para el launcher.
+ * Lectura de settings zigurat.launcher.* (schema canónico V05).
  *
- * Keys esperadas (WP-V05 / schema aún puede no estar en main):
- * - zigurat.launcherPort (number, requerido para conectar)
- * - zigurat.launcherHost (string, opcional; si hay puerto y no host → 127.0.0.1)
+ * Keys:
+ * - zigurat.launcher.port (number|null, requerido)
+ * - zigurat.launcher.host (string, requerido; vacío = ⏳)
  *
- * Sin puerto configurado → no se inventa flota ni puerto fijo nuevo.
+ * Sin inventar host/puerto por defecto.
  */
 export interface LauncherEndpointSettings {
     configured: boolean;
@@ -21,30 +21,24 @@ export interface LauncherEndpointSettings {
 }
 
 export function readLauncherEndpointSettings(): LauncherEndpointSettings {
-    const cfg = vscode.workspace.getConfiguration('zigurat');
-    const portRaw = cfg.get<unknown>('launcherPort');
-    const hostRaw = cfg.get<unknown>('launcherHost');
+    const { launcherHost, launcherPort } = getZiguratSettings();
 
-    const port =
-        typeof portRaw === 'number' && Number.isFinite(portRaw) && portRaw > 0
-            ? Math.floor(portRaw)
-            : typeof portRaw === 'string' && /^\d+$/.test(portRaw.trim())
-              ? Number(portRaw.trim())
-              : undefined;
-
-    if (port === undefined) {
+    if (launcherPort === undefined) {
         return {
             configured: false,
-            reason: `⏳ setting ausente: ${ZIGURAT_LAUNCHER_PORT_KEY} (schema V05; sin inventar puerto)`
+            reason: `⏳ setting ausente: ${ZIGURAT_LAUNCHER_PORT_KEY} (sin inventar puerto)`
         };
     }
 
-    const host =
-        typeof hostRaw === 'string' && hostRaw.trim().length > 0
-            ? hostRaw.trim()
-            : '127.0.0.1';
+    if (!launcherHost) {
+        return {
+            configured: false,
+            port: launcherPort,
+            reason: `⏳ setting ausente: ${ZIGURAT_LAUNCHER_HOST_KEY} (sin inventar host)`
+        };
+    }
 
-    return { configured: true, host, port };
+    return { configured: true, host: launcherHost, port: launcherPort };
 }
 
 export function launcherMcpUrl(host: string, port: number): string {

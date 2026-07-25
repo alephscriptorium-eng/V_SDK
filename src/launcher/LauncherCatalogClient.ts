@@ -43,7 +43,7 @@ export class LauncherCatalogClient {
         if (!endpoint.configured || endpoint.port === undefined || !endpoint.host) {
             return emptyPendingSnapshot(
                 'pending_settings',
-                endpoint.reason || '⏳ zigurat.launcherPort no configurado'
+                endpoint.reason || '⏳ zigurat.launcher.port no configurado'
             );
         }
 
@@ -130,7 +130,7 @@ export class LauncherCatalogClient {
             return {
                 ok: false,
                 pending: true,
-                statusMessage: endpoint.reason || '⏳ zigurat.launcherPort no configurado'
+                statusMessage: endpoint.reason || '⏳ zigurat.launcher.port no configurado'
             };
         }
 
