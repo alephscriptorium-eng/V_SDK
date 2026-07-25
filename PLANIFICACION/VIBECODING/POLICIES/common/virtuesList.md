@@ -1,2 +1,0 @@
-
-## Virtues List Updates

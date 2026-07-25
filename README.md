@@ -9,8 +9,9 @@ contract-compliant lista para probar.
 
 Semilla de producto importada desde
 `escrivivir-co/vscode-alephscript-extension` @ `integration/beta/scriptorium`
-(DV-03: historial preservado; tag `import/scriptorium-*`). README legacy de
-la extensión: [`README-LEGACY-EXTENSION.md`](./README-LEGACY-EXTENSION.md).
+(DV-03: historial preservado; tag `import/scriptorium-*`). El README legado
+de la extensión se podó en WP-V13; queda en el historial y en el tag
+`archive/pre-poda-ola-f`.
 
 ## Fronteras
 

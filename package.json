@@ -1492,7 +1492,6 @@
     "deploy:insiders": "npm run build:local && npm run uninstall:insiders && npm run install:insiders",
     "dev:insiders": "npm run compile && npm run deploy:insiders",
     "debug:view": "code --extensionDevelopmentPath=. --new-window",
-    "unix:code": "sh ./setup-vscode-path",
     "dev:tools": "echo 'Ctrl+Shift+I'",
     "skills:sync": "alephscript-skills-sync --runtime claude",
     "package:v1": "npm run compile:production && node scripts/vsix.mjs package",
