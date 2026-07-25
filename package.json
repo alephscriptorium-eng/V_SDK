@@ -4,7 +4,7 @@
   "description": "Aleph-0 (ℵ₀) — host IDE de la ciudad: consumidor opt-in del contrato Z (identidad, catálogo MCP, autoría, elenco).",
   "version": "0.1.0",
   "publisher": "scriptorium",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/alephscriptorium-eng/V_SDK.git"
