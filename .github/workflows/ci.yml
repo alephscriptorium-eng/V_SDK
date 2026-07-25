@@ -49,21 +49,35 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Lint (v0 placeholder)
-        run: npm run lint --if-present
+      # WP-V16 (c) · V-L1-03 — antes era `node -e "console.log(…)"`: salía 0
+      # siempre, o sea un verde por construcción. Ahora corre eslint de verdad
+      # sobre `src` y este paso PUEDE fallar. Las 8 reglas que el legado viola
+      # están en `warn` con su recuento en .eslintrc.cjs; el resto son error.
+      - name: Lint (eslint · src)
+        run: npm run lint
 
       - name: Compile production
         run: npm run compile:production
 
-      - name: Test (legado — soft)
+      # WP-V16 (a) · V-L1-01 — el probe importa la pieza real compilada; si el
+      # artefacto falta o está obsoleto, falla (ya no hay espejo de repuesto).
+      - name: Probe V08 (parser real)
+        run: npm run probe:v08
+
+      # `continue-on-error`: el resultado de este paso NO condiciona el job.
+      # Declarado también en README §Qué verifica el CI.
+      - name: Test (legado — soft, no condiciona el resultado)
         continue-on-error: true
         run: npm test --if-present
 
       - name: Package v1 .vsix
         run: npm run package:v1
 
+      # WP-V16 (b) · V-L1-02 — glob: el nombre lo deriva scripts/vsix.mjs de
+      # package.json. Subir la versión ya no rompe este paso.
       - name: Upload .vsix artifact
         uses: actions/upload-artifact@v4
         with:
-          name: scriptorium-zigurat-v1-vsix
-          path: dist/scriptorium-zigurat-0.1.0.vsix
+          name: zigurat-vsix
+          path: dist/*.vsix
+          if-no-files-found: error
