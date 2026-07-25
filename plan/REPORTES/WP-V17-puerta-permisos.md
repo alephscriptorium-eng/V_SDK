@@ -327,9 +327,10 @@ elevo como **V17-B**.
   `parseEditorInfo.ts`, `types.ts` y el test, en `strict: true`, sin
   errores. Para mis dos ficheros eso es typecheck real; para el resto del
   árbol no afirmo nada.
-- **Corregir el consumidor de UI** (`mcpTreeView.ts`, residual R-1) y
-  **el hallazgo V17-A**: fuera de alcance. Los dejo listados, no
-  arreglados; tocarlos rompería la disjunción del lote.
+- **El hallazgo V17-A**: fuera de alcance. Lo dejo listado, no
+  arreglado; tocarlo rompería la disjunción del lote. *(La mención a
+  «corregir el consumidor de UI por R-1» que iba aquí se retiró en la
+  aceptación: R-1 quedó refutado — ver §11.)*
 - **`lint` con reglas de V16:** ⏳ no verificable aquí. `npm run lint` es
   hoy un `console.log` placeholder y `.eslintrc.cjs` tiene
   `ignorePatterns: ['**/*']`. Escribí el test en estilo conservador
@@ -343,7 +344,8 @@ elevo como **V17-B**.
 ## 10 · Hallazgos elevados (no arreglados aquí)
 
 - **V17-A · `extractMotivoFromDeny` produce un motivo que no existe en el
-  catálogo.** `parseEditorInfo.ts:169-171` recorta el prefijo
+  catálogo.** `parseEditorInfo.ts:194-196` (numeración del árbol
+  entregado `02467b5`; en `1c90c43` era `:169-171`) recorta el prefijo
   `'linea-editor.reparto_'`, así que `rule: 'linea-editor.reparto_requerido'`
   devuelve **`requerido`**, no `reparto_requerido`. Ese valor no está en
   los ocho motivos, y al pasarlo por `representMotivoDeny` la UI dirá
@@ -363,16 +365,18 @@ elevo como **V17-B**.
 
 ## 11 · Residuales
 
-- **R-1 · El árbol dice `=ON` de lo que nadie declaró.**
-  `mcpTreeView.ts:309-315` sólo mira `gate.repartoRequired`, así que con
-  `required` no declarado mostrará `ZEUS_LINEA_EDITOR_REQUIRE_REPARTO=ON`
-  / `reparto_required` — presentando como declarado lo que es una
-  asunción del IDE. El ⏳ sí llega al usuario por el `statusMessage` de
-  `pending_info`, así que **el estado no es silencioso**, pero las dos
-  superficies no dicen lo mismo. Arreglo natural: un campo tipo
-  `repartoRequiredDeclared` en `VisibleGate` + rama en el árbol. Exige
-  `types.ts` **y** `mcpTreeView.ts`; el segundo está fuera de mi alcance,
-  y añadir el campo sin consumidor sería código muerto. **No lo hice.**
+- **R-1 · CERRADO POR ESTE WP** *(reescrito en la aceptación; ambas
+  contrarrevisiones refutaron el enunciado original)*. El camino que
+  R-1 denunciaba es inalcanzable: `mcpTreeView.ts:289` retorna temprano
+  si `availability !== 'ready'`, y con `required` no declarado el fix
+  produce `ok:false` → `pending_info`, así que `:309-315` nunca se
+  evalúa en ese escenario; en el camino `ready`, tras el fix,
+  `repartoRequired === requireRepartoLive` exactamente. El residual
+  honesto que queda: *el `gate` con `repartoRequired` asumido se publica
+  en el snapshot `pending_info` (`AuthorshipService.ts:183`); hoy ningún
+  consumidor lo lee sin comprobar antes `availability`, pero un
+  consumidor futuro que lo hiciera vería la asunción como declaración.*
+  No se eleva al custodio (se retira la parte correspondiente de §12).
 - **R-2 ·** Si faltan `motivos_deny` **y** `required` a la vez, gana el
   `pendingReason` de `motivos_deny` (se comprueba antes). Un solo motivo,
   determinista y con test; no se acumulan las dos causas en el mensaje.
@@ -889,3 +893,29 @@ fuerte a favor del WP— pero fue por suerte: la primera pasada declaró
   los campos de los que ya depende el IDE.
 - **Higiene del swarm:** V17-B (`git rm -r --cached coverage/`) y §G (un
   escritor por worktree).
+
+---
+
+## Aceptación del orquestador (2026-07-25 · sesión debug)
+
+Condiciones documentales de ambas contrarrevisiones **aplicadas** en
+este commit (§10 cita `:194-196` · §11 R-1 reescrito como cerrado ·
+§9 mención retirada). Respuestas a §12:
+
+1. **Precio de `ok:false`: ACEPTADO.** Es la cláusula transversal 1 del
+   contrato aplicada; ambas contrarrevisiones lo verificaron como
+   load-bearing (`AuthorshipService.ts:174-188`). Cambio de
+   comportamiento declarado y asumido.
+2. **V17-A → cola Z primero** (el contrato debe fijar la forma del
+   payload de denegación y la clave `reparto_required`, hoy no citables
+   — hallazgo C-2/H-2 de las contrarrevisiones). Nota corta a Z en el
+   cierre de ola; el recorte del prefijo en el IDE espera a esa fijación.
+3. **V17-B → lo adjudica el censo V12 y lo ejecuta V13** (des-trackear
+   `coverage/` con acta).
+
+Incidente de doble contrarrevisión: registrado en la estación V
+(`anomalias.log` 17:55 + corrección 18:02). Lecciones a wishlist de la
+librería: supuesto un-escritor-por-worktree explícito en
+`evidencia.sh` · identidad git por sesión para atribución (H-7 de V16).
+
+VEREDICTO FINAL: **✅ ACEPTADO** (pendiente de merge por el orquestador).
