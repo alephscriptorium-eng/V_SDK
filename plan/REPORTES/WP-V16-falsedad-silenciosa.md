@@ -11,8 +11,9 @@
 | base | `1c90c43` |
 | eje(s) CA | V-L1-01 · V-L1-02 · V-L1-03 · V-L1-04 · V-L1-05 |
 | riesgo de revisión | `independiente` |
-| revisor distinto del worker | pendiente |
+| revisor distinto del worker | **contrarrevisor-V** ✅ — ver §Contrarrevisión |
 | estado propuesto | listo para revisión |
+| VEREDICTO_REVISOR | **PASS** sin condiciones de bloqueo |
 
 **Enmienda que manda sobre el brief:**
 `C:/S_LAB/vigilancia/v/swarm/NOTA-VIGIA-lote-V12-V16-V17.md` §1. El criterio
@@ -637,4 +638,252 @@ quiere trazabilidad por agente, hace falta una identidad por sesión (p. ej.
 
 ---
 
-VEREDICTO_REVISOR: ⏳ pendiente
+VEREDICTO_REVISOR: **PASS** — contrarrevisión independiente (ver §Contrarrevisión). Sin condiciones de bloqueo; fusión con V17 verificada en verde ejecutando el probe contra el parser de `main`.
+
+---
+
+## Contrarrevisión
+
+| dato | valor |
+| ---- | ----- |
+| agente | contrarrevisor-V (distinto del worker) |
+| fecha | 2026-07-25 |
+| objeto | `1c90c43..3ed5c16` · obra `94653cf` + `28bb869` · reportes `5463810` + `3ed5c16` |
+| árbol al empezar | limpio · ranura libre · **sin escritor concurrente** (comprobado en `.slot.log` antes de tocar nada, lección de WP-V17) |
+| **veredicto** | **PASS** — sin condiciones de bloqueo |
+
+### A · La comprobación que ninguno de los dos workers podía hacer solo
+
+`main` avanzó a `2899732` **mientras yo revisaba**: WP-V17 ya está fusionado.
+Eso convierte la pregunta cruzada del lote en algo comprobable de verdad, y
+era el punto caliente nº 1 del encargo. No lo razoné: lo ejecuté.
+
+**Sustituí el parser de este worktree por el de `main` (V17) y corrí el probe.**
+Vía A de la nota del vigía §1 — temporal, revertida, verificada:
+
+```
+blob v16 (pre-V17)  : e1a56230477fb2ef4dfca92b88576e605eb25128
+blob main (V17)     : 50416186df499f531831fa503423f23316cd1023
+$ git cat-file blob 5041618 > src/mutation/parseEditorInfo.ts
+$ bash scripts/slot.sh run contrarrev-v16-merge -- npm run probe:v08
+        …
+        WP-V08 probe PASS (automatizado · pieza real de src/mutation/parseEditorInfo.ts)
+        rc=0
+$ git checkout -- src/mutation/parseEditorInfo.ts
+blob restaurado     : e1a56230477fb2ef4dfca92b88576e605eb25128
+$ git status --porcelain      → vacío
+```
+
+**El probe de V16 pasa en verde contra el parser de V17.** La fusión es
+compatible en cualquier orden, y el diseño del §3 —leer la política de la
+pieza real en vez de clavarla— **funciona de hecho, no solo sobre el papel**:
+
+| parser importado | nota que imprime el probe | resultado |
+| ---------------- | ------------------------- | --------- |
+| V16 (pre-V17, `e1a5623`) | `repartoRequired=false` | **PASS** |
+| V17 (`5041618`, el de `main`) | `repartoRequired=true` (derivado: `null !== false`) | **PASS** |
+
+La duda 3 del §11 queda **resuelta afirmativamente**, y el aviso FA-1 que yo
+mismo levanté al contrarrevisar V17 —«el probe se romperá en la fusión por
+forma»— queda **cerrado**: no se rompe, porque este WP reescribió los asserts
+a la forma anidada antes de que llegara el momento. Esa era exactamente la
+trampa, y el worker la vio y la desactivó (§3 «La trampa de la FORMA»).
+
+### B · ¿Muerden los asserts? Una mutación más dura que la del worker
+
+El worker demostró el rojo invirtiendo el default de `visible` (1 de 55). Esa
+mutación es válida pero **suave**: toca una línea que ningún espejo había
+divergido. La pregunta que de verdad importa en este WP es otra: *si alguien
+reintroduce el bug del espejo, ¿lo caza el probe?*
+
+Apliqué **M-A**: reintroducir textualmente la reimplementación divergida,
+`const requireRepartoLive = !!g.reparto_required` (el `:84` del espejo
+retirado), sustituyendo las dos rutas + `null` de la pieza real.
+
+```
+FAIL: dato por gate.reparto.required → true (ruta que el espejo ignoraba)
+FAIL: reparto_required no-booleano → null (no se coacciona con !!)
+FAIL: ausencia total del dato → requireRepartoLive null
+FAIL: tipo inválido se trata como ausencia
+WP-V08 probe FAIL (4)
+```
+
+Cuatro asserts en rojo, **incluido el que lleva el nombre del pecado**. Y el
+resumen final se imprimió: es rojo **por assert, no por excepción**, lo que
+confirma de forma independiente la tabla del §3. Revertido; `git status
+--porcelain` vacío; blob de vuelta a `e1a5623`.
+
+Con la demo del worker son **dos mutaciones independientes** y la mía ataca
+justo la regresión que este WP existe para impedir. **Descarto que este probe
+sea de los que no pueden fallar.**
+
+### C · Lo demás, comprobado contra el mundo
+
+| # | afirmación | cómo la comprobé | resultado |
+| - | ---------- | ---------------- | --------- |
+| 1 | alcance = 8 ficheros del brief | `git diff --name-status 1c90c43..3ed5c16` | ✅ probe · `vsix.mjs` (nuevo, autorizado) · `package.json` · `.eslintrc.cjs` · `ci.yml` · `release.yml` · `README.md` · reporte. **Cero de más.** `src/**` y `tests/**` sin cambio neto |
+| 2 | `package.json`: **solo** el bloque `scripts` | `git diff … -- package.json \| grep ^@@` → 3 hunks, todos en `1466-1503` | ✅ `version`, `contributes`, `dependencies` y la marca intactas |
+| 3 | CA 1 · cero reimplementación | el grep del brief, mío | ✅ **rc=1**, cero. Y el probe lleva la auto-guarda dentro (`:109-118`), así que la regresión se caza sola |
+| 4 | cero accesos de nivel superior a `motivosDeny` | `grep -n motivosDeny … \| grep -v "gate.motivosDeny"` | ✅ **rc=1**: los ocho son anidados |
+| 5 | el probe no tiene `try/catch` | `grep -c "try {"` → **0** | ✅ sostiene el argumento «rojo por assert» del §3 |
+| 6 | «55 asserts» | `grep -c "assert("` → **54** | ✅ **cuadra, y explico por qué para que nadie tropiece**: 54 − 1 (la *definición* `function assert(`) = 53 llamadas estáticas; el bucle de `:130-133` corre **3** veces (+2) ⇒ **55** en ejecución. No hay discrepancia |
+| 7 | CA (b) · cero literales de versión | el grep del CA, mío | ✅ solo `package.json:5` (la versión canónica, fuente de la derivación) y `:1523` (rango semver `^0.1.0` de dependencia). Ni un nombre de fichero |
+| 8 | `package:v0` muerto | `grep -rn "package:v0"` | ✅ **0** en el árbol; la única mención viva es la del propio brief |
+| 9 | la versión quedó revertida | `node -p require('./package.json').version` · `node scripts/vsix.mjs name` | ✅ `0.1.0` · `scriptorium-zigurat-0.1.0.vsix` |
+| 10 | la huella del lockfile volvió exacta | `sha256sum package-lock.json` | ✅ **`sha256:363c08ffd4f544da`**, idéntica a la de antes del bump. La decisión del §0 está respaldada por el dato |
+| 11 | H-1 real | `node -p` sobre ambos manifiestos | ✅ lock = `scriptorium-vscode-extension` / `0.1.0-scriptorium`; pkg = `zigurat` / `0.1.0`. Desincronía confirmada |
+| 12 | H-2 · `npx` ya no se usa | `grep -rn npx` sobre json/yml/mjs/cjs | ✅ el **único** `npx` que queda es el respaldo guardado de `vsix.mjs:165`, inalcanzable cuando `@vscode/vsce` está instalado. Ver §E.3 |
+| 13 | `vsix.mjs name/path` funciona antes de `npm ci` | lectura de `vsix.mjs:64-88` | ✅ `manifest()` solo lee `package.json`; no toca `node_modules`. El paso `Resolve .vsix name` (`release.yml:60-64`) está **antes** de `npm ci` (`:110`) y **no** es un fallo latente |
+| 14 | CA (d) · las dos guardas, sin bypass | lectura de `release.yml` entero | ✅ guarda 1 en `:33-37` (primer paso, antes del checkout); guarda 2 en `:71-80`, **antes** de `npm ci` (`:110`). El único `input` de `workflow_dispatch` es `reason` (informativo): **no hay interruptor de bypass** |
+| 15 | CA (e) · el README declara lo que NO cubre | `git diff … -- README.md` | ✅ tabla paso a paso + lista explícita de lo no comprobado, incluida la frase «un CI en verde **no** quiere decir que el producto funciona» |
+| 16 | CI ya no tiene verde por construcción | `.eslintrc.cjs` actual vs `git show 1c90c43:.eslintrc.cjs` | ✅ el anterior era `ignorePatterns: ['**/*']` — **no podía analizar nada**. Ahora ignora solo `dist/ out/ node_modules/ .vscode-test/` y el `lint` es `eslint src --ext ts` |
+
+**Economía.** `evidencia.sh vigente probe-v08` → **rc=1** (no vigente: el PASS
+del worker está sellado en `28bb869` y el tip es `3ed5c16`), así que no cité:
+ejecuté. Todo por `slot.sh`. Fila añadida:
+
+| sello (UTC) | etiqueta | resultado | HEAD | árbol | lockfile | nota |
+| ----------- | -------- | --------- | ---- | ----- | -------- | ---- |
+| 2026-07-25T~18:00Z | probe-v08-contrarrevision | PASS | `3ed5c16` | limpio | `sha256:363c08ffd4f544da` | verde con parser V16 **y** con parser V17 (`5041618`) — fusión compatible |
+
+### D · La pregunta del encargo sobre `tests/**`: la respondo con censo, no con opinión
+
+Se me pidió juzgar si excluir `tests/**` del lint «esconde deuda». El worker
+decidió el alcance de `src` **con censo** (371, tabla por regla) pero decidió
+la **exclusión sin ninguno**: nadie sabía cuánta deuda quedaba fuera. Ese es
+el hueco metodológico, medido contra el propio listón del WP («decide con
+dato, no con gusto»). Así que hice el censo que faltaba:
+
+```
+$ npx eslint tests scripts --ext ts,mjs,js        # con la config de este WP
+✖ 121 problems (59 errors, 62 warnings)
+```
+
+Y desglosado, el resultado **exonera la decisión**:
+
+| errores | regla / fichero |
+| ------- | --------------- |
+| **56** | `no-undef` — **todos en `tests/mocks/vscode.mock.js`** (un `.js` sin `env: jest`; es configuración ausente, no código malo) |
+| 1 | `no-inner-declarations` · `scripts/probes/v09-elenco-separacion.mjs` |
+| 1 | `@typescript-eslint/ban-ts-comment` · `tests/integration/…` |
+| 1 | `@typescript-eslint/ban-types` · `tests/setup.ts` |
+
+Por directorio: `tests` 58 · `scripts` **1**. Y el dato que más importa:
+
+> **`scripts/vsix.mjs` → 0 errores, 0 avisos. `scripts/probes/v08-mutacion-autoria.mjs` → 0 errores, 0 avisos.**
+
+**Conclusión: excluir `tests/**` es correcto y no esconde deuda de fondo.** Lo
+que hay fuera son ~3 incidencias reales más un `env` de jest sin declarar en
+un fichero de mocks; nada que justifique retrasar este WP, y nada parecido a
+las 371 de `src`. Además —y esto es lo que temía y no ocurre— **el código
+nuevo que introduce este WP pasaría su propio lint sin tocar una coma**: el WP
+no se exime a sí mismo de la honestidad que instala. Queda como dato para
+quien amplíe el alcance más adelante (empezar por un `overrides` con
+`env: {jest: true}` se lleva 56 de los 59 de un golpe).
+
+### E · Juicio sobre las decisiones que se me pidió juzgar
+
+1. **Los ficheros sucios heredados (§0) — decisión correcta y bien
+   respaldada.** El worker no descartó a ciegas: completó primero el
+   empaquetado con la versión aún en `0.2.0` (único estado en que el CA (b) es
+   observable) y **luego** revirtió. Y descartó el `npm version 0.1.0
+   --allow-same-version` del brief con razón demostrable: el lockfile comitea
+   `"0.1.0-scriptorium"` (H-1), así que ese comando lo habría dejado en
+   `"0.1.0"` — sucio **para siempre**. Lo verifiqué: la huella vuelve a
+   `sha256:363c08ffd4f544da`, exacta. **Aquí el worker corrigió el brief con
+   dato, que es justo lo que la nota del vigía §4 pide.**
+2. **CA (c) · el camino elegido es el honesto.** El anterior `ignorePatterns:
+   ['**/*']` hacía imposible que el lint viera nada; ahora el recomendado
+   completo está en `error` salvo 8 reglas censadas en `warn`. Descartar
+   `--max-warnings` está argumentado (acoplaría el CI a cualquier WP que añada
+   un `any`) y lo comparto. **Matiz honesto:** sin trinquete, la deuda en
+   `warn` solo puede crecer; está elevado como H-3 y es la elevación correcta.
+3. **H-1, H-2, H-4 · bien acotados y bien NO arreglados.** Los tres caen fuera
+   del alcance escrito y arreglarlos habría roto la disjunción del lote.
+   - **H-1**: real (verificado), y bien razonado que regenerar el lockfile es
+     un WP propio.
+   - **H-2**: real, pero **más estrecho de lo que sugiere el reporte**. Dice
+     «vale la pena un barrido de `npx` en el repo»; el barrido **ya está
+     hecho**: no queda ni un uso de `npx` fuera del respaldo guardado de
+     `vsix.mjs:165`. El riesgo residual **en este repo** es nulo; el hallazgo
+     sigue valiendo como aviso para futuros WP. Precisión, no corrección.
+   - **H-4**: real y correctamente no arreglado — endurecer el release no es
+     CA de este WP. Ver §F.1, que le añade un caso concreto.
+
+### F · Hallazgos míos, fuera de alcance
+
+1. **F-1 · El tag puede no corresponderse con la versión del artefacto, y
+   ninguna guarda lo ve.** `release.yml:51-56` resuelve el tag de
+   `GITHUB_REF_NAME` en un push de tag, mientras el `.vsix` se deriva de
+   `package.json`. Empujar `v9.9.9` con `package.json` en `0.1.0` publica un
+   release **llamado `v9.9.9`** con el asset **`scriptorium-zigurat-0.1.0.vsix`**
+   y un cuerpo que nombra el `0.1.0`. La guarda 2 no lo detecta (busca un
+   release de `v9.9.9`, que no existe) y la guarda 1 no aplica (el evento es
+   `push`, no `workflow_dispatch`). **No lo introduce este WP** —el literal
+   anterior producía el mismo desajuste— y **no es su CA**, pero es
+   exactamente el patrón que da nombre al WP: *el nombre publicado no cubre el
+   artefacto que publica*. Arreglo natural y barato, en la línea de las otras
+   dos guardas: un tercer paso que aborte si
+   `"v$(node -p "require('./package.json').version")" != "$TAG"`.
+   **Candidato fuerte para el WP que recoja H-4.**
+2. **F-2 · La guarda 2 es check-then-act con ventana ancha.** Entre
+   `gh release view` (`:71-80`) y la publicación (`:118`) corren `npm ci`,
+   compilación y empaquetado — minutos. `concurrency` agrupa por
+   `github.ref`, así que un push de tag y un dispatch desde `main` caen en
+   **grupos distintos** y pueden solaparse. Inherente al enfoque y muy de
+   borde; lo anoto porque el reporte presenta la guarda como definitiva y
+   conviene que se lea como «cierra el accidente frecuente», no «cierra la
+   carrera».
+3. **F-3 · La rutina `run()` de `vsix.mjs:106-117` cita los argumentos a mano
+   para Windows** (`\`"${a}"\`` con `shell: true`). Hoy es inocuo —los
+   argumentos son literales del propio script— pero es una vía de inyección si
+   alguna vez se pasa un valor externo (p. ej. una ruta con espacios y
+   comillas desde CI). Observación preventiva, sin acción pedida.
+
+### G · Qué NO pude comprobar, y por qué
+
+- **CA (d) sigue ⏳ y así debe quedar.** Verifiqué el YAML línea a línea
+  (§C.14) y **no disparé nada contra GitHub**, como manda el encargo. Que las
+  guardas *aborten de verdad* en Actions no está probado por nadie, y el §6
+  del reporte lo dice con todas las letras y con la tabla desglosada. **Es la
+  sección más honesta del reporte y la suscribo entera.** Un revisor que la
+  lea como PASS la está leyendo mal.
+- **`gh` en el runner** (⏳6): no comprobado. La guarda 2 depende de que exista
+  en `ubuntu-latest`. Viene preinstalado según doc, pero **si algún día no
+  está, `gh release view` falla y el `if` da falso ⇒ la guarda deja pasar**.
+  Es un fallo-abierto latente que ni el worker ni yo podemos cerrar sin correr
+  el flujo. Lo dejo dicho porque encaja con el tema del WP.
+- **`ci.yml` no se ha ejecutado en Actions** (⏳2). Los pasos los verifiqué
+  localmente en Windows; el runner es ubuntu. No afirmo nada sobre él.
+- **El `.vsix` no se instaló en VS Code** (⏳5). Que se construya (32 ficheros,
+  1.27 MB) no dice que instale. No lo reproduje: `package` estaba vigente y
+  re-empaquetar no habría hablado de eso.
+- **Smoke vivo contra `linea-editor`** (⏳3): ECONNREFUSED en `:4115`. El probe
+  lo declara `⏳` en vez de fingirlo — comprobado en mi propia salida.
+- **No re-corrí `npm ci` ni el censo de `src`**: el lockfile no cambió
+  (huella idéntica) y el censo de 371 es una observación del worker que no
+  contradice nada de lo que sí medí.
+
+### H · Veredicto
+
+**PASS.** Las cuatro falsedades que el WP venía a cortar están cortadas, y lo
+comprobé de forma independiente en las cuatro: el probe importa la pieza real
+y **muerde** (mutación mía, 4 rojos, la más dura que la del worker), el nombre
+del `.vsix` se deriva y no queda un literal, el lint **puede fallar** y ya no
+es un `console.log`, y el release tiene dos guardas sin bypass —declaradas
+como estáticas, que es lo correcto—. El alcance es exacto, la versión quedó
+revertida con la huella del lockfile como prueba, y los hallazgos elevados son
+reales y están bien no-arreglados.
+
+Lo que inclina el PASS por encima de «cumple los CA»: **el WP resolvió una
+trampa que nadie le pidió resolver.** El aviso que levanté al contrarrevisar
+V17 —que cambiar solo el `import` habría convertido el probe en un `TypeError`
+disfrazado de rojo— ya estaba desactivado aquí, con los asserts reescritos a la
+forma real y razonado en §3. Y lo he confirmado ejecutando el probe contra el
+parser de V17 ya fusionado: **verde**. El lote V16 ∥ V17 cierra sin costura.
+
+Para el orquestador, en orden: **F-1** al WP que recoja H-4 (es la guarda que
+falta y es barata); **H-1** a su propio WP de mantenimiento; el `overrides` con
+`env: {jest: true}` cuando se amplíe el lint (56 de 59 de un golpe); y la
+re-verificación de `lint` tras fusionar que pide el §11.2 — con V17 ya en
+`main`, esa pasada sigue haciendo falta porque la huella cambia al fusionar.
