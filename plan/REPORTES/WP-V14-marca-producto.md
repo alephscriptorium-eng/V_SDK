@@ -644,3 +644,16 @@ superficie («CHANGELOG de release si existe») y **no existe**. Verificado con
 - **No fusionado. No pusheado. No se tocó `plan/BACKLOG.md` ni `plan/DECISIONES.md`.**
 
 `VEREDICTO_REVISOR: ⏳ pendiente`
+
+---
+
+## Aceptación del orquestador (2026-07-25 · sesión debug)
+
+Revisión ordinaria con spot-check propio (displayName/license/icon/
+contenedor `aleph0`/CA-2=0/3 claves `arrakisTheater.*` como única
+arrakis-superficie restante/alcance 12 rutas): **✅ ACEPTADO**.
+Adjudicaciones de los hallazgos: RES-2 (3 claves `arrakisTheater.*`) y
+RES-6 (release.yml:122,124 notas «Zigurat») → **V15** · RES-5 (licencia:
+sin patrón de constelación; tensión Todo-FOSS vs UNLICENSED, precedente
+z-sdk GPL-3.0-or-later) → **escalada al custodio con el tick público
+DEFERRED** · CHANGELOG inexistente → acta del re-release.
