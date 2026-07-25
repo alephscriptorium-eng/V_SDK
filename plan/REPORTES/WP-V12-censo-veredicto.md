@@ -726,3 +726,18 @@ de que `tests/integration/extensionChatIntegration.test.ts:3` importa
 Ni un veredicto, ni un recuento, ni `src/`, ni el alcance. Sigue sin
 ejecutarse un solo comando caro y sin `git rm`. `VEREDICTO_REVISOR` se
 deja **como está**: lo levanta el contrarrevisor al verificar, no yo.
+
+---
+
+## Aceptación del orquestador (2026-07-25 · sesión debug)
+
+Devolución `99159ff` **levantada** tras la corrección `48cc874`:
+verificación puntual del orquestador sobre el diff estrecho (alcance =
+2 ficheros; puntos 1-3 presentes con citas; spot-check propio del
+import muerto `src/core/extensionBootstrap.ts:42` → cero usos, registro
+real en `copilotLogs/commands.ts:485-488` — exacto). Los 6 puntos extra
+del re-conteo y la anomalía nueva refuerzan el mapa; ningún veredicto
+de fila cambió (27/19/23 = 69).
+
+VEREDICTO FINAL: **✅ ACEPTADO**. El censo gobierna V13; el orden de
+poda de tests acompaña al de su código (mismo commit o antes).
