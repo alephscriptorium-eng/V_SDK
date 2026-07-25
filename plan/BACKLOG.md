@@ -121,7 +121,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
 
 ## Ola D · Checkpoint `.vsix` v1 «lista para probar» — gate R5-V
 
-- ⬜ **WP-V10 · v1 + Release** — `package.json` (publisher DV-05,
+- 🔶 **WP-V10 · v1 + Release** — `package.json` (publisher DV-05,
   name/displayName, semver 0.1.0), `.vscodeignore` endurecido,
   pipeline `npm ci → compile:production → vsce package`; smoke
   DOCUMENTADO en REPORTES (activación + catálogo en caliente + un
@@ -130,7 +130,7 @@ probar** → validación por el vigía-S (tick asentado en el plan de S).
   ejemplo); GitHub Release con .vsix adjunto (GO Release custodio).
   **CA:** .vsix v1 instalable · guía de prueba de ≤10 pasos ·
   CI+Release verdes con run-ids · **aviso al carril S para el tick
-  de validación del vigía**. Dep: V05+V06+V07+V08+V09.
+  de validación del vigía**. Dep: V05+V06+V07+V08+V09. Brief: `plan/BRIEFS/WP-V10-v1-release.md`. R4-V PASS · STANDING_GO · publisher DV-05 scriptorium.
 
 ## Ola E · Constelación (post-v1 · GOs aparte, NO bloquea v1)
 
