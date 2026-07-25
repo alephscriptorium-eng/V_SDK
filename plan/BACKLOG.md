@@ -167,10 +167,16 @@ Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
   DEVOLUCIÓN estrecha `99159ff` · corrección `48cc874` (+6 puntos de
   arrastre extra) · aceptación `6939f43` · merge `9d753c4`. El «~113»
   del replan corregido: **86** comandos `alephscript.*` de 115.
-- ⬜ **WP-V13 · Poda** — retirar del árbol lo marcado *poda* por el censo
+- ✅ **WP-V13 · Poda** — retirar del árbol lo marcado *poda* por el censo
   (filas 17, 18, 20, 21 de §2 del replan como punto de partida).
   **CA:** `git rm` con acta · probes V07/V08/V09 siguen PASS · el `.vsix`
-  arranca igual. Dep: V12. **Bloqueado por DV-11 y DV-12 (abiertas).**
+  arranca igual. Dep: V12. DV-11/DV-12 cerradas (bloque 2026-07-25).
+  Reporte: `plan/REPORTES/WP-V13-poda.md`. Acta: **23 filas + 1 poda de
+  nivel comando** · árbol 552→300 · trackeados-ignorados 72→0 (V17-B
+  agotado) · tag `archive/pre-poda-ola-f` · FAIL de compile:tests/jest
+  demostrados preexistentes · contrarrevisión PASS `78fee64` · merge
+  `3c4ce52` · errata del censo asentada `fb6a28e`. R-1 (9 puntos) → V15
+  · 13ª vista sin proveedor → V14 · R-7 sourcemap → cola V16/H-4.
 - ⬜ **WP-V14 · Marca del producto** — barra de actividad,
   `configuration.title`, icono, `README.md`. **CA:** quien lo instala lee
   **Aleph-0** y no lee «Arrakis Theater» **ni «Zigurat»** en ninguna
