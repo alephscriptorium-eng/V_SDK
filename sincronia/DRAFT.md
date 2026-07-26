@@ -4,8 +4,8 @@
 | ---- | ----- |
 | Carril | **V** · Aleph-0 (ℵ₀) · `C:\S_LAB\v-sdk` |
 | Estado | **borrador** · nada encolado (§9.5) · serie `WP-Vnn`, siguiente libre **V18** |
-| Fuente normativa | **INFORME-R2** (R1 = `[cita inerte]`) |
-| Compactado | R5 — sustituye al de R4 (§2.d) · puntos **ticados** por el custodio |
+| Fuente normativa | **INFORME-R3** (R1 y R2 = `[cita inerte]`) |
+| Compactado | **R7** (gate post-R3) — sustituye al de R5 |
 
 ---
 
@@ -41,13 +41,16 @@ Necesita: **tick de cruce V↔Z(+O)** — ya en cola de R2 §4.
 | **WP-V22** | mapa barrio → superficie mía (árbol/panel/status/terminal), incluido **cuál no va a ninguna**. ★ Criterio R4: la UI representa **ámbitos de suscripción, no cadenas de mando** — zonas solapadas y enlaces horizontales deben poder dibujarse; un árbol estricto `ciudad ⊃ barrio ⊃ edificio` sería mentira de interfaz (✎ TEMIS en nota de O). ★ Añadido R5 («el poder que existe, se ve», §E.6 de O): un cambio de ámbito que altere lo que alguien ve **debe poder mostrarse**; alcance invisible = misma familia que un `✅` heredado | tick + V21 |
 | **WP-V19** | las 4 entradas del catálogo que no lanzan: causa nombrada y destino o descarte | tick + detalle de Z |
 
-## C · Refactor interno (REFACTOR decidido · R2 §2.b)
+## C · Refactor interno — **DESBLOQUEADO** (INFORME-R3 §1)
 
-⚠️ **Nada se mueve hasta que la propagación a O se zanje** (turno siguiente).
+✅ **O↔V ZANJADO**: el acoplamiento **no existía en código**; V queda
+**libre en su REFACTOR**. Los 4 datos que pedí a O dejan de ser
+prerrequisito. Única interfaz futura con O = **fichero env de la demo**
+(WP-V26).
 
 | id | qué | estado |
 | -- | --- | ------ |
-| **WP-V23** | **mapear los ajustes a la ontología del nuevo Scriptorium** — hoy 3 prefijos (`aleph0.` 13 · `alephscript.` 12 · `mcpSocketManager.` 1). No es unificar a un prefijo mío: el nombre sale de la ontología | ⏳ reformulado tras corrección del custodio; espera propagación a O |
+| **WP-V23** | **mapear los ajustes a la ontología del nuevo Scriptorium** — hoy 3 prefijos (`aleph0.` 13 · `alephscript.` 12 · `mcpSocketManager.` 1). No es unificar a un prefijo mío: el nombre sale de la ontología | ✅ **desbloqueado** (R3 §1) · espera solo tick |
 | **WP-V24** | jubilar el cliente 3010 legado → conector por catálogo/segunda puerta. Formulación de O (R4): **no se conecta por número, se conecta por variable** | ⏳ bloqueado por V20 |
 | **WP-V25** | 31 comandos declarados sin handler + 1 id duplicado: rellenar desde catálogo o caer con acta | ⏳ tras V22 |
 
@@ -63,6 +66,12 @@ ajustes locales compitiendo con él · cambios visibles en la demo.
 carriles: el cómo (formato, escritura, validación) se fija en backlog,
 no se improvisa (condición del propio O).
 Dep: **O-c** (fichero de env, O propone / Z valida). Necesita: **tick**.
+▸ R3 §1 lo eleva: es la **única interfaz futura V↔O**, y *nace nueva* —
+no arrastra acoplamiento previo.
+⚠️ **CERCO EXTERIOR** (R3 §2.a / §10.8): el env debe resolver **dentro
+del cerco** (`C:\S` + `C:\S_LAB`). Ni la extensión ni la demo pueden
+arrancar colgando de una URL externa; lo de fuera se importa una vez y
+las URLs quedan como metadato inerte.
 
 ## D · Deuda sin dueño
 
@@ -70,6 +79,10 @@ Dep: **O-c** (fichero de env, O propone / Z valida). Necesita: **tick**.
 **tráfico de sockets y operadores** del nodo; mis paneles observan
 **capas superiores**. Objetos distintos a alturas distintas. Criterio que
 me llevo: comparar el **objeto observado**, no la función.
+
+⚠️ **Revisar contra el CERCO EXTERIOR**: mi `docs/GUIA-PRUEBA-v2.md` y el
+README citan el Release público como referencia viva — deben quedar como
+**metadato inerte de procedencia**, no como ancla de arranque.
 
 5 superficies de marca legada visibles (`ARRAKIS_*`) · 5 tests jest rojos
 preexistentes (reusables como guarda del mando de ciudad) · Release
