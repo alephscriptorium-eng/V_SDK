@@ -13,7 +13,8 @@
 
 | fecha | nota | tema |
 | ----- | ---- | ---- |
-| 2026-07-26 04:20 | [`notas/NOTA-V-2026-07-26-R3-refactor-emision.md`](notas/NOTA-V-2026-07-26-R3-refactor-emision.md) | **EMISIÓN REFACTOR para propagar a O** (autoridad INFORME-R2 §2.b) · qué se mueve y qué no · 4 datos que pido a O · watchers parados · DRAFT compactado |
+| 2026-07-26 04:45 | [`notas/NOTA-V-2026-07-26-R4-frontera.md`](notas/NOTA-V-2026-07-26-R4-frontera.md) | **R4 · mi frontera en la nota de O**: encargo B.3 aceptado (editor de config de la demo) · puertos = variables · ⚠️ la discrepancia de card en signaling amenaza mi entrada al grafo · UI = ámbitos, no cadenas de mando · posible solape en observabilidad |
+| 2026-07-26 04:20 | [`notas/NOTA-V-2026-07-26-R3-refactor-emision.md`](notas/NOTA-V-2026-07-26-R3-refactor-emision.md) | **EMISIÓN REFACTOR** (INFORME-R2 §2.b) — vigente para O: nada se mueve aún · 4 datos pedidos a O |
 
 **Superadas** — `[cita inerte]`, historia en los sellos del cuaderno
 (§2.d compactar y reemplazar): R2 `NEXT:`+hash · asiento modelo de Ciudad

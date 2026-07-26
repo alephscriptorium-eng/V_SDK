@@ -5,7 +5,7 @@
 | Carril | **V** · Aleph-0 (ℵ₀) · `C:\S_LAB\v-sdk` |
 | Estado | **borrador** · nada encolado (§9.5) · serie `WP-Vnn`, siguiente libre **V18** |
 | Fuente normativa | **INFORME-R2** (R1 = `[cita inerte]`) |
-| Compactado | R3 — sustituye al DRAFT de R2, no lo acumula (§2.d) |
+| Compactado | R4 — sustituye al de R3 (§2.d) |
 
 ---
 
@@ -19,7 +19,11 @@ exige card. Alcance: entrar y marcar mi fila en `GRAFO-STARTERKIT.md`.
 CA: fila V marcada · modalidad usada declarada (anónima u opt-in) · cero
 escritura fuera de mi fila · evidencia de facto.
 ⏳ Depende de **Z-runtime** (R2 §4) — sin él la marca no sería honesta.
-Necesita: **tick** + ficha de los 3 servicios.
+⚠️ **Riesgo declarado (R4):** si mi entrada va por `webrtc-signaling`, su
+`peer-card-gate.mjs` **exige** card (ADDENDA de O) y la modalidad anónima
+no existe para mí. Resolver en el cruce: ¿entro por `rooms`/`socket-server`
+(card viaja) o por signaling (card requisito)?
+Necesita: **tick** + ficha de los 3 servicios + esa respuesta de Z.
 
 ### WP-V20 · Segunda puerta (lo que no está en el catálogo)
 
@@ -34,7 +38,7 @@ Necesita: **tick de cruce V↔Z(+O)** — ya en cola de R2 §4.
 | id | qué | necesita |
 | -- | --- | -------- |
 | **WP-V21** | estructura del Zigurat en el `PLAYGROUND` (qué es estructura, qué es lienzo) — prerrequisito de toda mi banda de transformación | tick + material de G |
-| **WP-V22** | mapa barrio → superficie mía (árbol/panel/status/terminal), incluido **cuál no va a ninguna** | tick + V21 |
+| **WP-V22** | mapa barrio → superficie mía (árbol/panel/status/terminal), incluido **cuál no va a ninguna**. ★ Criterio R4: la UI representa **ámbitos de suscripción, no cadenas de mando** — zonas solapadas y enlaces horizontales deben poder dibujarse; un árbol estricto `ciudad ⊃ barrio ⊃ edificio` sería mentira de interfaz (✎ TEMIS en nota de O) | tick + V21 |
 | **WP-V19** | las 4 entradas del catálogo que no lanzan: causa nombrada y destino o descarte | tick + detalle de Z |
 
 ## C · Refactor interno (REFACTOR decidido · R2 §2.b)
@@ -44,10 +48,28 @@ Necesita: **tick de cruce V↔Z(+O)** — ya en cola de R2 §4.
 | id | qué | estado |
 | -- | --- | ------ |
 | **WP-V23** | **mapear los ajustes a la ontología del nuevo Scriptorium** — hoy 3 prefijos (`aleph0.` 13 · `alephscript.` 12 · `mcpSocketManager.` 1). No es unificar a un prefijo mío: el nombre sale de la ontología | ⏳ reformulado tras corrección del custodio; espera propagación a O |
-| **WP-V24** | jubilar el cliente 3010 legado → conector por catálogo/segunda puerta | ⏳ bloqueado por V20 |
+| **WP-V24** | jubilar el cliente 3010 legado → conector por catálogo/segunda puerta. Formulación de O (R4): **no se conecta por número, se conecta por variable** | ⏳ bloqueado por V20 |
 | **WP-V25** | 31 comandos declarados sin handler + 1 id duplicado: rellenar desde catálogo o caer con acta | ⏳ tras V22 |
 
+### WP-V26 · Editor de configuración de la demo
+
+Encargo de O (§B.3 / candidato **O-d**), **aceptado**. No es UI nueva:
+mis paneles y trees existentes pasan a operar sobre **el fichero de env
+real del playground** en vez de sobre ajustes locales. Orden de
+superficie: **env/puertos/URLs primero**, por encima de todo lo demás.
+CA tentativo: la extensión lee y edita el fichero real · cero valores de
+ajustes locales compitiendo con él · cambios visibles en la demo.
+⚠️ Al tocar la **fuente común** de la demo, editar mal rompe a otros
+carriles: el cómo (formato, escritura, validación) se fija en backlog,
+no se improvisa (condición del propio O).
+Dep: **O-c** (fichero de env, O propone / Z valida). Necesita: **tick**.
+
 ## D · Deuda sin dueño
+
+⏳ **Posible solape con O en observabilidad**: mis paneles apuntan a
+`console-monitor` / `firehose-browser` / `cache-browser`; O sitúa la
+Socket.IO Admin UI (O-i) en la misma función. Si son la misma capa, sobra
+una. Declarado antes de construir.
 
 5 superficies de marca legada visibles (`ARRAKIS_*`) · 5 tests jest rojos
 preexistentes (reusables como guarda del mando de ciudad) · Release
