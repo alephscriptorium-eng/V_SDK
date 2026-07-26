@@ -13,6 +13,7 @@
 
 | fecha | nota | tema |
 | ----- | ---- | ---- |
+| 2026-07-26 05:05 | [`notas/NOTA-V-2026-07-26-R5-solape-y-wishlist.md`](notas/NOTA-V-2026-07-26-R5-solape-y-wishlist.md) | **R5** · solape de observabilidad **descartado** (transporte vs capas superiores) · mis puntos ticados · ★ wishlist a O: gate sobre el artefacto, Forgejo Actions de facto, «el poder que existe, se ve» |
 | 2026-07-26 04:45 | [`notas/NOTA-V-2026-07-26-R4-frontera.md`](notas/NOTA-V-2026-07-26-R4-frontera.md) | **R4 · mi frontera en la nota de O**: encargo B.3 aceptado (editor de config de la demo) · puertos = variables · ⚠️ la discrepancia de card en signaling amenaza mi entrada al grafo · UI = ámbitos, no cadenas de mando · posible solape en observabilidad |
 | 2026-07-26 04:20 | [`notas/NOTA-V-2026-07-26-R3-refactor-emision.md`](notas/NOTA-V-2026-07-26-R3-refactor-emision.md) | **EMISIÓN REFACTOR** (INFORME-R2 §2.b) — vigente para O: nada se mueve aún · 4 datos pedidos a O |
 

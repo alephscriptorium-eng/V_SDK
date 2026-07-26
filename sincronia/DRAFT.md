@@ -5,7 +5,7 @@
 | Carril | **V** · Aleph-0 (ℵ₀) · `C:\S_LAB\v-sdk` |
 | Estado | **borrador** · nada encolado (§9.5) · serie `WP-Vnn`, siguiente libre **V18** |
 | Fuente normativa | **INFORME-R2** (R1 = `[cita inerte]`) |
-| Compactado | R4 — sustituye al de R3 (§2.d) |
+| Compactado | R5 — sustituye al de R4 (§2.d) · puntos **ticados** por el custodio |
 
 ---
 
@@ -38,7 +38,7 @@ Necesita: **tick de cruce V↔Z(+O)** — ya en cola de R2 §4.
 | id | qué | necesita |
 | -- | --- | -------- |
 | **WP-V21** | estructura del Zigurat en el `PLAYGROUND` (qué es estructura, qué es lienzo) — prerrequisito de toda mi banda de transformación | tick + material de G |
-| **WP-V22** | mapa barrio → superficie mía (árbol/panel/status/terminal), incluido **cuál no va a ninguna**. ★ Criterio R4: la UI representa **ámbitos de suscripción, no cadenas de mando** — zonas solapadas y enlaces horizontales deben poder dibujarse; un árbol estricto `ciudad ⊃ barrio ⊃ edificio` sería mentira de interfaz (✎ TEMIS en nota de O) | tick + V21 |
+| **WP-V22** | mapa barrio → superficie mía (árbol/panel/status/terminal), incluido **cuál no va a ninguna**. ★ Criterio R4: la UI representa **ámbitos de suscripción, no cadenas de mando** — zonas solapadas y enlaces horizontales deben poder dibujarse; un árbol estricto `ciudad ⊃ barrio ⊃ edificio` sería mentira de interfaz (✎ TEMIS en nota de O). ★ Añadido R5 («el poder que existe, se ve», §E.6 de O): un cambio de ámbito que altere lo que alguien ve **debe poder mostrarse**; alcance invisible = misma familia que un `✅` heredado | tick + V21 |
 | **WP-V19** | las 4 entradas del catálogo que no lanzan: causa nombrada y destino o descarte | tick + detalle de Z |
 
 ## C · Refactor interno (REFACTOR decidido · R2 §2.b)
@@ -66,15 +66,25 @@ Dep: **O-c** (fichero de env, O propone / Z valida). Necesita: **tick**.
 
 ## D · Deuda sin dueño
 
-⏳ **Posible solape con O en observabilidad**: mis paneles apuntan a
-`console-monitor` / `firehose-browser` / `cache-browser`; O sitúa la
-Socket.IO Admin UI (O-i) en la misma función. Si son la misma capa, sobra
-una. Declarado antes de construir.
+✅ **Solape con O: descartado** (custodio, R5). La Admin UI observa
+**tráfico de sockets y operadores** del nodo; mis paneles observan
+**capas superiores**. Objetos distintos a alturas distintas. Criterio que
+me llevo: comparar el **objeto observado**, no la función.
 
 5 superficies de marca legada visibles (`ARRAKIS_*`) · 5 tests jest rojos
 preexistentes (reusables como guarda del mando de ciudad) · Release
 público 0.2.0 + guardas (H-4, F-1/F-2/F-3), DEFERRED · contrato Z no fija
 `reparto_required` ni forma del payload deny (a resolver en el cruce V20).
+
+---
+
+## E · ★ Wishlist emitida hacia O (R5, no son WPs míos)
+
+| id | qué | estado |
+| -- | --- | ------ |
+| **W-1** | `GATE-O-CLAVES`: añadir inspección del **artefacto construido**, no solo del contexto de build. Evidencia: mis dos fugas de empaquetado se vieron con `unzip -l` del paquete real, nunca razonando el ignore | ★ sugerido |
+| **W-2** | Portar mis dos workflows (`ci.yml`, `release.yml`) a Forgejo como prueba **de facto** de la portabilidad de Actions | ★ ofrecido, sin prisa |
+| **W-3** | «el poder que existe, se ve» adoptado como criterio de mi UI | ✅ incorporado a WP-V22 |
 
 ---
 
