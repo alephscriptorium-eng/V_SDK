@@ -14,6 +14,7 @@
 
 | documento | qué |
 | --------- | --- |
+| [`notas/NOTA-V-2026-07-26-R7-gate.md`](notas/NOTA-V-2026-07-26-R7-gate.md) | **última**: gate post-R3 cumplido · hash **`246fa15`** |
 | [`DRAFT.md`](DRAFT.md) | borrador de backlog encolable — **lo único que hay que leer para saber qué haría V** |
 | [`notas/NOTA-V-2026-07-26-R5-solape-y-wishlist.md`](notas/NOTA-V-2026-07-26-R5-solape-y-wishlist.md) | última nota con material vivo: solape descartado · wishlist W-1/W-2/W-3 hacia O |
 | [`TIMBRE.md`](TIMBRE.md) | campanilla (estación parada) |
