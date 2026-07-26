@@ -1,301 +1,176 @@
-# BACKLOG — carril V (v-sdk · Zigurat / host VS Code)
+# BACKLOG — carril V · Aleph-0 (ℵ₀)
 
-Estados: ⬜ pendiente · 🔶 en curso · ✅ aceptado. Serie: **WP-Vnn**.
-Semilla: `fundar_v-sdk_zigurat_f84c7f99.plan.md` (borrador de agente
-básico, arquitectura válida) **refinado a este backlog** por el vigía-S
-(2026-07-26). Fuente de verdad de comportamiento:
-`C:\S_LAB\z-sdk\plan\REPORTES\CONTRATO-IDE-OPT-IN-v1.md` (U177).
-Decisiones abiertas que BLOQUEAN lo indicado: `plan/DECISIONES.md`
-(las resuelve el custodio; no improvisar sobre ellas).
+| dato | valor |
+| ---- | ----- |
+| Mundo | `C:\S_LAB\v-sdk` — el **Zigurat**: el IDE desde el que se opera la Ciudad |
+| Serie | `WP-Vnn` · método `swarm-orquestacion` · estados ⬜ pendiente · 🔶 en curso · ✅ aceptado |
+| Fuente normativa | **INFORME-R4** (R1–R3 `[cita inerte]`) |
+| Proyección | **F2** (2026-07-26) — mundo acabado proyectado a lanes; **nada despachado sin GO del custodio** |
+| Doctrina | INÉDITO (romper sin duelo) · CERCO EXTERIOR (§10.8) · estructura en playground **antes** que interfaz · centro vacío |
 
-**Meta del carril:** `.vsix` v1 contract-compliant **lista para
-probar** → validación por el vigía-S (tick asentado en el plan de S).
+---
 
-## Reglas duras del carril
+## Visión del mundo acabado
 
-- Método: skills `@alephscript/skills-scriptorium@>=0.11.0` (v0.7:
-  claim pre-emulación · poda-junction · hostil-omite · evidencia
-  enmascarada · guard identidad opt-in).
-- Un WP = un worker = una rama `wp/vNN-<slug>` = worktree en
-  `C:\S_LAB\.worktrees\v\` · contrarrevisión independiente en WPs de
-  contrato/config/empaquetado · gate `Rn-V` por ola · solo el
-  orquestador escribe este BACKLOG.
-- z-sdk y OASIS: **SOLO LECTURA** (z se consume por contrato/servicios;
-  el espejo OASIS es referencia). Cero obra en
-  `C:\S\scriptorium\codebase\v-sdk` (atlas RO).
-- Identidad de commits: usar preflight `verificar-identidad.mjs`
-  (0.11.0) — nada de placeholders.
+> El editor es del usuario del Scriptorium: **el centro se mantiene vacío**.
+> Todo lo mío vive en la periferia — barra, paneles, árbol, status, terminales.
+> Acabado significa: **desde este IDE se entra a la Ciudad, se la ve entera
+> sin que la vista mienta, se la manda, y se edita lo que el contrato
+> declare editable — sin salir del cerco y sin heredar un solo `✅`.**
 
-## Ola 0 · Fundación (secuencial) — gate R1-V al cierre
+Cuatro invariantes que gobiernan todos los lanes:
 
-- ✅ **WP-V01 · Repo + taller + estación** — crear
-  `alephscriptorium-eng/V_SDK` (DV-01), clone a `C:\S_LAB\v-sdk`
-  PRESERVANDO este `plan/`, primer commit de gobierno (plan/ +
-  README misión), calibrar `plan/ESTACION.md`, boot estación-viva +
-  watcher (contrato ONCE 0.11.0). **CA:** repo main con plan/ ·
-  watcher vivo con lease · identidad-raiz PASS post-commit.
-  *(R1-V = cierre Ola 0 tras V01–V03; no inventar R1-V PASS en V01.)*
-  Brief: `plan/BRIEFS/WP-V01-repo-taller-estacion.md`.
-  Reporte: `plan/REPORTES/WP-V01-repo-taller-estacion.md`. Merge
-  `90fffd9`.
-- ✅ **WP-V02 · Semilla del producto** — importar tip de
-  `escrivivir-co/vscode-alephscript-extension` @
-  `integration/beta/scriptorium` según DV-03 (historial preservado +
-  tag `import/scriptorium-<sha>`); incorporar el
-  `README-SCRIPTORIUM.md` huérfano del espejo OASIS; `.gitignore`
-  (*.vsix, dist/, node_modules/). **CA:** tip importado con tag ·
-  árbol completo · procedencia documentada en el reporte. Dep:
-  V01. Brief: `plan/BRIEFS/WP-V02-semilla-producto.md`.
-  Reporte: `plan/REPORTES/WP-V02-semilla-producto.md`.
-  Tag: `import/scriptorium-793de5e92527`. Merge tip post-V02 en main.
-  STANDING_GO=true. README-SCRIPTORIUM: no hallado (documentado).
-- ✅ **WP-V03 · Dependencia standalone + higiene DX** — romper
-  `file:../MCPGallery` de `@alephscript/mcp-core-sdk`: preferido
-  registry `npm.scriptorium.escrivivir.co` si el paquete existe
-  (comprobar `npm view`); si no, vendor `vendor/*.tgz` interno.
-  Higiene del mismo lote: script `debug:view` con path `oracl`,
-  mismatch de uninstall ID. **CA:** `npm ci` limpio en checkout
-  fresco sin hermanos externos · `npm run compile` verde ·
-  contrarrevisión (dependencias usadas↔declaradas). Dep: V02. Brief: `plan/BRIEFS/WP-V03-deps-standalone.md`. STANDING_GO=true. Reporte: `plan/REPORTES/WP-V03-deps-standalone.md`. Gate V03 PASS · R1-V PASS.
+1. **No mentir.** Lo no verificado se muestra `⏳`; lo no declarado no se
+   infiere; un `✅` ajeno no se pinta como propio.
+2. **Ámbitos, no cadenas de mando.** La UI representa alcance y
+   suscripción; nunca autoridad por posición.
+3. **Una puerta declarada.** Todo entra por catálogo, o por la segunda
+   puerta **con fila en el documento**. Cero clientes a medida furtivos.
+4. **Cerco.** Nada arranca colgando de un ancla externa viva.
 
-## Ola A · Checkpoint `.vsix` v0 — gate R2-V
+---
 
-- ✅ **WP-V04 · Empaquetado v0 + CI** — `vsce package` standalone →
-  `dist/zigurat-0.0.x.vsix`; smoke install (`code
-  --install-extension`: activación sin errores); CI
-  (`ci.yml` lint/compile/test + artifact .vsix en Actions). **CA:**
-  .vsix instalable en VS Code limpio · CI verde con run-id ·
-  smoke documentado en REPORTES. Dep: V03. **Checkpoint v0: el
-  esqueleto vive standalone.** Brief: `plan/BRIEFS/WP-V04-empaquetado-v0.md`. R1-V PASS · STANDING_GO. Reporte: `plan/REPORTES/WP-V04-empaquetado-v0.md`. CI `30157700368`. R2-V PASS.
+# F2 · Lanes hacia el mundo acabado
 
-## Ola B · Pedido 2 — desacople (∥ posible entre V05 y V06) — gate R3-V
+## LANE A · ESTRUCTURA (antes que interfaz) — **P0**
 
-- ✅ **WP-V05 · Config única** — settings schema del workspace
-  (`zigurat.*`): hosts/puertos/baseUrl; ELIMINAR defaults absolutos y
-  de otra máquina. Cirugía mínima conocida (del censo Zigurat):
-  `src/libs/alephscript-client.ts:36` (3010 fijo) ·
-  `src/core/AracneBotService.ts:26` ·
-  `src/core/mcpConfigurationManager.ts:101,103,129-164` (ollama,
-  launcher, flota fija con wdir ajenos) · `src/processManager.ts:178`.
-  **CA:** grep de rutas absolutas de máquina y puertos hardcodeados
-  fuera de defaults de schema = 0 · extensión arranca con settings
-  vacíos mostrando ⏳ honesto · contrarrevisión (eje hostil-omite:
-  ¿qué pasa sin settings?). Dep: V04. Brief: `plan/BRIEFS/WP-V05-config-unica.md`. Lane ∥ V06. Reporte: `plan/REPORTES/WP-V05-config-unica.md`. Gate V05 PASS.
-- ✅ **WP-V06 · Catálogo dinámico** — cliente MCP a
-  `launcher://info|catalog|ports` + tools
-  `resolve_capability`/`list_capabilities` de `@zeus/mcp-launcher`
-  (puerto por settings); árbol MCP y tasks alimentados por catálogo
-  en caliente; `DEFAULT_TASKS`/tablas fijas 3001-3066 eliminadas o
-  degradadas a fallback MARCADO como tal; barrios no montados = `⏳`.
-  **CA:** con launcher vivo, inventario en caliente · sin launcher,
-  ⏳ honesto (no error fatal, no datos inventados) · cero puertos
-  fijos nuevos. Dep: V04 (∥ V05, ficheros disjuntos declarados en
-  briefs). Brief: `plan/BRIEFS/WP-V06-catalogo-dinamico.md`. Lane ∥ V05. Reporte: `plan/REPORTES/WP-V06-catalogo-dinamico.md`. Gate V06 PASS · R3-V PASS.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V21** `P0` | Asentar en el `PLAYGROUND` la **estructura del Zigurat**: qué es estructura y qué es lienzo. Prerrequisito declarado de todo lo demás (R2 §2.b) | estructura navegable en playground · frontera estructura/lienzo explícita · **cero VS Code** en este WP |
+| **WP-V22** `P0` | **Mapa barrio → superficie**: por cada entrada del catálogo, a qué superficie va (árbol/panel/status/terminal) y **cuál no va a ninguna** | tabla completa sin `<pendiente>` · cada «no va» con motivo · ninguna fila implica jerarquía |
+| **WP-V27** `P1` | **Léxico del Zigurat**: vocabulario de la extensión derivado de la ontología del Scriptorium (barrio, zona, ámbito, edificio, pieza, corpus) | glosario citable · cada término con su fuente · cero sinónimos compitiendo en la UI |
 
-## Ola C · Contrato IDE fases 1–5 — gate R4-V
+## LANE B · ENTRADA E IDENTIDAD — **P0**
 
-- ✅ **WP-V07 · Identidad + lectura (fases 1-2)** — join de room →
-  peer-card emitida por la autoridad; seat verificado VÍA API del
-  protocol (cero cripto propia); card renovada por join (no cacheada
-  como identidad); ssbId visible; resources MCP proyectados en
-  UI/estado. **CA:** flujo join→card→resources demostrado contra
-  z-sdk local · card expirada ⇒ re-join (probado) · contrarrevisión
-  (hostil-omite: sin card, sin seat). Dep: V06. Brief: `plan/BRIEFS/WP-V07-identidad-lectura.md`. R3-V PASS · STANDING_GO. Reporte: `plan/REPORTES/WP-V07-identidad-lectura.md`. Gate V07 PASS.
-- ✅ **WP-V08 · Mutación + autoría (fases 3-4)** — tools de mutación
-  con gate visible en errores/UI; autoría linea-editor
-  (`crear_linea`/`export_story_board`); **motivos_deny LEÍDOS de
-  `editor://info` en runtime** (cláusula viva del contrato — la
-  lista del servidor manda, hoy 8 motivos) y representados
-  textualmente; deny sin efecto colateral visible. **CA:** los 8
-  motivos actuales representados desde runtime (no hardcodeados) ·
-  demo verde/rojo contra despliegue con
-  `ZEUS_LINEA_EDITOR_REQUIRE_REPARTO` activo · contrarrevisión.
-  Dep: V07. Brief: `plan/BRIEFS/WP-V08-mutacion-autoria.md`. Lane ∥ V09. Reporte: `plan/REPORTES/WP-V08-mutacion-autoria.md`. Gate V08 PASS.
-- ✅ **WP-V09 · Elenco (fase 5) + separación** — panel de elenco
-  alimentado por datos del carril Z (`filasCastDesdeReparto` /
-  contrato cast-table); la compañía teatral IDE (ICompany) queda
-  como capa propia SEPARADA — prohibido fusionarla con `reparto/1`
-  (cláusula del contrato). **CA:** dos modelos de datos distintos y
-  documentados · panel elenco desde reparto real · contrarrevisión.
-  Dep: V07 (∥ V08 posible, zonas UI distintas). Brief: `plan/BRIEFS/WP-V09-elenco-separacion.md`. Lane ∥ V08. Reporte: `plan/REPORTES/WP-V09-elenco-separacion.md`. Gate V09 PASS · R4-V PASS.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V28** `P0` | **Cliente MCP mínimo** de la extensión: conectar, listar resources/tools, leer. Prerrequisito de V18 | conecta a un servidor del catálogo · lee `editor://info` y `launcher://catalog` · falla honesto sin runtime |
+| **WP-V18** `P0` **BLOQUEA:** holón-7 | **Entrar al grafo como edificio-1** y marcar mi fila en `GRAFO-STARTERKIT.md` | fila V marcada · **modalidad declarada** (anónima u opt-in) · cero escritura fuera de mi fila · evidencia de facto |
+| **WP-V29** `P1` | **Peercard opt-in**: emitir/portar card, seat verificado vía API del protocol (cero cripto propia), renovada por join | join→card→resources demostrado · card expirada ⇒ re-join · sin card, funciona en anónimo |
+| **WP-V30** `P1` | **Anónimo honesto**: la UI declara en todo momento en qué modalidad está y qué capacidades faltan por no tener card | modalidad visible siempre · toda capacidad denegada dice **por qué** · ausencia de card ≠ error |
 
-## Ola D · Checkpoint `.vsix` v1 «lista para probar» — gate R5-V
+## LANE C · CONFIGURACIÓN — el editor de la demo — **P0**
 
-- ✅ **WP-V10 · v1 + Release** — `package.json` (publisher DV-05,
-  name/displayName, semver 0.1.0), `.vscodeignore` endurecido,
-  pipeline `npm ci → compile:production → vsce package`; smoke
-  DOCUMENTADO en REPORTES (activación + catálogo en caliente + un
-  deny de autoría visible); **GUÍA DE PRUEBA para el custodio**
-  (pasos numerados, requisitos de runtime local z-sdk, settings
-  ejemplo); GitHub Release con .vsix adjunto (GO Release custodio).
-  **CA:** .vsix v1 instalable · guía de prueba de ≤10 pasos ·
-  CI+Release verdes con run-ids · **aviso al carril S para el tick
-  de validación del vigía**. Dep: V05+V06+V07+V08+V09. Brief: `plan/BRIEFS/WP-V10-v1-release.md`. R4-V PASS · STANDING_GO · publisher DV-05 scriptorium. Reporte: `plan/REPORTES/WP-V10-v1-release.md`. CI `30158827844` · Release `v0.1.0` · Gate V10 PASS · **R5-V PASS**.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V26** `P0` | **Editor del fichero env real del playground** (encargo O · O-d): mis paneles y trees operan sobre él, no sobre ajustes locales. **Única interfaz V↔O** | lee y edita el fichero real · cero ajustes locales compitiendo · cambios visibles en la demo · resuelve **dentro del cerco** |
+| **WP-V31** `P1` | **Endpoints por variable, nunca por número**: toda conexión resuelve por env/catálogo | grep de puertos literales fuera de defaults de schema = 0 |
+| **WP-V32** `P1` | **Validación honesta del env**: qué falta, qué sobra, qué no se puede verificar | cada clave con estado ✅/⏳/⛔ · ninguna inventada · sin red, sigue diciendo la verdad |
+| **WP-V33** `P2` | **Perfiles de entorno** (local/lab/vps) por **contrato, no por path** | cambiar perfil no edita rutas a mano · el perfil activo es visible |
 
-## Ola E · Constelación (post-v1 · GOs aparte, NO bloquea v1)
+## LANE D · CATÁLOGO Y MANDO DE CIUDAD — **P0/P1**
 
-- ⬜ **WP-V11 · Atlas y punteros** — gitlink `codebase/v-sdk` en
-  scriptorium (GO DA-S11 aparte) · nota en a-sdk (ancla
-  VsCodeExtension → V_SDK, sin duplicar obra; frontera: la ejecuta
-  a-sdk) · actualizar path canónico en cantera 00-ZIGURAT de s-sdk
-  (frontera: s-sdk) · nota corta a Z («consumidor IDE materializado;
-  contrato v1 sin cambios»). **CA:** según DV-06.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V20** `P0` **BLOQUEA:** modelo de integración | **Segunda puerta**: `socket-server`, `ciudad-lifecycle` y UIs quedan fuera del catálogo — o entran, o se declara la otra puerta con criterio | documento de dos puertas · **cero clientes a medida sin fila en él** |
+| **WP-V19** `P1` | Las **4 entradas del catálogo que no lanzan**: causa nombrada y destino o descarte | cada una con causa · fila de destino o «no tiene superficie», con motivo |
+| **WP-V34** `P1` | **Mando de ciudad**: `launch/stop/restart/launch_all` de barrios — el hueco real (hoy a cero) | arranca y para un barrio de verdad · estado real, no optimista · terminal por barrio |
+| **WP-V35** `P1` | **Salud de barrios**: `health` enlazado y pintado, con ⏳ cuando no responde | salud real por barrio · sin runtime, ⏳ honesto y no error fatal |
+| **WP-V36** `P1` | **Árbol de ámbitos**: zonas que **solapan** y enlaces **horizontales** dibujables. Un árbol estricto sería mentira de interfaz | una zona en dos sitios se ve como una · ningún widget sugiere que arriba manda |
 
-## Ola F · CORTE — prerequisito de todo y de un re-release honesto
+## LANE E · OBSERVACIÓN DE CAPAS SUPERIORES — **P1**
 
-Origen: `C:/S/vigilancia/REPLAN-V-ciudad-zigurat.md` §4, transcrito por el
-orquestador-V (§9·C6: el replan es handoff; lo transcribe el orquestador).
-**Renombrado de olas aplicado** (aviso §4 + §9·C1): las olas A–F del replan
-son aquí **F–K**, porque este backlog ya usaba 0·A·B·C·D·E. La **Ola E
-vigente** («Constelación», WP-V11) no se toca: sigue ⬜ y queda reencolada
-tras el re-release de esta ola, por decisión del custodio.
+*(observabilidad de **dominio**; el transporte lo observa la Admin UI de O — sin solape)*
 
-Gate al cierre de la ola: **R6-V**. **Sin R6-V no hay re-release.**
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V37** `P1` | **console-monitor** → ventana 1 de los cuatro paneles | consume la pieza real, no un espejo · vacío honesto cuando no hay datos |
+| **WP-V38** `P1` | **firehose-browser** → ventana 2, con **cursor** (es flujo, no pozo) | navega por cursor · nunca promete totales que no puede contar |
+| **WP-V39** `P1` | **cache-browser** → ventana 3 | muestra qué está cacheado **y qué no** · cache miss visible |
+| **WP-V40** `P2` | **Visor de story-boards** (`story-board-schema`) con personajes refs-only | refs-only, jamás corpus embebido · ciclo raw→triaged→canon visible |
+| **WP-V41** `P2` | **Elenco vivo**: panel alimentado por reparto real, `ICompany` separada por contrato | dos modelos de datos distintos y documentados · reparto real, no fixture |
 
-**R6-V: PASS (2026-07-25)** — acta y evidencia:
-`plan/REPORTES/ACTA-RE-RELEASE-0.2.0.md`. Re-release **local** 0.2.0
-(`aleph-0-0.2.0.vsix` · 28 ficheros · sha256 `3500AC80…D8480B`),
-instalada y con runtime verificado (contrato contra servidor vivo).
-Release público **DEFERRED** (DV-14) — reencolado en el plan de S.
-Pasos interactivos de la guía v2 → ojo del custodio.
+## LANE F · VOLUMES DESDE EL IDE — **P1**
 
-- ✅ **WP-V12 · Censo y veredicto** — censo de lo absorbido en WP-V02:
-  una fila por **entrada de primer nivel** del repo y por **módulo de
-  `src/`**, con veredicto *queda* / *re-contenido* / *poda* y motivo. Es
-  el documento que **D-1** exige (alcance de la amputación). La tabla §2
-  del replan es **punto de partida, no respuesta**: se verifica contra el
-  disco. **No borra nada — V12 solo decide.** **CA:** cero
-  `<pendiente>` · una fila por entrada y por módulo · cada fila con
-  motivo y con la fuente que la respalda. Dep: —.
-  Brief: `plan/BRIEFS/WP-V12-censo-veredicto.md`.
-  Entregable: `plan/CENSO-V12.md` (69 filas: 27 queda / 19
-  re-contenido / 23 poda). Obra `a1fa0c8`+`c34022e` (retomado tras
-  muerte de sesión; 8 filas del borrador corregidas) · contrarrevisión
-  DEVOLUCIÓN estrecha `99159ff` · corrección `48cc874` (+6 puntos de
-  arrastre extra) · aceptación `6939f43` · merge `9d753c4`. El «~113»
-  del replan corregido: **86** comandos `alephscript.*` de 115.
-- ✅ **WP-V13 · Poda** — retirar del árbol lo marcado *poda* por el censo
-  (filas 17, 18, 20, 21 de §2 del replan como punto de partida).
-  **CA:** `git rm` con acta · probes V07/V08/V09 siguen PASS · el `.vsix`
-  arranca igual. Dep: V12. DV-11/DV-12 cerradas (bloque 2026-07-25).
-  Reporte: `plan/REPORTES/WP-V13-poda.md`. Acta: **23 filas + 1 poda de
-  nivel comando** · árbol 552→300 · trackeados-ignorados 72→0 (V17-B
-  agotado) · tag `archive/pre-poda-ola-f` · FAIL de compile:tests/jest
-  demostrados preexistentes · contrarrevisión PASS `78fee64` · merge
-  `3c4ce52` · errata del censo asentada `fb6a28e`. R-1 (9 puntos) → V15
-  · 13ª vista sin proveedor → V14 · R-7 sourcemap → cola V16/H-4.
-- ✅ **WP-V14 · Marca del producto** — barra de actividad,
-  `configuration.title`, icono, `README.md`. **CA:** quien lo instala lee
-  **Aleph-0** y no lee «Arrakis Theater» **ni «Zigurat»** en ninguna
-  superficie de usuario (§8 · DV-16; guía de revisión, no gate). Dep: V12.
-  Reporte: `plan/REPORTES/WP-V14-marca-producto.md`. Obra `d409e0a`:
-  14 superficies · icono ℵ₀ propio (PNG+SVG path) · vista fantasma
-  `arrakisTheater` retirada · `mcp.svg` retirado · LICENSE UNLICENSED
-  provisional (RES-5 al tick deferred) · `.vsix` 244KB · 26 excepciones
-  medidas sobre paquete extraído → V15. Aceptación `48d9267` · merge
-  `9690102`.
-- ✅ **WP-V15 · Espacios de nombres** — lo que sobreviva pasa a un solo
-  prefijo; declarar lo heredado que se quede. Absorbe el renombrado de
-  claves de settings si **DV-16.a** se cierra en (b) —
-  `extension-id → scriptorium.aleph-0`, claves → `aleph0.*`— y entonces
-  **re-verifica la CA de WP-V05** con las claves nuevas (§9·C5). **CA:**
-  un solo prefijo en `contributes.commands` salvo excepciones declaradas.
-  Dep: V13. DV-16.a cerrada en (b).
-  Reporte: `plan/REPORTES/WP-V15-espacios-nombres.md`. Obra `808be04`:
-  99/99 comandos `aleph0.*` (4 excepciones `.focus` inevitables) · 13
-  claves · id `scriptorium.aleph-0` · `aleph-0-0.1.0.vsix` derivado
-  (D-3 ratificado) · guía v2 · lockfile regenerado (H-1 cerrado) · CA
-  V05 re-verificada. Contrarrevisión PASS `6d413c7` (2 condiciones
-  documentales aplicadas) · aceptación `e564d04` · merge `2626b7e`.
-  Corrigió 3 premisas del encargo con dato (99/115 · 13/16 ·
-  `teatro.*` vivos). Residual: 5 superficies de marca visibles →
-  micro-tick (DV-16 observación).
-- ✅ **WP-V16 · Falsedad silenciosa** — ola L1 de
-  `HANDOFF-S-COLA-LIMPIEZA-post-R5V.md`: (a) el probe importa el parser
-  real en vez de reimplementarlo · (b) nombre del `.vsix` derivado de la
-  versión, cero literales `0.1.0` · (c) `lint` que puede fallar o sale del
-  CI · (d) guarda del release manual · (e) declarar qué verifica el
-  pipeline. **CA:** los 5 CA de L1; en particular, un cambio en el parser
-  real **rompe** el probe (demostrado) y `npm version 0.2.0` produce asset
-  `…-0.2.0.vsix`. Dep: —.
-  Brief: `plan/BRIEFS/WP-V16-falsedad-silenciosa.md`.
-  Reporte: `plan/REPORTES/WP-V16-falsedad-silenciosa.md`. Obra
-  `94653cf`+`28bb869` (retomado tras muerte de sesión; bump 0.2.0
-  transitorio revertido con causa) · contrarrevisión PASS `8183a1c`
-  (probe × parser de main verificado verde; mutación M-A 4 asserts
-  rojos) · merge `513f2c0`. CA (d) ⏳ estática por contrato.
-  F-1/F-2/F-3 (guardas del release) → con H-4 al reactivar el tick
-  público DEFERRED.
-- ✅ **WP-V17 · Puerta de permisos** — (a) la ausencia de información no
-  concede permiso: `parseEditorInfo.ts:83` falla abierto mientras `:80`
-  falla cerrado, en el mismo literal · (b) pruebas unitarias de los
-  invariantes del contrato. **CA:** L2-01 y L2-02; casos mínimos
-  `required` ausente · `reparto.required` sin `reparto_required` ·
-  `motivos_deny` ausente · motivo fuera de lista · `visible` ausente.
-  Dep: —. Brief: `plan/BRIEFS/WP-V17-puerta-permisos.md`.
-  Reporte: `plan/REPORTES/WP-V17-puerta-permisos.md`. Obra `411777a` ·
-  doble contrarrevisión convergente (`6208d5e` PASS + `977bea5`
-  devolución documental) · aceptación `8acc409` · merge `2899732`.
-  V17-A → cola Z (contrato debe fijar forma del payload deny) ·
-  V17-B → censo V12/V13 (coverage/).
+*(observación por defecto **read-only**; edición **opt-in y declarada**)*
 
-**Primer lote despachable:** V12 ∥ V16 ∥ V17 (independientes, ficheros en
-alcance disjuntos declarados en los briefs). V13 · V14 · V15 en cuanto
-V12 cierre y el custodio resuelva DV-11 / DV-12 / DV-16.a.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V42** `P1` | **Lector del adaptador**: namespace lógico + mounts plurales, root por `ZEUS_VOLUMES_ROOT` (nunca por `cwd`) | cita una pieza por nombre lógico · el root usado es **visible** · dos cwd distintos dan el mismo resultado |
+| **WP-V43** `P1` | **Manifiesto ≠ estado**: mostrarlos como **dos hechos separados**, y la deriva entre ambos como dato | declarado y actual se ven a la vez · divergencia visible, no fatal · nunca se presenta uno como el otro |
+| **WP-V44** `P1` · compromiso **T9** | **Evidencia de réplica verificable por un tercero**: que un observador ajeno a A y B pueda afirmar que la réplica ocurrió sin preguntarles | verificación desde fuera de ambos nodos · autocertificación **rechazada** por diseño |
+| **WP-V45** `P1` | **Procedencia + hash tras import** legibles sin salir del cerco | cada pieza responde qué es y de dónde vino · URL externa = metadato inerte |
+| **WP-V46** `P2` | **Curación humana**: si V edita, es capacidad **declarada**, y el import **nunca** la pisa | edición es opt-in explícito · import respeta lo curado o falla ruidoso |
 
-## Olas G–K · planificadas, sin desarrollar
+## LANE G · DEUDA Y VERDAD (refactor interno) — **P1**
 
-Títulos asentados para constancia del plan completo
-(`REPLAN-V-ciudad-zigurat.md` §4, letras ya renombradas). Ninguna se
-desarrolla hasta que su ola previa cierre; el detalle vive en el replan.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V23** `P1` | **Ajustes → ontología del Scriptorium**: hoy 3 prefijos (`aleph0.` 13 · `alephscript.` 12 · `mcpSocketManager.` 1). El nombre sale de la ontología, no de mi prefijo | un solo espacio de nombres · tabla de migración · CA de V05 re-verificada |
+| **WP-V24** `P1` | **Jubilar el cliente 3010 legado** → conector por catálogo/segunda puerta | cero puertos escritos a mano · endpoint resuelto, no escrito |
+| **WP-V25** `P1` | **31 comandos declarados sin handler** + 1 id duplicado: rellenar desde catálogo o **caer con acta** | cero comandos que prometan lo que no hacen |
+| **WP-V47** `P2` | **5 superficies de marca legada** visibles (`ARRAKIS_*` en títulos de panel y terminal) | quien instala no lee marca legada en ninguna superficie |
+| **WP-V48** `P2` | **5 jest rojos preexistentes** (hueco del mock de terminal) → reusados como **guarda del mando de ciudad** | los 5 en verde · cubren ciclo de vida de terminales, que es lo que V34 necesita blindado |
+| **WP-V49** `P1` | **Cerco en mis documentos**: guía de prueba y README citan el Release público como referencia viva → pasan a **metadato inerte** | cero anclas externas como dependencia de arranque |
 
-- ⬜ **Ola G · MANDO DE CIUDAD** (WP-V18…V22) — gate **R7-V**. Joya 1.
-  Cierra G1, G2, G3. Dep: Ola F. Enmendada por §9·C3: V18 se reduce a
-  enlazar `health` y pintar estado (el árbol ya se alimenta del catálogo,
-  CA de V06); **V19 es el hueco de verdad** (`launch_mcp_server` /
-  `stop_mcp_server` / `restart_mcp_server` / `launch_all` a cero).
-- ⬜ **Ola H · BARRIOS Y VENTANAS** (WP-V23…V26) — gate **R8-V**. Dep: G.
-- ⬜ **Ola I · IDENTIDAD Y AUTORÍA** (WP-V27…V29) — gate **R9-V**. Dep: H.
-  Cierra G7, G8.
-- ⬜ **Ola J · EL MAPA** (WP-V30…V32) — gate **R10-V**. Joya 2. Cierra G9.
-  Dep: G.
-- ⬜ **Ola K · ENTRADA** (WP-V33…V36) — gate **R11-V**. Cierra G4, G5,
-  G6 (rebajado a hueco de UX por §9·C2), G10. Al cerrar K: **re-release**
-  y solo entonces **WP-V11** (atlas), con **DV-06 enmendado** (DV-14).
+## LANE H · EMPAQUETADO Y CANAL — **P1/P2**
 
-## Wishlist (§5 del replan · fuera de esta tanda, sin fecha)
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V50** `P1` | **Guardas del release**: tag≠versión (F-1), check-then-act (F-2), citado con `shell:true` (F-3), publish sin lint/tests (H-4) | un tag `v9.9.9` con package en otra versión **falla** · guardas probadas, no declaradas |
+| **WP-V51** `P1` | **Gate de artefacto** (mi W-1): verificar contra el **paquete real**, nunca razonando el patrón de ignore | `unzip -l` en el CA · dos fugas históricas cubiertas por test |
+| **WP-V52** `P2` | **Release público 0.2.0** + equivalencia asset↔local (extingue la anomalía del v0.1.0) | sha del asset = sha local · guía apunta al artefacto publicado |
+| **WP-V53** `P2` | **Portar mis workflows a Forgejo** (W-2): prueba **de facto** de la portabilidad de Actions | los dos workflows corren verdes en la forja nueva sin reescribir |
+| **WP-V11** `P2` | **Atlas y punteros**: gitlink `codebase/v-sdk` + notas a a-sdk/s-sdk/Z | según DV-14: R6-V PASS + acta ✅ ya cumplido; falta GO DA-S11 |
 
-- ⬜ Editor de agentes de la ciudad (`customEditors` re-contenido, fila 15)
-- ⬜ Participantes de chat con personajes reales del reparto (fila 19)
-- ⬜ 3D del jugador: player-3d-ui · solar-system · force-system
-- ⬜ Firehose navegable con filtros (firehose-browser)
-- ⬜ Actas y partes como superficie propia (acta-kit · parte-kit)
-- ⬜ Almacén y caché (blobstore-client · cache-browser · blob-sync-harness)
-- ⬜ Visor WebRTC (webrtc-viewer · oasis-webrtc)
-- ⬜ Puente de operador (operator-bridge · operator-ui)
-- ⬜ Volúmenes (volumes-ops) · embajador (embajador-kit) · SSB (ssb-system)
-- ⬜ Marketplace (sigue diferido, DV-10)
+## LANE I · LA CAMPANA — la mesa como caso de uso — **P2**
 
-## Economía de CPU (obligatoria en todos los WP desde la Ola F)
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V54** `P2` | **Hospedar la campana**: sustituir la campanilla de ficheros por `parte-kit` (`campanasDesdeParte`) sobre el mesh vía `operator-bridge`. El mecanismo de reunión se vuelve **caso de uso de la Ciudad** | un PING llega por el mesh, no por FS · la mesa se notifica con las piezas que censa |
+| **WP-V55** `P2` | **Sincronía como superficie**: buzón, timbre y compactos legibles desde el IDE | leer la sala sin salir del editor · escritura sigue en estrella (un buzón, un dueño) |
 
-Señalado por el custodio: tres agentes compilando y probando lo mismo en
-paralelo saturan la máquina y no producen evidencia nueva.
+## LANE J · JUEGO Y 3D — **P2 (horizonte)**
 
-1. **Ranura de proceso caro.** `npm ci`, `compile*`, `test`, `vsce
-   package` y cualquier comando de coste comparable se ejecutan con
-   `bash scripts/slot.sh run <etiqueta> -- <comando…>`. Nunca dos a la
-   vez: la ranura es compartida por todos los worktrees del repo.
-2. **Evidencia con huella.** Todo resultado caro se registra con
-   `bash scripts/evidencia.sh registrar <etiqueta> PASS|FAIL` →
-   `EVIDENCIA.md` del worktree (HEAD + árbol limpio + hash del lockfile +
-   sello).
-3. **No repetir sin causa.** Antes de gastar, `bash scripts/evidencia.sh
-   vigente <etiqueta>`: si sale 0, la huella no ha cambiado desde el
-   último PASS y **se cita el registro anterior en vez de re-ejecutar**.
-   Lo decide el script, no el criterio de cada agente.
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V56** `P2` | **Catálogo de juegos de G** en el IDE: qué juegos hay y cuáles tienen datos | distingue «existe» de «tiene datos» · sin inventar disponibilidad |
+| **WP-V57** `P2` | **Ventanas 3D**: `solar-system`, `force-system`, `player-3d-ui` — ¿superficie propia o enlace? | decisión declarada con motivo · si es enlace, respeta el cerco |
+| **WP-V58** `P2` | **`editor-ui` / `player-ui`**: embebido en webview o vecina enlazada | frontera declarada · cero duplicación de la misma función |
 
-## Fuera de alcance (heredado del borrador, vigente)
+## LANE K · L1 Y FRONTERA CON O — **P2 (horizonte)**
 
-Reabrir U73/U172-U177 en Z · publish npm de paquetes Z · capa
-federada L1↔L2 · identidad nueva · force-push/reescritura ·
-obra en el atlas · marketplace (post-GO Release, ops PAT aparte).
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V59** `P2` | **`ssb-system` en lectura**: identidad L1 visible, **jamás** escritura desde la sala | cero escritura al pub · todo lo de L1 marcado como tal |
+| **WP-V60** `P2` | **`blobstore-client`**: lectura de blobs con frontera O declarada | CID visible · nada que sugiera que el IDE posee el blob |
+| **WP-V61** `P2` | **`acta-kit` / `parte-kit`**: actas y partes como superficie propia | un acta se lee entera desde el IDE · cristalización hacia L1 **nunca** desde aquí |
+
+---
+
+## Conteo
+
+| prioridad | WPs |
+| --------- | --- |
+| **P0** | **6** — V18 · V20 · V21 · V22 · V26 · V28 |
+| **P1** | **22** — V19 · V23 · V24 · V25 · V27 · V29 · V30 · V31 · V32 · V34 · V35 · V36 · V37 · V38 · V39 · V42 · V43 · V44 · V45 · V49 · V50 · V51 |
+| **P2** | **17** — V11 · V33 · V40 · V41 · V46 · V47 · V48 · V52 · V53 · V54 · V55 · V56 · V57 · V58 · V59 · V60 · V61 |
+| **total F2** | **45** en **11 lanes** |
+
+`BLOQUEA:` — **V18** (holón-7, a los 6 carriles) · **V20** (modelo de
+integración, a V/Z/O).
+
+**Compromiso votado con dueño:** **T9 → WP-V44**.
+
+---
+
+## Histórico (cerrado · `[cita inerte]`)
+
+| ola | WPs | cierre |
+| --- | --- | ------ |
+| 0 · Fundación | V01–V03 | ✅ R1-V |
+| A · checkpoint v0 | V04 | ✅ R2-V |
+| B · desacople | V05–V06 | ✅ R3-V |
+| C · contrato IDE | V07–V09 | ✅ R4-V |
+| D · v1 «lista para probar» | V10 | ✅ R5-V · Release `v0.1.0` |
+| F · corte | V12–V17 | ✅ **R6-V** · re-release local `aleph-0-0.2.0.vsix` · acta `plan/REPORTES/ACTA-RE-RELEASE-0.2.0.md` |
+| E · constelación | V11 | ⬜ → reencolado en LANE H |
+
+Detalle por WP en `plan/REPORTES/`. Decisiones: `plan/DECISIONES.md`.
+
+---
+
+**Nada despachado.** Todo este backlog espera aprobación o descarte del
+custodio (F2 · INFORME-R4 §2.4).
+
+— **V** · Aleph-0 (ℵ₀)
