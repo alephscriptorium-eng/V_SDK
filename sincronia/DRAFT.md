@@ -12,13 +12,13 @@
 C:\S_LAB\v-sdk\plan\BACKLOG.md
 ```
 
-**45 WPs en 11 lanes**, proyectados hacia el mundo acabado.
+**63 WPs en 13 lanes**, proyectados hacia el mundo acabado.
 
 | prioridad | WPs |
 | --------- | --- |
 | P0 | 6 — V18 · V20 · V21 · V22 · V26 · V28 |
-| P1 | 22 |
-| P2 | 17 |
+| P1 | 32 |
+| P2 | 22 |
 
 **Lanes:** A estructura · B entrada e identidad · C configuración ·
 D catálogo y mando · E observación · F volumes · G deuda y verdad ·

@@ -136,16 +136,53 @@ Cuatro invariantes que gobiernan todos los lanes:
 | **WP-V60** `P2` | **`blobstore-client`**: lectura de blobs con frontera O declarada | CID visible · nada que sugiera que el IDE posee el blob |
 | **WP-V61** `P2` | **`acta-kit` / `parte-kit`**: actas y partes como superficie propia | un acta se lee entera desde el IDE · cristalización hacia L1 **nunca** desde aquí |
 
+## LANE L · PRODUCTO — el IDE como software terminado — **P0/P1**
+
+*Hueco declarado en F2: los lanes A–K hacen que la extensión **hable con
+la Ciudad**; ninguno la hace **terminada como producto VS Code**. Si el
+swarm cierra A–K y nadie mira esto, sale una extensión que funciona en la
+demo del autor y se rompe en la máquina de cualquier otro.*
+
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V68** `P0` | **Arnés de test de Extension Host** (`@vscode/test-electron`): hoy **nada interactivo se verifica jamás** — por eso los pasos 5–10 de la guía llevan dos rondas en `⏳` | activación, comandos y vistas probados en VS Code real, en CI · el `⏳` de la guía deja de ser estructural |
+| **WP-V62** `P1` | **Ciclo de vida**: activación perezosa por evento real (no `*`), `deactivate` que cierra lo que abrió, `dispose` de cada suscripción | activa solo cuando toca · cerrar la ventana no deja procesos ni watchers vivos |
+| **WP-V63** `P1` | **Estado y persistencia declarada**: qué guarda la extensión entre sesiones y dónde; todo **regenerable**, nada que sea segunda fuente de verdad | inventario de estado · borrarlo no rompe · cero estado que contradiga al env |
+| **WP-V64** `P1` | **Superficie de error**: qué ve el usuario cuando el runtime no está, un comando falla o la card expira. Hoy hay principio (`⏳` honesto) sin superficie | cada fallo dice **qué pasó y qué hacer** · cero excepciones mudas · nada se presenta como éxito parcial |
+| **WP-V65** `P1` | **Resiliencia**: el mesh cae y vuelve — reconexión con backoff, sin tormenta de reintentos ni estado zombi | sobrevive a caída y vuelta · la UI refleja el corte mientras dura |
+| **WP-V66** `P1` | **Seguridad de webviews**: CSP, nonce y `localResourceRoots` en los cuatro paneles con HTML propio | cero `unsafe-inline` · nada carga desde fuera del cerco · CSP verificada por test |
+| **WP-V67** `P1` | **Tema y accesibilidad**: los paneles heredados llevan estética fija; un producto respeta el tema del usuario y el contraste | legible en claro y oscuro · sin colores fijos que ignoren el tema · navegación por teclado |
+| **WP-V71** `P1` | **Canal de salida y log estructurado**: poder depurar la extensión en máquina ajena sin adivinar | un `OutputChannel` propio · niveles · cero `console.log` sueltos |
+| **WP-V72** `P1` | **Menús, keybindings y `when`**: la superficie declarada coincide con la real (complementa V25, que solo mira handlers) | cero entradas de menú a comandos inexistentes · `when` coherente con el estado |
+| **WP-V69** `P2` | **Multi-root y workspace sin carpeta**: hoy se asume una carpeta y un playground | abre sin carpeta sin romperse · multi-root elige raíz de forma declarada |
+| **WP-V70** `P2` | **Primer arranque**: qué ve alguien que instala sin nada configurado (V32 valida, pero no acompaña) | primer arranque comprensible sin leer el README · camino claro al env |
+| **WP-V73** `P2` | **Coste**: 99 comandos, árboles que refrescan, activación. Medir antes de crecer | presupuesto de activación declarado · refrescos sin bucle |
+| **WP-V74** `P2` | **Compatibilidad y migración**: `engines.vscode` real, y qué pasa a quien venía de `0.1.0`/`0.2.0` con claves viejas | migración de ajustes probada · versión mínima verificada, no supuesta |
+| **WP-V75** `P2` | **Desinstalación limpia**: qué deja atrás la extensión al desinstalarse | no deja procesos, ni ficheros fuera de su ámbito, ni ajustes huérfanos |
+| **WP-V76** `P1` | **CA del centro vacío**, verificable: ninguna superficie mía invade el área del editor. Es mi doctrina — hasta ahora sin prueba | test que falla si algo ocupa el centro · el lienzo sigue siendo del usuario |
+
+## LANE M · GOBIERNO DE LA EJECUCIÓN — **P0**
+
+*Si mañana entra un swarm a ejecutar 60 WPs, esto es lo que evita que se
+pisen. Sale de mi propia Ola F: tres WPs tocando `package.json` hubo que
+secuenciarlos a mano, y aun así el lote se rompió.*
+
+| WP | brief | CA tentativo |
+| -- | ----- | ------------ |
+| **WP-V77** `P0` | **Grafo de dependencias y contención de ficheros** entre todos los WPs. Punto caliente conocido: `package.json` lo tocan V23·V25·V47·V72·V74; `extensionBootstrap.ts` lo tocan V25·V62·V64 | cada WP con sus deps y sus ficheros · lotes paralelos **con alcance disjunto verificado** · lo contencioso, secuencial y declarado |
+| **WP-V78** `P0` | **Gates por lane** (`R7-V`…) y **definición de terminada**: qué prueba de facto cierra cada lane, y qué significa exactamente «la extensión está lista» | cada lane con su gate y su evidencia · «terminada» = lista de CAs, no opinión |
+| **WP-V79** `P1` | **Plantilla de brief y CA para el swarm**, con las trampas ya conocidas: `npx` roto en local, `coverage/` trackeado, `.map` y locks colándose en el `.vsix`, evidencia contra artefacto real | un worker nuevo no repite ninguna de las trampas censadas |
+
 ---
 
 ## Conteo
 
 | prioridad | WPs |
 | --------- | --- |
-| **P0** | **6** — V18 · V20 · V21 · V22 · V26 · V28 |
-| **P1** | **22** — V19 · V23 · V24 · V25 · V27 · V29 · V30 · V31 · V32 · V34 · V35 · V36 · V37 · V38 · V39 · V42 · V43 · V44 · V45 · V49 · V50 · V51 |
-| **P2** | **17** — V11 · V33 · V40 · V41 · V46 · V47 · V48 · V52 · V53 · V54 · V55 · V56 · V57 · V58 · V59 · V60 · V61 |
-| **total F2** | **45** en **11 lanes** |
+| **P0** | **9** — V18 · V20 · V21 · V22 · V26 · V28 · **V68** · **V77** · **V78** |
+| **P1** | **32** — V19 · V23 · V24 · V25 · V27 · V29 · V30 · V31 · V32 · V34 · V35 · V36 · V37 · V38 · V39 · V42 · V43 · V44 · V45 · V49 · V50 · V51 · **V62 · V63 · V64 · V65 · V66 · V67 · V71 · V72 · V76 · V79** |
+| **P2** | **22** — V11 · V33 · V40 · V41 · V46 · V47 · V48 · V52 · V53 · V54 · V55 · V56 · V57 · V58 · V59 · V60 · V61 · **V69 · V70 · V73 · V74 · V75** |
+| **total F2** | **63** en **13 lanes** |
 
 `BLOQUEA:` — **V18** (holón-7, a los 6 carriles) · **V20** (modelo de
 integración, a V/Z/O).
