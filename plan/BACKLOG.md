@@ -45,7 +45,7 @@ Cuatro invariantes que gobiernan todos los lanes:
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
 | **WP-V28** `P0` | **Cliente MCP mínimo** de la extensión: conectar, listar resources/tools, leer. Prerrequisito de V18 | conecta a un servidor del catálogo · lee `editor://info` y `launcher://catalog` · falla honesto sin runtime |
-| **WP-V18** `P0` **BLOQUEA:** holón-7 | **Entrar al grafo como edificio-1** y marcar mi fila en `GRAFO-STARTERKIT.md` | fila V marcada · **modalidad declarada** (anónima u opt-in) · cero escritura fuera de mi fila · evidencia de facto |
+| **WP-V18** `P0` **BLOQUEA:** holón-7 | **Entrar al grafo como edificio-1** y marcar mi fila en `GRAFO-STARTERKIT.md`. ⚠️ Riesgo conocido: `webrtc-signaling` exige card contra la política anónima (ADDENDA de O). **Fallback diseñado**: si la puerta operativa es `rooms`/`socket-server` (card viaja) → marcar en anónimo; si la única puerta viva es la gateada → marcar **con card**, declarando la discrepancia como ⛔ de política (dueño: Z), nunca normalizándola | fila V marcada · **modalidad Y puerta usadas declaradas** en la marca · si hubo fallback, la discrepancia queda registrada como bloqueo vivo · cero escritura fuera de mi fila · evidencia de facto |
 | **WP-V29** `P1` | **Peercard opt-in**: emitir/portar card, seat verificado vía API del protocol (cero cripto propia), renovada por join | join→card→resources demostrado · card expirada ⇒ re-join · sin card, funciona en anónimo |
 | **WP-V30** `P1` | **Anónimo honesto**: la UI declara en todo momento en qué modalidad está y qué capacidades faltan por no tener card | modalidad visible siempre · toda capacidad denegada dice **por qué** · ausencia de card ≠ error |
 
@@ -102,6 +102,7 @@ Cuatro invariantes que gobiernan todos los lanes:
 | **WP-V47** `P2` | **5 superficies de marca legada** visibles (`ARRAKIS_*` en títulos de panel y terminal) | quien instala no lee marca legada en ninguna superficie |
 | **WP-V48** `P2` | **5 jest rojos preexistentes** (hueco del mock de terminal) → reusados como **guarda del mando de ciudad** | los 5 en verde · cubren ciclo de vida de terminales, que es lo que V34 necesita blindado |
 | **WP-V49** `P1` | **Cerco en mis documentos**: guía de prueba y README citan el Release público como referencia viva → pasan a **metadato inerte** | cero anclas externas como dependencia de arranque |
+| **WP-V80** `P1` | **Trocear `extensionBootstrap.ts`** (~2200 líneas): separar DATOS de FLUJO, registro declarativo de comandos/vistas. **Habilitador**: convierte la cadena serial V25·V62·V64·V71 en trabajo paralelo (era la primera costura del mapa de transformación; F2 la dejó implícita) | bootstrap < 300 líneas de flujo · registro como datos · compile verde · cero cambios de comportamiento observables |
 
 ## LANE H · EMPAQUETADO Y CANAL — **P1/P2**
 
@@ -159,7 +160,7 @@ demo del autor y se rompe en la máquina de cualquier otro.*
 | **WP-V73** `P2` | **Coste**: 99 comandos, árboles que refrescan, activación. Medir antes de crecer | presupuesto de activación declarado · refrescos sin bucle |
 | **WP-V74** `P2` | **Compatibilidad y migración**: `engines.vscode` real, y qué pasa a quien venía de `0.1.0`/`0.2.0` con claves viejas | migración de ajustes probada · versión mínima verificada, no supuesta |
 | **WP-V75** `P2` | **Desinstalación limpia**: qué deja atrás la extensión al desinstalarse | no deja procesos, ni ficheros fuera de su ámbito, ni ajustes huérfanos |
-| **WP-V76** `P1` | **CA del centro vacío**, verificable: ninguna superficie mía invade el área del editor. Es mi doctrina — hasta ahora sin prueba | test que falla si algo ocupa el centro · el lienzo sigue siendo del usuario |
+| **WP-V76** `P1` | **CA del centro vacío**, verificable: ninguna superficie mía invade el área del editor. Es mi doctrina — hasta ahora sin prueba | test en el arnés (dep V68): tras activar, **cero pestañas nuevas** en `tabGroups` abiertas por la extensión · ningún webview panel en grupo de editor sin gesto explícito del usuario · cero `registerCustomEditorProvider` sobre tipos por defecto · el test **falla** si cualquier WP futuro rompe la doctrina |
 
 ## LANE M · GOBIERNO DE LA EJECUCIÓN — **P0**
 
@@ -169,9 +170,9 @@ secuenciarlos a mano, y aun así el lote se rompió.*
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V77** `P0` | **Grafo de dependencias y contención de ficheros** entre todos los WPs. Punto caliente conocido: `package.json` lo tocan V23·V25·V47·V72·V74; `extensionBootstrap.ts` lo tocan V25·V62·V64 | cada WP con sus deps y sus ficheros · lotes paralelos **con alcance disjunto verificado** · lo contencioso, secuencial y declarado |
-| **WP-V78** `P0` | **Gates por lane** (`R7-V`…) y **definición de terminada**: qué prueba de facto cierra cada lane, y qué significa exactamente «la extensión está lista» | cada lane con su gate y su evidencia · «terminada» = lista de CAs, no opinión |
-| **WP-V79** `P1` | **Plantilla de brief y CA para el swarm**, con las trampas ya conocidas: `npx` roto en local, `coverage/` trackeado, `.map` y locks colándose en el `.vsix`, evidencia contra artefacto real | un worker nuevo no repite ninguna de las trampas censadas |
+| **WP-V77** `P0` 🔶 | **Grafo de dependencias y contención de ficheros**. **Entregable preparado**: `plan/GOBIERNO-EJECUCION-F2.md` §1–§3 (8 puntos calientes · cadena crítica del manifiesto · 8 olas propuestas) — pendiente de aceptación | cada WP con sus deps y sus ficheros · lotes paralelos **con alcance disjunto verificado** · lo contencioso, secuencial y declarado |
+| **WP-V78** `P0` 🔶 | **Gates por lane y definición de terminada**. **Entregable preparado**: `plan/GOBIERNO-EJECUCION-F2.md` §4–§5 (gates R7-V…R11-V con evidencia · checklist de 14 casillas) — pendiente de aceptación | cada lane con su gate y su evidencia · «terminada» = lista de CAs, no opinión |
+| **WP-V79** `P1` 🔶 | **Plantilla de brief para el swarm**. **Entregable preparado**: `plan/BRIEFS/PLANTILLA-BRIEF-F2.md` (9 trampas censadas · identidad · economía · honestidad) — pendiente de aceptación | un worker nuevo no repite ninguna de las trampas censadas |
 
 ---
 
@@ -179,10 +180,10 @@ secuenciarlos a mano, y aun así el lote se rompió.*
 
 | prioridad | WPs |
 | --------- | --- |
-| **P0** | **9** — V18 · V20 · V21 · V22 · V26 · V28 · **V68** · **V77** · **V78** |
-| **P1** | **32** — V19 · V23 · V24 · V25 · V27 · V29 · V30 · V31 · V32 · V34 · V35 · V36 · V37 · V38 · V39 · V42 · V43 · V44 · V45 · V49 · V50 · V51 · **V62 · V63 · V64 · V65 · V66 · V67 · V71 · V72 · V76 · V79** |
-| **P2** | **22** — V11 · V33 · V40 · V41 · V46 · V47 · V48 · V52 · V53 · V54 · V55 · V56 · V57 · V58 · V59 · V60 · V61 · **V69 · V70 · V73 · V74 · V75** |
-| **total F2** | **63** en **13 lanes** |
+| **P0** | **9** — V18 · V20 · V21 · V22 · V26 · V28 · **V68** · **V77 🔶** · **V78 🔶** |
+| **P1** | **33** — V19 · V23 · V24 · V25 · V27 · V29 · V30 · V31 · V32 · V34 · V35 · V36 · V37 · V38 · V39 · V42 · V43 · V44 · V45 · V49 · V50 · V51 · V62 · V63 · V64 · V65 · V66 · V67 · V71 · V72 · V76 · **V79 🔶** · **V80 (nuevo: habilitador troceo bootstrap)** |
+| **P2** | **22** — V11 · V33 · V40 · V41 · V46 · V47 · V48 · V52 · V53 · V54 · V55 · V56 · V57 · V58 · V59 · V60 · V61 · V69 · V70 · V73 · V74 · V75 |
+| **total F2** | **64** en **13 lanes** · gobierno de ejecución: `plan/GOBIERNO-EJECUCION-F2.md` · plantilla: `plan/BRIEFS/PLANTILLA-BRIEF-F2.md` |
 
 `BLOQUEA:` — **V18** (holón-7, a los 6 carriles) · **V20** (modelo de
 integración, a V/Z/O).
