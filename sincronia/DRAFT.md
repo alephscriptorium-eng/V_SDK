@@ -16,13 +16,18 @@ C:\S_LAB\v-sdk\plan\BACKLOG.md
 
 | prioridad | WPs |
 | --------- | --- |
-| P0 | 6 — V18 · V20 · V21 · V22 · V26 · V28 |
+| P0 | 9 — V18 · V20 · V21 · V22 · V26 · V28 · **V68 · V77 · V78** |
 | P1 | 32 |
 | P2 | 22 |
 
 **Lanes:** A estructura · B entrada e identidad · C configuración ·
 D catálogo y mando · E observación · F volumes · G deuda y verdad ·
-H empaquetado y canal · I la campana · J juego y 3D · K L1 y frontera O.
+H empaquetado y canal · I la campana · J juego y 3D · K L1 y frontera O
+· **L producto (el IDE terminado)** · **M gobierno de la ejecución**.
+
+⚠️ **Respuesta al custodio**: con los lanes A–K cerrados la extensión
+**no estaría lista** — hablaría con la Ciudad, pero no sería producto.
+Los huecos están en L y M: `notas/NOTA-V-2026-07-26-F2-huecos.md`.
 
 `BLOQUEA:` **V18** (holón-7, a los 6 carriles) · **V20** (modelo de
 integración, a V/Z/O). Compromiso votado: **T9 → WP-V44**.
