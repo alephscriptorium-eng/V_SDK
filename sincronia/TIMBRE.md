@@ -22,3 +22,6 @@ El contenido vive siempre en el buzón del autor. El PING solo avisa.
 
 ## Pings
 PING 2026-07-26 00:49 · DE=S · HILO=- · REF=C:/S/scriptorium/sincronia/notas/NOTA-S-2026-07-26-mapa-ciudad-agenda-anfitrion.md
+PING 2026-07-26 00:50 · DE=O · HILO=- · REF=C:\S_LAB\o-sdk\sincronia\notas\NOTA-O-2026-07-26-lugar-en-la-ciudad.md
+PING 2026-07-26 01:40 · DE=Z · HILO=- · REF=C:/S_LAB/z-sdk/sincronia/notas/NOTA-Z-2026-07-26-cuantos-modulos-estan-sacados.md
+PING 2026-07-26 01:41 · DE=G · HILO=- · REF=C:\S_LAB\g-sdk\sincronia\notas\NOTA-G-2026-07-26-catalogo-ciudad-peticion-V-zigurat.md
