@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { ProcessManager } from './processManager';
 import { LoggingManager, LogCategory, LogLevel } from './loggingManager';
-import { buildCspMeta, createNonce, escapeHtml, hasCspMeta, isLocalOrigin } from './webview/security';
+import { buildCspMeta, createNonce, escapeHtml, findWebviewHtmlViolations, isLocalOrigin, isSafeWebviewHtml } from './webview/security';
 import { renderInertExternalPage } from './webview/commonPages';
 
 export interface WebViewInstance {
@@ -99,7 +99,9 @@ export class WebViewManager {
                 config.title,
                 targetColumn,
                 {
-                    enableScripts: config.enableScripts !== false,
+                    // WP-V66 (D3): los scripts son OPT-IN. Omitir el campo ya no
+                    // concede ejecución a contenido de disco de terceros.
+                    enableScripts: config.enableScripts === true,
                     retainContextWhenHidden: config.retainContextWhenHidden !== false,
                     localResourceRoots: config.localPath ? [
                         vscode.Uri.file(config.localPath),
@@ -231,22 +233,19 @@ export class WebViewManager {
 
         if (config.url) {
             // External URL - create iframe
-            const html = this.generateIframeHtml(config.url, config.title);
-            panel.webview.html = html;
+            panel.webview.html = this.generateIframeHtml(config.url, config.title);
         } else if (config.localPath) {
             // Local HTML file
             const htmlPath = vscode.Uri.file(path.join(config.localPath, 'index.html'));
             try {
                 const htmlContent = await vscode.workspace.fs.readFile(htmlPath);
-                const html = htmlContent.toString();
-                // WP-V66 (fail-closed): HTML de disco sin meta CSP no se sirve.
-                if (!hasCspMeta(html)) {
-                    panel.webview.html = this.generateErrorHtml(
-                        `Local content rejected: ${htmlPath.fsPath} declares no Content-Security-Policy meta`
-                    );
+                // WP-V66 (D3): el HTML de disco pasa por las MISMAS invariantes
+                // que un render propio; si falla, no se sirve.
+                const raw = htmlContent.toString();
+                const accepted = isSafeWebviewHtml(raw);
+                panel.webview.html = verifyDiskHtml(raw, htmlPath.fsPath);
+                if (!accepted) {
                     webview.status = 'error';
-                } else {
-                    panel.webview.html = html;
                 }
             } catch (error) {
                 panel.webview.html = this.generateErrorHtml(`Failed to load local content: ${error}`);
@@ -254,9 +253,7 @@ export class WebViewManager {
             }
         } else if (config.port) {
             // Local server URL
-            const localUrl = `http://localhost:${config.port}`;
-            const html = this.generateIframeHtml(localUrl, config.title);
-            panel.webview.html = html;
+            panel.webview.html = this.generateIframeHtml(`http://localhost:${config.port}`, config.title);
         } else {
             // Default content
             panel.webview.html = this.generateDefaultHtml(config.title);
@@ -353,8 +350,7 @@ export class WebViewManager {
         try {
             // Re-set the HTML content to reload the iframe
             if (webview.url) {
-                const html = this.generateIframeHtml(webview.url, webview.panel.title);
-                webview.panel.webview.html = html;
+                webview.panel.webview.html = this.generateIframeHtml(webview.url, webview.panel.title);
                 webview.status = 'loading';
                 return true;
             }
@@ -424,6 +420,28 @@ export class WebViewManager {
             this.loggingManager.log(LogLevel.INFO, LogCategory.WEBVIEW, 'All webviews disposed');
         });
     }
+}
+
+/**
+ * WP-V66 (D3) · Guarda de ejecución para HTML que NO produce la extensión
+ * (fichero `index.html` en disco, potencialmente de un tercero).
+ *
+ * Antes solo se miraba que existiese la cadena `<meta http-equiv=...>`: una
+ * CSP permisiva, una meta vacía o una meta DENTRO DE UN COMENTARIO pasaban.
+ * Ahora se aplican las mismas invariantes que a cualquier render propio y,
+ * si alguna falla, se sirve la página de error en su lugar — el HTML hostil
+ * nunca llega al webview.
+ *
+ * Función pura y exportada: es su propio caso de prueba.
+ */
+export function verifyDiskHtml(html: string, sourceLabel: string): string {
+    const violations = findWebviewHtmlViolations(html);
+    if (violations.length > 0) {
+        return renderWebviewErrorPage(
+            `Local content rejected: ${sourceLabel} — ${violations.join(' | ')}`
+        );
+    }
+    return html;
 }
 
 /**

