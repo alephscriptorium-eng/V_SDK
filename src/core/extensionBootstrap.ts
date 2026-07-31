@@ -4,6 +4,7 @@ import { AnalyticsEventType } from './analyticsService';
 import { AICapability, AIInteractionType } from './aiAssistantService';
 import { LogCategory, LogLevel, createLogger } from '../loggingManager';
 import { ExtensionContext } from './bootstrap/context';
+import { registerViewContribution, viewRegistrations } from './bootstrap/viewRegistry';
 import { TeatroTreeDataProvider } from '../views/TeatroTreeDataProvider';
 import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
 import { HackerControlPanelProvider } from '../views/HackerControlPanelProvider';
@@ -1711,6 +1712,7 @@ Detalles específicos sobre cómo configurar y usar este agente.
 
     /**
      * Sets up TreeViews and related UI elements
+     * WP-V80: flujo puro — lee la tabla `viewRegistrations` y registra fila a fila.
      */
     private async setupTreeViews(): Promise<void> {
         if (!this.extensionContext || !this.vsCodeContext) {
@@ -1718,133 +1720,11 @@ Detalles específicos sobre cómo configurar y usar este agente.
         }
 
         try {
-            // Register Teatro TreeView
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.teatro', {
-                    treeDataProvider: this.extensionContext.teatroTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            // Register Teatro WebView Provider  
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerWebviewViewProvider(
-                    TeatroWebViewProvider.viewType, 
-                    this.extensionContext.teatroWebViewProvider
-                )
-            );
-
-            // Register Hacker Control Panel WebView Provider
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerWebviewViewProvider(
-                    HackerControlPanelProvider.viewType,
-                    this.extensionContext.hackerControlPanelProvider
-                )
-            );
-
-            // Register Hacker Command Panel WebView Provider
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerWebviewViewProvider(
-                    HackerCommandPanelProvider.viewType,
-                    this.extensionContext.hackerCommandPanelProvider
-                )
-            );
-
-            // Register Hacker Config Panel WebView Provider
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerWebviewViewProvider(
-                    HackerConfigPanelProvider.viewType,
-                    this.extensionContext.hackerConfigPanelProvider
-                )
-            );
-
-            // Register Hacker Tasks Panel WebView Provider (dynamic tasks.json reader)
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerWebviewViewProvider(
-                    HackerTasksPanelProvider.viewType,
-                    this.extensionContext.hackerTasksPanelProvider
-                )
-            );
-
-            // Register Agent Content Editor (for .agent.md files)
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerCustomEditorProvider(
-                    'alephscript.agentContentEditor',
-                    this.extensionContext.agentContentEditor,
-                    {
-                        webviewOptions: {
-                            retainContextWhenHidden: true,
-                            enableFindWidget: true
-                        },
-                        supportsMultipleEditorsPerDocument: false
-                    }
-                )
-            );
-
-            // Register Agent Config Editor (for .config.json files in agent contexts)
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.registerCustomEditorProvider(
-                    'alephscript.agentConfigEditor',
-                    this.extensionContext.agentConfigEditor,
-                    {
-                        webviewOptions: {
-                            retainContextWhenHidden: true,
-                            enableFindWidget: true
-                        },
-                        supportsMultipleEditorsPerDocument: false
-                    }
-                )
-            );
-
-            // Register Gamification TreeViews (First Era Restoration)
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.sockets', {
-                    treeDataProvider: this.extensionContext.socketsTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.uis', {
-                    treeDataProvider: this.extensionContext.uisTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.configs', {
-                    treeDataProvider: this.extensionContext.configsTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.logs', {
-                    treeDataProvider: this.extensionContext.logsTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.mcptree', {
-                    treeDataProvider: this.extensionContext.mcpTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
-
-            this.vsCodeContext.subscriptions.push(
-                vscode.window.createTreeView('alephscript.elenco', {
-                    treeDataProvider: this.extensionContext.elencoTreeProvider,
-                    showCollapseAll: true,
-                    canSelectMany: false
-                })
-            );
+            for (const entry of viewRegistrations) {
+                this.vsCodeContext.subscriptions.push(
+                    registerViewContribution(entry, this.extensionContext)
+                );
+            }
 
             this.extensionContext.logger.info('🎭 Teatro TreeViews and WebViews registered successfully');
             this.extensionContext.logger.info('🔧 Agent Editors registered successfully');
