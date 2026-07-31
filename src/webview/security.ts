@@ -56,10 +56,32 @@ export function createNonce(): string {
     return crypto.randomBytes(16).toString('base64');
 }
 
+const EMPTY = '';
+/** TAB, LF y CR: el parser de la WHATWG los borra en CUALQUIER posicion. */
+const TAB_OR_NEWLINE = new RegExp('[\u0009\u000A\u000D]', 'g');
+/** C0 y espacio en los extremos: la WHATWG tambien los recorta. */
+const EDGE_CONTROL = new RegExp('^[\u0000-\u0020]+|[\u0000-\u0020]+$', 'g');
+
+/**
+ * D-1 · Puerta de entrada ÚNICA para clasificar un URL.
+ *
+ * El parser de URL de la WHATWG —el que usa el navegador— hace dos cosas antes
+ * de mirar nada: «remove all ASCII tab or newline from input» (en CUALQUIER
+ * posición, no sólo en los bordes) y recorta los C0 y espacios de los extremos.
+ * Así que `htt<TAB>ps://evil` ES `https://evil` para el navegador.
+ *
+ * Este módulo tenía DOS clasificadores con criterios distintos: `isLocalOrigin`
+ * usaba `new URL` (que normaliza) y `isExtensionResourceUrl` una regex de
+ * esquema escrita a mano (que no). Ahora ambos pasan por aquí primero.
+ */
+export function normalizeUrlForClassification(rawUrl: string): string {
+    return rawUrl.replace(TAB_OR_NEWLINE, EMPTY).replace(EDGE_CONTROL, EMPTY);
+}
+
 /** ¿El URL apunta a un peer local (cerco v2)? */
 export function isLocalOrigin(rawUrl: string): boolean {
     try {
-        const u = new URL(rawUrl);
+        const u = new URL(normalizeUrlForClassification(rawUrl));
         if (u.protocol !== 'http:' && u.protocol !== 'https:' && u.protocol !== 'ws:' && u.protocol !== 'wss:') {
             return false;
         }
@@ -218,7 +240,11 @@ export function extractCspMetaContents(html: string): string[] {
  * externo (aunque sea https) es NO. Protocol-relative (`//host`) es NO.
  */
 export function isExtensionResourceUrl(rawUrl: string): boolean {
-    const v = rawUrl.trim();
+    // D-1 · normalizar ANTES de clasificar, igual que el navegador. Sin esto,
+    // `htt<TAB>ps://evil` no casaba ningún esquema y se daba por "relativo",
+    // mientras el navegador lo cargaba como https externo. El fallo no estaba
+    // en leer el atributo (eso ya era correcto) sino aquí, en clasificarlo.
+    const v = normalizeUrlForClassification(rawUrl);
     if (v === '' || v.startsWith('//') || v.startsWith('\\')) {
         return false;
     }
@@ -231,13 +257,28 @@ export function isExtensionResourceUrl(rawUrl: string): boolean {
         return true;
     }
     if (scheme === 'https') {
-        const host = /^https:\/\/([^/?#]*)/i.exec(v)?.[1] ?? '';
+        // el host lo extrae el MISMO parser que usa `isLocalOrigin`, no una
+        // segunda regex: dos clasificadores con dos criterios fue el defecto
+        let host: string;
+        try {
+            host = new URL(v).hostname.toLowerCase();
+        } catch {
+            return false;
+        }
         return host === '*.vscode-cdn.net' || host.endsWith('.vscode-cdn.net');
     }
     return false;
 }
 
-/** Atributos que cargan un recurso, con la política aplicable a cada uno. */
+/**
+ * Atributos que cargan (o navegan a) un recurso, con la política de cada uno.
+ *
+ * D-3 · Esta lista es EXHAUSTIVA respecto a lo que la guarda promete: un
+ * atributo de URL que no esté aquí no se inspecciona. Por eso los que no se
+ * pueden comprobar con esta misma regla —porque llevan varias URLs o una URL
+ * embebida en otra sintaxis— no se dejan sin mirar: se RECHAZAN abajo
+ * (`UNSUPPORTED_URL_ATTRS`), en vez de afirmar una cobertura que no hay.
+ */
 const URL_BEARING: Array<{ tag: string; attr: string; allowLocalPeer: boolean; allowData: boolean }> = [
     { tag: 'script', attr: 'src', allowLocalPeer: false, allowData: false },
     { tag: 'link', attr: 'href', allowLocalPeer: false, allowData: false },
@@ -247,8 +288,28 @@ const URL_BEARING: Array<{ tag: string; attr: string; allowLocalPeer: boolean; a
     { tag: 'object', attr: 'data', allowLocalPeer: false, allowData: false },
     { tag: 'source', attr: 'src', allowLocalPeer: false, allowData: true },
     { tag: 'img', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'form', attr: 'action', allowLocalPeer: false, allowData: false }
+    { tag: 'form', attr: 'action', allowLocalPeer: false, allowData: false },
+    // — añadidos en D-3: misma regla, una URL por atributo —
+    { tag: 'a', attr: 'href', allowLocalPeer: false, allowData: false },
+    { tag: 'a', attr: 'ping', allowLocalPeer: false, allowData: false },
+    { tag: 'area', attr: 'href', allowLocalPeer: false, allowData: false },
+    { tag: 'button', attr: 'formaction', allowLocalPeer: false, allowData: false },
+    { tag: 'input', attr: 'formaction', allowLocalPeer: false, allowData: false },
+    { tag: 'input', attr: 'src', allowLocalPeer: false, allowData: true },
+    { tag: 'video', attr: 'src', allowLocalPeer: false, allowData: true },
+    { tag: 'video', attr: 'poster', allowLocalPeer: false, allowData: true },
+    { tag: 'audio', attr: 'src', allowLocalPeer: false, allowData: true },
+    { tag: 'track', attr: 'src', allowLocalPeer: false, allowData: false }
 ];
+
+/**
+ * D-3 · Atributos que SÍ transportan URLs pero no con «una URL por atributo»:
+ * `srcset`/`imagesrcset` son listas con descriptores, y el `content` de un
+ * `<meta http-equiv="refresh">` lleva la URL dentro de `N;url=…`. Analizarlos
+ * pediría un mini-parser por sintaxis, es decir volver a perseguir al
+ * navegador. Se estrecha la entrada: no se admiten.
+ */
+const UNSUPPORTED_URL_ATTRS = ['srcset', 'imagesrcset'];
 
 /**
  * Enumera las violaciones de la política de webview sobre el HTML YA
@@ -392,6 +453,24 @@ export function findWebviewHtmlViolations(html: string): string[] {
     for (const tag of startTags) {
         if (tag.name === 'meta' && tag.unresolvedRefAttrs.has('content')) {
             problems.push('referencia de carácter no resoluble en el content= de una meta');
+        }
+    }
+
+    // 10 · D-3 · atributos de URL que esta guarda no sabe descomponer
+    for (const tag of startTags) {
+        for (const attr of UNSUPPORTED_URL_ATTRS) {
+            if (tag.attrs.has(attr)) {
+                problems.push(`<${tag.name} ${attr}> no admitido: lista de URLs sin analizar`);
+            }
+        }
+        if (
+            tag.name === 'meta' &&
+            (tag.attrs.get('http-equiv') ?? '').trim().toLowerCase() === 'refresh'
+        ) {
+            // NB: el mensaje evita a propósito escribir la etiqueta literal —
+            // el censo de puntos de render clasifica por texto de literal y la
+            // tomaría por un fragmento HTML. Es su fragilidad, anotada para V89.
+            problems.push('meta http-equiv=refresh no admitido: redirección sin analizar');
         }
     }
 

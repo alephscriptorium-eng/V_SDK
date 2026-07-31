@@ -50,6 +50,7 @@ import {
     isAllowedCspSourceToken,
     isExtensionResourceUrl,
     isLocalOrigin,
+    normalizeUrlForClassification,
     isSafeWebviewHtml,
     requireLocalOrigin
 } from '../../../src/webview/security';
@@ -906,6 +907,106 @@ describe('WP-V66 · D-1 · referencias de carácter en atributos', () => {
 
     test('`&amp;` en una query NO es falso positivo', () => {
         expect(findWebviewHtmlViolations(doc('<img src="media/a.gif?x=1&amp;y=2">'))).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D-1 (2ª vuelta) — el disfraz de esquema NO depende de la
+// posición 0 ni de que haya entidad: normalizar es del CLASIFICADOR de URL.
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D-1 · TAB/LF/CR se normalizan antes de clasificar', () => {
+    const doc = (body: string) => {
+        const nonce = createNonce();
+        return `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body>${body.replace(/__NONCE__/g, nonce)}</body></html>`;
+    };
+
+    test('TAB LITERAL crudo, sin entidad ninguna, no cuela como relativo', () => {
+        // el control que demuestra que no era divergencia del tokenizador
+        expect(isExtensionResourceUrl('htt\tps://evil.example/x.png')).toBe(false);
+        expect(findWebviewHtmlViolations(doc('<img src="htt\tps://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+    });
+
+    test('la entidad en posición interior tampoco (el payload de la devolución)', () => {
+        expect(findWebviewHtmlViolations(doc('<img src="htt&Tab;ps://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+        expect(findWebviewHtmlViolations(doc('<img src="htt&#9;ps://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+        expect(findWebviewHtmlViolations(doc('<img src="htt&NewLine;ps://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+        expect(findWebviewHtmlViolations(doc('<img src="htt&#13;ps://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+    });
+
+    test('en cualquier posición del esquema, no sólo la 0', () => {
+        for (const url of [
+            '\thttps://evil.example/x', 'h\tttps://evil.example/x', 'ht\ttps://evil.example/x',
+            'htt\tps://evil.example/x', 'http\ts://evil.example/x', 'https\t://evil.example/x',
+            'https:\t//evil.example/x', 'https:/\t/evil.example/x'
+        ]) {
+            expect(isExtensionResourceUrl(url)).toBe(false);
+        }
+    });
+
+    test('y en todos los atributos de URL, no sólo en <img>', () => {
+        for (const [frag, esperado] of [
+            ['<script nonce=__NONCE__ src="java&Tab;script:alert(1)"></script>', 'recurso remoto en <script src>'],
+            ['<link rel=stylesheet href="htt&Tab;ps://evil.example/a.css">', 'recurso remoto en <link href>'],
+            ['<iframe src="java&Tab;script:alert(1)"></iframe>', 'recurso remoto en <iframe src>'],
+            ['<form action="htt&Tab;ps://evil.example/rob"></form>', 'recurso remoto en <form action>'],
+            ['<object data="htt&Tab;ps://evil.example/x"></object>', 'recurso remoto en <object data>']
+        ] as Array<[string, string]>) {
+            expect(findWebviewHtmlViolations(doc(frag))).toContainEqual(expect.stringContaining(esperado));
+        }
+    });
+
+    test('los dos clasificadores del módulo coinciden ahora', () => {
+        // isLocalOrigin ya normalizaba (usa new URL); isExtensionResourceUrl no
+        expect(isLocalOrigin('http://local\thost:3000')).toBe(true);
+        expect(isExtensionResourceUrl('vscode-resou\trce:/ext/x.js')).toBe(true);
+        expect(normalizeUrlForClassification(' \thtt\nps://x\r ')).toBe('https://x');
+    });
+
+    test('no rompe URLs legítimas', () => {
+        expect(isExtensionResourceUrl('media/x.js')).toBe(true);
+        expect(isExtensionResourceUrl('vscode-resource:/ext/media/x.js')).toBe(true);
+        expect(isExtensionResourceUrl('https://file%2B.vscode-resource.vscode-cdn.net/a.css')).toBe(true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// D-3 · la superficie de URLs, acotada de verdad
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D-3 · superficie de atributos de URL', () => {
+    const doc = (body: string) => {
+        const nonce = createNonce();
+        return `<!DOCTYPE html><html><head>${buildCspMeta({ styleNonce: nonce })}</head><body>${body}</body></html>`;
+    };
+
+    test('los atributos de una sola URL añadidos sí se inspeccionan', () => {
+        for (const [frag, esperado] of [
+            ['<a href="https://evil.example/x">x</a>', 'recurso remoto en <a href>'],
+            ['<a ping="https://evil.example/p">x</a>', 'recurso remoto en <a ping>'],
+            ['<button formaction="https://evil.example/f"></button>', 'recurso remoto en <button formaction>'],
+            ['<input formaction="https://evil.example/f">', 'recurso remoto en <input formaction>'],
+            ['<video poster="https://evil.example/p.jpg"></video>', 'recurso remoto en <video poster>'],
+            ['<audio src="https://evil.example/a.mp3"></audio>', 'recurso remoto en <audio src>'],
+            ['<track src="https://evil.example/t.vtt">', 'recurso remoto en <track src>']
+        ] as Array<[string, string]>) {
+            expect(findWebviewHtmlViolations(doc(frag))).toContainEqual(expect.stringContaining(esperado));
+        }
+    });
+
+    test('los que llevan varias URLs o una URL embebida se RECHAZAN, no se ignoran', () => {
+        expect(findWebviewHtmlViolations(doc('<img srcset="a.png 1x, https://evil.example/b.png 2x">')))
+            .toContainEqual(expect.stringContaining('srcset> no admitido'));
+        expect(findWebviewHtmlViolations(doc('<link rel=preload imagesrcset="https://evil.example/b.png 2x">')))
+            .toContainEqual(expect.stringContaining('imagesrcset> no admitido'));
+        expect(findWebviewHtmlViolations(doc('<meta http-equiv="refresh" content="0;url=https://evil.example/">')))
+            .toContainEqual(expect.stringContaining('refresh no admitido'));
     });
 });
 

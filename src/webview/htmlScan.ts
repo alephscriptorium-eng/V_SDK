@@ -45,6 +45,21 @@
  *    documento si aparece donde importa (URLs, CSP).
  *  - **`srcdoc`**: un documento dentro de un atributo. No se analiza en
  *    profundidad; se rechaza (ver `security.ts`).
+ *  - **`&#128;` y la tabla windows-1252**: para las referencias numéricas en
+ *    el rango 0x80–0x9F el navegador aplica una tabla heredada (`&#128;` es
+ *    U+20AC, el euro), y aquí se devuelve U+0080. Es la única divergencia
+ *    conocida que va en dirección INSEGURA, pero ninguno de esos code points
+ *    puede formar un esquema ni un separador de URL.
+ *  - **`<image>`**: el navegador lo construye como `<img>`; aquí se tokeniza
+ *    con su nombre literal, así que no se le aplican las reglas de `<img>`.
+ *    Va en dirección insegura sólo para `img-src`, que es la directiva menos
+ *    crítica; se anota en vez de emular la corrección de nombres del árbol.
+ *  - **Referencias con nombre sin *longest match***: el spec resuelve la
+ *    coincidencia más larga; aquí se lee el nombre completo y, si no está en
+ *    la tabla, se marca no resuelta. Rechaza de más, nunca de menos.
+ *  - **Cierre de RAWTEXT sin exigir delimitador**: se corta en `</script`
+ *    aunque el navegador pida además `>`, `/` o espacio detrás. Rechaza o
+ *    recorta de más, nunca de menos.
  *
  * Un módulo que declara sus límites es auditable. Uno que se declarase
  * equivalente al navegador estaría prometiendo lo que ningún parser a mano
