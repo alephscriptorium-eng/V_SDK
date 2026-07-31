@@ -4,18 +4,118 @@
 | ---- | ----- |
 | agente | worker V · rama única, worktree `C:\S_LAB\wt\v-v71` |
 | fecha | 2026-08-01 |
-| rama | `wp/v71-log-estructurado` (base `main` = `0efb830`) |
-| commits | `dbae546` · `e319ae3` · `322997a` · `8bc976d` · `b2a2ebf` · `84009f5` · `e78c1a1` |
+| rama | `wp/v71-log-estructurado` (base `main` = `ef86fba`) |
+| commits | obra: `dbae546` · `e319ae3` · `322997a` · `8bc976d` · `b2a2ebf` · `84009f5` · `e78c1a1` · `717b840` — corrección: `b8f6ec3` · `0acf7fd` · `3a5166e` · `2277283` |
 | eje(s) CA | **estructural** (pieza ancha, «cero cambio observable») + roce de **frontera de confianza** (secretos en el log) |
 | riesgo de revisión | `independiente` — §4.5 de `plan/PRACTICAS.md`: «cero cambio observable» sobre pieza ancha |
-| revisor distinto del worker | `⏳ pendiente` |
-| estado propuesto | listo para revisión — **con un desvío declarado que el orquestador debe ratificar o revertir (§0)** |
+| revisor distinto del worker | 1ª contrarrevisión: **DEVUELTO** · 2ª: `⏳ pendiente` (acotada a D1, D2, `auth`/`tokenEnv`, castellano y las dos formas del gate) |
+| estado propuesto | **devuelto-corregido** — desvío D1 **aprobado por el orquestador**; los 6 puntos de la devolución, cerrados (§−1) |
+
+---
+
+## §−1 · CORRECCIÓN DE LA DEVOLUCIÓN
+
+Seis puntos, seis commits de corrección. Nada de lo que el contrarrevisor
+declaró «resiste» se ha tocado.
+
+| # | qué pedía | qué hice | commit |
+| - | --------- | -------- | ------ |
+| **D1** | tres sitios re-nivelados a `warn` contra lo que declaraba el reporte → volver a `info` | hecho, **y verificado mecánicamente que no había un cuarto** | `b8f6ec3` |
+| **D2** | `id` y `pid` desaparecidos del log de procesos | restaurados; `terminal` es ya la única exclusión, dicho así | `b8f6ec3` |
+| **D5** | la justificación de `auth` no la sostiene el árbol; y `tokenEnv` se cegaba | comparación **por palabras**: `auth` entra, `author` no se toca, `tokenEnv` sobrevive | `0acf7fd` |
+| **D4** | castellano, `Basic`, `ENV` en minúsculas, incoherencia entre patrones | un solo vocabulario para los cuatro caminos; huecos cerrados; límites declarados **y fijados por test** | `0acf7fd` |
+| **D3** | el comentario promete `-p X` y el patrón no lo cubre | corregido el **comentario**: `-p` no se tapa a propósito (es «port» en medio ecosistema) → límite L4 | `0acf7fd` |
+| **gate** | cerrar `process.stdout/stderr` y el alias de `globalThis`; declarar el resto; corregir el «9/9» | dos selectores nuevos; sonda ampliada a 19 formas; afirmación reescrita | `3a5166e` |
+| **D6** | decidir y declarar lo del `dispose` en `deactivate` | **se retira**: el canal ya no se cierra. Razonado en el código y en §8bis | `2277283` |
+| — | acotar la afirmación de `forOperation` (multi-módulo) | acotada en cabecera, jsdoc **y fijada por test** | `2277283` |
+
+### Sobre D1 — lo que de verdad se rompía
+
+El contrarrevisor tiene razón en el diagnóstico y agradezco la precisión: el
+daño era **cero** (`WARN < INFO`, nada se silenciaba), pero lo que se rompía no
+era el comportamiento sino **la prueba**. Mi conclusión «ninguna línea queda
+silenciada» estaba demostrada *por la regla 1:1*, y una regla con tres
+excepciones no demuestra nada. Con el umbral en `warn` —clave que
+`structuredLog.ts` ya lee— esas tres se habrían comportado distinto de lo
+prometido.
+
+No me limité a arreglar los tres que me señalaron: escribí un **comparador
+mecánico** que saca de `git show main:<fichero>` la secuencia de métodos de
+consola y de la versión actual la secuencia de niveles del canal, y las coteja
+**en orden**. Así la afirmación 1:1 deja de ser una inspección y pasa a ser una
+medida:
+
+```
+OK  src/processManager.ts                          base=16 canal=16
+OK  src/core/AracneBotService.ts                   base=14 canal=14
+DIF src/views/HackerControlPanelProvider.ts        base=18 canal=18
+OK  src/views/HackerTasksPanelProvider.ts          base=13 canal=13
+DIF src/views/HackerCommandPanelProvider.ts        base= 8 canal= 8
+DIF src/views/HackerConfigPanelProvider.ts         base= 7 canal= 7
+OK  src/libs/alephscript-client.ts                 base= 6 canal= 6
+OK  src/extension.ts                               base= 6 canal= 6
+OK  src/core/managerFactory.ts                     base= 3 canal= 3
+OK  src/core/extensionBootstrap.ts                 base= 2 canal= 2
+OK  src/treeViews/configsTreeView.ts               base= 2 canal= 2
+
+TOTAL base=95 canal=95
+DESVIOS DE NIVEL (3):
+  src/views/HackerControlPanelProvider.ts  #9  esperado=info  actual=warn
+  src/views/HackerCommandPanelProvider.ts  #8  esperado=info  actual=warn
+  src/views/HackerConfigPanelProvider.ts  #7  esperado=info  actual=warn
+```
+
+**Exactamente los tres, ningún cuarto.** Tras el arreglo, `DESVIOS DE NIVEL (0)`.
+
+**Seguimiento propuesto (no lo hago aquí):** «comando desconocido llegado desde
+un webview» **merece** `warn` — es una superficie que manda algo que no
+existe. Las tres rutas, para quien coja el WP:
+`src/views/HackerCommandPanelProvider.ts:129`,
+`src/views/HackerConfigPanelProvider.ts:107`,
+`src/views/HackerControlPanelProvider.ts:109`. Primero la equivalencia
+demostrable; luego la mejora.
+
+### Sobre D5 — la justificación se autoalimentaba, y lo comprobé yo
+
+El contrarrevisor lo contó bien y lo verifiqué de primera mano antes de tocar
+nada:
+
+```
+$ grep -rnE "^\s*(author|authorship)\s*[?:]" src --include=*.ts | wc -l
+0
+```
+
+`AuthorshipSnapshot` (`src/mutation/types.ts:33-44`) no tiene campo `author`;
+`AuthorshipService` ni siquiera está migrado al canal. **El único `author:` del
+árbol era el que yo mismo planté en el test que fijaba la decisión** — la
+justificación se sostenía sobre su propia prueba. Y la dicotomía era falsa:
+
+```
+$ node -e "const re=/\bauth\b/i; ['author','authorship','authorId','auth'].forEach(s=>console.log(re.test(s),s))"
+false author      false authorship      false authorId      true auth
+```
+
+Mientras tanto el patrón **sí** cegaba un campo real: `VisibleGate.tokenEnv`
+(`src/mutation/types.ts:24`) es el **nombre** de una variable de entorno y salía
+como `«redactado»`. Protegía un campo inventado a costa de uno que existe.
+
+El arreglo no es añadir `\bauth\b` sino cambiar el **criterio**: las claves se
+comparan ahora **por palabras** (camelCase, snake, kebab, acrónimos). `authToken`
+→ `auth|token` (tapa); `author` → `author` (no tapa), sin excluir nada. Como
+efecto, se puede meter `pin` sin cazar `spinner` ni `pingInterval` — cosa que un
+patrón por subcadena no permitía. Y los sufijos de referencia (`env`, `name`,
+`var`, `field`…) marcan «esta clave nombra **dónde** vive el valor»: `tokenEnv`
+conserva el suyo.
 
 ---
 
 ## §0 · DESVÍOS — antes que nada
 
 ### D1 · Toqué 4 ficheros de `src/views/` pese al «no toques las webviews» del BRIEF
+
+> **APROBADO por el orquestador** en la devolución: verificó que la intersección
+> con el carril de webviews es **vacía**. El `git revert 8bc976d` que dejé
+> preparado no se usa. Se conserva el apartado como registro de cómo se midió.
 
 El BRIEF dice: «Tampoco toques `src/config` ni las webviews (otros carriles)».
 **56 de los 105 `console.*` vivos estaban en `src/views/`.** Respetarlo al pie
@@ -61,13 +161,21 @@ midió y salió idéntico está en §4. Lo que sí cambia, declarado:
     «origen» (y el nombre de instancia va como dato `client`);
   - los secretos salen tapados (§5) — es CA4.
 
-### D3 · Sin re-nivelar: mapeo 1:1
+### D3 · Sin re-nivelar: mapeo 1:1 — **ahora sí, y medido**
 
 `console.log → info`, `console.warn → warn`, `console.error → error`. El umbral
 por defecto es INFO, así que **ninguna línea que antes se imprimía queda ahora
-silenciada**. Hay puntos claramente ruidosos (p. ej. «Received message from
-webview» en cada mensaje) que *pedirían* bajar a `debug`; no lo hice porque
-eso sí sería un cambio observable. Queda como candidato a WP (§8).
+silenciada**.
+
+En la primera entrega esta afirmación era **falsa en 3 de 95 sitios**; la
+devolución la cazó. Corregido y verificado con el comparador mecánico de §−1:
+`TOTAL base=95 canal=95`, `DESVIOS DE NIVEL (0)`. La afirmación ya no es una
+inspección, es una medida reproducible.
+
+Hay puntos claramente ruidosos (p. ej. «Received message from webview» en cada
+mensaje) que *pedirían* bajar a `debug`, y tres que pedirían subir a `warn`
+(§−1); no lo hice porque eso sí sería un cambio observable. Queda como
+candidato a WP (§8).
 
 ---
 
@@ -137,31 +245,71 @@ Un regex sobre el texto es el sensor equivocado aquí: da falso positivo con
 negativo con el **alias**. El gate vive en `.eslintrc.cjs` y son **tres reglas**,
 las tres en `error`.
 
-Escribí el gate pensando en quien intente esquivarlo, y lo **medí con una sonda
-de 9 formas de evasión** (fichero temporal, ejecutado y borrado):
+Escribí el gate pensando en quien intente esquivarlo, y lo **medí con una sonda**
+(fichero temporal, ejecutado y borrado). La devolución señaló con razón que mi
+«9/9» describía nueve formas **todas de la familia `console.*`** — o sea, la
+sonda se había autoseleccionado los casos que iba a ganar. Sonda ampliada a **19
+formas** y afirmación reescrita:
 
 ```
-forma de evasión                        no-console   +restricted-globals   +restricted-properties
-1  console.log('a')                          ✓                ✓                     ✓
-2  console\n  .log('b')                      ✓                ✓                     ✓
-3  console['log']('c')                       ✓                ✓                     ✓
-4  console["er"+"ror"]('d')                  ✓                ✓                     ✓
-5  (console).warn('e')                       ✓                ✓                     ✓
-6  console?.log('f')                         ✓                ✓                     ✓
-7  globalThis.console.log('g')               ✗                ✗                     ✓
-8  const c = console; c.log('h')             ✗                ✓                     ✓
-9  const {log} = console; log('i')           ✗                ✓                     ✓
-                                          ─────            ─────                 ─────
-                                           6/9              8/9                   9/9
+familia console.* (9)                    no-console  +globals  +properties  +syntax
+ 1  console.log('a')                          ✓          ✓          ✓          ✓
+ 2  console\n  .log('b')                      ✓          ✓          ✓          ✓
+ 3  console['log']('c')                       ✓          ✓          ✓          ✓
+ 4  console["er"+"ror"]('d')                  ✓          ✓          ✓          ✓
+ 5  (console).warn('e')                       ✓          ✓          ✓          ✓
+ 6  console?.log('f')                         ✓          ✓          ✓          ✓
+ 7  globalThis.console.log('g')               ✗          ✗          ✓          ✓
+ 8  const c = console; c.log('h')             ✗          ✓          ✓          ✓
+ 9  const {log} = console; log('i')           ✗          ✓          ✓          ✓
+                                           ─────      ─────      ─────      ─────
+                                            6/9        8/9        9/9        9/9
+
+fuera de la familia — CERRADAS en la corrección (5)
+10  process.stdout.write('j')                 ✗          ✗          ✗          ✓
+11  process.stderr.write('k')                 ✗          ✗          ✗          ✓
+12  const o = process.stdout; o.write('l')    ✗          ✗          ✗          ✓
+13  const g = globalThis; g.console.log('m')  ✗          ✗          ✗          ✓
+14  const {console:k} = globalThis; k.log()   ✗          ✗          ✗          ✓
+                                                                             ─────
+                                                                              5/5
 ```
 
-**`no-console` sola habría dejado pasar 3 de 9.** Por eso el gate lleva las tres.
-Salida literal de la sonda con la configuración real del repo:
+**Afirmación acotada: 9/9 de la familia `console.*`, más 5 cerradas fuera de
+ella (14/14 de lo cerrable), y 5 declaradas como límite** — no «9/9» a secas.
+
+`no-console` sola habría dejado pasar 3 de 9 dentro de su propia familia, y las
+5 de fuera. Las dos que cerró la corrección no son exóticas: `process.stdout.write`
+escribe en la **misma** consola que el gate destierra y es idiomático; y aliasar
+`globalThis` es la **misma clase** de evasión que me obligó a añadir
+`no-restricted-globals` para `console`, un nivel más arriba — cerré el alias de
+`console` y no probé el de `globalThis`.
+
+### Límites conocidos del gate (declarados, no callados)
+
+Ningún lint **estático** puede con estos, y así hay que decirlo:
+
+```
+15  eval('console.log(1)')                            ✗ — cadena en tiempo de ejecución
+16  new Function('console.log(1)')()                  ✗ — idem
+17  Reflect.get(globalThis, 'console').log('o')       ✗ — acceso reflexivo
+18  (globalThis as any)['con'+'sole'].log('p')        ✗ — clave computada por concatenación
+19  const n='console'; (globalThis as any)[n].log()   ✗ — clave computada por variable
+```
+
+Cerrarlos exigiría análisis con tipos o en tiempo de ejecución, no un
+`.eslintrc`. Los cinco son **deliberadamente hostiles**: quien escriba
+`Reflect.get(globalThis,'console')` en este repo no se está saltando un lint por
+descuido. Salida literal de la sonda con la configuración real:
 
 ```
 $ npx eslint src/__bypass_probe.ts -f compact
-line 4  line 5  line 7  line 8  line 9  line 10  line 11  line 12  line 13
-   (las 9 líneas con evasión, todas Error)
+L4 L5 L7 L8 L9 L10   (no-console + no-restricted-globals)
+L11                  (no-restricted-properties · globalThis.console)
+L12 L13              (no-restricted-globals · alias y destructuring de console)
+L15 L16 L17          (no-restricted-syntax · process.stdout/stderr, incl. alias)
+L18 L19              (no-restricted-syntax · alias y destructuring de globalThis)
+   → 14 formas cazadas; L21–L25 (los 5 límites) no aparecen, como está declarado
 ```
 
 ### Salida del gate sobre el árbol
@@ -184,20 +332,26 @@ No doy un grep que dé 0 por arte de un patrón astuto. Doy el grep más ancho
 posible y **enumero cada superviviente**:
 
 ```
-$ grep -rn "console\s*[.[]" src --include=*.ts        →  15 líneas
-$ grep -rnc "console"       src --include=*.ts        →  18 líneas
+$ grep -rnE "console\s*[.[]" src --include=*.ts       →  16 líneas
+$ grep -rn  "console"        src --include=*.ts       →  19 líneas
 ```
 
-Las 18, una por una:
+Las 19, una por una:
 
 | ruta:línea | qué es | ¿llamada viva del Extension Host? |
 | ---------- | ------ | --------------------------------- |
 | `src/views/BaseHackerPanelProvider.ts` :61,64,67,145,148,199 | 6 llamadas reales | **SÍ** — carve-out de frontera V66 |
 | `src/views/TeatroWebViewProvider.ts` :71,74,77,258 | 4 llamadas reales | **SÍ** — carve-out de frontera V66 |
-| `src/core/logging/structuredLog.ts` :4,28,136,261 | comentarios del propio módulo | no |
+| `src/core/logging/structuredLog.ts` :4,29,147,272 | comentarios del propio módulo | no |
+| `src/extension.ts` :61 | comentario que razona D6 (§8bis) | no |
 | `src/socketMonitor.ts` :613,616 | JS **del webview** dentro de una plantilla (`console.log(\`…\`)`) | no — otro proceso |
 | `src/core/aiAssistantService.ts` :771 | fragmento de código que el asistente **inserta en el documento del usuario** | no — es producto, no log |
 | `src/treeViews/uisTreeView.ts` :38 | `case 'console':` — nombre de un **tipo de UI** | no |
+
+Sube de 18 a 19 respecto de la primera entrega porque la corrección añadió un
+comentario que **nombra** el símbolo (el razonamiento de D6). Que un comentario
+cuente es justo lo que se busca: el censo textual no distingue, y por eso el
+sensor que manda es el AST.
 
 **Qué excluye el gate y por qué:**
 
@@ -222,8 +376,8 @@ Todo re-verificado de facto en este worktree; ningún ✅ heredado.
 | | antes (`main`) | después (`HEAD`) | delta |
 | --- | --- | --- | --- |
 | Test Suites | 1 failed, 7 passed, **8** | 1 failed, 9 passed, **10** | +2 (los míos) |
-| Tests | **117** | **177** | +60 (los míos) |
-| passed | 111 | 171 | +60 |
+| Tests | **117** | **234** | +117 (los míos) |
+| passed | 111 | 228 | +117 |
 | **failed** | **5** | **5** | **0** |
 | skipped | 1 | 1 | 0 |
 
@@ -284,18 +438,45 @@ no la introduzco ni la arreglo (sería contrabando).
 Se cierran **en el canal**, no en cada sitio de llamada: la redacción es del
 emisor, así que un punto de log nuevo la hereda sin acordarse de nada.
 
-`src/core/logging/redact.ts` tapa: claves secretas por nombre (a cualquier
+`src/core/logging/redact.ts` tapa: claves secretas **por palabras** (a cualquier
 profundidad, también en `Map`/array), credenciales inline de URL, query params
-sensibles, `Bearer`, banderas de CLI, asignaciones de entorno, bloques PEM, y
-sustituye el home del usuario por `~`.
+sensibles, cabeceras `Bearer`/`Basic`/`Digest`/`Negotiate`, banderas de CLI,
+asignaciones de entorno, bloques PEM, y sustituye el home del usuario por `~`.
 
-**Decisión deliberada, documentada en el propio fichero:** el patrón **NO**
-incluye `auth` a secas. Este árbol tiene `AuthorshipService` y campos
-`author`/`authorship`; un `/auth/i` los taparía y dejaría ciego el log de
-autoría. Hay test que lo fija (`author` sobrevive junto a `token` tapado).
+**Reescrito tras la devolución** (D4/D5, ver §−1). Lo que cambió de fondo:
 
-Grep de comprobación sobre los datos que llegan al canal — la probe planta 4
-secretos reales y verifica que ninguno sale (§6).
+| antes | ahora |
+| ----- | ----- |
+| 4 listas paralelas que no coincidían (`?auth=` se tapaba, `--auth` no) | **un** vocabulario del que derivan claves, banderas, entorno y query |
+| comparación por **subcadena** → había que sacrificar `auth` para salvar `author` | comparación por **palabras** → `auth` entra y `author` no se toca |
+| `tokenEnv` cegado (falso positivo sobre un campo real) | sufijos de referencia (`env`, `name`, `var`…): `tokenEnv` conserva su valor |
+| solo inglés; `contraseña` fugaba y `secreto` se salvaba de casualidad | castellano explícito: `clave`, `contraseña`, `credenciales`, `pwd`, `pin`, `firma` |
+| solo `Bearer` | `Basic` incluido — viaja con `usuario:contraseña` en base64 |
+| `ENV=` solo en MAYÚSCULAS | `/i` + delimitación por `_`: `token=x` se tapa, `SPINNER=x` no |
+
+Matriz hostil verificada (tests permanentes): **37 claves secretas** detectadas,
+**20 claves limpias** intactas (`author`, `authorship`, `tokenEnv`, `settingKey`,
+`pingInterval`, `spinner`, `passengers`, `monkey`, `turnkey`…), **18 cadenas
+hostiles** tapadas, **6 cadenas limpias** sin tocar (`--port 3000`,
+`NODE_ENV=production`, `docker run -p 8080:80`…). Cero falsos positivos.
+
+### Límites del redactor — declarados **y fijados por test**
+
+Ningún redactor **por nombre** puede con estos. Están en la cabecera de
+`redact.ts` y además hay un `describe('LÍMITES CONOCIDOS')` que los **fija**: si
+alguien los cierra, el test falla y obliga a actualizar la documentación. Un
+límite callado es un hueco; uno fijado por test es una decisión.
+
+| | caso | por qué no se cierra |
+| - | ---- | -------------------- |
+| **L1** | secreto en el PATH de una URL | nada en el nombre lo anuncia |
+| **L2** | blob base64/hex suelto | indistinguible de un hash, un id o contenido legítimo; taparlo por su forma cegaría más de lo que protege |
+| **L3** | secreto usado como **clave** (`{ 'ghp_…': 'activo' }`) | se redacta el valor, no el nombre del campo |
+| **L4** | `-p valor` | en medio ecosistema `-p` es «port» (`docker run -p 8080:80`); taparlo sería una fábrica de falsos positivos. **El comentario que prometía cubrirlo estaba mal y se corrigió** (D3) |
+| **L5** | secreto en prosa sin etiqueta | «la clave es hunter2» se tapa; «hunter2» a secas, no |
+
+La probe planta 4 secretos reales por caminos distintos y verifica que ninguno
+sale (§6).
 
 ---
 
@@ -308,25 +489,25 @@ líneas de abajo las emite el módulo real, no el guion.
 
 ```
 ========================================================================
-Aleph-0 · diagnóstico · sesión 5baed610
-  iniciada    2026-07-31T22:38:36.773Z
+Aleph-0 · diagnóstico · sesión 7a07d33e
+  iniciada    2026-07-31T23:18:14.078Z
   extensión   scriptorium.aleph-0 0.2.0 (simulada en probe)
   vs code     1.95.0 (simulada en probe)
   plataforma  win32 x64 · node 22.21.1
   nivel       INFO
   las credenciales van redactadas como «redactado» (WP-V71)
 ========================================================================
-[2026-07-31T22:38:36.777Z] [INFO ] [extension] [s=5baed610 #1] AlephScript Extension is activating...
-[2026-07-31T22:38:36.783Z] [INFO ] [ProcessManager] [s=5baed610 #2 op=start-1] Process launching | {"name":"launcher","workingDir":"/home/ada/proyectos/zigurat","command":"node launcher.js --api-key «redactado» --port 3000","port":3000}
-[2026-07-31T22:38:36.791Z] [INFO ] [ProcessManager] [s=5baed610 #3 op=start-1] Process started in terminal | {"name":"launcher"}
-[2026-07-31T22:38:36.791Z] [INFO ] [ProcessManager] [s=5baed610 #4 op=start-2] Process is already running | {"name":"launcher"}
-[2026-07-31T22:38:37.792Z] [INFO ] [ProcessManager] [s=5baed610 #5 op=stop-3] Terminal for process disposed | {"name":"launcher"}
-[2026-07-31T22:38:37.793Z] [INFO ] [ProcessManager] [s=5baed610 #6 op=stop-3] Process stopped successfully | {"name":"launcher"}
-[2026-07-31T22:38:37.793Z] [INFO ] [ProcessManager] [s=5baed610 #7 op=stop-4] Process not found | {"name":"no-existe"}
-[2026-07-31T22:38:37.793Z] [ERROR] [ManagerFactory] [s=5baed610 #8] Error disposing manager | {"managerId":"webView","error":{"name":"Error","message":"ECONNREFUSED 127.0.0.1:3000","stack":"Error: ECONNREFUSED 127.0.0.1:3000\n    at conducir (C:\\S_LAB\\wt\\v-v71\\out\\probe\\v71-canal.cjs:1268:17)\n    at async file:///C:/S_LAB/wt/v-v71/scripts/probes/v71-canal-estructurado.mjs:59:5"}}
-[2026-07-31T22:38:37.794Z] [INFO ] [AracneBot] [s=5baed610 #9] Received VSCODE_COMMAND request | {"data":{"command":"aleph0.abrirPanel","authorization":"«redactado»","author":"ada@lovelace.dev"}}
-[2026-07-31T22:38:37.794Z] [INFO ] [AlephScriptClient] [s=5baed610 #10] Connected | {"client":"vscode-extension","url":"https://«redactado»@mesh.local:3000/runtime?token=«redactado»","socketId":"k3Jd9"}
-[2026-07-31T22:38:37.794Z] [WARN ] [AracneBot] [s=5baed610 #11] ⏳ aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO
+[2026-07-31T23:18:14.082Z] [INFO ] [extension] [s=7a07d33e #1] AlephScript Extension is activating...
+[2026-07-31T23:18:14.087Z] [INFO ] [ProcessManager] [s=7a07d33e #2 op=start-1] Process launching | {"name":"launcher","workingDir":"/home/ada/proyectos/zigurat","command":"node launcher.js --api-key «redactado» --port 3000","port":3000}
+[2026-07-31T23:18:14.090Z] [INFO ] [ProcessManager] [s=7a07d33e #3 op=start-1] Process started in terminal | {"name":"launcher"}
+[2026-07-31T23:18:14.090Z] [INFO ] [ProcessManager] [s=7a07d33e #4 op=start-2] Process is already running | {"name":"launcher"}
+[2026-07-31T23:18:15.092Z] [INFO ] [ProcessManager] [s=7a07d33e #5 op=stop-3] Terminal for process disposed | {"name":"launcher"}
+[2026-07-31T23:18:15.092Z] [INFO ] [ProcessManager] [s=7a07d33e #6 op=stop-3] Process stopped successfully | {"name":"launcher"}
+[2026-07-31T23:18:15.092Z] [INFO ] [ProcessManager] [s=7a07d33e #7 op=stop-4] Process not found | {"name":"no-existe"}
+[2026-07-31T23:18:15.093Z] [ERROR] [ManagerFactory] [s=7a07d33e #8] Error disposing manager | {"managerId":"webView","error":{"name":"Error","message":"ECONNREFUSED 127.0.0.1:3000","stack":"Error: ECONNREFUSED 127.0.0.1:3000\n    at conducir (C:\\S_LAB\\wt\\v-v71\\out\\probe\\v71-canal.cjs:1397:17)\n    at async file:///C:/S_LAB/wt/v-v71/scripts/probes/v71-canal-estructurado.mjs:59:5"}}
+[2026-07-31T23:18:15.093Z] [INFO ] [AracneBot] [s=7a07d33e #9] Received VSCODE_COMMAND request | {"data":{"command":"aleph0.abrirPanel","authorization":"«redactado»","author":"ada@lovelace.dev"}}
+[2026-07-31T23:18:15.093Z] [INFO ] [AlephScriptClient] [s=7a07d33e #10] Connected | {"client":"vscode-extension","url":"https://«redactado»@mesh.local:3000/runtime?token=«redactado»","socketId":"k3Jd9"}
+[2026-07-31T23:18:15.093Z] [WARN ] [AracneBot] [s=7a07d33e #11] ⏳ aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO
 ```
 
 **Qué de esto sirve para diagnosticar sin acceso al equipo:**
@@ -338,11 +519,18 @@ Aleph-0 · diagnóstico · sesión 5baed610
   hora local del emisor es ilegible desde otro huso;
 - **nivel de ancho fijo** — `grep '\[ERROR\]'` casa siempre;
 - **origen** — `[ProcessManager]`, `[AracneBot]`… qué módulo habló;
-- **correlación**: `s=5baed610` agrupa las líneas de un mismo arranque cuando el
+- **correlación**: `s=7a07d33e` agrupa las líneas de un mismo arranque cuando el
   usuario pega solo un fragmento; `#1..#11` es monótona y **delata líneas
   perdidas o reordenadas**; `op=start-1` / `op=stop-3` hilvanan las líneas de
   una misma operación — se ve que `#5` y `#6` son el mismo `stop`, y que
-  `#2/#3` y `#4` son **dos arranques distintos** aunque hablen del mismo proceso;
+  `#2/#3` y `#4` son **dos arranques distintos** aunque hablen del mismo proceso.
+  **Alcance acotado tras la devolución**: `op=` correlaciona **dentro de un
+  módulo**. Cada `forOperation()` acuña un id nuevo, no hay propagación: dos
+  módulos del mismo flujo obtienen operaciones distintas y un hijo no hereda del
+  padre. Mi primera redacción decía «multi-módulo» y la API no lo sostiene — ni
+  esta probe lo demostraba, porque todas sus líneas correlacionadas salen de
+  `ProcessManager`. Hay test que **fija** el límite; correlacionar entre módulos
+  exige propagar el id por la cadena de llamadas y es diseño de otro WP;
 - **la pila del error** llega entera: `JSON.stringify(new Error('x'))` devuelve
   `{}`, que es inútil; por eso el serializador trata `Error` aparte;
 - **los secretos, tapados**: `--api-key «redactado»`,
@@ -411,6 +599,40 @@ lee. **Ojo de frontera:** ambas claves entran en el terreno de **V23**
 5. **No verifiqué en un Extension Host real.** La probe corre el código vivo con
    un doble de `vscode`; el canal en un VS Code de verdad queda
    **⏳ sin verificar** — lo cubre el arnés de V68 en CI.
+6. **No propagué la correlación entre módulos** (ver §6): `forOperation` aísla
+   una operación dentro de un módulo y nada más. Hacerlo cruzar módulos exige
+   propagar el id por la cadena de llamadas o un contexto asíncrono; es diseño
+   de otro WP.
+
+---
+
+## §8bis · D6 · El canal **no** se cierra en `deactivate` — decisión, no olvido
+
+La primera versión hacía `disposeStructuredLog()` en un `finally` de
+`deactivate`. **Se retira.** El razonamiento, que también queda escrito en
+`src/extension.ts` para que no haya que venir aquí a buscarlo:
+
+- **Contra cerrarlo (decisivo).** Cerrar el canal lo retira del desplegable de
+  «Output» **con todo su contenido**. En un «Reload Window» —o justo después de
+  un fallo de desactivación— el operador pierde el log en el instante exacto en
+  que iba a copiarlo a un issue. Ese log es el entregable central de este WP
+  (CA2). El `console.log` que sustituimos **sobrevivía** en el log del Extension
+  Host: degradar eso sería un retroceso disfrazado de higiene.
+- **A favor de cerrarlo: nada que sostenga el peso.** Un `OutputChannel` no es
+  un proceso, ni un puerto, ni un descriptor de fichero — es un panel de texto
+  que VS Code destruye solo al terminar el host, que es justo lo que viene
+  después de `deactivate`. Cerrarlo a mano solo **adelanta la pérdida** sin
+  liberar nada.
+- **El criterio «sale limpio»** (`plan/VISION.md` §4.5) habla de *procesos,
+  ficheros fuera de ámbito y ajustes huérfanos*. Un panel de salida no es
+  ninguno de los tres.
+- **Consecuencia coherente:** tampoco se registra en `context.subscriptions` —
+  eso lo cerraría por la puerta de atrás. `disposeStructuredLog()` sigue
+  exportado para los tests y para el futuro comando de limpieza (§7).
+
+**⏳ sin verificar en host real**: que el canal sobreviva a un «Reload Window»
+con su contenido es la conducta que espero de la API, no algo que haya medido en
+un VS Code de verdad. Lo cubre el arnés de V68.
 
 ---
 
@@ -437,22 +659,33 @@ lee. **Ojo de frontera:** ambas claves entran en el terreno de **V23**
 
 - [x] **Diff solo dentro del alcance**: `src/core/logging/` (nuevo),
       11 ficheros migrados, `.eslintrc.cjs` (el gate), `tests/unit/core/logging/`,
-      `scripts/probes/v71-*`, este reporte. **Desvío D1 declarado en §0.**
+      `scripts/probes/v71-*`, este reporte. **Desvío D1 aprobado (§0).**
 - [x] **Cero ficheros copiados de otros mundos**: nada importado de fuera.
-- [x] **Rutas citadas existentes**: todas verificadas en este árbol.
+- [x] **Rutas citadas existentes**: todas verificadas en este árbol; la única
+      que había derivado (`AracneBotService.ts`) se corrigió a `:225`.
 - [x] **Eje estructural evidenciado**: «cero cambio observable» **probado**
-      (§4), no afirmado — suite, rojos por nombre, diff de tsc, esbuild.
+      (§4), no afirmado — suite, rojos por nombre, diff de tsc, esbuild. Y la
+      regla 1:1 que lo sostiene, **medida** con el comparador de §−1, no
+      inspeccionada.
 - [x] **Gate de dedup**: no se duplica `LogLevel`/`LogCategory`; se reutilizan.
-- [x] **Gates ejecutados de verdad**: lint, sonda de evasión, 60 tests, probe,
-      tsc, esbuild — todas las salidas pegadas son literales.
-- [x] **Commits convencionales**: 7, todos `wp(V71): …`.
-- [ ] **Verificación en host real**: ⏳ sin verificar (arnés V68).
+- [x] **Gates ejecutados de verdad**: lint, sonda de evasión (19 formas),
+      117 tests del módulo, probe, tsc, esbuild — todas las salidas pegadas son
+      literales.
+- [x] **Commits convencionales**: 12, todos `wp(V71): …`.
+- [x] **Afirmaciones acotadas a lo que la evidencia sostiene**: el «9/9» del
+      gate y el «multi-módulo» de `forOperation` se estrecharon tras la
+      devolución; ambos límites están **fijados por test**.
+- [ ] **Verificación en host real**: ⏳ sin verificar (arnés V68). Incluye D6
+      (que el canal sobreviva al «Reload Window»).
 
 ## §11 · Evidencia de riesgo y contrarrevisión
 
 - `CASOS_ADVERSARIALES`:
-  - `[automatizado]` **9 formas de evasión del gate** → 9/9 cazadas con la
-    config real (§3.1). Es el caso que el BRIEF pedía anticipar.
+  - `[automatizado]` **19 formas de evasión del gate** → 14/14 de lo cerrable
+    cazadas; 5 declaradas como límite de cualquier lint estático (§3.1).
+  - `[automatizado]` **matriz hostil del redactor**: 37 claves secretas,
+    20 limpias, 18 cadenas hostiles, 6 limpias → cero fugas, cero falsos
+    positivos. 5 límites **fijados por test** (§5).
   - `[automatizado]` **canal roto** (`appendLine` lanza) → el logger no propaga
     y **no** cae a `console` (espías sobre los 3 métodos).
   - `[automatizado]` **sin API de `OutputChannel`** → no lanza; el anillo retiene.
@@ -460,6 +693,8 @@ lee. **Ojo de frontera:** ambas claves entran en el terreno de **V23**
     mensaje no-string) → nunca lanza, siempre una sola línea.
   - `[automatizado]` **4 secretos plantados** en línea de comando, URL, cabecera
     y dato → ninguno llega al canal; `author` sí (no cegar).
+  - `[automatizado]` **paridad de nivel 1:1** sobre los 95 sitios, cotejada en
+    orden contra `main` (§−1) → 0 desvíos.
   - `[manual]` **solape con V66** inspeccionado hunk a hunk: ninguna de las 10
     líneas del carve-out cae dentro de un hunk de V66.
 - `DEPENDENCIAS_DIRECTAS_VERIFICADAS`: el módulo nuevo usa **solo** `vscode` y
@@ -468,22 +703,27 @@ lee. **Ojo de frontera:** ambas claves entran en el terreno de **V23**
 - `INSTALACION_LIMPIA`: `no aplica` — este WP no toca empaquetado. `npm ci` en
   worktree limpio + `npm run esbuild-base` verde.
 - `TEST_AUTOMATIZADO_VS_EVIDENCIA_MANUAL`:
-  - Automatizado: 60 tests jest nuevos · probe de 24 aserciones · sonda de
-    evasión de 9 casos · diffs de tsc y de rojos.
+  - Automatizado: 117 tests jest nuevos · probe de 24 aserciones · sonda de
+    evasión de 19 casos · comparador de niveles · diffs de tsc y de rojos.
   - Manual: lectura de los hunks de `wp/v66-csp`; enumeración de las 18
-    apariciones textuales de `console` supervivientes.
-- `VEREDICTO_REVISOR`: `⏳ pendiente de revisor distinto` — riesgo
-  `independiente` por §4.5 de `plan/PRACTICAS.md`.
+    apariciones textuales de `console` supervivientes; verificación de primera
+    mano del censo de `author`/`tokenEnv` que desmontó mi propia justificación.
+- `VEREDICTO_REVISOR`: 1ª contrarrevisión **DEVUELTO** (6 puntos, todos
+  cerrados en §−1) · 2ª `⏳ pendiente`, acotada a D1, D2, `auth`/`tokenEnv`, el
+  castellano y las dos formas del gate.
 
 ## §12 · Dudas / bloqueos para el orquestador
 
-1. **§0/D1 exige decisión**: ¿se ratifican los 4 paneles migrados, o
-   `git revert 8bc976d` y el WP queda en 49/105? No lo decido yo.
+1. ~~**§0/D1 exige decisión**~~ — **resuelto**: el orquestador aprobó el desvío
+   tras verificar que la intersección con el carril de webviews es vacía.
 2. **Los nombres `aleph0.log.level` y `aleph0.mostrarDiagnostico`** (§7) pisan el
    terreno de V23 (claves→ontología). Son propuesta, no acuerdo.
 3. **CA1 no da un 0 absoluto**: da 0 errores del gate AST con un carve-out de
    frontera de 10 sitios, declarado y visible como warning. Si el orquestador
    quiere el 0 absoluto, hay que autorizar tocar los 2 ficheros de V66.
+4. **Seguimiento propuesto (§−1)**: subir a `warn` los tres «comando desconocido
+   desde webview». Lo pide el criterio; lo bloquea, hoy, la demostrabilidad de
+   la regla 1:1. Va como WP aparte, no de tapadillo aquí.
 
 ---
 
