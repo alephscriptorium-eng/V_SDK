@@ -13,6 +13,17 @@
 import * as vscode from 'vscode';
 import { AlephScriptClient, AlephScriptClientConfig } from '../libs/alephscript-client';
 import { resolveMeshBaseUrl, ZIGURAT_PENDING } from '../config/ziguratSettings';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from './logging';
+
+/**
+ * WP-V71 · el prefijo `[AracneBot]` que llevaban estos mensajes lo pone ahora
+ * el campo «origen» de la línea; se retira del texto para no duplicarlo.
+ *
+ * Superficie sensible: por aquí entran `data` y `args` de pares del mesh que no
+ * controlamos. Van al canal por el redactor (WP-V71 CA4), nunca en crudo.
+ */
+const log = getLogger('AracneBot', LogCategory.SOCKET);
 
 export interface AracneBotConfig {
     socketUrl?: string;
@@ -98,8 +109,8 @@ export class AracneBotService {
         if (!this.config.socketUrl) {
             this.pending = true;
             this.client = undefined;
-            console.warn(
-                `[AracneBot] ${ZIGURAT_PENDING} aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
+            log.warn(
+                `${ZIGURAT_PENDING} aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
             );
             return;
         }
@@ -121,18 +132,18 @@ export class AracneBotService {
             
             // Setup connection handlers
             this.client.onConnect((socketId) => {
-                console.log(`[AracneBot] Connected with id: ${socketId}`);
+                log.info('Connected to mesh', { socketId });
                 this._onConnectionChange.fire(true);
                 this.registerWithMesh();
             });
 
             this.client.onDisconnect(() => {
-                console.log(`[AracneBot] Disconnected from mesh`);
+                log.info('Disconnected from mesh');
                 this._onConnectionChange.fire(false);
             });
 
             this.client.onError((error) => {
-                console.error(`[AracneBot] Error:`, error);
+                log.error('Client error', { error });
                 this._onError.fire(error);
             });
 
@@ -141,14 +152,14 @@ export class AracneBotService {
                 this.setupEventListeners();
             });
 
-            console.log(`[AracneBot] Initialized - ready to connect to ${this.config.socketUrl}`);
+            log.info('Initialized - ready to connect', { socketUrl: this.config.socketUrl });
             
             // Auto-connect if configured
             if (this.config.autoConnect) {
                 this.connect();
             }
         } catch (error) {
-            console.error(`[AracneBot] Failed to initialize:`, error);
+            log.error('Failed to initialize', { error });
             this.pending = true;
             this.client = undefined;
         }
@@ -169,7 +180,8 @@ export class AracneBotService {
         // Declare as MASTER with capabilities
         this.client.makeMaster(this.config.capabilities || [], this.roomName);
 
-        console.log(`[AracneBot] Registered as MASTER of ${this.roomName}`, {
+        log.info('Registered as MASTER of room', {
+            room: this.roomName,
             capabilities: this.config.capabilities
         });
     }
@@ -182,7 +194,7 @@ export class AracneBotService {
 
         // Handle capability requests from other bots
         this.client.on("GET_VSCODE_COMMAND", async (data: any) => {
-            console.log("[AracneBot] Received VSCODE_COMMAND request:", data);
+            log.info('Received VSCODE_COMMAND request', { data });
             this._onMessage.fire({ event: "GET_VSCODE_COMMAND", data });
             
             // Execute VS Code command if provided
@@ -205,7 +217,7 @@ export class AracneBotService {
         });
 
         this.client.on("GET_VSCODE_STATUS", () => {
-            console.log("[AracneBot] Received STATUS request");
+            log.info('Received STATUS request');
             this._onMessage.fire({ event: "GET_VSCODE_STATUS", data: {} });
             
             this.client?.room("SET_VSCODE_STATUS", {
@@ -218,7 +230,7 @@ export class AracneBotService {
         });
 
         this.client.on("GET_EXTENSION_HEALTH", () => {
-            console.log("[AracneBot] Received HEALTH request");
+            log.info('Received HEALTH request');
             this._onMessage.fire({ event: "GET_EXTENSION_HEALTH", data: {} });
             
             this.client?.room("SET_EXTENSION_HEALTH", {
@@ -232,7 +244,7 @@ export class AracneBotService {
         // Subscribe to all events for debugging
         this.client.onAny((eventName: string, ...args: any[]) => {
             if (!['connect', 'disconnect', 'connect_error'].includes(eventName)) {
-                console.log(`[AracneBot] Event: ${eventName}`, args);
+                log.info('Event received', { event: eventName, args });
             }
         });
     }
@@ -242,12 +254,12 @@ export class AracneBotService {
      */
     public connect(): void {
         if (this.pending || !this.client) {
-            console.warn(
-                `[AracneBot] ${ZIGURAT_PENDING} sin mesh configurado. Configure aleph0.mesh.baseUrl (o host+port).`
+            log.warn(
+                `${ZIGURAT_PENDING} sin mesh configurado. Configure aleph0.mesh.baseUrl (o host+port).`
             );
             return;
         }
-        console.log(`[AracneBot] Connecting to ${this.config.socketUrl}${this.config.namespace}...`);
+        log.info('Connecting to mesh', { url: `${this.config.socketUrl}${this.config.namespace}` });
         this.client.connect();
     }
 
@@ -279,7 +291,7 @@ export class AracneBotService {
      */
     public sendToRoom(event: string, data: any, roomName?: string): void {
         if (!this.client || !this.isConnected()) {
-            console.warn("[AracneBot] Cannot send - not connected");
+            log.warn('Cannot send - not connected');
             return;
         }
         this.client.room(event, data, roomName || this.roomName);

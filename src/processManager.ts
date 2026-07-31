@@ -2,6 +2,15 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { TerminalManager } from './terminalManager';
 import { resolveLauncherPort, ZIGURAT_PENDING } from './config/ziguratSettings';
+import { LogCategory } from './loggingManager';
+import { getLogger } from './core/logging';
+
+/**
+ * WP-V71 · el ciclo de vida de procesos es lo primero que se pide cuando algo
+ * falla en una máquina ajena; cada arranque y cada parada llevan `op=` para
+ * poder aislar un lanzamiento concreto entre el ruido.
+ */
+const log = getLogger('ProcessManager', LogCategory.PROCESS);
 
 export interface ProcessInfo {
     id?: string;
@@ -32,15 +41,18 @@ export class ProcessManager {
     }
 
     async startProcess(name: string, command: string, args: string[], workingDir: string, port?: number): Promise<boolean> {
+        const opLog = log.forOperation('start');
         try {
             // Check if process is already running
             if (this.processInfo.has(name) && this.processInfo.get(name)?.status === 'running') {
-                console.log(`Process ${name} is already running`);
+                opLog.info('Process is already running', { name });
                 return false;
             }
 
             const fullCommand = `${command} ${args.join(' ')}`;
-            console.log(`Process launching at ${workingDir} :> ${fullCommand}`);
+            // La línea de comando puede traer `--token …` o `API_KEY=…` en los
+            // args; el redactor del canal los tapa antes de emitir (WP-V71 CA4).
+            opLog.info('Process launching', { name, workingDir, command: fullCommand, port });
 
             // Create terminal using VS Code's terminal API
             const terminal = vscode.window.createTerminal({
@@ -80,29 +92,30 @@ export class ProcessManager {
                         info.status = 'stopped';
                         this.processInfo.set(name, info);
                     }
-                    console.log(`Terminal process ${name} was closed`);
+                    opLog.info('Terminal process was closed', { name });
                     disposable.dispose();
                 }
             });
 
-            console.log(`Process ${name} started in terminal`);
+            opLog.info('Process started in terminal', { name });
             return true;
         } catch (error) {
-            console.error(`Failed to start process ${name}:`, error);
+            opLog.error('Failed to start process', { name, error });
             return false;
         }
     }
 
     async stopProcess(name: string): Promise<boolean> {
+        const opLog = log.forOperation('stop');
         try {
             const processInfo = this.processInfo.get(name);
             if (!processInfo) {
-                console.log(`Process ${name} not found`);
+                opLog.info('Process not found', { name });
                 return false;
             }
 
             if (processInfo.status !== 'running') {
-                console.log(`Process ${name} is not running (status: ${processInfo.status})`);
+                opLog.info('Process is not running', { name, status: processInfo.status });
                 return false;
             }
 
@@ -116,7 +129,7 @@ export class ProcessManager {
                 
                 // Then dispose the terminal
                 processInfo.terminal.dispose();
-                console.log(`Terminal for process ${name} disposed`);
+                opLog.info('Terminal for process disposed', { name });
             }
             
             // Update status
@@ -124,10 +137,10 @@ export class ProcessManager {
             processInfo.terminal = undefined;
             this.processInfo.set(name, processInfo);
             
-            console.log(`Process ${name} stopped successfully`);
+            opLog.info('Process stopped successfully', { name });
             return true;
         } catch (error) {
-            console.error(`Failed to stop process ${name}:`, error);
+            opLog.error('Failed to stop process', { name, error });
             
             // Mark as stopped even if there was an error, to prevent zombie entries
             const processInfo = this.processInfo.get(name);
@@ -159,7 +172,7 @@ export class ProcessManager {
         const promises = allProcessNames.map(name => this.stopProcess(name));
         await Promise.all(promises);
         
-        console.log(`All processes stopped (${allProcessNames.length} processes)`);
+        log.info('All processes stopped', { count: allProcessNames.length });
     }
 
     getRunningProcessesCount(): number {
@@ -177,7 +190,7 @@ export class ProcessManager {
     async startLauncher(configPath: string): Promise<boolean> {
         const launcherPort = resolveLauncherPort();
         if (launcherPort === undefined) {
-            console.warn(
+            log.warn(
                 `${ZIGURAT_PENDING} aleph0.launcher.port no configurado — no se arranca launcher con puerto inventado`
             );
             vscode.window.showWarningMessage(
@@ -236,10 +249,10 @@ export class ProcessManager {
             };
             
             this.processInfo.set(processName, processInfo);
-            console.log(`MCP Web ${webId} tracked at http://${host}:${port}`);
+            log.info('MCP Web tracked', { webId, url: `http://${host}:${port}` });
             return true;
         } catch (error) {
-            console.error(`Failed to start/track MCP web ${webId}:`, error);
+            log.error('Failed to start/track MCP web', { webId, error });
             return false;
         }
     }
@@ -258,7 +271,7 @@ export class ProcessManager {
             const processInfo = this.processInfo.get(processName);
             return processInfo?.status === 'running';
         } catch (error) {
-            console.error(`Failed to check MCP web status for ${webId}:`, error);
+            log.error('Failed to check MCP web status', { webId, error });
             return false;
         }
     }
@@ -288,7 +301,17 @@ export class ProcessManager {
     showProcessLogs(processId: string): void {
         const processInfo = this.getProcessInfo(processId);
         if (processInfo) {
-            console.log(`Logs for process ${processId}:`, processInfo);
+            // Se enumeran los campos: `terminal` es un objeto vivo de la API de
+            // VS Code, no un dato — volcarlo ensucia el canal sin diagnosticar.
+            log.info('Logs for process', {
+                processId,
+                name: processInfo.name,
+                command: processInfo.command,
+                status: processInfo.status,
+                port: processInfo.port,
+                workingDirectory: processInfo.workingDirectory,
+                startTime: processInfo.startTime
+            });
         }
     }
 

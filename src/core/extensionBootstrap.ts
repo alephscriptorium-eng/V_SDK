@@ -13,11 +13,18 @@
 import * as vscode from 'vscode';
 import { AnalyticsEventType } from './analyticsService';
 import { LogCategory, createLogger } from '../loggingManager';
+import { getLogger } from './logging';
 import { ExtensionContext } from './bootstrap/context';
 import { assembleExtensionContext } from './bootstrap/assembleContext';
 import { commandTable, CommandDeps } from './bootstrap/commands';
 import { registerViewContribution, viewRegistrations } from './bootstrap/viewRegistry';
 import { stringArrayToLogCategories } from './bootstrap/logSettings';
+
+/**
+ * WP-V71 · canal de último recurso del bootstrap: se usa donde el logger
+ * normal puede no existir todavía o donde falló la vía de UI.
+ */
+const bootstrapLog = getLogger('ExtensionBootstrap', LogCategory.EXTENSION);
 
 export class ExtensionBootstrap {
     private static instance: ExtensionBootstrap;
@@ -97,7 +104,7 @@ export class ExtensionBootstrap {
                     }
                 });
             } catch (uiError) {
-                console.error('Failed to show error UI:', uiError);
+                bootstrapLog.error('Failed to show error UI', { error: uiError });
             }
 
             throw error;
@@ -283,7 +290,7 @@ AlephScript Extension Status:
                 await this.extensionContext.managers.factory.disposeAll();
                 this.extensionContext.logger.info('AlephScript extension deactivation completed');
             } catch (error) {
-                console.error('Error during extension disposal:', error);
+                bootstrapLog.error('Error during extension disposal', { error });
             }
         }
     }

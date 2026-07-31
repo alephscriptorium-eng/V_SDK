@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { LoggingManager } from '../loggingManager';
+import { LoggingManager, LogCategory } from '../loggingManager';
+import { getLogger } from './logging';
 import { ProcessManager } from '../processManager';
 import { WebViewManager } from '../webViewManager';
 import { CommandPaletteManager } from '../commandPaletteManager';
@@ -7,6 +8,9 @@ import { ConfigurationService } from './configurationService';
 import { ErrorBoundary } from './errorBoundary';
 import { AnalyticsService } from './analyticsService';
 import { AIAssistantService } from './aiAssistantService';
+
+/** WP-V71 · fallos del ciclo de vida de managers, al canal propio. */
+const log = getLogger('ManagerFactory', LogCategory.EXTENSION);
 
 export interface ManagerConfig {
     context: vscode.ExtensionContext;
@@ -143,7 +147,7 @@ export class ManagerFactory {
                 manager.dispose();
                 this.managers.delete(managerId);
             } catch (error) {
-                console.error(`Error disposing manager ${managerId}:`, error);
+                log.error('Error disposing manager', { managerId, error });
             }
         }
     }
@@ -181,7 +185,7 @@ export class ManagerFactory {
                 try {
                     await (manager as any).updateConfig(this.config);
                 } catch (error) {
-                    console.error(`Error updating config for manager ${managerId}:`, error);
+                    log.error('Error updating config for manager', { managerId, error });
                 }
             }
         }
@@ -222,7 +226,7 @@ export class ManagerFactory {
             try {
                 await this.createManager(managerType as any);
             } catch (error) {
-                console.error(`Error reinitializing manager ${managerType}:`, error);
+                log.error('Error reinitializing manager', { managerType, error });
             }
         }
     }
