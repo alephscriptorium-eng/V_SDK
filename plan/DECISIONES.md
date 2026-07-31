@@ -26,6 +26,25 @@ ver «Cerradas». El replan de la Ola F queda copiado en
 
 ## Cerradas
 
+- **DV-17 · Namespace de configuración: se APLAZA; V23 cierra con `aleph0`**
+  — decisión del custodio **2026-07-31** (decisión ⑦ del plan del hub).
+  **La pregunta**: la contrarrevisión de V23 detectó que la cita de DV-16.a
+  elide «opción (b) **dentro de WP-V15**» — la cláusula de la que depende si
+  DV-16.a ata a V23 o si el brief de V23 («los 3 prefijos actuales se
+  **demuelen**», y `aleph0` es uno de los tres) la supera. Se suma que
+  `aleph0` **no tiene fila** en `plan/LEXICO-ZIGURAT.md` §1 mientras que
+  **`Zigurat` sí** (`:38`), contra un brief que pide el namespace «salido de
+  la ontología».
+  **La resolución**: **aplazar**. El namespace se decide **junto con la
+  identidad pública del nuevo scope** (decisión ③: «hacerla muy
+  Scriptorium»), no antes. Razón: cambiar el namespace dos veces es peor que
+  cambiarlo tarde, y renombrarlo hoy costaría 19 claves que habría que
+  volver a mover al cerrar la identidad. Cuando se cierre, el cambio se hace
+  **de una vez con el extension-id**.
+  **Consecuencia operativa**: **V23 cierra con `aleph0` tal cual** y su obra
+  es válida como está; ningún worker reabre esto. El residuo declarado
+  (identificadores de código que no se renombran, p. ej. el campo `meshHost`
+  leyendo `ciudad.host`) queda igualmente aplazado a ese momento.
 - **DV-11..DV-16.a · CERRADAS EN BLOQUE** — GO custodio 2026-07-25
   (sesión debug; ventana vigilante-S con gorro de operador V, relevo
   `C:/S_LAB/vigilancia/v/RELEVO-GORRO-2026-07-25-debug.md`). Las seis
