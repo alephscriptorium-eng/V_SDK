@@ -38,7 +38,7 @@ de canal/puertas = **U236**.
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
 | **WP-V21** `P0` | **Gate de consumo de la estructura del Zigurat**: la materialización en playground es del HUB/G (G52·HUB-072); V la **consume y verifica** — ninguna UI antes de que exista con evidencia | estructura externa citada por ruta · frontera estructura/lienzo verificada por V · **cero VS Code** hasta el gate |
-| **WP-V22** `P0` | **Mapa barrio → superficie**: por cada entrada del catálogo, a qué superficie va y **cuál no va a ninguna** | tabla completa sin `<pendiente>` · cada «no va» con motivo · ninguna fila implica jerarquía |
+| **WP-V22** `P0` 🔶 | **Mapa barrio → superficie**: por cada entrada del catálogo, a qué superficie va y **cuál no va a ninguna** | tabla completa sin `<pendiente>` · cada «no va» con motivo · ninguna fila implica jerarquía |
 | **WP-V27** `P1` | **Léxico del Zigurat** derivado de la ontología (barrio, zona, ámbito, edificio, pieza, corpus) | glosario citable · cada término con fuente · cero sinónimos compitiendo |
 
 ## LANE B · ENTRADA E IDENTIDAD — **P0**
@@ -112,7 +112,7 @@ de canal/puertas = **U236**.
 | **WP-V50** `P1` | **Guardas del release**: tag≠versión, check-then-act, `shell:true`, publish sin gates | tag falso **falla** · guardas probadas, no declaradas |
 | **WP-V51** `P1` | **Gate de artefacto** (W-1): verificar contra el paquete real | `unzip -l` en el CA · las dos fugas históricas cubiertas por test |
 | **WP-V83** `P1` | **Supply-chain del VSIX**: SBOM, checksums, audit de deps, provenance | vsix inspeccionado y trazable · deps auditadas en CI |
-| **WP-V86** `P0` | **PRIMERA release pública aceptada** — absorbe al viejo V52: semver lo decide el custodio (no hay 0.1/0.2 que salvar); artefacto firmado/hash; canal decidido; guía apunta al artefacto | DoD R11-V completa · sha asset = sha local · anomalía del v0.1.0 extinguida |
+| **WP-V86** `P0` | **PRIMERA release pública aceptada** — absorbe al viejo V52: semver lo decide el custodio (no hay 0.1/0.2 que salvar); artefacto firmado/hash; guía apunta al artefacto. **Decisión ③ (custodio 2026-07-31): corte con el histórico** — scope `alephscriptorium/aleph-scriptorium` muerto; identidad pública muy Scriptorium, ligada al scope nuevo (github + registry npm nuevos · v-sdk.escrivivir.co); contadores reiniciados; la Release v0.1.0 antigua se desconecta y depreca; canal = GitHub Release; Marketplace **DEFERRED** (spike market propio → O96) | DoD R11-V completa · sha asset = sha local · anomalía del v0.1.0 extinguida |
 | **WP-V53** `P2` | **Portar workflows a Forgejo** (W-2): prueba de facto de portabilidad | los dos workflows verdes en la forja sin reescribir |
 | **WP-V11** `P2` | **Atlas y punteros**: gitlink `codebase/v-sdk` + notas | R6-V PASS ya ✅ · falta GO DA-S11 |
 
@@ -168,9 +168,9 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V81** `P0` | **Fundación del plan**: `VISION.md` + `PRACTICAS.md` locales — ownership, ejes CA, riesgos, release, lenguaje INÉDITO; el backlog apunta, no duplica | contrato local único · invariantes fuera del backlog |
-| **WP-V77** `P0` ⬜ | **Grafo de deps y contención**. Entregable **preparado**: `plan/GOBIERNO-EJECUCION-F2.md` §1–§3 — **pendiente de aceptación** (sin worker, no se marca en curso) | lotes paralelos con alcance disjunto verificado |
-| **WP-V78** `P0` ⬜ | **Gates por lane + definición de terminada**. Entregable preparado: íd. §4–§5 — pendiente de aceptación | cada lane con gate y evidencia · «terminada» = CAs, no opinión |
+| **WP-V81** `P0` 🔶 | **Fundación del plan**: `VISION.md` + `PRACTICAS.md` locales — ownership, ejes CA, riesgos, release, lenguaje INÉDITO; el backlog apunta, no duplica | contrato local único · invariantes fuera del backlog |
+| **WP-V77** `P0` ✅ | **Grafo de deps y contención**: `plan/GOBIERNO-EJECUCION-F2.md` §1–§3 — **aceptado por el orquestador (2026-07-31, GO ola 0)**; correcciones de forma aplicadas (V52→V86 · puerta=rooms) | lotes paralelos con alcance disjunto verificado |
+| **WP-V78** `P0` ✅ | **Gates por lane + definición de terminada**: íd. §4–§5 — **aceptado por el orquestador (2026-07-31, GO ola 0)** | cada lane con gate y evidencia · «terminada» = CAs, no opinión |
 | **WP-V79** `P1` ⬜ | **Plantilla de brief**. Entregable preparado: `plan/BRIEFS/PLANTILLA-BRIEF-F2.md` — pendiente de aceptación | un worker nuevo no repite las 9 trampas censadas |
 
 ---

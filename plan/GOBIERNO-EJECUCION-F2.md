@@ -4,7 +4,7 @@
 | ---- | ----- |
 | Carril | **V** · Aleph-0 (ℵ₀) |
 | Entregable de | **WP-V77** (§1–§3) y **WP-V78** (§4–§5) |
-| Estado | 🔶 preparado en sesión de asentamiento · **pendiente de aceptación del custodio** |
+| Estado | ✅ **aceptado** (orquestador Anfitrión · GO custodio ola 0 · 2026-07-31) · correcciones de forma aplicadas: V52→V86 · puerta=rooms |
 | Regla que lo motiva | en la Ola F, tres WPs tocando `package.json` se secuenciaron a mano **y aun así el lote se rompió**. Con 64 WPs, sin grafo no se despacha |
 
 ---
@@ -16,11 +16,11 @@ salvo partición de secciones declarada en ambos briefs.
 
 | fichero / zona | WPs que lo tocan | estrategia |
 | -------------- | ---------------- | ---------- |
-| `package.json` (manifiesto) | **V23** (claves→ontología) · **V25** (comandos) · **V62** (activationEvents) · **V72** (menus/when) · **V74** (engines) · **V52** (versión) | ⛔ **serial estricto**. Orden propuesto: V23 → V25 → V62 → V72 → V74 → V52. Es la cadena crítica del plan |
+| `package.json` (manifiesto) | **V23** (claves→ontología) · **V25** (comandos) · **V62** (activationEvents) · **V72** (menus/when) · **V74** (engines) · **V86** (release; absorbió a V52) | ⛔ **serial estricto**. Orden propuesto: V23 → V25 → V62 → V72 → V74 → V86. Es la cadena crítica del plan |
 | `src/core/extensionBootstrap.ts` (~2200 líneas) | **V25** · **V62** · **V64** · **V71** | ver **V80** (§2): trocear primero convierte esta cadena serial en paralelo |
 | webviews + `media/` | **V66** (CSP) · **V67** (tema) · **V37/V38/V39** (inquilinos) | V66 y V67 primero (marco común); después los 3 inquilinos **en paralelo** (un panel = un fichero) |
 | `src/config` + resolución env | **V23** · **V31** · **V32** · **V26** | V23 fija nombres → V31 quita literales → V32 valida → V26 edita. Serial |
-| docs (guía/README) | **V49** (cerco) · **V70** (primer arranque) · **V52** (release) | serial corto, barato |
+| docs (guía/README) | **V49** (cerco) · **V70** (primer arranque) · **V86** (release) | serial corto, barato |
 | CI / `scripts/` | **V50** · **V51** · **V53** | V51 (gate de artefacto) antes que V50 (guardas) — el gate verifica a las guardas. V53 al final |
 | `tests/` + arnés | **V68** · **V48** · **V76** | V68 crea el arnés; V48 y V76 lo consumen → V68 estrictamente primero |
 | `GRAFO-STARTERKIT.md` (playground) | **V18** | un solo escritor por diseño (mi fila) — sin contención |
@@ -36,7 +36,7 @@ V25, V62, V64 y V71 pasan a tocar módulos distintos.
 ## §3 · Grafo de dependencias y olas propuestas (★ propuesta, el custodio corta)
 
 Dependencias externas (no las controla V): `O-c` (fichero env, O propone/Z
-valida) → **V26** · respuesta de Z (¿rooms o signaling?) + Z-runtime →
+valida) → **V26** · puerta = **rooms** (dilema resuelto en F2-unificada; dep **Z-D1**) + Z-runtime →
 **V18** · detalle de Z (4 no-lanzables) → **V19** · material de G → **V21**
 · contrato de import de Z → LANE F.
 
@@ -52,7 +52,7 @@ OLA F2-4 · CIUDAD                      V18 (si Z responde) · V26 (si O-c) ·
 OLA F2-5 · VENTANAS Y VOLUMES          V37∥V38∥V39 · V64 · V65 · V42 · V43 · V45
 OLA F2-6 · VERDAD Y CIERRE             V76 · V48 · V44 · V49 · V51 → V50 ·
                                        V63 · V47 · V25-resto
-OLA F2-7 · PRODUCTO Y CANAL (P2)       V70 · V73 · V74 · V75 · V52 · V53 · V11 ·
+OLA F2-7 · PRODUCTO Y CANAL (P2)       V70 · V73 · V74 · V75 · V86 · V53 · V11 ·
                                        V33 · V40 · V41 · V46 · lanes I/J/K
 ```
 
