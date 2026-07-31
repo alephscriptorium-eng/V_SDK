@@ -13,31 +13,66 @@ import {
 
 describe('WP-V71 · redact — claves secretas', () => {
     it.each([
-        'password', 'passwd', 'pass', 'secret', 'token', 'accessToken',
-        'api_key', 'apiKey', 'API-KEY', 'authorization', 'credential',
-        'cookie', 'privateKey', 'private_key', 'sessionKey', 'passphrase'
+        // inglés
+        'password', 'passwd', 'pass', 'passphrase', 'secret', 'token', 'jwt',
+        'accessToken', 'api_key', 'apiKey', 'API-KEY', 'APIKey', 'authorization',
+        'auth', 'authToken', 'oauthToken', 'credential', 'credentials', 'cookie',
+        'privateKey', 'private_key', 'sessionKey', 'signature', 'otp',
+        // la clave ENTERA
+        'key', 'sig',
+        // castellano — el árbol comenta y documenta en castellano (devolución D4)
+        'clave', 'claves', 'contraseña', 'contrasena', 'contrasenya',
+        'credenciales', 'credencial', 'secreto', 'pwd', 'pin', 'firma'
     ])('reconoce «%s» como clave secreta', key => {
         expect(isSecretKey(key)).toBe(true);
     });
 
-    it.each(['author', 'authorship', 'authorId', 'name', 'url', 'port', 'status', 'command'])(
-        'NO trata «%s» como secreta',
-        key => {
-            expect(isSecretKey(key)).toBe(false);
-        }
-    );
+    it.each([
+        'author', 'authorship', 'authorId', 'name', 'url', 'port', 'status',
+        'command',
+        // `key` sin calificador secreto: son nombres de ajuste, no credenciales
+        'settingKey', 'configKey', 'keyName',
+        // la clave nombra DÓNDE vive el valor, no el valor (devolución D5)
+        'tokenEnv', 'repartoPolicyEnv', 'tokenName',
+        // subcadenas que NO son la palabra: por qué se compara por palabras
+        'pingInterval', 'spinner', 'passengers', 'pinnedAt', 'monkey', 'turnkey'
+    ])('NO trata «%s» como secreta', key => {
+        expect(isSecretKey(key)).toBe(false);
+    });
 
-    it('no ciega a AuthorshipService: `author` sobrevive junto a `token` tapado', () => {
-        const out = redactValue({ author: 'ada@lovelace.dev', token: 'ghp_deadbeefdeadbeef' });
-        expect(out).toEqual({ author: 'ada@lovelace.dev', token: REDACTED });
+    it('`tokenEnv` conserva su valor: nombra la variable, no la contiene', () => {
+        // Falso positivo real corregido en la devolución (D5):
+        // `VisibleGate.tokenEnv` — src/mutation/types.ts:24
+        expect(redactValue({ tokenEnv: 'MESH_TOKEN', token: 'ghp_deadbeef' })).toEqual({
+            tokenEnv: 'MESH_TOKEN',
+            token: REDACTED
+        });
+    });
+
+    it('`auth` se tapa y `author` no, sin excluir `auth` del vocabulario', () => {
+        // La primera versión sacrificaba `auth` para salvar `author`. Comparar
+        // por PALABRAS da las dos cosas (devolución D5).
+        expect(isSecretKey('auth')).toBe(true);
+        expect(isSecretKey('author')).toBe(false);
+        expect(redactValue({ author: 'ada@lovelace.dev', auth: 'ghp_x' })).toEqual({
+            author: 'ada@lovelace.dev',
+            auth: REDACTED
+        });
     });
 
     it('tapa el valor secreto a cualquier profundidad', () => {
         const out = redactValue({
-            mesh: { auth: { apiKey: 'sk-live-123456' }, host: 'localhost' }
+            mesh: { conexion: { apiKey: 'sk-live-123456' }, host: 'localhost' }
         }) as any;
-        expect(out.mesh.auth.apiKey).toBe(REDACTED);
+        expect(out.mesh.conexion.apiKey).toBe(REDACTED);
         expect(out.mesh.host).toBe('localhost');
+    });
+
+    it('un contenedor con nombre secreto se tapa ENTERO, sin descender', () => {
+        // `auth` es secreta como palabra, así que el subárbol no se explora:
+        // más seguro que tapar hoja a hoja y dejarse una.
+        const out = redactValue({ mesh: { auth: { apiKey: 'sk-live-1', otro: 'x' } } }) as any;
+        expect(out.mesh.auth).toBe(REDACTED);
     });
 });
 
@@ -54,20 +89,54 @@ describe('WP-V71 · redact — cadenas libres', () => {
         expect(out).toContain('page=2');
     });
 
-    it('tapa una cabecera Bearer', () => {
-        expect(redactString('Authorization: Bearer eyJhbGciOi.J9payload.sig')).not.toContain('eyJhbGciOi');
-    });
+    it.each(['Bearer', 'Basic', 'Digest', 'Negotiate'])(
+        'tapa la cabecera de autorización con esquema %s',
+        esquema => {
+            // `Basic` fugaba entero en la primera versión, y viaja con
+            // usuario:contraseña en base64 (devolución D4).
+            const out = redactString(`Authorization: ${esquema} eyJhbGciOiSECRETOaaa`);
+            expect(out).not.toContain('SECRETO');
+        }
+    );
 
-    it('tapa banderas de línea de comando', () => {
+    it('tapa banderas de línea de comando en forma larga', () => {
         const out = redactString('node launcher.js --api-key sk-live-999 --port 3000');
         expect(out).not.toContain('sk-live-999');
         expect(out).toContain('--port 3000');
     });
 
-    it('tapa asignaciones de entorno en una línea de comando', () => {
-        const out = redactString('MESH_TOKEN=abc999 NODE_ENV=production node index.js');
-        expect(out).not.toContain('abc999');
-        expect(out).toContain('NODE_ENV=production');
+    it.each(['--clave', '--contraseña', '--pwd', '--auth', '--jwt', '--credenciales'])(
+        'tapa la bandera %s (vocabulario unificado con el de las claves)',
+        bandera => {
+            expect(redactString(`node a.js ${bandera} SECRETO`)).not.toContain('SECRETO');
+        }
+    );
+
+    it('tapa asignaciones de entorno en MAYÚSCULAS y en minúsculas', () => {
+        // La primera versión solo miraba MAYÚSCULAS: `token=x` fugaba mientras
+        // `?token=x` sí se tapaba (devolución D4).
+        for (const linea of ['MESH_TOKEN=abc999 node i.js', 'token=abc999 node i.js', 'api_key=abc999 x']) {
+            expect(redactString(linea)).not.toContain('abc999');
+        }
+    });
+
+    it.each([
+        'node a.js --port 3000',
+        'NODE_ENV=production node i.js',
+        'docker run -p 8080:80 img',
+        'SPINNER=on node i.js',
+        'PASSENGERS=3 node i.js',
+        'GET /authors?page=2'
+    ])('NO toca «%s» (cero falsos positivos)', linea => {
+        expect(redactString(linea)).toBe(linea);
+    });
+
+    it('el vocabulario es el MISMO en query, bandera y entorno', () => {
+        // La inconsistencia que señaló la devolución: `?auth=` se tapaba pero
+        // `--auth` no. Los tres caminos derivan ya de una sola fuente.
+        for (const forma of ['http://m/c?auth=SECRETO', 'node a.js --auth SECRETO', 'auth=SECRETO node a.js']) {
+            expect(redactString(forma)).not.toContain('SECRETO');
+        }
     });
 
     it('tapa un bloque PEM entero', () => {
@@ -85,6 +154,39 @@ describe('WP-V71 · redact — cadenas libres', () => {
         const out = maskHomePath(`${home}/proyectos/zigurat/config.json`);
         expect(out).toBe('~/proyectos/zigurat/config.json');
         expect(out).not.toContain(home);
+    });
+});
+
+describe('WP-V71 · redact — LÍMITES CONOCIDOS (declarados, no tapados)', () => {
+    // Estos casos FUGAN, y se fijan por test a propósito: son el límite de
+    // cualquier redactor por nombre. Si algún día se cierran, este bloque
+    // falla y obliga a actualizar la cabecera de `redact.ts` — que es
+    // exactamente lo que debe pasar. Un límite callado es un hueco; uno
+    // fijado por test es una decisión.
+
+    it('L1 · secreto en el PATH de una URL: no hay nombre que lo anuncie', () => {
+        const s = 'GET https://host/v1/AKIAIOSFODNN7EXAMPLE/datos';
+        expect(redactString(s)).toContain('AKIAIOSFODNN7EXAMPLE');
+    });
+
+    it('L2 · blob base64/hex suelto sin etiqueta: indistinguible de un hash o un id', () => {
+        const s = 'respuesta: ZGVhZGJlZWZkZWFkYmVlZg==';
+        expect(redactString(s)).toContain('ZGVhZGJlZWZkZWFkYmVlZg==');
+    });
+
+    it('L3 · secreto usado como CLAVE: se redacta el valor, no el nombre del campo', () => {
+        // El nombre del campo ES el secreto. Nada en él lo anuncia.
+        expect(redactValue({ ghp_A1b2C3d4E5f6: 'activo' })).toEqual({ ghp_A1b2C3d4E5f6: 'activo' });
+    });
+
+    it('L4 · `-p valor` NO se tapa: en medio ecosistema `-p` es «port»', () => {
+        expect(redactString('mysql -u root -p hunter2')).toContain('hunter2');
+        // La contrapartida buscada: `docker run -p 8080:80` queda intacto.
+        expect(redactString('docker run -p 8080:80 img')).toBe('docker run -p 8080:80 img');
+    });
+
+    it('L5 · secreto en prosa sin etiqueta', () => {
+        expect(redactString('me dijo hunter2 y colgó')).toContain('hunter2');
     });
 });
 
