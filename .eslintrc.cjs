@@ -97,6 +97,38 @@ module.exports = {
                 property: 'console',
                 message: 'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
             }))
+        ],
+        /**
+         * WP-V71 (corrección de devolución) · las dos fugas que las tres
+         * reglas anteriores no veían, y que no son exóticas:
+         *
+         *  a) `process.stdout.write` / `process.stderr.write` escriben en la
+         *     MISMA consola que el gate destierra, y son idiomáticas. Se
+         *     prohíbe tocar `process.stdout`/`stderr` en cualquier posición,
+         *     no solo la llamada: así también cae `const o = process.stdout`.
+         *  b) aliasar el objeto global (`const g = globalThis; g.console.log()`)
+         *     es la MISMA clase de evasión que obligó a añadir
+         *     `no-restricted-globals` para `console`, un nivel más arriba. La
+         *     primera versión cerró el alias de `console` y no probó el de
+         *     `globalThis`.
+         *
+         * Medido: 0 usos de `process.stdout`/`stderr` en `src/`. `vscode.window`
+         * no colisiona (ahí `window` no es el identificador raíz).
+         */
+        'no-restricted-syntax': [
+            'error',
+            {
+                selector: "MemberExpression[object.name='process'][property.name=/^(stdout|stderr)$/]",
+                message:
+                    'process.stdout/stderr escriben en la consola del Extension Host. ' +
+                    'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
+            },
+            {
+                selector: 'VariableDeclarator[init.name=/^(globalThis|global|window|self)$/]',
+                message:
+                    'Aliasar el objeto global elude el gate del log (WP-V71). ' +
+                    'Si lo necesitas de verdad, justifícalo con un eslint-disable a la vista.'
+            }
         ]
     },
     overrides: [
