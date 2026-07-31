@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
-import { createStandardManagers, ManagerFactory } from './managerFactory';
-import { ConfigurationService } from './configurationService';
-import { ErrorBoundary } from './errorBoundary';
-import { AnalyticsService, AnalyticsEventType } from './analyticsService';
-import { AIAssistantService, AICapability, AIInteractionType } from './aiAssistantService';
-import { LoggingManager, LogCategory, LogLevel, createLogger } from '../loggingManager';
-import { ProcessManager } from '../processManager';
-import { WebViewManager } from '../webViewManager';
-import { CommandPaletteManager } from '../commandPaletteManager';
+import { createStandardManagers } from './managerFactory';
+import { AnalyticsEventType } from './analyticsService';
+import { AICapability, AIInteractionType } from './aiAssistantService';
+import { LogCategory, LogLevel, createLogger } from '../loggingManager';
+import { ExtensionContext } from './bootstrap/context';
 import { TeatroTreeDataProvider } from '../views/TeatroTreeDataProvider';
 import { TeatroWebViewProvider } from '../views/TeatroWebViewProvider';
 import { HackerControlPanelProvider } from '../views/HackerControlPanelProvider';
@@ -34,43 +30,6 @@ import { RoomIdentityService, IdentityStatusBar } from '../identity';
 import { ResourceProjectionService } from '../resources';
 import { AuthorshipService } from '../mutation';
 import { RepartoElencoService, ElencoTreeDataProvider } from '../elenco';
-
-export interface ExtensionContext {
-    managers: {
-        factory: ManagerFactory;
-        errorBoundary: ErrorBoundary;
-        config: ConfigurationService;
-        logging: LoggingManager;
-        process: ProcessManager;
-        webView: WebViewManager;
-        commandPalette: CommandPaletteManager;
-        analytics: AnalyticsService;
-        aiAssistant: AIAssistantService;
-    };
-    // Segunda Época - Teatralización
-    // WP-V13 (DV-11): chatParticipant/theatricalChat podados; re-lore a wishlist
-    teatroTreeProvider: TeatroTreeDataProvider;
-    teatroWebViewProvider: TeatroWebViewProvider;
-    hackerControlPanelProvider: HackerControlPanelProvider;
-    hackerCommandPanelProvider: HackerCommandPanelProvider;
-    hackerConfigPanelProvider: HackerConfigPanelProvider;
-    hackerTasksPanelProvider: HackerTasksPanelProvider;
-    hackerStatusBarManager: HackerStatusBarManager;
-    agentContentEditor: AgentContentEditorProvider;
-    agentConfigEditor: AgentConfigEditorProvider;
-    // Primera Época - Socket.io Gamification
-    socketMonitor: SocketMonitor;
-    socketsTreeProvider: SocketsTreeDataProvider;
-    uisTreeProvider: UIsTreeDataProvider;
-    configsTreeProvider: ConfigsTreeDataProvider;
-    logsTreeProvider: LogsTreeDataProvider;
-    mcpTreeProvider: MCPTreeDataProvider;
-    mcpWebViewManager: MCPWebViewManager;
-    aracneBotService: AracneBotService;
-    /** WP-V09 · panel elenco (reparto/1 → cast-table); SEPARADO de ICompany */
-    elencoTreeProvider: ElencoTreeDataProvider;
-    logger: ReturnType<typeof createLogger>;
-}
 
 export class ExtensionBootstrap {
     private static instance: ExtensionBootstrap;
