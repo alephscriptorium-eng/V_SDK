@@ -25,7 +25,7 @@ jest.mock('vscode', () => ({
         getConfiguration: jest.fn().mockImplementation((section?: string) => ({
             get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
                 // Return appropriate values based on the section and key
-                if (section === 'alephscript.logging') {
+                if (section === 'aleph0.logging') {
                     switch (key) {
                         case 'level': return 'info';
                         case 'enabledCategories': return ['general', 'extension', 'ui'];

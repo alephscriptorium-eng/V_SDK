@@ -353,8 +353,8 @@ console.log(`pieza real: ${path.relative(pkgRoot, ARTEFACTO)} ← src/mutation/p
   assert(cmds.includes('aleph0.authorship.crearLinea'), 'command crearLinea');
   assert(cmds.includes('aleph0.authorship.exportStoryBoard'), 'command exportStoryBoard');
   assert(
-    pkg.contributes?.configuration?.properties?.['aleph0.lineaEditor.port'] != null,
-    'setting aleph0.lineaEditor.port'
+    pkg.contributes?.configuration?.properties?.['aleph0.pieza.lineaEditor.port'] != null,
+    'setting aleph0.pieza.lineaEditor.port'
   );
   assert(pkg.scripts?.['probe:v08'] != null, 'script probe:v08');
   assert(pkg.scripts?.['probe:v08:build'] != null, 'script probe:v08:build (compila la pieza real)');

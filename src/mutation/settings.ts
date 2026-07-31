@@ -3,8 +3,8 @@ import { CatalogService } from '../launcher/CatalogService';
 import { readLauncherEndpointSettings } from '../launcher/settings';
 import { LINEA_EDITOR_SERVER_ID } from './types';
 
-export const ZIGURAT_LINEA_EDITOR_HOST_KEY = 'aleph0.lineaEditor.host';
-export const ZIGURAT_LINEA_EDITOR_PORT_KEY = 'aleph0.lineaEditor.port';
+export const ZIGURAT_LINEA_EDITOR_HOST_KEY = 'aleph0.pieza.lineaEditor.host';
+export const ZIGURAT_LINEA_EDITOR_PORT_KEY = 'aleph0.pieza.lineaEditor.port';
 
 export interface LineaEditorEndpoint {
     configured: boolean;
@@ -17,7 +17,7 @@ export interface LineaEditorEndpoint {
 /**
  * Resuelve endpoint de linea-editor:
  * 1) catálogo launcher vivo (id=linea-editor) + host del launcher
- * 2) settings aleph0.lineaEditor.* (override / sin launcher)
+ * 2) settings aleph0.pieza.lineaEditor.* (override / sin launcher)
  * Sin inventar puerto 4115.
  */
 export function resolveLineaEditorEndpoint(): LineaEditorEndpoint {

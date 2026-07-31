@@ -176,7 +176,7 @@ describe('WP-V28 · CA3 — falla honesto sin runtime (de facto, sin servidor)',
         expect(r.configured).toBe(false);
         if (!r.configured) {
             expect(r.reason).toContain('⏳');
-            expect(r.reason).toContain('aleph0.launcher.port');
+            expect(r.reason).toContain('aleph0.pieza.launcher.port');
             expect(r.reason).toContain('ZEUS_MCP_LAUNCHER');
         }
     });

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ALEPH0_SECTION, STATUSBAR_VISIBLE_SUBKEY } from '../config/ziguratSettings';
 
 /**
  * Manages the Hacker Panel Quick Access Status Bar
@@ -28,14 +29,16 @@ export class HackerStatusBarManager {
         this.createHackerPanelButtons(context);
         
         // Respect initial visibility configuration
-        const config = vscode.workspace.getConfiguration('alephscript');
-        const isVisible = config.get<boolean>('statusBar.visible', true);
+        const config = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+        const isVisible = config.get<boolean>(STATUSBAR_VISIBLE_SUBKEY, true);
         this.setVisible(isVisible);
-        
+
         // Listen for configuration changes
         const configWatcher = vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration('alephscript.statusBar.visible')) {
-                const newVisibility = vscode.workspace.getConfiguration('alephscript').get<boolean>('statusBar.visible', true);
+            if (e.affectsConfiguration(`${ALEPH0_SECTION}.${STATUSBAR_VISIBLE_SUBKEY}`)) {
+                const newVisibility = vscode.workspace
+                    .getConfiguration(ALEPH0_SECTION)
+                    .get<boolean>(STATUSBAR_VISIBLE_SUBKEY, true);
                 this.setVisible(newVisibility);
             }
         });

@@ -191,19 +191,17 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
         const settings: ConfigItem[] = [];
 
         // Core extension settings (must match contributes.configuration in package.json)
+        // WP-V23: espacio de nombres único `aleph0.*`. Las claves que no tenían
+        // ningún lector se demolieron; este panel ya no las muestra.
         const extensionSettings = [
-            { key: 'aleph0.theater.configPath', name: 'Theater Config Path', description: 'Path to the Theater configuration file' },
-            { key: 'aleph0.theater.autoStart', name: 'Auto Start Theater', description: 'Auto-start Theater services when opening workspace' },
-            { key: 'aleph0.theater.hackerMode', name: 'Hacker Mode', description: 'Enable hacker-style terminal aesthetics and green color scheme' },
-            { key: 'alephscript.statusBar.visible', name: 'Status Bar: Visible', description: 'Show/hide the hacker panel quick access buttons in status bar' },
-            { key: 'alephscript.statusBar.animation', name: 'Status Bar: Animation', description: 'Enable animations and effects for status bar buttons' },
-            { key: 'alephscript.logging.level', name: 'Logging Level', description: 'Minimum log level to display' },
-            { key: 'alephscript.logging.enabledCategories', name: 'Logging Categories', description: 'Log categories to enable' },
-            { key: 'alephscript.logging.showTimestamp', name: 'Logging: Show Timestamp', description: 'Show timestamp in log entries' },
-            { key: 'alephscript.logging.showLevel', name: 'Logging: Show Level', description: 'Show log level in log entries' },
-            { key: 'alephscript.logging.showCategory', name: 'Logging: Show Category', description: 'Show category in log entries' },
-            { key: 'alephscript.logging.showSource', name: 'Logging: Show Source', description: 'Show source in log entries' },
-            { key: 'alephscript.logging.maxEntries', name: 'Logging: Max Entries', description: 'Maximum number of log entries to keep in memory' }
+            { key: 'aleph0.superficie.statusBar.visible', name: 'Status Bar: Visible', description: 'Show/hide the hacker panel quick access buttons in status bar' },
+            { key: 'aleph0.logging.level', name: 'Logging Level', description: 'Minimum log level to display' },
+            { key: 'aleph0.logging.enabledCategories', name: 'Logging Categories', description: 'Log categories to enable' },
+            { key: 'aleph0.logging.showTimestamp', name: 'Logging: Show Timestamp', description: 'Show timestamp in log entries' },
+            { key: 'aleph0.logging.showLevel', name: 'Logging: Show Level', description: 'Show log level in log entries' },
+            { key: 'aleph0.logging.showCategory', name: 'Logging: Show Category', description: 'Show category in log entries' },
+            { key: 'aleph0.logging.showSource', name: 'Logging: Show Source', description: 'Show source in log entries' },
+            { key: 'aleph0.logging.maxEntries', name: 'Logging: Max Entries', description: 'Maximum number of log entries to keep in memory' }
         ];
 
         extensionSettings.forEach(setting => {

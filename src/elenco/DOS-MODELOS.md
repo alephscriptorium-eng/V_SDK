@@ -21,7 +21,7 @@ Filas del cast-table (schema consumido, no reinventado):
 { participant: string, role: string, oldid: string }
 ```
 
-Fuente de verdad: JSON `reparto/1` (setting `aleph0.reparto.path`).
+Fuente de verdad: JSON `reparto/1` (setting `aleph0.pieza.reparto.path`).
 Sin path / shape inválido → `⏳` (hostil-omite).
 
 ## Modelo B · Compañía teatral IDE (`ICompany`)

@@ -72,7 +72,7 @@ export class ResourceProjectionService implements vscode.Disposable {
             return this.publish(
                 emptyResourceSnapshot(
                     'pending_settings',
-                    launcher.reason || '⏳ aleph0.launcher.* no configurado'
+                    launcher.reason || '⏳ aleph0.pieza.launcher.* no configurado'
                 )
             );
         }

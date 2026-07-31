@@ -91,7 +91,7 @@ describe('WP-V28 · resolveMcpEndpoint', () => {
         expect(r.configured).toBe(false);
         if (!r.configured) {
             expect(r.reason).toContain('⏳');
-            expect(r.reason).toContain('aleph0.launcher.host');
+            expect(r.reason).toContain('aleph0.pieza.launcher.host');
             expect(r.reason).toContain('ZEUS_HOST');
         }
     });
@@ -103,7 +103,7 @@ describe('WP-V28 · resolveMcpEndpoint', () => {
         });
         expect(r.configured).toBe(false);
         if (!r.configured) {
-            expect(r.reason).toContain('aleph0.lineaEditor.port');
+            expect(r.reason).toContain('aleph0.pieza.lineaEditor.port');
             expect(r.reason).toContain('ZEUS_MCP_LINEA_EDITOR');
             expect(r.reason).toContain('no inventa');
         }
@@ -114,8 +114,9 @@ describe('WP-V28 · resolveMcpEndpoint', () => {
         (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
             get: (key: string) =>
                 ({
-                    'launcher.host': 'host-del-ide',
-                    'launcher.port': 1234
+                    // WP-V23: sub-claves del espacio único `aleph0.*`
+                    'pieza.launcher.host': 'host-del-ide',
+                    'pieza.launcher.port': 1234
                 })[key]
         });
         const r = resolveMcpEndpoint('launcher', { env: {} });

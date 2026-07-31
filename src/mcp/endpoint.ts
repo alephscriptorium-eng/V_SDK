@@ -47,8 +47,8 @@ export const SETTING_KEYS_BY_TARGET: Record<
     McpCatalogTarget,
     { host: string; port: string }
 > = {
-    launcher: { host: 'aleph0.launcher.host', port: 'aleph0.launcher.port' },
-    lineaEditor: { host: 'aleph0.lineaEditor.host', port: 'aleph0.lineaEditor.port' }
+    launcher: { host: 'aleph0.pieza.launcher.host', port: 'aleph0.pieza.launcher.port' },
+    lineaEditor: { host: 'aleph0.pieza.lineaEditor.host', port: 'aleph0.pieza.lineaEditor.port' }
 };
 
 /**

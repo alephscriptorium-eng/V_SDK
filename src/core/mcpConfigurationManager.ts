@@ -8,6 +8,8 @@ import {
     resolveOllamaBaseUrl,
     resolveLauncherPort,
     ZIGURAT_PENDING,
+    ALEPH0_SECTION,
+    MCP_CONFIG_PATH_SUBKEY,
 } from '../config/ziguratSettings';
 
 export class McpConfigurationManager {
@@ -34,15 +36,9 @@ export class McpConfigurationManager {
      */
     async initialize(): Promise<void> {
         try {
-            // First try to get config path from VS Code settings
-            const vscodeConfig = vscode.workspace.getConfiguration('mcpSocketManager');
-            let configPath = vscodeConfig.get<string>('configPath');
-
-            // Also check the alephscript configuration for backward compatibility
-            if (!configPath) {
-                const alephConfig = vscode.workspace.getConfiguration('alephscript');
-                configPath = alephConfig.get<string>('configurationFile');
-            }
+            // Ruta del fichero de piezas MCP: única clave (WP-V23)
+            const vscodeConfig = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+            let configPath = vscodeConfig.get<string>(MCP_CONFIG_PATH_SUBKEY);
 
             // If no path in settings, look for sample-config.json in workspace
             if (!configPath && vscode.workspace.workspaceFolders) {
@@ -172,7 +168,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get Ollama URL — aleph0.ollama.baseUrl, luego archivo; vacío = ⏳.
+     * Get Ollama URL — aleph0.pieza.ollama.baseUrl, luego archivo; vacío = ⏳.
      */
     getOllamaUrl(): string {
         const fromSettings = resolveOllamaBaseUrl();
@@ -183,7 +179,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get MCP service launcher port — aleph0.launcher.port, luego archivo; undefined = ⏳.
+     * Get MCP service launcher port — aleph0.pieza.launcher.port, luego archivo; undefined = ⏳.
      */
     getMcpServiceLauncherPort(): number | undefined {
         const fromSettings = resolveLauncherPort();
@@ -212,7 +208,7 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Socket URL por defecto: aleph0.mesh.*, luego UI primaria del archivo.
+     * Socket URL por defecto: aleph0.ciudad.*, luego UI primaria del archivo.
      * Vacío si nada configurado (⏳ — no inventa localhost:puerto).
      */
     getDefaultSocketUrl(): string {
@@ -271,12 +267,10 @@ export class McpConfigurationManager {
      * Update VS Code settings to point to the configuration file
      */
     async updateVSCodeSettings(configPath: string): Promise<void> {
-        const config = vscode.workspace.getConfiguration('mcpSocketManager');
-        await config.update('configPath', configPath, vscode.ConfigurationTarget.Workspace);
-
-        // Also update the extension-specific setting for better visibility
-        const alephConfig = vscode.workspace.getConfiguration('alephscript');
-        await alephConfig.update('configurationFile', configPath, vscode.ConfigurationTarget.Workspace);
+        // WP-V23: una sola clave que escribir (antes se escribían dos con el
+        // mismo valor, en dos espacios de nombres distintos).
+        const config = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+        await config.update(MCP_CONFIG_PATH_SUBKEY, configPath, vscode.ConfigurationTarget.Workspace);
 
         this.logger.info(`Updated VS Code settings to use configuration file: ${configPath}`);
     }

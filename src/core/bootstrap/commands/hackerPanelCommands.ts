@@ -5,6 +5,7 @@
  */
 import * as vscode from 'vscode';
 import { LogCategory } from '../../../loggingManager';
+import { ALEPH0_SECTION, STATUSBAR_VISIBLE_SUBKEY } from '../../../config/ziguratSettings';
 import { CommandEntry } from './types';
 
 export const hackerPanelCommands: CommandEntry[] = [
@@ -165,11 +166,11 @@ export const hackerPanelCommands: CommandEntry[] = [
             try {
                 const ctx = deps.getContext();
                 if (ctx?.hackerStatusBarManager) {
-                    const config = vscode.workspace.getConfiguration('alephscript');
-                    const isVisible = config.get<boolean>('statusBar.visible', true);
+                    const config = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+                    const isVisible = config.get<boolean>(STATUSBAR_VISIBLE_SUBKEY, true);
                     const newVisibility = !isVisible;
 
-                    await config.update('statusBar.visible', newVisibility, vscode.ConfigurationTarget.Global);
+                    await config.update(STATUSBAR_VISIBLE_SUBKEY, newVisibility, vscode.ConfigurationTarget.Global);
                     ctx.hackerStatusBarManager.setVisible(newVisibility);
 
                     vscode.window.showInformationMessage(
