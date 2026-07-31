@@ -2,6 +2,14 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { McpConfigurationManager } from '../core/mcpConfigurationManager';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · rutas de ficheros de configuración del usuario: el redactor
+ * sustituye el home por `~` antes de emitir (WP-V71 CA4).
+ */
+const log = getLogger('ConfigsTreeView', LogCategory.CONFIG);
 
 export interface ConfigTreeItem {
     id: string;
@@ -92,7 +100,7 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
             this.validationCache.set(uri.fsPath, validation);
 
         } catch (error) {
-            console.error(`Error processing config file ${uri.fsPath}:`, error);
+            log.error('Error processing config file', { file: uri.fsPath, error });
         }
     }
 
@@ -201,7 +209,7 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
                     await this.processConfigFile(file);
                 }
             } catch (error) {
-                console.error(`Error scanning for pattern ${pattern}:`, error);
+                log.error('Error scanning for pattern', { pattern, error });
             }
         }
     }
