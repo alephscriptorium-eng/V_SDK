@@ -97,7 +97,7 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V23** `P1` | **Primera configuración intencional**: un solo espacio de nombres salido de la ontología; los 3 prefijos actuales se **demuelen** | un namespace · acta de demolición · CA de V05 re-verificada |
+| **WP-V23** `P1` 🔶 | **Primera configuración intencional**: un solo espacio de nombres salido de la ontología; los 3 prefijos actuales se **demuelen**. **Ola 3, despachado 2026-07-31** (`wp/v23-config-intencional`, worktree `wt/v-v23`) — **único escritor de `package.json` esta ola** (cadena crítica §1); consume la colisión **C1** del léxico (*servidor* → *pieza*) · **contrarrevisión obligatoria** (contrato/config) | un namespace · acta de demolición · CA de V05 re-verificada |
 | **WP-V24** `P1` | **Demoler el cliente 3010** → conector por catálogo/puerta declarada (dep V20) | cero puertos a mano · endpoint resuelto, no escrito |
 | **WP-V25** `P1` | **31 comandos sin handler** + 1 id duplicado: rellenar desde catálogo o caer con acta | cero comandos que prometan lo que no hacen |
 | **WP-V47** `P2` | **Retirar la marca previa** de las 5 superficies (`ARRAKIS_*`) | quien instala no lee marca ajena en ninguna superficie |
@@ -152,7 +152,7 @@ de canal/puertas = **U236**.
 | **WP-V65** `P1` | **Resiliencia**: reconexión con backoff, sin tormentas ni zombis | sobrevive caída y vuelta · el corte se ve mientras dura |
 | **WP-V66** `P1` 🔶 **EN CORRECCIÓN** | **Seguridad de webviews**: CSP, nonce, `localResourceRoots`. Obra sustancial **viva en rama `wp/v66-csp`** (tip `9f0a5d7`, worktree conservado) — **no mergeada**: la contrarrevisión adversarial halló 3 bypass no cazados (censo por fichero y no por punto de render · **script externo CON nonce, explotable** · `hasCspMeta` burlable con comentario HTML) + inyección de directivas en el helper. Defectos numerados y lo que SÍ resiste: **`plan/DEVOLUCION-V66-csp.md`**. **Corrección despachada 2026-07-31 al deshielo** (worker fresco, misma rama y worktree, commits nuevos; al cerrar, **nueva contrarrevisión adversarial obligatoria** que reintente los 8 vectores) | cero `unsafe-inline` · CSP verificada por test · los 3 bypass en rojo |
 | **WP-V67** `P1` | **Tema y accesibilidad** | legible en claro/oscuro · navegación por teclado |
-| **WP-V71** `P1` | **OutputChannel + log estructurado** | depurable en máquina ajena · cero `console.log` sueltos |
+| **WP-V71** `P1` 🔶 | **OutputChannel + log estructurado**. **Ola 3, despachado 2026-07-31** (`wp/v71-log-estructurado`, worktree `wt/v-v71`) — habilitado por V80 (troceo del bootstrap: ya no colisiona con V25/V62/V64); **prohibido tocar `package.json`** (lo tiene V23) · **contrarrevisión obligatoria** §4.5 cero-cambio-observable | depurable en máquina ajena · cero `console.log` sueltos |
 | **WP-V72** `P1` | **Menús/keybindings/`when`** coherentes con lo real | cero menús a comandos inexistentes |
 | **WP-V85** `P1` | **Privacidad y datos**: inventario de datos/red/logs; opt-in explícito | cero telemetría accidental · inventario publicado |
 | **WP-V87** `P1` | **Actualización/rollback**: update fallido no pierde env/estado | rollback probado · uninstall coordina V75 |
