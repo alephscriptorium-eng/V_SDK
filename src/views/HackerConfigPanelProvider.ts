@@ -104,7 +104,7 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
                 this._openUserSettings();
                 break;
             default:
-                log.warn('Unknown command from webview', { command: message.command });
+                log.info('Unknown command from webview', { command: message.command });
                 vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }

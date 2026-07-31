@@ -301,10 +301,20 @@ export class ProcessManager {
     showProcessLogs(processId: string): void {
         const processInfo = this.getProcessInfo(processId);
         if (processInfo) {
-            // Se enumeran los campos: `terminal` es un objeto vivo de la API de
-            // VS Code, no un dato — volcarlo ensucia el canal sin diagnosticar.
+            // Se enumeran los campos en vez de volcar el objeto porque
+            // `ProcessInfo.terminal` es un objeto VIVO de la API de VS Code:
+            // volcarlo ensucia el canal sin diagnosticar nada. `terminal` es la
+            // ÚNICA exclusión; el resto del registro va entero.
+            //
+            // WP-V71 (corrección de devolución D2): `id` y `pid` estaban
+            // ausentes. `processId` es el PARÁMETRO de búsqueda, no
+            // `processInfo.id`, y pueden diferir; y el `pid` es el dato más útil
+            // que existe para depurar un proceso en una máquina ajena, que es
+            // justo lo que persigue este WP.
             log.info('Logs for process', {
                 processId,
+                id: processInfo.id,
+                pid: processInfo.pid,
                 name: processInfo.name,
                 command: processInfo.command,
                 status: processInfo.status,
