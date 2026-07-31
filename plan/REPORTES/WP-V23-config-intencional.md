@@ -9,11 +9,20 @@
 | commits | `b97151b` (obra) · `82ba4b2` (docs) · este reporte |
 | tipo(s) de WP | **estructural** (espacio de nombres) + **evidencia** (acta) — `plan/PRACTICAS.md:82-88` |
 | riesgo de revisión | **independiente** — clase contrato/configuración (`plan/PRACTICAS.md:105-116` §4.3) |
-| `VEREDICTO_REVISOR` | ⏳ **pendiente de contrarrevisión adversarial read-only** |
+| `VEREDICTO_REVISOR` | **DEVUELTO** (contrarrevisión adversarial, 2 bloqueantes + 4 menores) → **corregido en §11**; ⏳ pendiente de nueva contrarrevisión acotada a D1/D2 |
+
+> ⚠️ **Este reporte se lee con §11 delante.** La devolución tumbó dos
+> afirmaciones centrales de las secciones 1-10. **No se ha borrado nada**:
+> cada frase caída lleva marca `⛔ CAÍDA (D-n)` en su sitio y el texto
+> corregido vive en **§11 · Corrección de la devolución**. Las cifras
+> vigentes son las de §11, no las de §0.
 
 ---
 
 ## 0 · Resumen en una tabla
+
+> ⛔ **CAÍDA parcial (D1, D6)** — las cifras de claves y de demoliciones
+> cambian tras la devolución. Tabla vigente: **§11.0**.
 
 | eje | antes | después |
 | --- | ----- | ------- |
@@ -30,6 +39,12 @@
 ---
 
 ## 1 · Qué es «un solo espacio de nombres» aquí, y por qué el prefijo es `aleph0`
+
+> ✅ **RESUELTA por el custodio (D5 → DV-17)** — esta sección se escribió
+> como decisión zanjada cuando aún no lo estaba (la contrarrevisión tenía
+> razón: mi cita de DV-16.a elidía «*dentro de WP-V15*»). **Ahora sí lo
+> está**: **DV-17** aplaza el namespace y **V23 cierra con `aleph0`**. Lo
+> de abajo es la lectura que el custodio ha respaldado. Ver **§11.5**.
 
 Esta es la decisión que un lector hostil debe poder atacar con toda la
 información delante, así que va primero.
@@ -85,7 +100,7 @@ cifra «26 de 26 cambian» quedara redonda habría sido exactamente el
 | 5 | `aleph0.launcher.port` | `aleph0.pieza.launcher.port` | ídem |
 | 6 | `aleph0.lineaEditor.host` | `aleph0.pieza.lineaEditor.host` | `pieza` + nombre propio de la pieza ajena `@zeus/linea-editor` |
 | 7 | `aleph0.lineaEditor.port` | `aleph0.pieza.lineaEditor.port` | ídem |
-| 8 | `aleph0.ollama.baseUrl` | `aleph0.pieza.ollama.baseUrl` | `pieza`; **owner externo al producto**, declarado como tal en la descripción del schema |
+| ~~8~~ | ~~`aleph0.ollama.baseUrl`~~ | ⛔ **CAÍDA (D1)** — no se renombra: **se demuele**. Su única cadena de lectura estaba muerta. Fila vigente en **§11.1** | — |
 | 9 | `aleph0.reparto.path` | `aleph0.pieza.reparto.path` | `pieza`; `reparto/1` es dato con owner declarado (`@zeus/reparto-kit`) que V **observa** |
 | 10 | `alephscript.statusBar.visible` | `aleph0.superficie.statusBar.visible` | **superficie** = «lugar de la periferia del editor donde V pinta… vista/panel de árbol, comando de paleta, webview/editor, **statusbar**, terminal gestionado» (`plan/LEXICO-ZIGURAT.md:35`). `statusBar` sigue siendo el nombre técnico de la API: **C7** deja los tipos VS Code como técnica (`plan/LEXICO-ZIGURAT.md:76`) |
 | 11 | `alephscript.logging.level` | `aleph0.logging.level` | `logging` **no es término de dominio**: es diagnóstico técnico de la propia extensión. La regla al pie del léxico (`:90`) rige *términos de dominio*; C7 y C10 dejan lo técnico como técnico. Sólo se mueve la raíz |
@@ -108,7 +123,10 @@ revés) pierde igual: la clave nueva es una y hay que escribirla. Y ya no
 existe el orden de precedencia entre ambas — deja de haber precedencia
 porque deja de haber dos.
 
-### 2.3 · Demolidas sin sustituta — 6 claves, ningún lector
+### 2.3 · Demolidas sin sustituta — ~~6~~ **7** claves, ningún lector
+
+> ⛔ **CORREGIDO (D1)** — son **7**: se suma `aleph0.ollama.baseUrl`, cuya
+> cadena de lectura completa está muerta. Fila y prueba en **§11.1**.
 
 Estas seis estaban **declaradas en el manifiesto y ningún código las
 leía**: ponerlas nunca hizo nada. Retirarlas es cumplir «nada promete lo
@@ -186,13 +204,13 @@ Configuration Setting*. Las dos señales llegan sin abrir el plan.
 
 | clave nueva | ¿qué ve quien la perdió? | ¿ruidosa? |
 | ----------- | ------------------------ | --------- |
-| `aleph0.ciudad.host` / `.port` / `.baseUrl` | `⏳ aleph0.ciudad.baseUrl (o host+port) no configurado` (`src/core/AracneBotService.ts:102,246`, `src/identity/roomSettings.ts:33`, `src/libs/alephscript-client.ts:62`) | **sí**, nombra la clave nueva |
+| `aleph0.ciudad.host` / `.port` / `.baseUrl` | ⛔ **CAÍDA (D2)** — «sí» sólo para 3 de sus 4 caminos. El cuarto (`getDefaultSocketUrl()`) **sustituye por `ws://localhost:<puerto>`**: ni ⏳, ni clave, ni log. Fila vigente y caso rojo reproducido en **§11.2** | ⛔ |
 | `aleph0.pieza.launcher.host` / `.port` | `⏳ setting ausente: aleph0.pieza.launcher.port (sin inventar puerto)` (`src/launcher/settings.ts:29,37`) + aviso modal al arrancar launcher (`src/processManager.ts:181,184`) | **sí** |
 | `aleph0.pieza.lineaEditor.host` / `.port` | `⏳ configure aleph0.pieza.lineaEditor.host+…` (`src/mutation/settings.ts:56`) | **sí** |
 | `aleph0.pieza.reparto.path` | el panel elenco queda en ⏳ con la ruta vacía (`src/elenco/RepartoElencoService.ts:24`) | **sí** |
 | `aleph0.room.id` | `⏳ aleph0.room.id no configurado` — **pero esta clave no cambió**, nadie la pierde | n/a |
-| `aleph0.pieza.ollama.baseUrl` | `getOllamaUrl()` devuelve `''` y cae al fichero de ópera si lo hay (`src/core/mcpConfigurationManager.ts:173-179`). **No hay mensaje propio** | **NO** — silencio parcial, declarado |
-| `aleph0.mcp.configPath` | `⏳ Sin archivo Opera ni flota inventada…` (`src/core/mcpConfigurationManager.ts:60`); el aviso **no nombra la clave nueva** | **parcial** — avisa, pero no dice qué escribir |
+| ~~`aleph0.pieza.ollama.baseUrl`~~ | ⛔ **sin objeto (D1)**: la clave ya no existe. Nadie la pierde porque nunca hizo nada — **§11.1** | — |
+| `aleph0.mcp.configPath` | `⏳ Sin archivo Opera ni flota inventada…` (`src/core/mcpConfigurationManager.ts:60`); el aviso **no nombra la clave nueva**. ⚠️ **incompleta (D4)**: antes de ese aviso hay una **adopción automática** de un fichero de la raíz, que además se **auto-escribe** en los ajustes — ver **§11.4** | **parcial**, y peor de lo que decía |
 | `aleph0.superficie.statusBar.visible` | quien la tenía en `false` vuelve a ver la barra de estado. Literalmente visible; ningún mensaje | **NO** — pero el efecto es la propia UI reapareciendo |
 | `aleph0.logging.*` | el log vuelve a los defaults (nivel `info`, todas las categorías) | **NO** — sin mensaje |
 | las 6 demolidas (§2.3) | **nada**, porque nunca hicieron nada | n/a |
@@ -208,7 +226,12 @@ paralelo. Quedan anotadas para V32 («validación honesta del env»,
 
 ## 4 · Lo que promete y no hace — inventario completo (CA-5)
 
-### 4.1 · Claves declaradas sin efecto: **0 después** (había 6, §2.3)
+### 4.1 · Claves declaradas sin efecto: ~~**0 después**~~ (había 6, §2.3)
+
+> ⛔ **CAÍDA (D1)** — el «0 después» era falso: `aleph0.pieza.ollama.baseUrl`
+> quedaba declarada con un lector **muerto** (`getOllamaUrl()`, 0 llamadas).
+> Tabla vigente y cadena verificada en **§11.1**. Tras la corrección el «0»
+> sí se sostiene, sobre **18** claves.
 
 Las 19 claves del schema tienen lector verificado:
 
@@ -332,6 +355,10 @@ src/config/ziguratSettings.ts:22  (comentario del propio WP)
 → 3 · ninguna es una clave ni una sección
 ```
 
+> ⚠️ **D6** — en §9 esta cifra aparecía como «115»; **el bueno es 116**
+> (líneas; 121 ocurrencias). Y de la clase **C**, en **código** hay **4**
+> `*.focus`; la quinta ocurrencia es prosa. Corregido en §11.6.
+
 **Y el manifiesto, medido en positivo:**
 
 ```text
@@ -341,6 +368,11 @@ $ node -e "const p=require('./package.json'); const k=Object.keys(p.contributes.
 ```
 
 ### 5.2 · CA-3 · CA de WP-V05 re-verificada de facto (no citada)
+
+> ⛔ **CAÍDA parcial (D3)** — los tres greps se re-ejecutaron de verdad, pero
+> **el patrón de V05 es ciego a los puertos interpolados** (`localhost:${…}`),
+> así que su verde es un **verde vacío** justo sobre la línea de D2. Patrón
+> corregido, salida y alcance real en **§11.3**.
 
 Los tres greps de `plan/REPORTES/WP-V05-config-unica.md:58-85`,
 **re-ejecutados hoy sobre este árbol**, con el mismo alcance de ficheros:
@@ -446,6 +478,14 @@ $ npm run lint             (paso de CI)
 Medido en el **mismo árbol y la misma máquina**: la base con
 `git stash` puesto, el después con el trabajo aplicado.
 
+> ⚠️ **DESVÍO DE MÉTODO, declarado (apunte del orquestador).** Usar
+> `git stash` para medir el «antes» es **incorrecto en un swarm**: la pila
+> de stash es del **repositorio**, no del worktree, y había otro worker
+> operando en paralelo sobre el mismo repo. Hoy no hubo daño (pila vacía
+> antes y después, `git status` limpio, `stash pop` sin conflicto), pero
+> la práctica correcta es leer la base sin tocar el árbol compartido:
+> `git show <base>:<ruta>`, o un worktree desechable. **No lo repito.**
+
 | medida | ANTES (base `ef86fba`) | DESPUÉS (`82ba4b2`) |
 | ------ | ---------------------- | ------------------- |
 | Test Suites | 1 failed, 7 passed, **8 total** | 1 failed, 7 passed, **8 total** |
@@ -514,6 +554,10 @@ sólo enseña el estado final esconde la mitad del trabajo.
    declarada**: el campo TS `meshHost` lee ahora la clave `ciudad.host`. Es
    una incoherencia interna real, acotada a `src/config/ziguratSettings.ts`
    y sus 7 consumidores, y no la tapo.
+
+   > ✅ **Destino fijado (DV-17)**: este residuo **no es deuda suelta ni WP
+   > propio**. El custodio lo aplaza **al mismo momento** que la raíz del
+   > namespace, para moverlo de una vez con el extension-id (§11.5).
 2. **No toqué comandos ni menús.** Los 6 `aleph0.mcpSocketManager.*` y los
    4 `alephscript.*.focus` siguen como estaban: son **V25**
    (`plan/BACKLOG.md:102`) y `plan/GOBIERNO-EJECUCION-F2.md:19` los
@@ -535,6 +579,14 @@ sólo enseña el estado final esconde la mitad del trabajo.
    logging ni de webview**: no toqué formato, niveles, canales, HTML, CSP ni
    `media/`. Se declara por el paralelismo con el otro worker.
 
+   > ⚠️ **Enmarcado corregido (apunte del orquestador).** Llamarlo «lista de
+   > rótulos» se queda corto: es un **cambio observable de superficie**. El
+   > panel de Ajustes del IDE pasa de **12 filas a 8**: desaparecen «Theater
+   > Config Path», «Auto Start Theater», «Hacker Mode» y «Status Bar:
+   > Animation». Ninguna hacía nada (§2.3), así que no se pierde conducta —
+   > pero **el usuario ve cuatro filas menos**, y eso se declara como cambio
+   > observable, no como retoque cosmético.
+
 ---
 
 ## 8 · Hallazgos fuera de alcance (CA-6 — lo que vi mal y no arreglé)
@@ -554,6 +606,11 @@ sólo enseña el estado final esconde la mitad del trabajo.
 
 ## 9 · Auto-revisión contra el encargo
 
+> ⛔ **CAÍDA (D1, D2, D3, D6)** — esta tabla se firmó con **siete ✅** y
+> tres no se sostenían. Tabla vigente, con lo que de verdad está verde y lo
+> que queda ⚠️, en **§11.9**. Se conserva abajo para que se vea qué se
+> afirmó de más.
+
 | CA | estado | dónde |
 | -- | ------ | ----- |
 | 1 · un namespace, grep con patrón y salida | ✅ | §5.1 — G1 `exit=1`, G2 clasificación completa de los 115 restos, G3, y el manifiesto medido en positivo (19/0) |
@@ -566,10 +623,11 @@ sólo enseña el estado final esconde la mitad del trabajo.
 
 ### Riesgos que dejo señalados para la contrarrevisión
 
-- **R-1** · La lectura de «los 3 prefijos se demuelen» (§1) es
-  interpretativa. Si el orquestador o el custodio quieren que `aleph0`
-  también muera, el trabajo es un `sed` sobre 19 claves — pero exige
-  reabrir **DV-16.a**, que es acto del custodio, no mío.
+- **R-1** · ~~La lectura de «los 3 prefijos se demuelen» (§1) es
+  interpretativa…~~ ✅ **CERRADO por el custodio: DV-17** — el namespace se
+  aplaza al momento de fijar la identidad pública, y **V23 cierra con
+  `aleph0`**. Ya no hay riesgo abierto aquí; ningún worker lo reabre.
+  Detalle y cita en **§11.5**.
 - **R-2** · `aleph0.room.id` conserva su nombre. Está declarado en §2.4;
   no es una clave vieja superviviente por descuido.
 - **R-3** · Los `alephscript.*` y `mcpSocketManager.*` que quedan en el
@@ -585,4 +643,395 @@ sólo enseña el estado final esconde la mitad del trabajo.
 
 ---
 
-— **V** · Aleph-0 (ℵ₀) · WP-V23
+— **V** · Aleph-0 (ℵ₀) · WP-V23 *(secciones 0-10: entrega original, con las marcas ⛔ de la devolución)*
+
+---
+
+# 11 · Corrección de la devolución
+
+| dato | valor |
+| ---- | ----- |
+| Devolución | contrarrevisión adversarial read-only · **2 bloqueantes (D1, D2)** + **D3, D4, D6** menores + **D5** · 2 apuntes de método |
+| D5 | **CERRADA por el custodio: DV-17** — el namespace se aplaza y V23 cierra con `aleph0`. Ya no es interpretación mía (§11.5) |
+| Commits de corrección | ver `git log` de la rama (`fix(V23): …`) |
+| Qué NO se rehace | lo que la contrarrevisión declaró que resiste (§11.10) |
+
+Los dos bloqueantes eran ciertos y los verifiqué **contra el código, no
+contra el reporte**, antes de tocar nada. Los dos atacaban afirmaciones
+mías, no el trabajo: el acta aplicaba su propio criterio en un sentido y
+no en el otro (D1), y una fila de la tabla de silencios decía «sí» donde
+la conducta real es peor que un silencio (D2).
+
+## 11.0 · Resumen vigente (sustituye a §0)
+
+| eje | antes | después **(vigente)** |
+| --- | ----- | --------------------- |
+| prefijos vivos en `contributes.configuration` | **3** (`aleph0.` 13 · `alephscript.` 12 · `mcpSocketManager.` 1) | **1** (`aleph0.`) |
+| claves declaradas | **26** | **18** *(era 19 antes de D1)* |
+| claves renombradas | — | **16** *(era 17; ollama sale)* |
+| claves **fusionadas** (2 → 1) | — | **2 → 1** |
+| claves **demolidas sin sustituta** | — | **7** *(era 6)* |
+| claves con nombre intacto | — | **1** (`aleph0.room.id`) |
+| claves declaradas **sin lector vivo** | 7 | **0** |
+| residuales `alephscript|mcpSocketManager` clasificadas | — | **116 líneas / 121 ocurrencias · 0 configuración** |
+| jest | 5 rojos · 1 skip · 111 verdes · 117 total | **idéntico** (§11.7) |
+| `tsc --noEmit` | 8 errores preexistentes | **los mismos 8** (§11.7) |
+
+Comprobación: 16 renombradas + 2 fusionadas + 7 demolidas + 1 intacta =
+**26**, las 26 de la base. Y 16 + 1 (fusionada) + 1 (intacta) = **18**
+declaradas.
+
+## 11.1 · D1 — `aleph0.pieza.ollama.baseUrl` **se demuele** (7ª demolición)
+
+**El cargo era correcto.** Verificado en cadena, sobre el árbol.
+
+> 📌 **Las líneas de este bloque son de ANTES de la corrección** (rama en
+> `82ba4b2`). Quien re-ejecute estos greps hoy obtendrá **0** para
+> `resolveOllamaBaseUrl`: la función ya no existe. Se conservan porque son
+> la prueba del cargo, no el estado actual. El estado actual está al final
+> de este §11.1.
+
+```text
+$ grep -rn --include="*.ts" "resolveOllamaBaseUrl" src/ tests/
+src/config/ziguratSettings.ts:107   (definición)
+src/core/mcpConfigurationManager.ts:90,174   (2 consumidores)
+
+$ grep -rn --exclude-dir={node_modules,.git,dist,out,plan} "getOllamaUrl" .
+src/core/mcpConfigurationManager.ts:173      ← su propia definición. CERO llamadas.
+
+$ grep -rn --include="*.ts" "getLauncherConfig|getFullConfig" src/ tests/
+src/core/mcpConfigurationManager.ts:166      ← definición. CERO llamadas.
+src/core/mcpConfigurationManager.ts:244      ← definición. CERO llamadas.
+```
+
+El camino `:90` escribe `this.config.launcher.ollamaUrl`, que sólo se lee
+desde `getLauncherConfig()` (0 llamadas) y desde `getOllamaUrl()` (0
+llamadas). **Las dos salidas del dato están tapiadas.** La clave estaba
+declarada en el panel de Ajustes prometiendo un efecto inexistente.
+
+**Elección, con su motivo (la devolución pedía elegir):** **demoler**, no
+cablear. Cablear un consumidor sería **inventar funcionalidad** — no hay
+en todo `src/` ni un cliente de Ollama (`grep -rin "ollama" src/` fuera de
+la propia cadena → **1 línea**, y es un comentario). Inventar conducta es
+justo el contrabando que la CA-6 prohíbe. Demoler es aplicar **el mismo
+criterio de §2.3 en la dirección incómoda**, que es lo que faltaba.
+
+**Fila del acta (se suma a §2.3):**
+
+| # | clave demolida | prueba de que no tenía lector vivo |
+| - | -------------- | ----------------------------------- |
+| 8 | `aleph0.pieza.ollama.baseUrl` | cadena de arriba: `resolveOllamaBaseUrl` → `getOllamaUrl()` (0 llamadas) y → `config.launcher.ollamaUrl` → `getLauncherConfig()` (0 llamadas). **Ninguna salida viva** |
+
+**Demolida entera, no sólo el schema.** Quitar la clave y dejar el lector
+habría creado una **huérfana nº 22** — exactamente el defecto que §4.2
+denuncia. Así que cae la cadena completa:
+
+| fichero | qué se quita |
+| ------- | ------------ |
+| `package.json` | la propiedad `aleph0.pieza.ollama.baseUrl` |
+| `src/config/ziguratSettings.ts` | el campo `ollamaBaseUrl` de `ZiguratSettings`, su `cfg.get(...)` y la función `resolveOllamaBaseUrl()` |
+| `src/core/mcpConfigurationManager.ts` | el import, la lectura de `:90` (pasa a `"ollamaUrl": ""` con nota) y la rama de ajustes de `getOllamaUrl()` |
+
+**Lo que NO cambia**: si hay fichero de ópera con `launcher.ollamaUrl`,
+`getOllamaUrl()` lo sigue devolviendo. Sólo desaparece el camino por
+ajustes, que no llegaba a ningún sitio.
+
+**Verificación de facto** (sonda temporal, borrada al cerrar):
+
+```text
+√ el schema no la declara y el módulo de config no la lee
+  claves declaradas: 18
+  ¿queda alguna ollama? []
+```
+
+Estado **actual** del árbol (post-corrección, re-ejecutado):
+
+```text
+$ grep -rn -i --include="*.ts" --include="*.json" "ollama" src/ package.json
+src/core/mcpConfigurationManager.ts:96,98   (mi nota de la corrección D1)
+src/core/mcpConfigurationManager.ts:99     "ollamaUrl": ""   ← ya no viene de ajustes
+src/core/mcpConfigurationManager.ts:172,176,177  (getOllamaUrl: sólo fichero de ópera)
+src/mcpTypes.ts:40                          (campo del tipo del fichero de ópera)
+package.json                                → SIN COINCIDENCIAS
+→ cero claves de configuración, cero lecturas de ajustes
+```
+
+**Consecuencia declarada**: quien tuviera `aleph0.ollama.baseUrl` o
+`zigurat.ollama.baseUrl` puesta la pierde **y no pasa nada**, porque nunca
+hizo nada. Es la fila más honesta del acta y también la más aburrida.
+
+**Anotado**: `getMcpServiceLauncherPort()` (`mcpConfigurationManager.ts`)
+tiene el mismo patrón «ajuste → fichero» y **cero llamadas** hoy. No lo
+toco: su clave (`aleph0.pieza.launcher.port`) **sí** tiene lectores vivos
+por otras vías (`launcher/settings.ts`, `mcp/endpoint.ts`, `processManager.ts`),
+así que no es una clave sin efecto — es un método muerto. Va a poda, no a
+demolición de clave: **H-9**.
+
+## 11.2 · D2 — el quinto silencio no es silencio: es sustitución por `localhost`
+
+**El cargo era correcto y la fila de §3.1 era falsa.** `aleph0.ciudad.*`
+tiene **cuatro** caminos de consumo, no tres. Los tres primeros nombran la
+clave que falta. El cuarto, `getDefaultSocketUrl()`, hace otra cosa:
+
+```ts
+// src/core/mcpConfigurationManager.ts (conducta, sin cambios)
+const fromSettings = resolveMeshSocketUrl();
+if (fromSettings) { return fromSettings; }
+const primaryUi = this.config?.ui?.find(ui => ui.config.isPrimary);
+const port = primaryUi?.config?.port;
+if (typeof port === 'number' && port > 0) {
+    return `ws://localhost:${port}`;      // ← host INVENTADO
+}
+return '';
+```
+
+**Caso rojo reproducido por mí** (sonda temporal): usuario que tenía su
+mesh real puesto **con las claves viejas**, y un fichero de ópera con una
+UI primaria en 7777.
+
+```text
+SONDA V23 · D2 · CASO ROJO: sustitución silenciosa por localhost
+  √ sin ciudad configurada + UI primaria en 7777 → devuelve ws://localhost:7777, sin ⏳
+      getDefaultSocketUrl() = "ws://localhost:7777"
+      ¿nombra alguna clave?  false
+      ¿lleva ⏳?             false
+  √ sin ciudad y SIN UI primaria → sí devuelve vacío (el camino que sí cumple el contrato)
+      getDefaultSocketUrl() = ""
+```
+
+**Por qué es peor que las cuatro filas «NO» que sí declaré**: aquéllas
+degradan a **vacío** y la superficie pinta ⏳. Ésta degrada a un valor
+**plausible y equivocado**, y se propaga:
+
+```text
+$ grep -rn --include="*.ts" "getDefaultSocketUrl" src/
+src/core/bootstrap/assembleContext.ts:109   ← socketUrl del contexto de TODA la extensión
+src/core/mcpConfigurationManager.ts:214     ← definición
+src/socketMonitor.ts:276,280,284,643
+src/treeViews/configsTreeView.ts:429
+src/treeViews/socketsTreeView.ts:85,232
+→ 8 sitios de consumo
+```
+
+El usuario que pierde el mesh no ve un hueco: ve un monitor de sockets
+apuntando a su propia máquina.
+
+**Agravante reconocido**: la afirmación falsa se propagó a superficie de
+usuario en `docs/GUIA-PRUEBA-v2.md`. **Corregido** en el mismo commit.
+
+**Fila vigente de §3.1:**
+
+| clave nueva | ¿qué ve quien la perdió? | ¿ruidosa? |
+| ----------- | ------------------------ | --------- |
+| `aleph0.ciudad.host` / `.port` / `.baseUrl` | **3 de 4 caminos**: `⏳ aleph0.ciudad.baseUrl (o host+port) no configurado` (`AracneBotService.ts:102,246`, `identity/roomSettings.ts:33`, `libs/alephscript-client.ts:62`). **El 4º (`getDefaultSocketUrl()`) no**: si el fichero de ópera trae UI primaria, devuelve `ws://localhost:<puerto>` sin ⏳, sin log y sin nombrar clave — y ese valor alimenta 8 sitios | **NO en 1 de 4**, y es el peor caso de todo el WP |
+
+**Qué corrijo y qué no, con el motivo:**
+
+- ✅ **La mentira del comentario.** El docstring decía literalmente
+  «*Vacío si nada configurado (⏳ — no inventa localhost:puerto)*» encima
+  de la línea que inventa `localhost`. Eso **sí** es «prometer lo que no
+  se hace» y **sí** es mío: el comentario ahora describe el defecto, cita
+  los 8 consumidores y apunta a este §11.2.
+- ❌ **La conducta.** Quitar el `localhost` es **cambio de conducta** sobre
+  8 sitios de consumo, sin prueba en VS Code real, y cae de lleno en la
+  fila de **WP-V31** («endpoints por variable, nunca por número»,
+  `plan/BACKLOG.md:58`). Hacerlo aquí sería el contrabando que la CA-6
+  prohíbe. **Es una línea**: si el orquestador lo quiere en este WP, lo
+  pide y lo hago; no lo decido yo por mi cuenta. Enrutado como **H-10**
+  con el caso rojo y las 8 llamadas ya listadas, para que V31 no repita el
+  trabajo de encontrarlo.
+
+## 11.3 · D3 — el patrón de V05 es ciego, y su verde era vacío
+
+**El cargo era correcto.** El patrón de V05 exige `localhost:\d+`, así que
+**no puede ver** `ws://localhost:${port}`: puerto interpolado, no dígitos.
+Mi §5.2 lo re-ejecutó tal cual y firmó un ✅ sobre un patrón que no mira
+donde está el defecto — y encima sobre uno de los cinco ficheros que la
+propia CA cubre.
+
+```text
+### patrón V05 ORIGINAL, sobre sus 5 ficheros
+$ rg -n 'localhost:\d+|127\.0\.0\.1:\d+|:\s*30(10|50|01|02|03|12)\b|port:\s*30\d\d|,\s*3050\)|http://localhost:\d+' <5 ficheros>
+exit=1   → 0 coincidencias   ← VERDE VACÍO
+
+### patrón CORREGIDO: host literal en una URL (lo que la CA quería medir)
+$ rg -n '(ws|http)s?://(localhost|127\.0\.0\.1)' <los mismos 5 ficheros>
+src/core/mcpConfigurationManager.ts:215     (mi comentario nuevo, describe el defecto)
+src/core/mcpConfigurationManager.ts:231     ← ws://localhost:${port}   ← EL DEFECTO (D2)
+exit=0
+```
+
+**Afirmación vigente sobre la CA de V05**, sin maquillaje:
+
+- Los tres greps de V05 se **re-ejecutaron** y dan 0 **con su patrón** —
+  eso es cierto y sigue siéndolo.
+- Pero **su patrón es defectuoso desde V05**: con el patrón corregido hay
+  **1 hit real** en su propio alcance, `mcpConfigurationManager.ts:231`,
+  **preexistente** y anterior a este WP (era `getDefaultSocketUrl()` ya en
+  la base). Es decir: **la CA de V05 llevaba verde por ceguera del patrón,
+  no por limpieza del código.**
+- Por tanto la CA-3 de este WP pasa de ✅ a **✅ con excepción declarada**
+  (§11.9), y el defecto va a V31 como **H-10**.
+
+**Regalo colateral para V31** — con el patrón corregido, el censo real de
+hosts literales en `src/` no son 3 líneas sino **6 sitios**:
+
+```text
+$ rg -n '(ws|http)s?://(localhost|127\.0\.0\.1)|["'\''`](localhost|127\.0\.0\.1):' --glob '*.ts' src/
+src/mcpServerManager.ts:381            http://localhost:${server.port || 'N/A'}
+src/webViewManager.ts:246              http://localhost:${config.port}
+src/core/mcpConfigurationManager.ts:231  ws://localhost:${port}          ← D2
+src/treeViews/socketsTreeView.ts:92    'localhost:3000'  (fallback)
+src/uiManager.ts:217                   http://localhost:${ui.port}
+src/treeViews/configsTreeView.ts:430   "ws://localhost:3000"
+```
+
+Mi §8 H-3 decía «3 líneas, 2 ficheros». **Era incompleto por el mismo
+patrón ciego.** H-3 queda sustituido por esta lista.
+
+## 11.4 · D4 — adopción y auto-escritura de un fichero que el usuario no eligió
+
+**El cargo era correcto y la fila de §3.1 estaba incompleta.** Con
+`aleph0.mcp.configPath` vacía, antes de llegar al aviso ⏳ que sí declaré,
+`initialize()` hace esto:
+
+1. Busca `ArrakisTheater_OperaConfig.json` en la raíz del workspace.
+2. Si existe, **lo adopta** como configuración.
+3. Y llama a `updateVSCodeSettings(configPath)`, que **escribe la ruta en
+   los ajustes del workspace** — sin preguntar.
+
+**Fila vigente de §3.1:**
+
+| clave nueva | ¿qué ve quien la perdió? | ¿ruidosa? |
+| ----------- | ------------------------ | --------- |
+| `aleph0.mcp.configPath` | Si hay `ArrakisTheater_OperaConfig.json` en la raíz: **se adopta en silencio y se auto-escribe** en `settings.json` (workspace). El usuario que había perdido sus dos claves viejas puede acabar **apuntando a otro fichero**, persistido sin pedirlo. Si no lo hay: `⏳ Sin archivo Opera ni flota inventada…`, que **no nombra la clave nueva** | **NO** — y además **escribe** |
+
+Es preexistente (V23 sólo fusionó las dos claves en una), pero mi tabla lo
+presentaba como «parcial: avisa, pero no dice qué escribir», y eso se
+quedaba corto: **antes de avisar, decide y persiste**. Enrutado como
+**H-11** (junto a H-4, que ya señalaba la marca retirada en esa misma
+ruta).
+
+## 11.5 · D5 — **CERRADA por el custodio: DV-17.** El namespace se aplaza; V23 cierra con `aleph0`
+
+Enruté esto como riesgo (R-1) y la contrarrevisión lo elevó. **El custodio
+ha respondido**, y ya no es interpretación mía que haya que defender:
+
+> **DV-17 · Namespace de configuración: se APLAZA; V23 cierra con `aleph0`**
+> — decisión del custodio **2026-07-31** (decisión ⑦ del plan del hub).
+> […] **La resolución**: **aplazar**. El namespace se decide **junto con la
+> identidad pública del nuevo scope** (decisión ③: «hacerla muy
+> Scriptorium»), no antes. Razón: cambiar el namespace dos veces es peor que
+> cambiarlo tarde, y renombrarlo hoy costaría 19 claves que habría que
+> volver a mover al cerrar la identidad. Cuando se cierre, el cambio se hace
+> **de una vez con el extension-id**.
+> **Consecuencia operativa**: **V23 cierra con `aleph0` tal cual** y su obra
+> es válida como está; ningún worker reabre esto. El residuo declarado
+> (identificadores de código que no se renombran, p. ej. el campo `meshHost`
+> leyendo `ciudad.host`) queda igualmente aplazado a ese momento.
+>
+> — `plan/DECISIONES.md:29-47` en `main` (commit `0c08eed`). **Aún no está
+> en mi rama**: mi base es `ef86fba` y no rebaso (§0). Citado leyendo
+> `git show main:plan/DECISIONES.md`, sin tocar el árbol.
+
+**Qué cambia en este reporte:**
+
+- **§1 deja de ser una lectura a defender** y pasa a ser la aplicación de
+  una decisión cerrada. La duda que planteé —si DV-16.a, cerrada «dentro
+  de WP-V15», ataba a V23— queda respondida: **no se reabre ahora**, se
+  reabre cuando se cierre la identidad pública, y entonces se mueve todo
+  junto.
+- **El dato incómodo que yo mismo puse por delante sigue siendo cierto y
+  el custodio lo tuvo delante al decidir**: `aleph0` **no tiene fila** en
+  `plan/LEXICO-ZIGURAT.md` §1; **`Zigurat` sí** (`:38`). DV-17 lo recoge
+  literalmente. La raíz, por tanto, **no está justificada por la ontología
+  sino por gobierno**, y eso se dice tal cual: es lo único del espacio de
+  nombres que no sale del léxico, y es deliberado.
+- **El residuo de identificadores de código** (§7.2 punto 1: el campo TS
+  `meshHost` leyendo la clave `ciudad.host`) **no va a un WP suelto**:
+  DV-17 lo aplaza **al mismo momento**, para que se mueva de una vez con
+  la raíz y el extension-id. Corregido en §11.8 — ya no lo enruto a poda.
+- **CA-4 pasa a ✅ sin ⏳** (§11.9): los segmentos salen del léxico con
+  cita, y la raíz tiene ahora respaldo de gobierno explícito.
+
+**Nota de exactitud sobre la cifra de DV-17**: la decisión habla de «19
+claves que habría que volver a mover». Tras la corrección D1 (§11.1) son
+**18** — la decisión se tomó con el número pre-devolución. El argumento no
+depende de la cifra: 18 o 19, moverlas dos veces sigue siendo peor que
+moverlas tarde. Lo anoto para que nadie lea el desajuste como una
+contradicción.
+
+## 11.6 · D6 — contabilidad
+
+- **116, no 115.** El §9 decía «115 restos»; §5.1 decía 116. El bueno es
+  **116 líneas** (y **121 ocurrencias**, porque cinco líneas contienen dos
+  apariciones). Corregido en §5.1 y en §11.9.
+- **Clase C = 4 en código, no 5.** Los `*.focus` que genera VS Code son
+  **cuatro** (`hackerControlPanel`, `hackerCommandPanel`, `hackerConfigPanel`,
+  `hackerTasksPanel`), invocados desde
+  `src/core/bootstrap/commands/hackerPanelCommands.ts:18,39,60,81`. La
+  quinta ocurrencia que mi script metió en ese cubo es **prosa** ya contada
+  en otra clase: el clasificador ordenaba `.focus` antes que el cubo de
+  ids de vista y se llevó una línea prestada. **El total 116 no cambia**;
+  cambia el reparto entre dos cubos.
+
+## 11.7 · Tests y compilación tras la corrección
+
+| medida | base `ef86fba` | tras V23 (pre-devolución) | **tras la corrección** |
+| ------ | -------------- | ------------------------- | ---------------------- |
+| Test Suites | 1 failed / 7 passed / 8 | 1 / 7 / 8 | **1 / 7 / 8** |
+| Tests | 5 failed · 1 skipped · 111 passed · **117** | idéntico | **idéntico** |
+| `tsc --noEmit` | 8 errores | 8 | **8** (mismos ficheros y códigos) |
+| `npm run compile` | exit 0 | exit 0 | **exit 0** |
+| `npm run compile:production` | exit 0 | exit 0 | **exit 0** |
+| `npm run lint` | 0 err / 159 warn | igual | **igual** |
+
+Los 5 rojos siguen siendo los mismos cinco por nombre, con la misma causa
+única (`vscode.window.onDidCloseTerminal is not a function`), listados en
+§6. **La demolición de la clave de ollama no movió un solo test**, lo cual
+es coherente con que su cadena estuviera muerta.
+
+## 11.8 · Hallazgos nuevos o corregidos
+
+| # | hallazgo | evidencia | destino |
+| - | -------- | --------- | ------- |
+| **H-3** | ⛔ **sustituido**: decía «3 líneas, 2 ficheros» por patrón ciego. Son **6 sitios** con host literal en `src/` | §11.3 | **V31** |
+| **H-9** | `getMcpServiceLauncherPort()`: mismo patrón «ajuste → fichero», **0 llamadas**. Método muerto (no clave sin efecto: su clave sí tiene lectores vivos por otras vías) | §11.1 | poda (**V13/V47**) |
+| **H-13** | ⛔ **re-enrutado**: el residuo de §7.2 punto 1 (identificadores de código sin renombrar — el campo `meshHost` leyendo `ciudad.host`) **ya no va a un WP suelto**. **DV-17** lo aplaza al mismo momento que la raíz, para moverlo de una vez con el extension-id | `plan/DECISIONES.md:29-47` (en `main`) | **aplazado con la identidad pública** — no es deuda suelta |
+| **H-10** | `getDefaultSocketUrl()` **inventa `ws://localhost:<puerto>`** contra su propio contrato; 8 sitios de consumo; caso rojo ya reproducido | §11.2 | **V31** — es una línea, con el caso rojo ya escrito |
+| **H-11** | `initialize()` **adopta y auto-escribe** `ArrakisTheater_OperaConfig.json` de la raíz en los ajustes del workspace, sin preguntar | §11.4 | **V32** (+ **V47** por la marca) |
+| **H-12** | `getOllamaUrl()`, `getLauncherConfig()`, `getFullConfig()`: **0 llamadas** cada uno. Superficie pública muerta en `McpConfigurationManager` | §11.1 | poda (**V13/V47**) |
+
+Los demás (H-1, H-2, H-4 … H-8) siguen vigentes tal como están en §8.
+
+## 11.9 · Auto-revisión vigente (sustituye a §9)
+
+| CA | estado | dónde |
+| -- | ------ | ----- |
+| 1 · un namespace, grep con patrón y salida | ✅ | §5.1 — G1 `exit=1`; G2 **116 líneas / 121 ocurrencias** clasificadas sin resto (clase C = 4 en código); G3; manifiesto en positivo, ahora **18/0** |
+| 2 · acta clave a clave, sin huecos, con decisión sobre el usuario | ✅ | §2 + **§11.1** (26 filas: 16 + 2→1 + **7** + 1) · §3 + **§11.2/§11.4** (pérdida declarada, con los silencios corregidos) |
+| 3 · CA de V05 re-verificada de facto | ✅ **con excepción declarada** | §5.2 (re-ejecutada con su patrón) + **§11.3**: el patrón de V05 es ciego a puertos interpolados; con el corregido hay **1 hit preexistente** en su alcance, que es D2 |
+| 4 · nombres desde la ontología, con cita | ✅ | §2.1 columna «fuente del nombre»: los **segmentos** salen del léxico con cita uno a uno. **La raíz `aleph0` no sale del léxico** (no tiene fila; `Zigurat` sí) y se sostiene por **gobierno, no por ontología**: el custodio la ratificó y aplazó su revisión en **DV-17** (§11.5). Dicho así de claro para que nadie lo lea como que el léxico avala la raíz |
+| 5 · nada promete lo que no hace | ✅ | **§11.1** (7ª demolición; ahora sí **0** claves declaradas sin lector vivo, sobre 18) · §4.2 (las 21 huérfanas, el defecto inverso) · **§11.2/§11.4** (los dos silencios que faltaban) |
+| 6 · cero contrabando | ✅ | §7.1 · §7.2 · §8 + **§11.8**. La corrección de D1 toca 3 ficheros y **borra** código; la de D2 toca **un comentario**, no la conducta |
+| 7 · tests, números exactos antes → después | ✅ | §6 + **§11.7** |
+
+## 11.10 · Lo que la contrarrevisión declaró que resiste — **no lo he tocado**
+
+Verificado que sigue en pie tras los commits de corrección:
+
+- **Ninguna clave vieja sobrevive**: patrón G1 → `exit=1` (re-ejecutado).
+- **El acta es completa**: las 26 filas cubren las 26 claves de la base.
+- **Las 7 demoliciones están fundadas** contra la base, no contra el reporte.
+- **Las 21 huérfanas siguen siendo 21**: la corrección de D1 **no crea una
+  nº 22** — por eso cae la cadena entera de lectura, no sólo el schema.
+- **El léxico se respeta**: no he añadido ningún segmento nuevo; la
+  demolición de ollama sólo **quita**.
+- **C1 sigue saldada**: `servidor|servicio` en las descripciones del
+  schema → **0** (ahora sobre 18 descripciones).
+- **Los números siguen siendo honestos**: §11.7.
+- **Sigue sin haber contrabando**: la corrección de D2 es un comentario.
+
+---
+
+— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la devolución
