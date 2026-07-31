@@ -348,6 +348,21 @@ export function findWebviewHtmlViolations(html: string): string[] {
             if (url === undefined) {
                 continue;
             }
+            // D-1 · si el valor traía una referencia de carácter que el escáner
+            // no supo resolver, no sabemos qué URL es: no se aprueba.
+            if (tag.unresolvedRefAttrs.has(rule.attr)) {
+                problems.push(
+                    `referencia de carácter no resoluble en <${rule.tag} ${rule.attr}>: "${url}"`
+                );
+                continue;
+            }
+            // D-4 · valor vacío no es un recurso remoto. `<form action="">`
+            // envía a la URL actual y es HTML válido; reportarlo era un falso
+            // positivo, y un falso positivo en una guarda es la vía por la que
+            // alguien acaba desactivándola.
+            if (url.trim() === '') {
+                continue;
+            }
             const ok =
                 isExtensionResourceUrl(url) ||
                 (rule.allowLocalPeer && isLocalOrigin(url)) ||
@@ -361,6 +376,23 @@ export function findWebviewHtmlViolations(html: string): string[] {
     // 7 · <base> reescribiría toda URL relativa
     if (startTags.some(t => t.name === 'base')) {
         problems.push('<base> presente: reescribiría las URLs relativas del documento');
+    }
+
+    // 8 · `srcdoc` es un documento entero dentro de un atributo. Analizarlo
+    //     en profundidad sería volver a perseguir al navegador (habría que
+    //     decodificar y re-tokenizar recursivamente, con sus propias
+    //     divergencias). Se estrecha la entrada: no se admite.
+    for (const tag of startTags) {
+        if (tag.attrs.has('srcdoc')) {
+            problems.push(`<${tag.name} srcdoc> no admitido: documento anidado sin analizar`);
+        }
+    }
+
+    // 9 · la CSP misma no puede depender de una referencia sin resolver
+    for (const tag of startTags) {
+        if (tag.name === 'meta' && tag.unresolvedRefAttrs.has('content')) {
+            problems.push('referencia de carácter no resoluble en el content= de una meta');
+        }
     }
 
     return problems;

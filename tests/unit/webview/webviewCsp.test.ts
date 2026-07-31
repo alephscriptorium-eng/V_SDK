@@ -53,7 +53,7 @@ import {
     isSafeWebviewHtml,
     requireLocalOrigin
 } from '../../../src/webview/security';
-import { scanHtml } from '../../../src/webview/htmlScan';
+import { decodeAttributeValue, scanHtml } from '../../../src/webview/htmlScan';
 import { renderInertExternalPage } from '../../../src/webview/commonPages';
 import {
     renderAgentValidationPage,
@@ -846,6 +846,125 @@ describe('WP-V66 · DD5 · comentarios sincronizados con el tokenizador', () => 
         const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
             <body><script nonce="${nonce}">const s = "<div onclick=x>";</script></body></html>`;
         expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D-1 — referencias de carácter en valores de atributo
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D-1 · referencias de carácter en atributos', () => {
+    const doc = (body: string) => {
+        const nonce = createNonce();
+        return `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body>${body.replace(/__NONCE__/g, nonce)}</body></html>`;
+    };
+
+    test('el decodificador resuelve numéricas, hex y con nombre', () => {
+        expect(decodeAttributeValue('&#104;ttps://evil.example/x.js').value).toBe('https://evil.example/x.js');
+        expect(decodeAttributeValue('&#x68;ttps://evil.example/x.js').value).toBe('https://evil.example/x.js');
+        expect(decodeAttributeValue('&Tab;https://evil.example').value).toBe('\thttps://evil.example');
+        expect(decodeAttributeValue('javascript&colon;alert(1)').value).toBe('javascript:alert(1)');
+        // sin `;` también son válidas las numéricas
+        expect(decodeAttributeValue('&#104ttps').value).toBe('https');
+    });
+
+    test('regla heredada: nombre sin `;` seguido de `=` o alfanumérico NO se decodifica', () => {
+        expect(decodeAttributeValue('&ltfoo').value).toBe('&ltfoo');
+        expect(decodeAttributeValue('&lt=x').value).toBe('&lt=x');
+        expect(decodeAttributeValue('&lt/foo').value).toBe('</foo');
+    });
+
+    test('una referencia con nombre desconocida se marca NO resuelta, no se adivina', () => {
+        const r = decodeAttributeValue('&noexiste;https://x');
+        expect(r.unresolved).toBe(true);
+        expect(r.value).toBe('&noexiste;https://x');
+    });
+
+    test('<script src="&#104;ttps://…"> es violación (el vector del informe)', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body><script nonce="${nonce}" src="&#104;ttps://evil.example/x.js"></script></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([
+            'recurso remoto en <script src>: "https://evil.example/x.js"'
+        ]);
+    });
+
+    test('las variantes hex, &Tab; y la baliza <img> también caen', () => {
+        expect(findWebviewHtmlViolations(doc('<script nonce=__NONCE__ src="&#x68;ttps://evil.example/x.js"></script>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+        expect(findWebviewHtmlViolations(doc('<script nonce=__NONCE__ src="&Tab;https://evil.example/x.js"></script>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+        expect(findWebviewHtmlViolations(doc('<img src="&#104;ttps://evil.example/beacon.gif">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+    });
+
+    test('una referencia no resoluble en una URL se rechaza, no se aprueba', () => {
+        expect(findWebviewHtmlViolations(doc('<img src="&desconocida;/x.gif">')))
+            .toContainEqual(expect.stringContaining('referencia de carácter no resoluble en <img src>'));
+    });
+
+    test('`&amp;` en una query NO es falso positivo', () => {
+        expect(findWebviewHtmlViolations(doc('<img src="media/a.gif?x=1&amp;y=2">'))).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · D-2 — contenido extranjero: se rechaza, no se emula
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D-2 · <svg>/<math> rechazados fail-closed', () => {
+    test('el vector: <svg><title> esconde marcado real al escáner', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body><svg><title><div></div><script nonce="${nonce}" src="https://evil.example/x.js"></script></title></svg></body></html>`;
+        expect(findWebviewHtmlViolations(html)[0]).toMatch(/contenido extranjero <svg> no soportado/);
+    });
+
+    test('<math> igual', () => {
+        expect(scanHtml('<math><mi>x</mi></math>').errors[0]).toMatch(/contenido extranjero <math>/);
+    });
+
+    test('ninguno de los 25 puntos de render propios usa SVG/MathML inline', () => {
+        for (const entry of CENSO) {
+            expect(scanHtml(entry.render()).errors).toEqual([]);
+        }
+    });
+});
+
+// ---------------------------------------------------------------------------
+// D-3 y D-4 · dos falsos positivos que había que quitar
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · D-3/D-4 · sin falsos positivos', () => {
+    test('D-3 · <script/> entra en RAWTEXT: su cuerpo no es marcado', () => {
+        const nonce = createNonce();
+        // el navegador ignora el `/` y trata todo hasta </script> como texto;
+        // tokenizarlo como marcado inventaba un handler inline que no existe
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body><script nonce="${nonce}"/>var s = '<div onclick=x>';</script></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+
+    test('D-4 · <form action=""> es HTML válido, no un recurso remoto', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ styleNonce: nonce })}</head>
+            <body><form action=""></form><img src=""></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// srcdoc · decisión: se estrecha la entrada
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · srcdoc no admitido', () => {
+    test('un <iframe srcdoc> se rechaza en vez de dejarlo sin inspeccionar', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ styleNonce: nonce })}</head>
+            <body><iframe srcdoc="&lt;script&gt;alert(1)&lt;/script&gt;"></iframe></body></html>`;
+        expect(findWebviewHtmlViolations(html))
+            .toContainEqual(expect.stringContaining('srcdoc> no admitido'));
     });
 });
 
