@@ -103,7 +103,7 @@ de canal/puertas = **U236**.
 | **WP-V47** `P2` | **Retirar la marca previa** de las 5 superficies (`ARRAKIS_*`) | quien instala no lee marca ajena en ninguna superficie |
 | **WP-V48** `P2` | 5 jest rojos → **guarda del mando de ciudad** (V34) | los 5 en verde · cubren ciclo de vida de terminales |
 | **WP-V49** `P1` | **Cerco en documentos**: referencias vivas a canales externos → sidecar inerte | cero anclas externas como dependencia |
-| **WP-V80** `P1` 🔶 | **Trocear `extensionBootstrap.ts`** (~2200 líneas): DATOS/FLUJO, registro declarativo. Habilitador de paralelismo (V25·V62·V64·V71) | bootstrap <300 líneas de flujo · compile verde · cero cambio observable |
+| **WP-V80** `P1` ✅ | **Trocear `extensionBootstrap.ts`**: 2150 → **290 líneas** de flujo; DATOS en `src/core/bootstrap/` (16 módulos: tabla de 56 comandos por dominio + registry de 14 vistas). **La cadena serial V25·V62·V64·V71 queda habilitada como paralelo.** Base no compilaba limpia (8 err TS preexistentes ajenos) → invariante aplicado: misma salida EXACTA antes/después (tsc diff vacío · esbuild 0/0 · mismos 5 jest rojos por nombre), verificado en cada uno de los 7 commits. **Contrarrevisión adversarial PASS** (base regenerada por el revisor · 56/56 extracción propia mismo orden · 14/14 vistas campo a campo · captura-viva equivalente con citas · 286 literales rastreados globalmente · obs menor: trailing whitespace en 2 template literals, sin conducta). ⏳ verificación en host real la cubre el arnés V68 en CI. Aceptado 2026-07-31 (rama `wp/v80-troceo-bootstrap`) | bootstrap <300 ✓ (290) · misma salida exacta ✓ · dedup 1-definición ✓ · cero cambio observable ✓ (probado) |
 
 ## LANE H · EMPAQUETADO Y CANAL — **P0/P1**
 
