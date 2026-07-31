@@ -45,7 +45,7 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V28** `P0` | **Cliente MCP mínimo**: conectar, listar, leer. Prerrequisito de V18 | conecta a servidor del catálogo · lee `editor://info` + `launcher://catalog` · falla honesto sin runtime |
+| **WP-V28** `P0` 🔶 | **Cliente MCP mínimo**: conectar, listar, leer. Prerrequisito de V18 | conecta a servidor del catálogo · lee `editor://info` + `launcher://catalog` · falla honesto sin runtime |
 | **WP-V18** `P0` **BLOQUEA:** holón-7 | **Entrar al grafo como edificio-1** y marcar mi fila. **Sin dilema** (consenso): la puerta es `rooms`/`socket-server` (`CLIENT_REGISTER`, la card **viaja** — verificado por Z); anónimo base y card opt-in son **las dos modalidades del mismo contrato** (§2.a) y el CA de Z-D1 exige ambas. El torno WebRTC es otra capa con dueño y WP (Z·U186); no condiciona esta entrada | fila V marcada · modalidad usada declarada en la marca · evidencia de facto contra runtime (dep **Z-D1**) · cero escritura fuera de mi fila |
 | **WP-V29** `P1` | **Peercard opt-in**: emitir/portar card, seat vía API del protocol (cero cripto propia) | join→card→resources demostrado · card expirada ⇒ re-join · sin card, anónimo funcional |
 | **WP-V30** `P1` | **Anónimo honesto**: la UI declara modalidad y capacidades ausentes | modalidad visible siempre · denegación con porqué · ausencia de card ≠ error |
@@ -103,7 +103,7 @@ de canal/puertas = **U236**.
 | **WP-V47** `P2` | **Retirar la marca previa** de las 5 superficies (`ARRAKIS_*`) | quien instala no lee marca ajena en ninguna superficie |
 | **WP-V48** `P2` | 5 jest rojos → **guarda del mando de ciudad** (V34) | los 5 en verde · cubren ciclo de vida de terminales |
 | **WP-V49** `P1` | **Cerco en documentos**: referencias vivas a canales externos → sidecar inerte | cero anclas externas como dependencia |
-| **WP-V80** `P1` | **Trocear `extensionBootstrap.ts`** (~2200 líneas): DATOS/FLUJO, registro declarativo. Habilitador de paralelismo (V25·V62·V64·V71) | bootstrap <300 líneas de flujo · compile verde · cero cambio observable |
+| **WP-V80** `P1` 🔶 | **Trocear `extensionBootstrap.ts`** (~2200 líneas): DATOS/FLUJO, registro declarativo. Habilitador de paralelismo (V25·V62·V64·V71) | bootstrap <300 líneas de flujo · compile verde · cero cambio observable |
 
 ## LANE H · EMPAQUETADO Y CANAL — **P0/P1**
 
@@ -143,7 +143,7 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V68** `P0` | **Arnés Extension Host** (`@vscode/test-electron`) — incluye **instalación del artefacto empaquetado**, no solo fuente | activación/comandos/vistas probados en VS Code real, en CI · el ⏳ estructural de la guía muere |
+| **WP-V68** `P0` 🔶 | **Arnés Extension Host** (`@vscode/test-electron`) — incluye **instalación del artefacto empaquetado**, no solo fuente | activación/comandos/vistas probados en VS Code real, en CI · el ⏳ estructural de la guía muere |
 | **WP-V84** `P0` | **Matriz limpia de plataforma**: VS Code mínimo real, Windows/Linux, `.vsix` sin repo ni node_modules | instala y activa en máquina limpia · `engines.vscode` verificado, no supuesto (absorbe la mitad viva del viejo V74) |
 | **WP-V82** `P0` | **Workspace Trust + secretos + permisos**: workspace no confiable no ejecuta procesos; secretos en SecretStorage/env | untrusted = cero spawn · cero secretos en settings/logs |
 | **WP-V62** `P1` | **Ciclo de vida**: activación por evento real, `deactivate`/`dispose` completos | cerrar la ventana no deja procesos ni watchers |
