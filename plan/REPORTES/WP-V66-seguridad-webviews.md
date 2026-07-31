@@ -6,10 +6,11 @@
 | fecha | 2026-08-01 |
 | rama | `wp/v66-csp` (worktree `C:\S_LAB\wt\v-v66`) |
 | base | `336f481` · obra previa `2bc8cbc..9f0a5d7` (7 commits) |
-| commits de esta corrección | `4c2453f` (corrección D1–D5) · este reporte |
+| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · este reporte |
 | eje(s) CA | tipo **seguridad** (PRACTICAS §4.4.4: *intenta el bypass, no releas la declaración*) + de facto sobre el HTML renderizado |
-| revisor distinto del worker | `⏳ pendiente` — **contrarrevisión adversarial obligatoria** (misma clase), debe reintentar los ocho vectores |
-| estado propuesto | listo para contrarrevisión |
+| revisor distinto del worker | `⏳ pendiente` — 3ª contrarrevisión, **acotada a DD4 y DD5** y a que no se haya roto lo que resiste |
+| estado propuesto | listo para contrarrevisión acotada |
+| alcance | **DD1/DD2/DD3 excluidos por decisión del orquestador** → WP nuevo **V89** (ver Parte 3 quater) |
 
 > **Nota de procedencia.** Este reporte se escribe en la corrección. El intento
 > anterior **no dejó reporte** en `plan/REPORTES/` (no existía fichero que
@@ -61,10 +62,11 @@ comprueba una cosa y la guarda otra».
 
 ### Ficheros tocados
 
-- `src/webview/security.ts` — motor de invariantes + lista blanca de fuentes (D2/D3/D4/D5)
-- `src/webViewManager.ts` — guarda de HTML de disco y scripts opt-in (D3)
+- `src/webview/security.ts` — motor de invariantes + lista blanca de fuentes (D2/D3/D4/D5); reescrito sobre el tokenizador y con el modelo de amenaza en la cabecera (DD4/DD5)
+- `src/webview/htmlScan.ts` — **creado**: tokenizador HTML fail-closed (DD4/DD5)
+- `src/webViewManager.ts` — guarda de HTML de disco y scripts opt-in (D3); ruta de disco sin scripts y `getDriverUIConfig` inerte (DD4/DD5)
 - `tests/unit/webview/renderPointAnalysis.ts` — **creado**: derivación del censo desde el AST (D1)
-- `tests/unit/webview/webviewCsp.test.ts` — reescrito el censo; añadidos los casos rojos D1–D5
+- `tests/unit/webview/webviewCsp.test.ts` — reescrito el censo; casos rojos D1–D5 y DD4/DD5
 
 ---
 
@@ -170,8 +172,10 @@ Hay además un test que comprueba que **no es un rechazo indiscriminado**: un
 **Qué cambió.** `hasCspMeta` (era `security.ts:119-121`, regex de presencia)
 **se elimina**. En su lugar:
 
-- `stripHtmlComments` (`security.ts:177`) — una meta dentro de un comentario HTML
-  deja de contar.
+- `stripHtmlComments` — una meta dentro de un comentario HTML deja de contar.
+  *(Superado en la 2ª corrección: era una regex y se desincronizaba del
+  tokenizador; ver DD5 en la Parte 3 bis. Hoy no existe — el escáner resuelve
+  los comentarios.)*
 - `extractCspMetaContents` (`:201`) — extrae el `content` respetando el tipo de
   comilla (el `content="… 'none' …"` ya no se corta en la primera comilla simple).
 - `findWebviewHtmlViolations` (`:257`) — exige `default-src 'none'` de arranque y
@@ -258,17 +262,23 @@ Reconstruidos desde `plan/DEVOLUCION-V66-csp.md` (el informe original no está e
 el worktree; la numeración 1B/7/8 es literal del documento, el resto se infiere
 de su §«Lo que SÍ resiste» y se marca como tal).
 
-| # | vector | estado | dónde queda cazado |
-| - | ------ | ------ | ------------------ |
+> **Corrección exigida por la 2ª contrarrevisión.** La versión anterior de esta
+> tabla decía «cazado — era rojo, ahora cae» en las filas 1B, 6, 7 y 8. Eso es
+> **cierto para el payload enunciado y falso para la familia**: la revisión
+> encontró variantes de una línea que siguen pasando. Reformulado abajo. No se
+> vende más de lo que se cubre.
+
+| # | vector | estado | dónde queda cazado / qué sigue abierto |
+| - | ------ | ------ | -------------------------------------- |
 | 1 | nonce hardcodeado / no criptográfico *(inferido)* | **cazado** (ya resistía) | `createNonce` + test «nonce distinto entre renders» por cada uno de los 25 puntos |
-| 1B | alias del objeto webview + literales partidos | **cazado — era rojo, ahora cae** | cobertura derivada del AST + regla de sumideros; probado por inyección real en `src/` |
+| 1B | alias del objeto webview + literales partidos | **cazado el payload enunciado** | cobertura derivada del AST + regla de sumideros, probado por inyección real en `src/`. **Abierto**: la regla de sumideros reconoce una *gramática*, no una operación — ver DD1/DD2/DD3, enrutados a **V89** |
 | 2 | `unsafe-inline`/`unsafe-eval` por cualquier campo del helper *(inferido)* | **cazado** (ya resistía) | `assertSafeSource` lanza; e invariante sobre el documento entero |
 | 3 | iframe a origen externo (`data:text/html`, `javascript:`, `http://localhost@evil.com`, `vscode-webview://`) *(inferido)* | **cazado** (ya resistía) | `requireLocalOrigin` + degradación a página inerte |
 | 4 | entradas degeneradas *(inferido)* | **cazado** (ya resistía) | fail-closed del helper |
-| 5 | `<script>`/`<style>` sin nonce *(inferido)* | **cazado** (ya resistía, ahora en el motor común) | `findWebviewHtmlViolations` §5 |
-| 6 | **script externo CON nonce** (D2) | **cazado — era rojo, ahora cae** | `URL_BEARING` + `isExtensionResourceUrl`; probado inyectando en `src/uiManager.ts` |
-| 7 | render hostil en un ASIGNADOR ya censado | **cazado — era rojo, ahora cae** | cobertura derivada; probado inyectando en `aiCommands.ts` |
-| 8 | render nº 26 en un PRODUCTOR ya censado | **cazado — era rojo, ahora cae** | cobertura derivada; probado inyectando en `bootstrapPages.ts` |
+| 5 | `<script>`/`<style>` sin nonce *(inferido)* | **cazado** (ya resistía, ahora sobre atributos tokenizados) | `findWebviewHtmlViolations` §5 |
+| 6 | **script externo CON nonce** (D2) | **cazado, ahora sí para la familia** | `URL_BEARING` + `isExtensionResourceUrl`. La 2ª revisión mostró que sólo cubría **valores entrecomillados** (DD4); con el tokenizador cubre también los valores sin comillas. Resiste `//host`, esquema en mayúsculas, `src` compuesto, `<link>`, `<img>`, `<iframe>`, `<form>`, `<base>` |
+| 7 | render hostil en un ASIGNADOR ya censado | **cazado el payload enunciado** | cobertura derivada, probado inyectando en `aiCommands.ts`. **Abierto**: variantes que no son `EqualsToken` + `.html`, y colisión de nombre simple en `pathToCensus` → **V89** |
+| 8 | render nº 26 en un PRODUCTOR ya censado | **cazado el payload enunciado** | cobertura derivada, probado inyectando en `bootstrapPages.ts`. **Abierto**: mismas variantes → **V89** |
 
 Vectores nuevos cerrados de paso, no pedidos: `<base href>`, protocol-relative
 `//host`, `<link>`/`<iframe>`/`<form>`/`<img>` remotos, segunda meta CSP,
@@ -276,17 +286,210 @@ sumidero que no procede de una llamada (HTML traído de la red).
 
 ---
 
+## Parte 3 bis · Segunda contrarrevisión: DD4 y DD5
+
+La 2ª contrarrevisión encontró cinco defectos. El orquestador partió el WP: **DD4
+y DD5 se cierran aquí** (son vulnerabilidades reales, explotables **sin tocar
+`src/`**); **DD1, DD2 y DD3 se van a V89** (son del censo, defensa contra
+regresión, y merecen diseño en vez de parche).
+
+### Por qué DD4 y DD5 eran vulnerabilidades de verdad
+
+No hace falta ser colaborador del repo. `getDriverUIConfig()`
+(`src/webViewManager.ts:404`) sirve el `index.html` de un **repo vecino**
+(`…/state-machine-mcp-driver/public`) y pedía `enableScripts: true`. Quien pueda
+escribir ese fichero ejecutaba JS —incluido JS remoto— dentro de un webview con
+`acquireVsCodeApi()`. Eso es **entrada externa**, no un insider.
+
+### La causa común: se estaba analizando HTML hostil con expresiones regulares
+
+- **DD4** — `attrOf` (era `security.ts:186`) sólo leía valores **entrecomillados**.
+  `src=https://evil.example/x.js` devolvía `undefined` y el bucle de
+  `URL_BEARING` hacía `continue`: **se saltaba en silencio**. Igual con
+  `onclick=alert(1)` (`:293`, la regex exigía comilla o backtick tras el `=`) y
+  con `style=color:red` (`:297`).
+- **DD5** — `stripHtmlComments` (era `:177`) se desincronizaba del tokenizador.
+  `<!-->` es *abrupt-closing-of-empty-comment*: el navegador cierra el
+  comentario ahí, la regex se comía hasta el `-->` siguiente. Y un `<!--` dentro
+  de un **valor de atributo entrecomillado** no abre comentario para el
+  navegador, pero sí para la regex. En ambos casos desaparecía del análisis
+  marcado que el navegador ejecuta.
+
+### La respuesta: tokenizar, y rechazar lo que no se pueda tokenizar
+
+Se crea `src/webview/htmlScan.ts` (**creado**, 240 líneas): una máquina de
+estados léxica que recorre el documento como lo hace un navegador para lo que
+aquí importa — etiquetas, atributos **con y sin comillas**, comentarios **con sus
+cierres abruptos**, y contenido RAWTEXT/RCDATA que **no se re-tokeniza**.
+`findWebviewHtmlViolations` opera ahora sobre **atributos tokenizados**, no sobre
+el texto crudo. Se elimina `stripHtmlComments`.
+
+Y, siguiendo la instrucción de fondo del orquestador, el escáner **declara sus
+errores**: comentario sin cerrar, valor de atributo sin cerrar, etiqueta sin
+cerrar, RAWTEXT sin cierre. Ante cualquiera de ellos
+`findWebviewHtmlViolations` **rechaza el documento** en vez de aprobarlo
+(`security.ts`, §0 de la función). Aprobar lo que no se ha podido analizar era
+el fallo de fondo, y ese sí queda cerrado por construcción.
+
+**Alcance declarado**: `htmlScan.ts` no es un parser HTML5 completo (no construye
+árbol, no hace *foster parenting*, no reconstruye elementos formateados). Cubre
+el nivel **léxico**, que es donde viven estas invariantes. Un vector que dependa
+de la construcción del árbol y no del léxico no está cubierto; se dice aquí en
+vez de dejar que se descubra.
+
+### La capa que no depende del parser
+
+Un tokenizador mejor sigue siendo un tokenizador, así que la ruta de disco deja
+de depender de él:
+
+- `src/webViewManager.ts:104` — `enableScripts: config.enableScripts === true &&
+  !config.localPath`. Si el contenido viene de disco, **no hay scripts, diga lo
+  que diga la config**. Sin scripts no hay ejecución ni `acquireVsCodeApi()`
+  aunque un documento burle el escáner.
+- `src/webViewManager.ts:404` — `getDriverUIConfig()` pasa a `enableScripts:
+  false`. **Cambio de comportamiento declarado**: ese panel queda inerte. Es la
+  decisión correcta para HTML de terceros, y se anota como tal por si el
+  propietario del driver UI necesita otra vía (servirlo por plantilla propia en
+  vez de crudo, que es la alternativa que apuntaba el orquestador).
+
+### Evidencia: los payloads contra el motor ANTERIOR y el actual
+
+Ejecutando los mismos documentos contra `findWebviewHtmlViolations` de
+`4c2453f` (motor con regex) y de `8ca02ee` (motor tokenizado):
+
+```
+=== DD4 · <script src=… SIN COMILLAS>, nonce válido y entrecomillado ===
+  payload: <script nonce="AAAA…==" src=https://evil.example/x.js></script>
+  ANTES (4c2453f): []                          ← 0 violaciones: VULNERABLE
+  AHORA (8ca02ee): ["recurso remoto en <script src>: \"https://evil.example/x.js\""]
+
+=== DD4 · onclick sin comillas ===
+  ANTES: *** PASA 0 violaciones - VULNERABLE ***
+  AHORA: handler inline presente: <div onclick=…>
+
+=== DD4 · style sin comillas ===
+  ANTES: *** PASA 0 violaciones - VULNERABLE ***
+  AHORA: atributo style= inline presente en <div>
+
+=== DD5 · <!--> cierre abrupto ===
+  ANTES: *** PASA 0 violaciones - VULNERABLE ***
+  AHORA: 2 violaciones -> <script> sin nonce | recurso remoto en <script src>
+
+=== DD5 · <!-- en valor de atributo ===
+  ANTES: *** PASA 0 violaciones - VULNERABLE ***
+  AHORA: 2 violaciones -> <script> sin nonce | recurso remoto en <script src>
+```
+
+Y por mutación del arreglo (revertido, el caso rojo cae):
+
+```
+# el valor sin comillas vuelve a ser invisible
+● DD4 › el tokenizador lee el valor sin comillas (antes: undefined)
+# sin los cierres abruptos del spec
+● DD5 › `<!-->` cierra el comentario ahí (abrupt-closing), no en el `-->` siguiente
+```
+
+Hay además tests de que **no es rechazo indiscriminado**: un comentario normal
+—con `<script>` dentro— se ignora sin violaciones, un `<div onclick=…>` dentro
+de una cadena JS de un `<script>` no cuenta como handler, y un `<script
+src="vscode-resource:…">` nonceado sigue pasando.
+
+---
+
+## Parte 3 ter · Modelo de amenaza (qué defiende cada capa)
+
+Queda escrito aquí y en el contrato del helper (`src/webview/security.ts`,
+cabecera) porque la confusión entre las dos capas es lo que produjo la primera
+devolución y parte de la segunda.
+
+**La guarda de ejecución** (`security.ts` + `htmlScan.ts` + `verifyDiskHtml`)
+defiende **contra entrada externa**: HTML que la extensión no ha escrito y que
+llega en tiempo de ejecución — hoy, el `index.html` de disco que sirve
+`webViewManager` para un `localPath` de un repo vecino. El adversario es quien
+pueda escribir ese fichero. Contra él las invariantes **son una frontera de
+seguridad de verdad**, y por eso son fail-closed: lo que no se puede analizar se
+rechaza, y la ruta de disco además va sin scripts.
+
+**El censo de puntos de render** (`tests/unit/webview/webviewCsp.test.ts` +
+`renderPointAnalysis.ts`) defiende otra cosa: **regresión en `src/`**. Detecta
+que alguien añada un render sin CSP o con marcado inseguro por descuido. **No es
+una frontera de seguridad** y no pretende resistir a un contribuyente hostil
+deliberado: quien puede editar `src/` puede editar el test. Es análisis estático
+contra código que el propio adversario escribe — una carrera sin final cerrado.
+Vale como red contra el error, no contra el atacante. **No debe leerse ni citarse
+como si protegiera de un atacante.**
+
+Consecuencia práctica para quien lea el verde de la suite: los 25 puntos de
+render en verde dicen «no ha entrado una regresión», no «esto es inexpugnable».
+
+---
+
+## Parte 3 quater · Insumo para V89 · por qué el censo es sintáctico donde debería ser semántico
+
+Escrito por quien conoce el terreno, como pide el orquestador. DD1/DD2/DD3 **no
+se corrigen aquí**. Lo que sigue es el diagnóstico para que V89 los rediseñe.
+
+El error de diseño es uniforme: **la implementación reconoce una gramática
+cuando debería reconocer una operación**. Tres manifestaciones concretas:
+
+1. **La regla de sumideros reconoce una forma sintáctica, no una operación.**
+   `analyzeSource` (`renderPointAnalysis.ts:214`) detecta un sumidero cuando ve
+   un `ts.BinaryExpression` cuyo operador es `EqualsToken` y cuya izquierda es un
+   `PropertyAccessExpression` **cuyo identificador se llama `html`**; y
+   (`:231`) una clave `html` **sin comillas** en un literal de objeto que sea
+   argumento de llamada. Lo que importa —«se está escribiendo la propiedad `html`
+   de un objeto `Webview`»— no se comprueba en ningún sitio. Por tanto se le
+   escapa toda forma que exprese la misma operación con otra sintaxis:
+   `wv['ht'+'ml'] = …`, `{ 'html': … }` con la clave entrecomillada, un
+   `Object.defineProperty`, un setter intermedio, desestructuración con
+   renombrado, o cualquier alias por índice. La vía correcta es el **type
+   checker** (`ts.createProgram` + `getTypeAtLocation`): preguntar si el objeto
+   es un `vscode.Webview` y si el símbolo escrito es su propiedad `html`. Eso
+   reconoce la operación y es indiferente a la sintaxis.
+
+2. **`pathToCensus` resuelve por NOMBRE SIMPLE GLOBAL, y basta colisionar un
+   nombre.** El grafo de llamadas se indexa en `byName` (`webviewCsp.test.ts`),
+   un `Map<string, FnInfo[]>` de **nombre simple** → implementaciones. La
+   consecuencia grave no es sólo que confunda dos funciones homónimas de módulos
+   distintos: es que **la comprobación de intermediarios se evapora**. Si el
+   primer salto ya encuentra *alguna* implementación censada con ese nombre, el
+   camino tiene longitud 1, `chain.slice(0, -1)` queda vacío y **no se inspecciona
+   ni un solo intermediario**. Es decir: nombrar una función igual que un render
+   censado desactiva la regla de pureza entera. La vía correcta es resolver por
+   **símbolo** (módulo + declaración), no por cadena.
+
+3. **La detección de productores depende de literales adyacentes.** El criterio
+   es «los literales propios de la función, concatenados, contienen `<html` o
+   `<!DOCTYPE html`». Es robusto frente al troceado (por eso cazó 1B) pero no
+   frente a que el HTML **no esté en literales de esa función**: constantes de
+   módulo, `String.fromCharCode`, plantillas cargadas de disco, o simplemente
+   repartir el documento entre dos funciones que se llaman. No hay análisis de
+   flujo de datos, y sin él «esta función produce un documento» no es decidible
+   sintácticamente.
+
+Recomendación para V89, en orden de valor: (a) mover el análisis al **type
+checker** y resolver por símbolo; (b) hacer que la unidad sea la **operación**
+(escritura sobre `Webview.html`) y no la forma; (c) plantearse si la garantía
+debe seguir siendo estática o si conviene un **chokepoint de ejecución** —ver
+Parte 6.1, donde explico por qué no lo hice aquí—, porque un único punto
+validado en runtime hace irrelevante casi todo lo anterior; y (d) **decidir y
+escribir qué adversario se persigue**, porque contra un contribuyente hostil el
+análisis estático del propio repo no puede ganar, y perseguirlo consume esfuerzo
+que rinde más en la guarda de ejecución.
+
+---
+
 ## Parte 4 · Números de suite
 
 Medidos con `npx jest --coverage=false` en el worktree.
 
-| | antes (`9f0a5d7`) | después (`4c2453f`) |
-| - | - | - |
-| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
-| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** |
-| `webviewCsp.test.ts` | 62 | **87** |
+| | antes (`9f0a5d7`) | 1ª corrección (`4c2453f`) | 2ª corrección DD4/DD5 (`HEAD`) |
+| - | - | - | - |
+| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
+| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** |
+| `webviewCsp.test.ts` | 62 | 87 | **102** |
 
-**+25 tests, +25 verdes, 0 rojos nuevos.**
+**+40 tests sobre el baseline, +40 verdes, 0 rojos nuevos.**
 
 Los **5 rojos históricos** son exactamente los mismos antes y después, todos en
 el mismo fichero de integración, **ninguno tocado por este WP**:
@@ -380,20 +583,53 @@ Afirmaciones reformuladas al alcance real:
    dependencia (el compilador de TypeScript ya estaba como devDep).
 5. **No se reescribió historia**: los 7 commits previos siguen intactos; esta
    corrección son commits nuevos sobre `wp/v66-csp`.
+6. **No se corrigieron DD1, DD2 ni DD3** — decisión del orquestador, no mía:
+   van a **V89 · endurecimiento del censo de puntos de render**, con su propio
+   brief, porque son de otra clase (defensa contra regresión, no frontera de
+   seguridad) y merecen diseño en vez de parche. El diagnóstico técnico para ese
+   WP queda en la **Parte 3 quater**.
+7. **`htmlScan.ts` no es un parser HTML5 completo.** Cubre el nivel léxico. No
+   construye árbol ni implementa reglas de inserción, así que un vector que
+   dependa de la construcción del árbol (y no del léxico) no está cubierto. Se
+   compensa con la capa que no depende del parser: la ruta de disco va sin
+   scripts.
+
+### Observaciones anotadas, no corregidas (fuera de alcance)
+
+- **Perilla muerta**: `'webview.enableScripts'` está declarada en
+  `src/core/configurationService.ts:29` (tipo) y `:125` (default `true`) y **no
+  la consume nadie**. No es explotable —precisamente porque nadie la lee— pero
+  es una perilla de seguridad que aparenta existir y no existe. Candidata a poda
+  o a cableado consciente; no la toco aquí porque no es de este WP.
+- **Backstop accidental, no defensa**: el test de contabilidad
+  (`webviewCsp.test.ts:394-399`) lleva la lista de ficheros asignadores
+  **escrita a mano**, así que rompe ante cualquier fichero nuevo con `.html =`.
+  Eso es un efecto colateral de una aserción de contabilidad, **no la regla de
+  sumideros funcionando**. Se dice explícitamente para que nadie lo cuente como
+  cobertura: si V89 sustituye esa aserción, no se pierde ninguna defensa, porque
+  no la había.
 
 ---
 
 ## Parte 7 · Para el contrarrevisor
 
-Los ocho vectores deben reintentarse. Tres avisos para que el reintento sea justo:
+La 3ª contrarrevisión está **acotada a DD4 y DD5** y a que no se haya roto lo que
+resiste. Cuatro avisos para que el reintento sea justo:
 
-- El censo ya **no** tiene lista de ficheros que ampliar; para colar un render hay
-  que hacer que el AST no lo vea. Los ganchos están en `renderPointAnalysis.ts`:
-  `DOC_SIGNAL`/`FRAG_SIGNAL` (`:23`,`:26`), la atribución de literales a la
-  función propietaria (`walkOwn`, `:139`, que no entra en funciones anidadas) y
-  la detección de sumideros (`:214` para `.html =`, `:231` para `{ html }`).
-- El motor de invariantes es `findWebviewHtmlViolations`; si se encuentra un HTML
-  hostil que devuelva lista vacía, eso es el bypass.
+- **DD4/DD5 viven en `src/webview/htmlScan.ts`.** El bypass sería un documento
+  cuyo marcado el navegador ejecute y que `scanHtml` tokenice distinto —o que
+  tokenice «bien» pero con `errors` vacío cuando no debería. Ganchos: los
+  cierres abruptos de comentario, el estado de valor de atributo (las tres
+  formas: `"`, `'`, sin comillas), y el tratamiento RAWTEXT/RCDATA. Recordar el
+  alcance declarado: es un tokenizador **léxico**, no un parser con árbol.
+- **El motor sigue siendo `findWebviewHtmlViolations`**: si se encuentra un HTML
+  hostil que devuelva lista vacía, eso es el bypass. Si devuelve
+  `documento no analizable, se rechaza: …`, eso es el comportamiento correcto,
+  no un fallo.
+- **No hace falta reintentar DD1/DD2/DD3**: están reconocidos como abiertos y
+  enrutados a V89 (Parte 3 quater). Reintentarlos aquí encontrará lo ya
+  admitido. Y **el censo no es una frontera de seguridad** (Parte 3 ter): un
+  bypass que requiera editar `src/` no es una vulnerabilidad de la guarda.
 - La suite entera debe correrse con `npx jest --coverage=false` (los umbrales de
   cobertura global están por debajo del mínimo desde antes de este WP y ensucian
   la salida).

@@ -751,6 +751,17 @@ describe('WP-V66 · DD4 · atributos sin comillas', () => {
             .toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
     });
 
+    test('el vector exacto: nonce VÁLIDO y entrecomillado, sólo el src sin comillas', () => {
+        // Sin ambigüedad: el nonce es correcto, así que la ÚNICA violación
+        // posible es el recurso remoto. Este documento devolvía [] antes.
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body><script nonce="${nonce}" src=https://evil.example/x.js></script></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([
+            'recurso remoto en <script src>: "https://evil.example/x.js"'
+        ]);
+    });
+
     test('handler inline sin comillas es violación', () => {
         expect(findWebviewHtmlViolations(doc('<div onclick=alert(1)></div>')))
             .toContainEqual(expect.stringContaining('handler inline presente'));
