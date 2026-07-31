@@ -40,7 +40,9 @@ ver «Cerradas». El replan de la Ola F queda copiado en
   Scriptorium»), no antes. Razón: cambiar el namespace dos veces es peor que
   cambiarlo tarde, y renombrarlo hoy costaría 19 claves que habría que
   volver a mover al cerrar la identidad. Cuando se cierre, el cambio se hace
-  **de una vez con el extension-id**.
+  **de una vez con el extension-id**. ✎ *Al asentarse esta decisión, V23
+  declaraba 19 claves; tras demoler una cadena muerta durante su corrección
+  son **18**. El argumento no depende de la cifra.*
   **Consecuencia operativa**: **V23 cierra con `aleph0` tal cual** y su obra
   es válida como está; ningún worker reabre esto. El residuo declarado
   (identificadores de código que no se renombran, p. ej. el campo `meshHost`
