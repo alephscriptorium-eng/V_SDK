@@ -46,3 +46,47 @@ Rutas relativas a `C:\S_LAB\z-sdk`. El orden de filas es el orden literal de
 | 12 | `arg-player-dos` (catalog.mjs:176) | Ídem fila 11: `workspace: null` (catalog.mjs:178); mismo rechazo de spawn (catalog.mjs:320-323) | **no va (aún)** | Ídem fila 11: declaración de puerto sin pieza observable en el workspace. |
 | 13 | `pozo-player` (catalog.mjs:186) | `workspace: null` (catalog.mjs:188); capacidad `game.pozo` (:191); mismo rechazo de spawn (catalog.mjs:320-323) | **no va (aún)** | Ídem fila 11: no hay servidor en el workspace que exponga algo que una superficie pueda mostrar. |
 | 14 | `solve-player` (catalog.mjs:196) | `workspace: null` (catalog.mjs:198); capacidad `game.solve` (:201); mismo rechazo de spawn (catalog.mjs:320-323) | **no va (aún)** | Ídem fila 11. |
+
+## Pie
+
+### Ninguna fila implica jerarquía
+
+Este mapa **declara consumo, no ordena mundos ni impone autoridad**: cada
+fila dice qué expone una pieza y dónde lo pinta el Zigurat, nada más. El
+orden de la tabla es el orden literal de `CATALOG_SEED`; que varias entradas
+compartan superficie (filas 3-5) o que una entrada tenga dos superficies no
+establece rango, propiedad ni precedencia entre piezas, barrios o mundos. La
+autoridad sobre el catálogo y el canal sigue siendo del runtime (Z posee
+canal, V consume — `plan/BACKLOG.md:66`, WP-V20).
+
+### Nota: «terminal gestionado» queda sin asignación
+
+Ninguna fila reclama terminal gestionado porque ninguna entrada del catálogo
+se lanza desde el IDE: el spawn es del actuador (`buildSpawnSpec`,
+catalog.mjs:306-333, sobre datos «Actuator data only», catalog.mjs:4), y el
+Zigurat consume el inventario por `launcher://catalog`
+(`CONTRATO-IDE-OPT-IN-v1.md:23-26`), no gestiona procesos de barrio.
+
+### Fuera del catálogo
+
+El workspace de `C:\S_LAB\z-sdk` declara los globs `packages/engine/*`,
+`packages/editor/*`, `packages/mesh/*`, `examples/*` (package.json:6-11).
+Conteo de paquetes con `package.json`: **50** (engine 26 · editor 1 ·
+mesh 21 · examples 2). Las 14 entradas del catálogo referencian **7**
+paquetes del workspace (`linea-system`, `solar-system`, `force-system`,
+`linea-editor`, `ssb-system`, `linea-firehose`, `console-monitor`; las
+otras 4 entradas no referencian ninguno). Quedan **43 piezas del workspace
+FUERA del catálogo** — este mapa cubre solo lo catalogado.
+
+Comando usado (PowerShell, solo lectura):
+
+```powershell
+$ws = @('packages/engine','packages/editor','packages/mesh','examples')
+$total = 0
+foreach ($d in $ws) {
+  $n = (Get-ChildItem "C:\S_LAB\z-sdk\$d" -Directory |
+    Where-Object { Test-Path (Join-Path $_.FullName 'package.json') }).Count
+  $total += $n
+}
+$total  # 50
+```
