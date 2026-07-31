@@ -134,6 +134,23 @@ describe('WP-V71 · correlación', () => {
         getLogger('X').info('suelta');
         expect(renderRecentLogEntries().pop()).not.toContain('op=');
     });
+
+    it('LÍMITE · la correlación NO cruza módulos: cada forOperation acuña id nuevo', () => {
+        // Acotación pedida en la devolución. Se fija por test para que la
+        // afirmación del reporte no pueda volver a excederse: dos módulos del
+        // mismo flujo NO comparten operación, y un hijo no hereda del padre.
+        const a = getLogger('ProcessManager').forOperation('lanzar');
+        const b = getLogger('AracneBot').forOperation('lanzar');
+        a.info('desde A');
+        b.info('desde B');
+        const [ea, eb] = getRecentLogEntries(2);
+        expect(ea.operation).not.toBe(eb.operation);
+
+        // Y el hijo de un sub-logger tampoco hereda:
+        const hijo = a.forOperation('lanzar');
+        hijo.info('desde el hijo');
+        expect(getRecentLogEntries(1)[0].operation).not.toBe(ea.operation);
+    });
 });
 
 describe('WP-V71 · nada de secretos en el canal (CA4, de punta a punta)', () => {

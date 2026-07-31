@@ -20,7 +20,8 @@
  * - **correlación**: `s=` sesión del Extension Host (agrupa líneas de un mismo
  *   arranque cuando el usuario pega un fragmento), `#` secuencia monótona
  *   (delata líneas perdidas o reordenadas) y `op=` operación, que hilvana las
- *   líneas de un mismo flujo multi-módulo.
+ *   líneas de una misma operación **dentro de un módulo** — su alcance exacto
+ *   está acotado en `forOperation`, y NO llega hoy a un flujo multi-módulo.
  * - **datos**: JSON de una línea, ya pasado por `redact.ts`.
  *
  * Invariantes de la pieza:
@@ -57,8 +58,18 @@ export interface StructuredLogger {
     debug(message: string, data?: unknown): void;
     trace(message: string, data?: unknown): void;
     /**
-     * Sub-logger atado a un id de operación: hilvana en el log las líneas de un
-     * flujo que atraviesa varios módulos o varios instantes.
+     * Sub-logger atado a un id de operación recién acuñado: hilvana las líneas
+     * que ese mismo sub-logger emite, aunque estén separadas en el tiempo
+     * (p. ej. el arranque de un proceso y el cierre de su terminal).
+     *
+     * ALCANCE — acotado en la corrección de la devolución. Cada llamada acuña
+     * un id **nuevo**: no hay propagación. Dos módulos del mismo flujo que
+     * llamen a `forOperation` obtienen operaciones DISTINTAS, y un sub-logger
+     * hijo no hereda la del padre. Sirve para aislar una operación dentro de un
+     * módulo; **no** correlaciona un flujo que atraviesa varios.
+     *
+     * Correlacionar entre módulos exige propagar el id por la cadena de
+     * llamadas (o un contexto asíncrono), y eso es diseño de otro WP.
      */
     forOperation(operation: string): StructuredLogger;
 }
