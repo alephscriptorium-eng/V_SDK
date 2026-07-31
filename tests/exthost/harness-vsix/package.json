@@ -1,0 +1,13 @@
+{
+  "name": "aleph0-exthost-harness",
+  "displayName": "Arnés exthost V68 (solo hospeda el runner en modo .vsix)",
+  "publisher": "scriptorium",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "activationEvents": [],
+  "contributes": {},
+  "main": "./extension.js"
+}

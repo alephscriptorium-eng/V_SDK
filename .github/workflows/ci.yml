@@ -81,3 +81,59 @@ jobs:
           name: zigurat-vsix
           path: dist/*.vsix
           if-no-files-found: error
+
+  # WP-V68 — Arnés Extension Host (@vscode/test-electron): VS Code real
+  # descargado en el runner, dos modos:
+  #   · fuente:   la extensión carga como development extension (dist/)
+  #   · artefacto: se empaqueta el .vsix, se INSTALA en un extensions-dir
+  #     aislado y se prueba lo instalado (la suite verifica la identidad
+  #     de artefacto — no vale correr desde el fuente)
+  # La suite deja acta JSON; sin acta el lanzador falla (nada de verde por
+  # construcción). Corre bajo xvfb: el Extension Host necesita display.
+  exthost:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Detect registry credentials
+        id: creds
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          if [ -n "${NPM_USERNAME}" ] && [ -n "${NPM_PASSWORD}" ]; then
+            echo "has_npm=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_npm=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NPM_USERNAME/NPM_PASSWORD absent — npm ci may fail on private @zeus/@alephscript"
+          fi
+
+      - name: Configure registry basic-auth (_password)
+        if: steps.creds.outputs.has_npm == 'true'
+        env:
+          NPM_USERNAME: ${{ secrets.NPM_USERNAME }}
+          NPM_PASSWORD: ${{ secrets.NPM_PASSWORD }}
+        run: |
+          # DV-09 / D-24 (a): username + _password base64 — no JWT.
+          # Do not echo secret values.
+          HOST='npm.scriptorium.escrivivir.co'
+          {
+            echo "//${HOST}/:username=${NPM_USERNAME}"
+            echo "//${HOST}/:_password=${NPM_PASSWORD}"
+            echo "//${HOST}/:email=ci@scriptorium.escrivivir.co"
+            echo "//${HOST}/:always-auth=true"
+          } >> .npmrc
+
+      - name: Install
+        run: npm ci
+
+      - name: Arnés Extension Host — modo fuente
+        run: xvfb-run -a npm run test:exthost
+
+      - name: Arnés Extension Host — modo .vsix empaquetado
+        run: xvfb-run -a npm run test:exthost:vsix
