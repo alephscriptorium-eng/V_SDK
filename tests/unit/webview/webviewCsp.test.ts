@@ -51,9 +51,9 @@ import {
     isExtensionResourceUrl,
     isLocalOrigin,
     isSafeWebviewHtml,
-    requireLocalOrigin,
-    stripHtmlComments
+    requireLocalOrigin
 } from '../../../src/webview/security';
+import { scanHtml } from '../../../src/webview/htmlScan';
 import { renderInertExternalPage } from '../../../src/webview/commonPages';
 import {
     renderAgentValidationPage,
@@ -638,7 +638,6 @@ describe('WP-V66 · D3 · la meta CSP se valida, no se cuenta', () => {
 
     test('meta CSP dentro de un comentario HTML NO cuenta', () => {
         const html = `<!DOCTYPE html><html><head><!-- ${META_OK} --></head><body></body></html>`;
-        expect(stripHtmlComments(html)).not.toContain('Content-Security-Policy');
         expect(extractCspMetaContents(html)).toEqual([]);
         expect(findWebviewHtmlViolations(html))
             .toContainEqual(expect.stringContaining('sin meta Content-Security-Policy'));
@@ -723,6 +722,143 @@ describe('WP-V66 · D4 · toda fuente CSP pasa por lista blanca', () => {
     test('un nonce que no es base64 LANZA', () => {
         expect(() => buildCspContent({ scriptNonce: "abc' 'self" })).toThrow();
         expect(() => buildCspContent({ styleNonce: 'abc;script-src *' })).toThrow();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · DD4 — valores de atributo SIN COMILLAS
+//
+// El parser anterior sólo leía valores entrecomillados: `src=…` sin comillas
+// devolvía undefined y la comprobación se saltaba en silencio. HTML permite
+// esos valores y el navegador los ejecuta.
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · DD4 · atributos sin comillas', () => {
+    const doc = (body: string) => {
+        const nonce = createNonce();
+        return `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body>${body.replace(/__NONCE__/g, nonce)}</body></html>`;
+    };
+
+    test('el tokenizador lee el valor sin comillas (antes: undefined)', () => {
+        const tags = scanHtml('<script nonce=abc src=https://evil.example/x.js></script>').tags;
+        expect(tags[0].attrs.get('src')).toBe('https://evil.example/x.js');
+        expect(tags[0].attrs.get('nonce')).toBe('abc');
+    });
+
+    test('<script src=… sin comillas> es violación', () => {
+        expect(findWebviewHtmlViolations(doc('<script nonce=__NONCE__ src=https://evil.example/x.js></script>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+    });
+
+    test('handler inline sin comillas es violación', () => {
+        expect(findWebviewHtmlViolations(doc('<div onclick=alert(1)></div>')))
+            .toContainEqual(expect.stringContaining('handler inline presente'));
+        // y con backtick, y con mayúsculas en el nombre del atributo
+        expect(findWebviewHtmlViolations(doc('<div ONCLICK=alert(1)></div>')))
+            .toContainEqual(expect.stringContaining('handler inline presente'));
+    });
+
+    test('style= sin comillas es violación', () => {
+        expect(findWebviewHtmlViolations(doc('<div style=color:red></div>')))
+            .toContainEqual(expect.stringContaining('atributo style= inline presente'));
+    });
+
+    test('link/iframe/form sin comillas también caen', () => {
+        expect(findWebviewHtmlViolations(doc('<link rel=stylesheet href=https://evil.example/a.css>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <link href>'));
+        expect(findWebviewHtmlViolations(doc('<iframe src=https://evil.example/></iframe>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <iframe src>'));
+        expect(findWebviewHtmlViolations(doc('<form action=https://evil.example/rob></form>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <form action>'));
+    });
+
+    test('un documento con atributo sin cerrar se RECHAZA, no se aprueba', () => {
+        const roto = `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none';"></head><body><script nonce="abc src=x></script></body></html>`;
+        expect(findWebviewHtmlViolations(roto)[0]).toMatch(/documento no analizable, se rechaza/);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// CASOS ROJOS · DD5 — comentarios: el análisis debe coincidir con el navegador
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · DD5 · comentarios sincronizados con el tokenizador', () => {
+    test('`<!-->` cierra el comentario ahí (abrupt-closing), no en el `-->` siguiente', () => {
+        // Para el navegador el comentario es sólo `<!-->`: el <script> de después
+        // ES marcado vivo. La regex anterior se comía hasta el `-->` final y no
+        // veía nada.
+        const html = `<!DOCTYPE html><html><head>
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none';">
+            </head><body><!--><script src="https://evil.example/x.js"></script><!-- --></body></html>`;
+        const v = findWebviewHtmlViolations(html);
+        expect(v).toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+        expect(v).toContainEqual(expect.stringContaining('<script> sin nonce'));
+    });
+
+    test('`<!--->` también cierra ahí', () => {
+        const tags = scanHtml('<!---><div onclick=x></div>').tags;
+        expect(tags.map(t => t.name)).toContain('div');
+    });
+
+    test('`<!--` dentro de un valor de atributo NO abre comentario', () => {
+        // El tokenizador está en estado "valor de atributo entrecomillado":
+        // el `<!--` es texto del atributo. La regex anterior sí abría comentario
+        // y borraba del análisis todo lo que venía detrás.
+        const html = `<!DOCTYPE html><html><head>
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none';">
+            </head><body><div title="<!--"></div>
+            <script src="https://evil.example/x.js"></script>
+            <div title="-->"></div></body></html>`;
+        const v = findWebviewHtmlViolations(html);
+        expect(v).toContainEqual(expect.stringContaining('recurso remoto en <script src>'));
+    });
+
+    test('un comentario de verdad sí se ignora (no es rechazo indiscriminado)', () => {
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ styleNonce: nonce })}
+            <!-- comentario normal, con <script> dentro que no es marcado -->
+            </head><body><h2>ok</h2></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+
+    test('un comentario sin cerrar RECHAZA el documento', () => {
+        const html = `<!DOCTYPE html><html><head>
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none';">
+            </head><body><!-- sin cerrar</body></html>`;
+        expect(findWebviewHtmlViolations(html)[0]).toMatch(/documento no analizable, se rechaza/);
+    });
+
+    test('el contenido de <script>/<style> no se re-tokeniza', () => {
+        // un `<div onclick=…>` dentro de una cadena JS no es un handler
+        const nonce = createNonce();
+        const html = `<!DOCTYPE html><html><head>${buildCspMeta({ scriptNonce: nonce })}</head>
+            <body><script nonce="${nonce}">const s = "<div onclick=x>";</script></body></html>`;
+        expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// DD4/DD5 · la ruta de disco no depende de que el análisis sea perfecto
+// ---------------------------------------------------------------------------
+
+describe('WP-V66 · la ruta de disco va sin scripts (capa que no depende del parser)', () => {
+    const src = require('fs').readFileSync(path.join(SRC_ROOT, 'webViewManager.ts'), 'utf8');
+
+    test('un localPath deniega scripts aunque la config los pida', () => {
+        expect(src).toContain('enableScripts: config.enableScripts === true && !config.localPath');
+    });
+
+    test('getDriverUIConfig ya no pide scripts para HTML de un repo vecino', () => {
+        const desde = src.indexOf('getDriverUIConfig');
+        const codigo = src
+            .slice(desde, desde + 900)
+            .split('\n')
+            .filter((l: string) => !l.trim().startsWith('//'))
+            .join('\n');
+        const bloque = codigo.slice(0, codigo.indexOf('}'));
+        expect(bloque).toContain('enableScripts: false');
+        expect(bloque).not.toContain('enableScripts: true');
     });
 });
 

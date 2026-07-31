@@ -101,7 +101,12 @@ export class WebViewManager {
                 {
                     // WP-V66 (D3): los scripts son OPT-IN. Omitir el campo ya no
                     // concede ejecución a contenido de disco de terceros.
-                    enableScripts: config.enableScripts === true,
+                    // WP-V66 (DD4/DD5): y si el contenido VIENE de disco, los
+                    // scripts se deniegan pase lo que pase en la config. Es la
+                    // única capa que no depende de que el análisis del HTML sea
+                    // perfecto: sin scripts no hay ejecución ni
+                    // `acquireVsCodeApi()`, aunque el documento burle el escáner.
+                    enableScripts: config.enableScripts === true && !config.localPath,
                     retainContextWhenHidden: config.retainContextWhenHidden !== false,
                     localResourceRoots: config.localPath ? [
                         vscode.Uri.file(config.localPath),
@@ -407,7 +412,12 @@ export class WebViewManager {
             type: 'driver',
             title: 'State Machine Driver UI',
             localPath: path.join(this.context.extensionPath, '../../state-machine-mcp-driver/public'),
-            enableScripts: true,
+            // WP-V66 (DD4/DD5): este panel sirve HTML de un repo VECINO, es
+            // decir contenido de terceros. Pedía `enableScripts: true`, lo que
+            // convertía a quien pudiera escribir ese `index.html` en ejecutor
+            // de JS dentro de un webview con `acquireVsCodeApi()`. Cambio de
+            // comportamiento declarado: el panel pasa a ser inerte.
+            enableScripts: false,
             retainContextWhenHidden: false
         };
     }

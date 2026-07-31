@@ -14,8 +14,26 @@
  *  - toda fuente de `style/img/font` pasa por lista blanca (D4).
  *  - `findWebviewHtmlViolations` verifica el documento YA RENDERIZADO: es el
  *    mismo motor que usan la guarda de ejecución y el test del censo.
+ *
+ * ## Modelo de amenaza (qué defiende cada capa)
+ *
+ * Este fichero es la **guarda de ejecución** y defiende **contra entrada
+ * externa**: HTML que la extensión no ha escrito y que llega en tiempo de
+ * ejecución — hoy, el `index.html` de disco que sirve `webViewManager` para
+ * un `localPath` de un repo vecino. El adversario es quien pueda escribir ese
+ * fichero, no un colaborador del repo. Contra él las invariantes de aquí son
+ * una frontera de seguridad de verdad, y por eso son fail-closed: lo que no se
+ * puede analizar se rechaza, y la ruta de disco además va **sin scripts**.
+ *
+ * El **censo de puntos de render** (`tests/unit/webview/webviewCsp.test.ts`)
+ * defiende otra cosa: **regresión en `src/`**. Detecta que alguien añada un
+ * render sin CSP o con marcado inseguro por descuido. **NO es una frontera de
+ * seguridad** y no pretende resistir a un contribuyente hostil deliberado:
+ * quien puede editar `src/` puede editar el test. No debe leerse como si
+ * protegiera de un atacante — sólo de un error.
  */
 import * as crypto from 'crypto';
+import { scanHtml } from './htmlScan';
 
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
@@ -165,42 +183,33 @@ export function buildCspMeta(opts: WebviewCspOptions): string {
 }
 
 // ---------------------------------------------------------------------------
-// WP-V66 (D2/D3/D5) · Verificación DE FACTO del documento renderizado
+// WP-V66 (D2/D3/D5/DD4/DD5) · Verificación DE FACTO del documento renderizado
 //
 // Un solo motor de invariantes, dos consumidores:
 //   - la guarda de ejecución que sirve HTML de disco (`webViewManager`),
 //   - el test del censo, que lo aplica a TODO punto de render derivado.
 // Así no puede haber "el test comprueba una cosa y la guarda otra".
+//
+// El documento se TOKENIZA (`htmlScan.ts`), no se somete a regex: valores de
+// atributo sin comillas y cierres abruptos de comentario son marcado válido
+// que el navegador ejecuta, y una regex los pierde en silencio. Si el escáner
+// no puede tokenizar con confianza, esta función RECHAZA el documento.
 // ---------------------------------------------------------------------------
-
-/** Quita comentarios HTML: una meta CSP comentada NO es una meta CSP (D3). */
-export function stripHtmlComments(html: string): string {
-    return html.replace(/<!--[\s\S]*?-->/g, '');
-}
-
-/**
- * Valor de un atributo. El tipo de comilla se respeta: un `content="…'none'…"`
- * NO puede cortarse en la primera comilla simple.
- */
-function attrOf(tag: string, attr: string): string | undefined {
-    const m = new RegExp(`\\b${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag);
-    if (!m) {
-        return undefined;
-    }
-    return m[1] !== undefined ? m[1] : m[2];
-}
-
-function tagsOf(html: string, tag: string): string[] {
-    return html.match(new RegExp(`<${tag}\\b[^>]*>`, 'gi')) ?? [];
-}
 
 /**
  * Contenido de TODAS las metas CSP del documento (D5: no solo la primera).
- * Se ignora lo que esté dentro de comentarios.
+ * Se tokeniza — los comentarios y sus cierres abruptos los resuelve el
+ * escáner, no una regex (DD5).
  */
 export function extractCspMetaContents(html: string): string[] {
-    const re = /<meta\b[^>]*http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gi;
-    return (stripHtmlComments(html).match(re) ?? []).map(tag => attrOf(tag, 'content') ?? '');
+    return scanHtml(html)
+        .tags.filter(
+            t =>
+                t.kind === 'start' &&
+                t.name === 'meta' &&
+                (t.attrs.get('http-equiv') ?? '').trim().toLowerCase() === 'content-security-policy'
+        )
+        .map(t => t.attrs.get('content') ?? '');
 }
 
 /**
@@ -256,10 +265,25 @@ const URL_BEARING: Array<{ tag: string; attr: string; allowLocalPeer: boolean; a
  */
 export function findWebviewHtmlViolations(html: string): string[] {
     const problems: string[] = [];
-    const doc = stripHtmlComments(html);
+
+    // 0 · DD4/DD5 · lo que no se puede tokenizar con confianza se RECHAZA.
+    //     Aprobar un documento que no se ha podido analizar es peor que no
+    //     analizarlo: da un verde que nadie ha ganado.
+    const scan = scanHtml(html);
+    if (scan.errors.length > 0) {
+        return scan.errors.map(e => `documento no analizable, se rechaza: ${e}`);
+    }
+    const doc = scan.withoutComments;
+    const startTags = scan.tags.filter(t => t.kind === 'start');
 
     // 1 · metas CSP: al menos una, y TODAS fail-closed
-    const metas = extractCspMetaContents(html);
+    const metas = startTags
+        .filter(
+            t =>
+                t.name === 'meta' &&
+                (t.attrs.get('http-equiv') ?? '').trim().toLowerCase() === 'content-security-policy'
+        )
+        .map(t => t.attrs.get('content') ?? '');
     if (metas.length === 0) {
         problems.push('sin meta Content-Security-Policy fuera de comentarios');
     }
@@ -288,31 +312,39 @@ export function findWebviewHtmlViolations(html: string): string[] {
         problems.push('unsafe-eval presente en el documento');
     }
 
-    // 4 · handlers y estilos inline
-    const onAttr = /\son[a-z]+\s*=\s*["'`\\]/i.exec(doc);
-    if (onAttr) {
-        problems.push(`handler inline presente: "${onAttr[0].trim()}"`);
-    }
-    if (/\sstyle\s*=\s*["'`\\]/i.test(doc)) {
-        problems.push('atributo style= inline presente');
+    // 4 · handlers y estilos inline — sobre ATRIBUTOS tokenizados, así que el
+    //     valor sin comillas (DD4) ya no se escapa del análisis
+    for (const tag of startTags) {
+        for (const attrName of tag.attrs.keys()) {
+            if (/^on[a-z]/.test(attrName)) {
+                problems.push(`handler inline presente: <${tag.name} ${attrName}=…>`);
+            }
+        }
+        if (tag.attrs.has('style')) {
+            problems.push(`atributo style= inline presente en <${tag.name}>`);
+        }
     }
 
     // 5 · nonce en cada <script>/<style>
-    for (const kind of ['script', 'style']) {
-        for (const tag of tagsOf(doc, kind)) {
-            const nonce = attrOf(tag, 'nonce');
-            if (!nonce) {
-                problems.push(`<${kind}> sin nonce: ${tag}`);
-            } else if (!nonces.includes(nonce)) {
-                problems.push(`<${kind}> con nonce no declarado en la CSP: ${tag}`);
-            }
+    for (const tag of startTags) {
+        if (tag.name !== 'script' && tag.name !== 'style') {
+            continue;
+        }
+        const nonce = tag.attrs.get('nonce');
+        if (nonce === undefined || nonce === '') {
+            problems.push(`<${tag.name}> sin nonce`);
+        } else if (!nonces.includes(nonce)) {
+            problems.push(`<${tag.name}> con nonce no declarado en la CSP: "${nonce}"`);
         }
     }
 
     // 6 · recursos remotos (el nonce NO redime a un src externo)
     for (const rule of URL_BEARING) {
-        for (const tag of tagsOf(doc, rule.tag)) {
-            const url = attrOf(tag, rule.attr);
+        for (const tag of startTags) {
+            if (tag.name !== rule.tag) {
+                continue;
+            }
+            const url = tag.attrs.get(rule.attr);
             if (url === undefined) {
                 continue;
             }
@@ -327,7 +359,7 @@ export function findWebviewHtmlViolations(html: string): string[] {
     }
 
     // 7 · <base> reescribiría toda URL relativa
-    if (tagsOf(doc, 'base').length > 0) {
+    if (startTags.some(t => t.name === 'base')) {
         problems.push('<base> presente: reescribiría las URLs relativas del documento');
     }
 
