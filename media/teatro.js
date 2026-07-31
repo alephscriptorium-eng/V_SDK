@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Handle messages from the extension
 window.addEventListener('message', event => {
     const message = event.data;
-    
+
     switch (message.command) {
         case 'updateStatus':
             updateStatus(message.status);
@@ -37,6 +37,38 @@ window.addEventListener('message', event => {
             break;
     }
 });
+
+// WP-V66 (CSP): cero handlers inline — delegación única por data-action.
+function initializeEventListeners() {
+    document.addEventListener('click', event => {
+        const btn = event.target.closest('[data-action]');
+        if (!btn) return;
+        const agentId = btn.getAttribute('data-agent-id');
+        switch (btn.getAttribute('data-action')) {
+            case 'refreshTeatro':
+                refreshTeatro(btn);
+                break;
+            case 'openAllChats':
+                openAllChats();
+                break;
+            case 'showSystemInfo':
+                showSystemInfo();
+                break;
+            case 'activateAgent':
+                activateAgent(agentId);
+                break;
+            case 'deactivateAgent':
+                deactivateAgent(agentId);
+                break;
+            case 'openChatParticipant':
+                openChatParticipant(agentId);
+                break;
+            case 'showAgentInfo':
+                showAgentInfo(agentId);
+                break;
+        }
+    });
+}
 
 // Update status display
 function updateStatus(status) {
@@ -125,12 +157,12 @@ function createAgentCard(agent) {
         : '<span class="status-indicator inactive">💤 Inactivo</span>';
     
     const primaryAction = agent.isActive
-        ? `<button class="agent-btn primary" onclick="openChatParticipant('${agent.id}')">💬 Abrir Chat</button>`
-        : `<button class="agent-btn success" onclick="activateAgent('${agent.id}')">▶️ Activar</button>`;
-    
+        ? `<button class="agent-btn primary" data-action="openChatParticipant" data-agent-id="${agent.id}">💬 Abrir Chat</button>`
+        : `<button class="agent-btn success" data-action="activateAgent" data-agent-id="${agent.id}">▶️ Activar</button>`;
+
     const secondaryAction = agent.isActive
-        ? `<button class="agent-btn warning" onclick="deactivateAgent('${agent.id}')">⏸️ Desactivar</button>`
-        : `<button class="agent-btn secondary" onclick="showAgentInfo('${agent.id}')">ℹ️ Info</button>`;
+        ? `<button class="agent-btn warning" data-action="deactivateAgent" data-agent-id="${agent.id}">⏸️ Desactivar</button>`
+        : `<button class="agent-btn secondary" data-action="showAgentInfo" data-agent-id="${agent.id}">ℹ️ Info</button>`;
     
     card.innerHTML = `
         <div class="agent-info">
@@ -186,20 +218,21 @@ function openChatParticipant(agentId, command = null) {
     }
 }
 
-function refreshTeatro() {
+function refreshTeatro(btn) {
     if (vscode) {
         vscode.postMessage({ command: 'refresh' });
-        
+
         // Visual feedback
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '🔄 Actualizando...';
-        btn.disabled = true;
-        
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }, 1000);
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🔄 Actualizando...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 1000);
+        }
     } else {
         console.error("VS Code API not available, cannot refresh Teatro.");
     }
