@@ -131,7 +131,8 @@ export const teatroAgentCommands: CommandEntry[] = [
                     vscode.ViewColumn.One,
                     {
                         enableScripts: true,
-                        localResourceRoots: [deps.getVsCodeContext()!.extensionUri]
+                        // WP-V66: solo media/ — lo único que el HTML del teatro carga.
+                        localResourceRoots: [vscode.Uri.joinPath(deps.getVsCodeContext()!.extensionUri, 'media')]
                     }
                 );
 

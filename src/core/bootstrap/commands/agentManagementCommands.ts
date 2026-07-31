@@ -6,6 +6,7 @@
  */
 import * as vscode from 'vscode';
 import { LogCategory } from '../../../loggingManager';
+import { renderAgentValidationPage } from '../../../webview/bootstrapPages';
 import { CommandEntry } from './types';
 
 export const agentManagementCommands: CommandEntry[] = [
@@ -242,28 +243,16 @@ Detalles específicos sobre cómo configurar y usar este agente.
                     'agent-validation',
                     'Agent Validation Results',
                     vscode.ViewColumn.One,
-                    { enableScripts: false }
+                    // WP-V66: página estática — sin scripts ni recursos locales.
+                    { enableScripts: false, localResourceRoots: [] }
                 );
 
-                panel.webview.html = `
-                    <html>
-                    <head>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            .result { margin: 8px 0; padding: 8px; border-radius: 4px; }
-                            .success { background: #d4edda; color: #155724; }
-                            .error { background: #f8d7da; color: #721c24; }
-                        </style>
-                    </head>
-                    <body>
-                        <h2>🎭 Agent Validation Results</h2>
-                        <p>Found ${contentFiles.length} content files and ${configFiles.length} config files</p>
-                        ${validationResults.map(result =>
-                            `<div class="result ${result.includes('✅') ? 'success' : 'error'}">${result}</div>`
-                        ).join('')}
-                    </body>
-                    </html>
-                `;
+                // WP-V66: HTML con CSP desde el módulo de páginas (fuera de la tabla).
+                panel.webview.html = renderAgentValidationPage(
+                    contentFiles.length,
+                    configFiles.length,
+                    validationResults
+                );
 
             } catch (error) {
                 await deps.managers.errorBoundary.handleError(

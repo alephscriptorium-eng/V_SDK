@@ -5,6 +5,7 @@
  */
 import * as vscode from 'vscode';
 import { LogCategory } from '../../../loggingManager';
+import { renderWebviewDashboardPage } from '../../../webview/bootstrapPages';
 import { CommandEntry } from './types';
 
 export const webviewCommands: CommandEntry[] = [
@@ -15,9 +16,11 @@ export const webviewCommands: CommandEntry[] = [
                 'webview-dashboard',
                 'WebView Dashboard',
                 vscode.ViewColumn.One,
-                { enableScripts: true }
+                // WP-V66: página estática — sin scripts ni recursos locales.
+                { enableScripts: false, localResourceRoots: [] }
             );
-            panel.webview.html = '<h1>WebView Dashboard</h1><p>WebView management interface</p>';
+            // WP-V66: HTML con CSP desde el módulo de páginas (fuera de la tabla).
+            panel.webview.html = renderWebviewDashboardPage();
         }
     },
     {
