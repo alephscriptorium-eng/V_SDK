@@ -32,7 +32,6 @@ export interface ZiguratSettings {
     meshBaseUrl: string;
     launcherHost: string;
     launcherPort: number | undefined;
-    ollamaBaseUrl: string;
     /** Room a la que el IDE hace join (WP-V07). Vacío = ⏳. */
     roomId: string;
     /** Override endpoint linea-editor (WP-V08). Vacío = resolver desde catálogo. */
@@ -68,7 +67,6 @@ export function getZiguratSettings(): ZiguratSettings {
         meshBaseUrl: readString(cfg.get('ciudad.baseUrl')),
         launcherHost: readString(cfg.get('pieza.launcher.host')),
         launcherPort: readNumber(cfg.get('pieza.launcher.port')),
-        ollamaBaseUrl: readString(cfg.get('pieza.ollama.baseUrl')),
         roomId: readString(cfg.get('room.id')),
         lineaEditorHost: readString(cfg.get('pieza.lineaEditor.host')),
         lineaEditorPort: readNumber(cfg.get('pieza.lineaEditor.port')),
@@ -104,10 +102,6 @@ export function resolveMeshSocketUrl(settings: ZiguratSettings = getZiguratSetti
 
 export function resolveLauncherPort(settings: ZiguratSettings = getZiguratSettings()): number | undefined {
     return settings.launcherPort;
-}
-
-export function resolveOllamaBaseUrl(settings: ZiguratSettings = getZiguratSettings()): string {
-    return settings.ollamaBaseUrl;
 }
 
 export function isMeshConfigured(settings: ZiguratSettings = getZiguratSettings()): boolean {

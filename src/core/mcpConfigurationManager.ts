@@ -5,7 +5,6 @@ import { AlephScriptConfiguration, MCPServerConfig, MCPServersConfig, MCPWebsCon
 import { LogCategory, createLogger } from '../loggingManager';
 import {
     resolveMeshSocketUrl,
-    resolveOllamaBaseUrl,
     resolveLauncherPort,
     ZIGURAT_PENDING,
     ALEPH0_SECTION,
@@ -87,7 +86,6 @@ export class McpConfigurationManager {
      * Sin rutas absolutas de otra máquina, sin flota fija, sin puertos inventados.
      */
     private setEmptyPendingConfiguration(): void {
-        const ollamaFromSettings = resolveOllamaBaseUrl();
         const launcherPort = resolveLauncherPort();
 
         this.config = {
@@ -95,7 +93,10 @@ export class McpConfigurationManager {
                 "type": "arrakis-theater-opera"
             },
             "launcher": {
-                "ollamaUrl": ollamaFromSettings,
+                // WP-V23 · corrección D1: aquí venía `aleph0.ollama.baseUrl`.
+                // La clave se demolió porque su única cadena de lectura estaba
+                // muerta (`getOllamaUrl()` y `getLauncherConfig()`: 0 llamadas).
+                "ollamaUrl": "",
                 "requiredModel": "",
                 "mcpServiceLauncherPort": launcherPort ?? 0,
                 "healthCheckTimeout": 30000,
@@ -168,13 +169,11 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get Ollama URL — aleph0.pieza.ollama.baseUrl, luego archivo; vacío = ⏳.
+     * Get Ollama URL — del fichero de ópera; vacío = ⏳.
+     * WP-V23 · D1: ya no consulta ajustes. No había clave que consultar con
+     * efecto: este método no lo llama nadie (poda pendiente, ver reporte V23).
      */
     getOllamaUrl(): string {
-        const fromSettings = resolveOllamaBaseUrl();
-        if (fromSettings) {
-            return fromSettings;
-        }
         return this.config?.launcher?.ollamaUrl || '';
     }
 
@@ -209,7 +208,17 @@ export class McpConfigurationManager {
 
     /**
      * Socket URL por defecto: aleph0.ciudad.*, luego UI primaria del archivo.
-     * Vacío si nada configurado (⏳ — no inventa localhost:puerto).
+     *
+     * ⚠️ WP-V23 · D2 — ESTE MÉTODO SÍ INVENTA HOST. El comentario anterior
+     * decía «no inventa localhost:puerto» y la línea de abajo lo desmiente:
+     * sin ajuste, si el fichero de ópera trae una UI primaria con puerto,
+     * devuelve `ws://localhost:<puerto>` — un valor plausible y equivocado,
+     * sin ⏳, sin log y sin nombrar la clave que falta. Se propaga a 8 sitios
+     * (`bootstrap/assembleContext.ts:109`, `socketMonitor.ts:276-284,643`,
+     * `treeViews/configsTreeView.ts:429`, `treeViews/socketsTreeView.ts:85,232`).
+     * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
+     * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca
+     * por número). Ver `plan/REPORTES/WP-V23-config-intencional.md` §11-D2.
      */
     getDefaultSocketUrl(): string {
         const fromSettings = resolveMeshSocketUrl();

@@ -648,12 +648,6 @@
           "description": "Puerto de la pieza @zeus/linea-editor. Vacío/null = catálogo o ⏳; no se inventa ningún puerto.",
           "scope": "window"
         },
-        "aleph0.pieza.ollama.baseUrl": {
-          "type": "string",
-          "default": "",
-          "description": "URL base de la pieza Ollama (owner externo al producto). Vacío = ⏳ pendiente.",
-          "scope": "window"
-        },
         "aleph0.pieza.reparto.path": {
           "type": "string",
           "default": "",
