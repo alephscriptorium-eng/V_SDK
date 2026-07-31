@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
 import { MCPWebConfig } from './mcpTypes';
 import { LoggingManager, LogCategory, createLogger } from './loggingManager';
+import { buildCspMeta, createNonce, escapeHtml, isLocalOrigin } from './webview/security';
+import { renderInertExternalPage } from './webview/commonPages';
 
 export interface MCPWebViewInfo {
     webId: string;
@@ -163,14 +165,63 @@ export class MCPWebViewManager {
      */
     private getWebViewHtml(url: string, webId: string, config: MCPWebConfig): string {
         const webName = this.formatWebName(webId);
-        
-        return `<!DOCTYPE html>
+        return renderMcpWebViewPage(url, webName);
+    }
+
+    /**
+     * Format web ID to display name
+     */
+    private formatWebName(webId: string): string {
+        return webId
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
+    /**
+     * Handle messages from webview
+     */
+    private handleWebViewMessage(webId: string, message: any): void {
+        switch (message.command) {
+            case 'openInBrowser':
+                vscode.env.openExternal(vscode.Uri.parse(message.url));
+                break;
+            case 'refresh':
+                this.refreshWebView(webId);
+                break;
+            default:
+                this.logger.debug(`Unknown message from web view ${webId}:`, message);
+        }
+    }
+
+    /**
+     * Dispose all resources
+     */
+    dispose(): void {
+        this.closeAllWebViews();
+    }
+}
+
+
+/**
+ * WP-V66: página contenedora de un web MCP con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ * Cerco v2: solo se embebe un peer LOCAL; un URL externo degrada a
+ * página inerte (la referencia se muestra como texto, sin iframe).
+ */
+export function renderMcpWebViewPage(url: string, webName: string): string {
+    if (!isLocalOrigin(url)) {
+        return renderInertExternalPage(url, `🎭 ${webName}`);
+    }
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce, frameOrigins: [url] })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>🎭 ${webName}</title>
-            <style>
+            <title>🎭 ${escapeHtml(webName)}</title>
+            <style nonce="${nonce}">
                 body {
                     margin: 0;
                     padding: 0;
@@ -306,52 +357,68 @@ export class MCPWebViewManager {
             <div class="header">
                 <div class="header-info">
                     <div class="status-indicator"></div>
-                    <div class="web-title">🎭 ${webName}</div>
-                    <div class="web-url">${url}</div>
+                    <div class="web-title">🎭 ${escapeHtml(webName)}</div>
+                    <div class="web-url">${escapeHtml(url)}</div>
                 </div>
                 <div class="controls">
-                    <button class="control-btn" onclick="refreshIframe()">↻ Refresh</button>
-                    <button class="control-btn" onclick="openInBrowser()">🌐 Browser</button>
+                    <button class="control-btn" data-action="refresh">↻ Refresh</button>
+                    <button class="control-btn" data-action="openInBrowser">🌐 Browser</button>
                 </div>
             </div>
-            
+
             <div class="iframe-container">
                 <div class="loading-overlay" id="loadingOverlay">
                     <div class="loading-spinner"></div>
                 </div>
-                <iframe 
-                    class="web-iframe" 
+                <iframe
+                    class="web-iframe"
                     id="webIframe"
-                    src="${url}"
-                    onload="hideLoading()"
-                    onerror="showError()">
+                    src="${escapeHtml(url)}">
                 </iframe>
             </div>
 
-            <script>
+            <script nonce="${nonce}">
                 const vscode = acquireVsCodeApi();
-                
+                const targetUrl = ${JSON.stringify(url)};
+
                 function hideLoading() {
                     document.getElementById('loadingOverlay').style.display = 'none';
                 }
-                
+
                 function showError() {
                     const overlay = document.getElementById('loadingOverlay');
-                    overlay.innerHTML = '<div class="error-message">Failed to load ${url}<br><small>Make sure the MCP server is running</small></div>';
+                    overlay.textContent = '';
+                    const box = document.createElement('div');
+                    box.className = 'error-message';
+                    box.textContent = 'Failed to load ' + targetUrl + ' — make sure the MCP server is running';
+                    overlay.appendChild(box);
                 }
-                
+
                 function refreshIframe() {
                     document.getElementById('loadingOverlay').style.display = 'flex';
-                    document.getElementById('webIframe').src = '${url}';
+                    document.getElementById('webIframe').src = targetUrl;
                 }
-                
+
                 function openInBrowser() {
                     vscode.postMessage({
                         command: 'openInBrowser',
-                        url: '${url}'
+                        url: targetUrl
                     });
                 }
-                
+
+                // WP-V66 (CSP): cero handlers inline — listeners y delegación.
+                const iframeEl = document.getElementById('webIframe');
+                iframeEl.addEventListener('load', hideLoading);
+                iframeEl.addEventListener('error', showError);
+                document.addEventListener('click', event => {
+                    const btn = event.target.closest('[data-action]');
+                    if (!btn) return;
+                    switch (btn.getAttribute('data-action')) {
+                        case 'refresh': refreshIframe(); break;
+                        case 'openInBrowser': openInBrowser(); break;
+                    }
+                });
+
                 // Auto-refresh on VS Code theme change
                 window.addEventListener('message', event => {
                     const message = event.data;
@@ -362,38 +429,4 @@ export class MCPWebViewManager {
             </script>
         </body>
         </html>`;
-    }
-
-    /**
-     * Format web ID to display name
-     */
-    private formatWebName(webId: string): string {
-        return webId
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-    }
-
-    /**
-     * Handle messages from webview
-     */
-    private handleWebViewMessage(webId: string, message: any): void {
-        switch (message.command) {
-            case 'openInBrowser':
-                vscode.env.openExternal(vscode.Uri.parse(message.url));
-                break;
-            case 'refresh':
-                this.refreshWebView(webId);
-                break;
-            default:
-                this.logger.debug(`Unknown message from web view ${webId}:`, message);
-        }
-    }
-
-    /**
-     * Dispose all resources
-     */
-    dispose(): void {
-        this.closeAllWebViews();
-    }
 }

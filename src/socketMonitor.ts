@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { AlephScriptClient, AlephScriptClientConfig } from './libs/alephscript-client';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
+import { buildCspMeta, createNonce, escapeHtml } from './webview/security';
 
 export interface SocketMessage {
     id: string;
@@ -58,7 +59,8 @@ export class SocketMonitor {
             vscode.ViewColumn.Two,
             {
                 enableScripts: true,
-                localResourceRoots: [extensionUri]
+                // WP-V66: la página no carga recursos locales.
+                localResourceRoots: []
             }
         );
 
@@ -282,14 +284,87 @@ export class SocketMonitor {
 
     private async getWebviewContent(): Promise<string> {
         const defaultUrl = await this.getDefaultSocketUrl();
+        return renderSocketMonitorPage(defaultUrl);
+    }
+
+    // Public methods for TreeView integration
+    public getConnectionStatus(): boolean {
+        return this.isConnected;
+    }
+
+    public getRooms(): Map<string, SocketRoomInfo> {
+        return this.rooms;
+    }
+
+    public getRecentMessages(count: number = 10): SocketMessage[] {
+        return this.messages.slice(0, count);
+    }
+
+    public async connectToSocket(url?: string): Promise<boolean> {
+        if (!url) {
+            if (!this.configManager.isConfigLoaded()) {
+                await this.configManager.initialize();
+            }
+            url = this.configManager.getDefaultSocketUrl();
+        }
         
-        return `<!DOCTYPE html>
+        return new Promise((resolve, reject) => {
+            try {
+                this.connect(url!);
+                const checkConnection = setInterval(() => {
+                    if (this.isConnected) {
+                        clearInterval(checkConnection);
+                        resolve(true);
+                    }
+                }, 100);
+                
+                setTimeout(() => {
+                    clearInterval(checkConnection);
+                    if (!this.isConnected) {
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 5000);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    public disconnectFromSocket(): void {
+        this.disconnect();
+        this.rooms.clear();
+        this._onConnectionChange.fire(false);
+        this._onRoomsChange.fire(this.rooms);
+    }
+
+    public joinSocketRoom(roomName: string): void {
+        this.joinRoom(roomName);
+    }
+
+    public leaveSocketRoom(roomName: string): void {
+        this.leaveRoom(roomName);
+    }
+
+    public sendSocketMessage(roomName: string, eventType: string, data: any): void {
+        this.sendMessage(roomName, eventType, data);
+    }
+}
+
+
+/**
+ * WP-V66: página del monitor de sockets con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ */
+export function renderSocketMonitorPage(defaultUrl: string): string {
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Socket.io Monitor</title>
-            <style>
+            <style nonce="${nonce}">
                 body {
                     font-family: var(--vscode-font-family);
                     color: var(--vscode-foreground);
@@ -443,6 +518,9 @@ export class SocketMonitor {
                     padding: 40px;
                     color: var(--vscode-descriptionForeground);
                 }
+                .grow-wide { flex: 1; min-width: 250px; }
+                .grow { flex: 1; }
+                .w-120 { width: 120px; }
             </style>
         </head>
         <body>
@@ -452,31 +530,31 @@ export class SocketMonitor {
             </div>
 
             <div class="connection-panel">
-                <input type="text" id="socketUrl" value="${defaultUrl}" placeholder="Socket URL" style="flex: 1; min-width: 250px;">
-                <button class="btn" onclick="connect()">Connect</button>
-                <button class="btn btn-secondary" onclick="disconnect()">Disconnect</button>
+                <input type="text" id="socketUrl" value="${escapeHtml(defaultUrl)}" placeholder="Socket URL" class="grow-wide">
+                <button class="btn" data-action="connect">Connect</button>
+                <button class="btn btn-secondary" data-action="disconnect">Disconnect</button>
             </div>
 
             <div class="section">
                 <div class="section-title">Room Controls</div>
                 <div class="room-controls">
-                    <input type="text" id="roomName" placeholder="Room name" style="flex: 1;">
-                    <button class="btn" onclick="joinRoom()">Join</button>
-                    <button class="btn btn-secondary" onclick="leaveRoom()">Leave</button>
+                    <input type="text" id="roomName" placeholder="Room name" class="grow">
+                    <button class="btn" data-action="joinRoom">Join</button>
+                    <button class="btn btn-secondary" data-action="leaveRoom">Leave</button>
                 </div>
             </div>
 
             <div class="section">
                 <div class="section-title">Messages</div>
                 <div class="filters">
-                    <select id="channelFilter" onchange="filterMessages()">
+                    <select id="channelFilter">
                         <option value="">All Channels</option>
                         <option value="Application">Application</option>
                         <option value="System">System</option>
                         <option value="UserInterface">UserInterface</option>
                     </select>
-                    <input type="text" id="searchFilter" placeholder="Search messages..." oninput="filterMessages()">
-                    <button class="btn btn-secondary" onclick="clearMessages()">Clear</button>
+                    <input type="text" id="searchFilter" placeholder="Search messages...">
+                    <button class="btn btn-secondary" data-action="clearMessages">Clear</button>
                 </div>
                 <div id="messagesContainer" class="messages-container">
                     <div class="empty-state">No messages yet. Connect to start monitoring.</div>
@@ -486,20 +564,36 @@ export class SocketMonitor {
             <div class="section">
                 <div class="section-title">Send Message</div>
                 <div class="send-panel">
-                    <input type="text" id="sendRoom" placeholder="Target Room" style="width: 120px;">
-                    <select id="sendChannel" style="width: 120px;">
+                    <input type="text" id="sendRoom" placeholder="Target Room" class="w-120">
+                    <select id="sendChannel" class="w-120">
                         <option value="Application">Application</option>
                         <option value="System">System</option>
                         <option value="UserInterface">UserInterface</option>
                     </select>
                     <textarea id="sendData" placeholder='{"type": "test", "message": "Hello"}'></textarea>
-                    <button class="btn" onclick="sendMessage()">Send</button>
+                    <button class="btn" data-action="sendMessage">Send</button>
                 </div>
             </div>
 
-            <script>
+            <script nonce="${nonce}">
                 const vscode = acquireVsCodeApi();
                 let allMessages = [];
+
+                // WP-V66 (CSP): cero handlers inline — delegación y listeners.
+                document.addEventListener('click', event => {
+                    const btn = event.target.closest('[data-action]');
+                    if (!btn) return;
+                    switch (btn.getAttribute('data-action')) {
+                        case 'connect': connect(); break;
+                        case 'disconnect': disconnect(); break;
+                        case 'joinRoom': joinRoom(); break;
+                        case 'leaveRoom': leaveRoom(); break;
+                        case 'clearMessages': clearMessages(); break;
+                        case 'sendMessage': sendMessage(); break;
+                    }
+                });
+                document.getElementById('channelFilter').addEventListener('change', filterMessages);
+                document.getElementById('searchFilter').addEventListener('input', filterMessages);
 
                 function connect() {
                     const url = document.getElementById('socketUrl').value;
@@ -620,67 +714,4 @@ export class SocketMonitor {
             </script>
         </body>
         </html>`;
-    }
-
-    // Public methods for TreeView integration
-    public getConnectionStatus(): boolean {
-        return this.isConnected;
-    }
-
-    public getRooms(): Map<string, SocketRoomInfo> {
-        return this.rooms;
-    }
-
-    public getRecentMessages(count: number = 10): SocketMessage[] {
-        return this.messages.slice(0, count);
-    }
-
-    public async connectToSocket(url?: string): Promise<boolean> {
-        if (!url) {
-            if (!this.configManager.isConfigLoaded()) {
-                await this.configManager.initialize();
-            }
-            url = this.configManager.getDefaultSocketUrl();
-        }
-        
-        return new Promise((resolve, reject) => {
-            try {
-                this.connect(url!);
-                const checkConnection = setInterval(() => {
-                    if (this.isConnected) {
-                        clearInterval(checkConnection);
-                        resolve(true);
-                    }
-                }, 100);
-                
-                setTimeout(() => {
-                    clearInterval(checkConnection);
-                    if (!this.isConnected) {
-                        reject(new Error('Connection timeout'));
-                    }
-                }, 5000);
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-
-    public disconnectFromSocket(): void {
-        this.disconnect();
-        this.rooms.clear();
-        this._onConnectionChange.fire(false);
-        this._onRoomsChange.fire(this.rooms);
-    }
-
-    public joinSocketRoom(roomName: string): void {
-        this.joinRoom(roomName);
-    }
-
-    public leaveSocketRoom(roomName: string): void {
-        this.leaveRoom(roomName);
-    }
-
-    public sendSocketMessage(roomName: string, eventType: string, data: any): void {
-        this.sendMessage(roomName, eventType, data);
-    }
 }

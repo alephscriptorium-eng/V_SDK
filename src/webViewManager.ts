@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { ProcessManager } from './processManager';
 import { LoggingManager, LogCategory, LogLevel } from './loggingManager';
+import { buildCspMeta, createNonce, escapeHtml, hasCspMeta, isLocalOrigin } from './webview/security';
+import { renderInertExternalPage } from './webview/commonPages';
 
 export interface WebViewInstance {
     id: string;
@@ -236,7 +238,16 @@ export class WebViewManager {
             const htmlPath = vscode.Uri.file(path.join(config.localPath, 'index.html'));
             try {
                 const htmlContent = await vscode.workspace.fs.readFile(htmlPath);
-                panel.webview.html = htmlContent.toString();
+                const html = htmlContent.toString();
+                // WP-V66 (fail-closed): HTML de disco sin meta CSP no se sirve.
+                if (!hasCspMeta(html)) {
+                    panel.webview.html = this.generateErrorHtml(
+                        `Local content rejected: ${htmlPath.fsPath} declares no Content-Security-Policy meta`
+                    );
+                    webview.status = 'error';
+                } else {
+                    panel.webview.html = html;
+                }
             } catch (error) {
                 panel.webview.html = this.generateErrorHtml(`Failed to load local content: ${error}`);
                 webview.status = 'error';
@@ -253,112 +264,15 @@ export class WebViewManager {
     }
 
     private generateIframeHtml(url: string, title: string): string {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${title}</title>
-            <style>
-                body, html {
-                    margin: 0;
-                    padding: 0;
-                    height: 100%;
-                    overflow: hidden;
-                }
-                iframe {
-                    width: 100%;
-                    height: 100vh;
-                    border: none;
-                }
-                .loading {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    font-family: var(--vscode-font-family);
-                    color: var(--vscode-foreground);
-                }
-            </style>
-        </head>
-        <body>
-            <div class="loading">Loading ${title}...</div>
-            <iframe id="webview-frame" src="${url}" style="display:none;"></iframe>
-            <script>
-                const vscode = acquireVsCodeApi();
-                const frame = document.getElementById('webview-frame');
-                const loading = document.querySelector('.loading');
-                
-                frame.onload = function() {
-                    loading.style.display = 'none';
-                    frame.style.display = 'block';
-                    vscode.postMessage({
-                        type: 'webview-ready',
-                        url: '${url}'
-                    });
-                };
-                
-                frame.onerror = function() {
-                    loading.textContent = 'Failed to load ${title}';
-                    vscode.postMessage({
-                        type: 'webview-error',
-                        url: '${url}'
-                    });
-                };
-            </script>
-        </body>
-        </html>`;
+        return renderLocalIframePage(url, title);
     }
 
     private generateErrorHtml(error: string): string {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>WebView Error</title>
-            <style>
-                body {
-                    font-family: var(--vscode-font-family);
-                    color: var(--vscode-errorForeground);
-                    background-color: var(--vscode-editor-background);
-                    padding: 20px;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>WebView Error</h2>
-            <p>${error}</p>
-        </body>
-        </html>`;
+        return renderWebviewErrorPage(error);
     }
 
     private generateDefaultHtml(title: string): string {
-        return `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${title}</title>
-            <style>
-                body {
-                    font-family: var(--vscode-font-family);
-                    color: var(--vscode-foreground);
-                    background-color: var(--vscode-editor-background);
-                    padding: 20px;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>${title}</h2>
-            <p>WebView content will be loaded here.</p>
-        </body>
-        </html>`;
+        return renderWebviewPlaceholderPage(title);
     }
 
     private handleWebViewMessage(webview: WebViewInstance, message: any): void {
@@ -504,10 +418,138 @@ export class WebViewManager {
 
     dispose(): void {
         this.loggingManager.log(LogLevel.INFO, LogCategory.WEBVIEW, 'Disposing all webviews...');
-        
+
         const disposePromises = Array.from(this.webviews.keys()).map(id => this.disposeWebView(id));
         Promise.all(disposePromises).then(() => {
             this.loggingManager.log(LogLevel.INFO, LogCategory.WEBVIEW, 'All webviews disposed');
         });
     }
+}
+
+/**
+ * WP-V66: página contenedora de iframe LOCAL con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ * Cerco v2: un URL no local degrada a página inerte (texto, sin iframe).
+ */
+export function renderLocalIframePage(url: string, title: string): string {
+    if (!isLocalOrigin(url)) {
+        return renderInertExternalPage(url, title);
+    }
+    const nonce = createNonce();
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce, frameOrigins: [url] })}
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${escapeHtml(title)}</title>
+            <style nonce="${nonce}">
+                body, html {
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                    overflow: hidden;
+                }
+                iframe {
+                    width: 100%;
+                    height: 100vh;
+                    border: none;
+                }
+                iframe.pending { display: none; }
+                .loading {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    font-family: var(--vscode-font-family);
+                    color: var(--vscode-foreground);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="loading">Loading ${escapeHtml(title)}...</div>
+            <iframe id="webview-frame" src="${escapeHtml(url)}" class="pending"></iframe>
+            <script nonce="${nonce}">
+                const vscode = acquireVsCodeApi();
+                const frame = document.getElementById('webview-frame');
+                const loading = document.querySelector('.loading');
+                const targetUrl = ${JSON.stringify(url)};
+                const targetTitle = ${JSON.stringify(title)};
+
+                frame.addEventListener('load', () => {
+                    loading.style.display = 'none';
+                    frame.classList.remove('pending');
+                    vscode.postMessage({
+                        type: 'webview-ready',
+                        url: targetUrl
+                    });
+                });
+
+                frame.addEventListener('error', () => {
+                    loading.textContent = 'Failed to load ' + targetTitle;
+                    vscode.postMessage({
+                        type: 'webview-error',
+                        url: targetUrl
+                    });
+                });
+            </script>
+        </body>
+        </html>`;
+}
+
+/** WP-V66: página de error con CSP (sin scripts). */
+export function renderWebviewErrorPage(error: string): string {
+    const nonce = createNonce();
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            ${buildCspMeta({ styleNonce: nonce })}
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>WebView Error</title>
+            <style nonce="${nonce}">
+                body {
+                    font-family: var(--vscode-font-family);
+                    color: var(--vscode-errorForeground);
+                    background-color: var(--vscode-editor-background);
+                    padding: 20px;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>WebView Error</h2>
+            <p>${escapeHtml(error)}</p>
+        </body>
+        </html>`;
+}
+
+/** WP-V66: página placeholder con CSP (sin scripts). */
+export function renderWebviewPlaceholderPage(title: string): string {
+    const nonce = createNonce();
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            ${buildCspMeta({ styleNonce: nonce })}
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${escapeHtml(title)}</title>
+            <style nonce="${nonce}">
+                body {
+                    font-family: var(--vscode-font-family);
+                    color: var(--vscode-foreground);
+                    background-color: var(--vscode-editor-background);
+                    padding: 20px;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>${escapeHtml(title)}</h2>
+            <p>WebView content will be loaded here.</p>
+        </body>
+        </html>`;
 }

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
 import { LogCategory, createLogger, CategoryLogger } from './loggingManager';
+import { buildCspMeta, createNonce } from './webview/security';
 
 export interface AlephScriptCommand {
     id: string;
@@ -274,7 +275,8 @@ export class CommandPaletteManager {
             'alephscriptDashboard',
             'AlephScript Dashboard',
             vscode.ViewColumn.One,
-            { enableScripts: true }
+            // WP-V66: script propio con nonce; sin recursos locales.
+            { enableScripts: true, localResourceRoots: [] }
         );
 
         panel.webview.html = this.getDashboardHTML();
@@ -420,13 +422,41 @@ export class CommandPaletteManager {
     }
 
     private getDashboardHTML(): string {
-        return `<!DOCTYPE html>
+        return renderCommandDashboardPage();
+    }
+
+    public dispose(): void {
+        this.logger.info('Disposing CommandPaletteManager');
+
+        if (this.registeredCommands) {
+            for (const disposable of this.registeredCommands) {
+                disposable?.dispose();
+            }
+
+            this.registeredCommands = [];
+        }
+        this.commands.clear();
+
+        this.logger.info('CommandPaletteManager disposed');
+    }
+}
+
+/**
+ * WP-V66: página del dashboard con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ * Cero handlers inline: botones con `data-command` + delegación en el
+ * script con nonce.
+ */
+export function renderCommandDashboardPage(): string {
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce })}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AlephScript Dashboard</title>
-    <style>
+    <style nonce="${nonce}">
         body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: var(--vscode-editor-background); }
         .dashboard { padding: 20px; }
         .section { margin: 20px 0; padding: 15px; border: 1px solid var(--vscode-panel-border); border-radius: 5px; }
@@ -440,20 +470,20 @@ export class CommandPaletteManager {
 <body>
     <div class="dashboard">
         <h1>🚀 AlephScript Control Dashboard</h1>
-        
+
         <div class="section">
             <h2>🎯 Quick Actions</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('aleph0.quickStart')">
+                <button class="command-button" data-command="aleph0.quickStart">
                     🚀 Quick Start<br><span class="shortcut">Ctrl+Alt+Q</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('aleph0.emergencyStop')">
+                <button class="command-button" data-command="aleph0.emergencyStop">
                     🛑 Emergency Stop<br><span class="shortcut">Ctrl+Alt+X</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('aleph0.systemStatus')">
+                <button class="command-button" data-command="aleph0.systemStatus">
                     📊 System Status<br><span class="shortcut">Ctrl+Alt+S</span>
                 </button>
-                <button class="command-button" onclick="executeCommand('aleph0.logs.showMainChannel')">
+                <button class="command-button" data-command="aleph0.logs.showMainChannel">
                     📋 Main Logs<br><span class="shortcut">Ctrl+Alt+L</span>
                 </button>
             </div>
@@ -462,50 +492,36 @@ export class CommandPaletteManager {
         <div class="section">
             <h2>🤖 Agent Management</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('aleph0.agents.startAll')">▶️ Start All Agents</button>
-                <button class="command-button" onclick="executeCommand('aleph0.agents.stopAll')">⏹️ Stop All Agents</button>
+                <button class="command-button" data-command="aleph0.agents.startAll">▶️ Start All Agents</button>
+                <button class="command-button" data-command="aleph0.agents.stopAll">⏹️ Stop All Agents</button>
             </div>
         </div>
 
         <div class="section">
             <h2>🖥️ UI Management</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('aleph0.uis.startAll')">▶️ Start All UIs</button>
-                <button class="command-button" onclick="executeCommand('aleph0.uis.openAllBrowsers')">🌐 Open All in Browser</button>
+                <button class="command-button" data-command="aleph0.uis.startAll">▶️ Start All UIs</button>
+                <button class="command-button" data-command="aleph0.uis.openAllBrowsers">🌐 Open All in Browser</button>
             </div>
         </div>
 
         <div class="section">
             <h2>🔌 Socket.IO</h2>
             <div class="command-grid">
-                <button class="command-button" onclick="executeCommand('aleph0.sockets.quickConnect')">🔌 Quick Connect</button>
-                <button class="command-button" onclick="executeCommand('aleph0.sockets.disconnectAll')">🔌 Disconnect All</button>
+                <button class="command-button" data-command="aleph0.sockets.quickConnect">🔌 Quick Connect</button>
+                <button class="command-button" data-command="aleph0.sockets.disconnectAll">🔌 Disconnect All</button>
             </div>
         </div>
     </div>
 
-    <script>
+    <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
-        function executeCommand(command) {
-            vscode.postMessage({ command: 'executeCommand', commandId: command });
-        }
+        document.addEventListener('click', event => {
+            const btn = event.target.closest('[data-command]');
+            if (!btn) return;
+            vscode.postMessage({ command: 'executeCommand', commandId: btn.getAttribute('data-command') });
+        });
     </script>
 </body>
 </html>`;
-    }
-
-    public dispose(): void {
-        this.logger.info('Disposing CommandPaletteManager');
-        
-        if (this.registeredCommands) {
-            for (const disposable of this.registeredCommands) {
-                disposable?.dispose();
-            }
-            
-            this.registeredCommands = [];
-        }
-        this.commands.clear();
-        
-        this.logger.info('CommandPaletteManager disposed');
-    }
 }

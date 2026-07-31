@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ProcessManager, ProcessInfo } from './processManager';
+import { buildCspMeta, createNonce } from './webview/security';
 
 export interface UIInstance {
     id: string;
@@ -22,7 +23,9 @@ export class UIManager {
             'UI Manager',
             vscode.ViewColumn.One,
             {
-                enableScripts: true
+                enableScripts: true,
+                // WP-V66: la página no carga recursos locales.
+                localResourceRoots: []
             }
         );
 
@@ -218,13 +221,25 @@ export class UIManager {
     }
 
     private getUIManagerWebview(): string {
-        return `<!DOCTYPE html>
+        return renderUiManagerPage();
+    }
+}
+
+/**
+ * WP-V66: página del gestor de UIs con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ * Cero handlers inline: delegación por `data-action`/`data-ui-id`.
+ */
+export function renderUiManagerPage(): string {
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>UI Manager</title>
-            <style>
+            <style nonce="${nonce}">
                 body {
                     font-family: var(--vscode-font-family);
                     color: var(--vscode-foreground);
@@ -328,23 +343,42 @@ export class UIManager {
                 .enabled-false {
                     background: var(--vscode-terminal-ansiRed);
                 }
+                .empty-hint {
+                    text-align: center;
+                    color: var(--vscode-descriptionForeground);
+                    padding: 40px;
+                }
             </style>
         </head>
         <body>
             <div class="header">
                 <h1>Gamification UI Manager</h1>
-                <button class="btn" onclick="refreshUIs()">Refresh</button>
+                <button class="btn" data-action="refresh">Refresh</button>
             </div>
 
             <div id="ui-container" class="ui-grid">
-                <div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">
+                <div class="empty-hint">
                     Loading UIs...
                 </div>
             </div>
 
-            <script>
+            <script nonce="${nonce}">
                 const vscode = acquireVsCodeApi();
                 let uis = [];
+
+                // WP-V66 (CSP): cero handlers inline — delegación única.
+                document.addEventListener('click', event => {
+                    const btn = event.target.closest('[data-action]');
+                    if (!btn) return;
+                    const uiId = btn.getAttribute('data-ui-id');
+                    switch (btn.getAttribute('data-action')) {
+                        case 'refresh': refreshUIs(); break;
+                        case 'start': startUI(uiId); break;
+                        case 'stop': stopUI(uiId); break;
+                        case 'open': openUI(uiId); break;
+                        case 'logs': showLogs(uiId); break;
+                    }
+                });
 
                 function refreshUIs() {
                     vscode.postMessage({ command: 'loadUIs' });
@@ -371,7 +405,7 @@ export class UIManager {
                     const container = document.getElementById('ui-container');
                     
                     if (uis.length === 0) {
-                        container.innerHTML = '<div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">No UIs configured. Check your config file.</div>';
+                        container.innerHTML = '<div class="empty-hint">No UIs configured. Check your config file.</div>';
                         return;
                     }
                     
@@ -396,14 +430,14 @@ export class UIManager {
                             </div>
                             
                             <div class="ui-actions">
-                                \${ui.status === 'running' ? 
-                                    \`<button class="btn danger" onclick="stopUI('\${ui.id}')">Stop</button>\` :
-                                    \`<button class="btn success" onclick="startUI('\${ui.id}')">Start</button>\`
+                                \${ui.status === 'running' ?
+                                    \`<button class="btn danger" data-action="stop" data-ui-id="\${ui.id}">Stop</button>\` :
+                                    \`<button class="btn success" data-action="start" data-ui-id="\${ui.id}">Start</button>\`
                                 }
-                                \${ui.port && ui.status === 'running' ? 
-                                    \`<button class="btn" onclick="openUI('\${ui.id}')">Open</button>\` : ''
+                                \${ui.port && ui.status === 'running' ?
+                                    \`<button class="btn" data-action="open" data-ui-id="\${ui.id}">Open</button>\` : ''
                                 }
-                                <button class="btn" onclick="showLogs('\${ui.id}')">Logs</button>
+                                <button class="btn" data-action="logs" data-ui-id="\${ui.id}">Logs</button>
                             </div>
                         </div>
                     \`).join('');
@@ -424,5 +458,4 @@ export class UIManager {
             </script>
         </body>
         </html>`;
-    }
 }

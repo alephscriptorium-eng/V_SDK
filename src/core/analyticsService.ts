@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { LoggingManager, LogCategory, LogLevel, createLogger } from '../loggingManager';
 import { errorBoundary } from './errorBoundary';
 import { ConfigurationService } from './configurationService';
+import { buildCspMeta, createNonce, escapeHtml } from '../webview/security';
 
 /**
  * Analytics event types for tracking user interactions
@@ -573,16 +574,39 @@ export class AnalyticsService {
     async generateDashboard(): Promise<string> {
         const result = await errorBoundary.wrapAsync(async () => {
             const aggregation = await this.getAnalyticsAggregation();
-            
-            return '<html><body><h1>Analytics Dashboard</h1>' +
-                   '<p>Total Events: ' + this.events.length + '</p>' +
-                   '<p>Session ID: ' + this.currentSession.session_id + '</p>' +
-                   '<p>User Actions: ' + this.currentSession.user_actions + '</p>' +
-                   '<p>Errors Count: ' + this.currentSession.errors_count + '</p>' +
-                   '<p>Average Command Execution Time: ' + aggregation.performance_summary.avg_command_execution_time + 'ms</p>' +
-                   '</body></html>';
+
+            return renderAnalyticsSummaryPage([
+                ['Total Events', this.events.length],
+                ['Session ID', this.currentSession.session_id],
+                ['User Actions', this.currentSession.user_actions],
+                ['Errors Count', this.currentSession.errors_count],
+                ['Average Command Execution Time', `${aggregation.performance_summary.avg_command_execution_time}ms`]
+            ]);
         }, 'AnalyticsService.generateDashboard', LogCategory.EXTENSION);
-        
-        return result || '<html><body><h1>Analytics Dashboard</h1><p>Error generating dashboard</p></body></html>';
+
+        return result || renderAnalyticsSummaryPage([['Error', 'Error generating dashboard']]);
     }
+}
+
+/**
+ * WP-V66: resumen de analytics con CSP del helper único (sin scripts).
+ * Exportada como función pura para el test de facto del censo.
+ */
+export function renderAnalyticsSummaryPage(rows: Array<[string, unknown]>): string {
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            ${buildCspMeta({ styleNonce: nonce })}
+            <title>Analytics Dashboard</title>
+            <style nonce="${nonce}">
+                body { font-family: sans-serif; padding: 20px; }
+            </style>
+        </head>
+        <body>
+            <h1>Analytics Dashboard</h1>
+            ${rows.map(([label, value]) => `<p>${escapeHtml(label)}: ${escapeHtml(value)}</p>`).join('')}
+        </body>
+        </html>`;
 }
