@@ -6,9 +6,9 @@
 | fecha | 2026-08-01 |
 | rama | `wp/v66-csp` (worktree `C:\S_LAB\wt\v-v66`) |
 | base | `336f481` · obra previa `2bc8cbc..9f0a5d7` (7 commits) |
-| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · `453a422` (D-1..D-4 + `srcdoc`) · este reporte |
+| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · `453a422` (D-1..D-4 + `srcdoc`) · `84b0d77` (D-1 clasificador de URL + D-3 superficie) · este reporte |
 | eje(s) CA | tipo **seguridad** (PRACTICAS §4.4.4: *intenta el bypass, no releas la declaración*) + de facto sobre el HTML renderizado |
-| revisor distinto del worker | `⏳ pendiente` — contrarrevisión **final**, acotada a D-1, D-2, los dos falsos positivos y que no se haya roto lo que resiste |
+| revisor distinto del worker | `⏳ pendiente` — contrarrevisión final, acotada a D-1 (clasificador de URL), la rectificación del corpus, la decisión de D-3 y que no se haya roto lo que resiste |
 | estado propuesto | listo para contrarrevisión final |
 | alcance | **DD1/DD2/DD3 excluidos por decisión del orquestador** → WP nuevo **V89** (ver Parte 3 quater) |
 
@@ -134,7 +134,8 @@ Retirados los ficheros hostiles, la suite vuelve a 87/87.
 miraba el `src`** — y `script-src 'nonce-X'` autoriza al navegador a ejecutar el
 script remoto que porte ese nonce. Ahora `findWebviewHtmlViolations`
 (`src/webview/security.ts:313`) resuelve **todo atributo que carga recurso**
-(`URL_BEARING`, `:232`: script/link/iframe/embed/object/source/img/form) contra
+(`URL_BEARING`: script/link/iframe/frame/embed/object/source/img/form, más los
+añadidos en la 4ª ronda — ver Parte 3 bis-3, D-3) contra
 `isExtensionResourceUrl` (`:211`): relativo o esquema de recurso de VS Code sí;
 origen externo no, lleve nonce o no. `//host` no cuela como «relativo» y `<base>`
 queda prohibido (reescribiría todas las URLs relativas).
@@ -429,6 +430,10 @@ disfrazar un esquema o un separador: `Tab`, `NewLine`, `colon`, `sol`, `semi`,
 `num`. Implementa la regla heredada del spec para el contexto de atributo (un
 nombre sin `;` seguido de `=` o de alfanumérico **no** se decodifica).
 
+*(Rectificado en la 4ª ronda: meterlas en la tabla cubría **sólo la posición 0**
+del payload. El disfraz de esquema no era un problema de la tabla de entidades
+sino del clasificador de URL — ver Parte 3 bis-3, D-1.)*
+
 Lo que no está en la tabla **no se adivina**: se marca como no resuelta y
 `findWebviewHtmlViolations` rechaza el documento si aparece donde importa —una
 URL o el `content=` de una meta—, dejándola pasar donde es inocua (un `title=`).
@@ -437,10 +442,10 @@ tooltip en un rechazo.
 
 ### D-2 · contenido extranjero: se rechaza, no se emula
 
-Todo documento con `<svg>` o `<math>` se rechaza. **Medido sobre el árbol
-completo**: 210 ficheros HTML reales, **209 tokenizan limpio** y el único
-rechazado es `Svg.html` —un fixture *sobre* SVG—, es decir el límite declarado
-disparando justo donde se declara. Ninguno de los 25 puntos de render propios lo
+Todo documento con `<svg>` o `<math>` se rechaza. **Medido sobre 210 ficheros HTML del árbol** (202 de `coverage/`, 8 de
+`node_modules/`; ver la rectificación en la Parte 3 bis-3 — no son un corpus
+diverso): **209 tokenizan limpio** y el único rechazado es `Svg.html`, un fixture
+*sobre* SVG, el límite declarado disparando donde se declara. Ninguno de los 25 puntos de render propios lo
 usa, y hay un test que lo comprueba render a render en vez de afirmarlo.
 
 ### Evidencia: payloads contra el motor anterior (`8ca02ee`) y el actual
@@ -485,6 +490,105 @@ añadí encima una defensa que no depende de que el análisis sea correcto. El
 resultado es que los dos hallazgos siguientes de la misma clase llegaron como
 deuda y no como incidente. La lección, para V89 y para quien herede esto: **una
 capa que no depende del parser vale más que un parser mejor**.
+
+---
+
+## Parte 3 bis-3 · Cuarta devolución: D-1 (bloqueante), corpus y superficie de URLs
+
+### D-1 · «arreglé el payload, no la clase» — el diagnóstico es correcto
+
+La ronda anterior metió `Tab`, `NewLine`, `colon`, `sol` y `semi` en la tabla de
+entidades y este reporte afirmó (`:426-428`) que estaban ahí «a propósito, las
+que sirven para disfrazar un esquema». **Cubrí exactamente la posición 0** —donde
+estaba el payload literal del informe— y nada más. Bastaba mover la entidad un
+carácter:
+
+```html
+<img src="htt&Tab;ps://evil.example/x.png">
+```
+
+Y el control que zanja de quién era la culpa: **con un TAB literal crudo, sin
+ninguna referencia de carácter de por medio, también se aprobaba**. El
+tokenizador entregaba el valor correcto. El que fallaba era el **clasificador de
+URL**, que daba por «relativo» todo lo que no casara su regex de esquema, cuando
+el parser de la WHATWG borra TAB/LF/CR **en cualquier posición** antes de mirar
+nada. Por eso la regla de cierre no lo ampara: no era una divergencia del
+tokenizador.
+
+**La delación estaba en casa**, y el revisor la señaló: el módulo tenía **dos
+clasificadores de URL con dos criterios**. `isLocalOrigin` usaba `new URL` —que
+normaliza— y `isExtensionResourceUrl` una regex escrita a mano —que no—.
+
+**Arreglo por convergencia**, no por parche:
+
+- `normalizeUrlForClassification` (`security.ts`) es ahora la **puerta de entrada
+  única**: borra TAB/LF/CR en cualquier posición y recorta C0 y espacio en los
+  extremos, igual que la WHATWG.
+- La usan **los dos** clasificadores.
+- En el caso `https`, el host lo extrae el **mismo parser** (`new URL().hostname`)
+  que usa `isLocalOrigin`, en lugar de una segunda regex.
+
+Evidencia contra el motor anterior (`b8ce346`):
+
+```
+D-1 · TAB LITERAL crudo (sin entidad)   ANTES []  → AHORA recurso remoto en <img src>
+D-1 · htt&Tab;ps (entidad interior)     ANTES []  → AHORA recurso remoto en <img src>
+D-1 · htt&#9;ps                         ANTES []  → AHORA recurso remoto en <img src>
+D-1 · java&Tab;script: en <iframe>      ANTES []  → AHORA recurso remoto en <iframe src>
+D-1 · <link href> con TAB               ANTES []  → AHORA recurso remoto en <link href>
+```
+
+Y un test que barre **las ocho posiciones** del esquema (`\thttps`, `h\tttps`,
+`ht\ttps`, … `https:/\t/`), para que la próxima vez no valga cubrir una sola.
+
+### D-2 · el corpus: lo que medí no era lo que dije
+
+El reporte decía «210 ficheros HTML reales **del árbol**». Medido de verdad:
+**202 son de `coverage/`** —salida generada por istanbul, ignorada por git, todas
+del mismo plantillazo—, **8 de `node_modules/`**, y **0 ficheros HTML propios**:
+este repo no tiene ninguno fuera de esas dos carpetas.
+
+**La cifra era real pero la palabra «corpus» no**: 202 copias de una misma
+plantilla generada no son diversidad, son una muestra de tamaño ~3. Redactado
+como lo que es. La evidencia buena de esta propiedad **no es mía sino del
+revisor**: 40 HTML legítimos escritos a mano, 0 falsos positivos.
+
+Lo que sí sostiene mi medición, y sólo eso: sobre esos 210 ficheros el
+**tokenizador** no rompe (209 sin error; el único rechazo es `Svg.html`, un
+fixture *sobre* SVG, es decir el límite declarado disparando donde se declara).
+Tras los cambios de esta ronda la cifra sigue siendo 209/210.
+
+> Nota de método: medir «falsos positivos de la política» sobre HTML de terceros
+> no tiene sentido y no lo he intentado — la política exige una meta CSP
+> fail-closed y scripts nonceados, así que rechazaría casi todo HTML del mundo
+> **por diseño**. La única medición honesta de FP es (a) sobre el tokenizador y
+> (b) sobre los 25 puntos de render propios, que siguen en verde.
+
+### D-3 · decidido: se acota la promesa y se cierra, no se aplaza
+
+«Una URL» prometía más que los 9 pares de `URL_BEARING`. Elegí **cerrarlo aquí**
+en vez de enrutarlo, porque se resuelve con la regla que ya existe:
+
+- **Añadidos** (una sola URL por atributo, misma regla, cero parsing nuevo):
+  `<a href>`, `<a ping>`, `<area href>`, `formaction` de `<button>` y `<input>`,
+  `<input src>`, `<video src>`, `<video poster>`, `<audio src>`, `<track src>`.
+- **Rechazados** (llevan varias URLs o una URL embebida en otra sintaxis, y
+  analizarlos pediría un mini-parser por sintaxis, o sea volver a perseguir al
+  navegador): `srcset`, `imagesrcset` y `<meta http-equiv="refresh">`.
+
+`URL_BEARING` queda documentada como **exhaustiva respecto a lo que la guarda
+promete**: lo que no está en la lista y transporta URLs, se rechaza. Ya no hay
+tercera categoría de «no mirado en silencio».
+
+### Los cuatro límites anotados por el revisor
+
+Añadidos a la cabecera de `htmlScan.ts`, contados como límites y no como
+defectos: `&#128;` frente a la tabla windows-1252 —**la única divergencia
+conocida en dirección insegura**, y ninguno de esos code points puede formar un
+esquema ni un separador de URL—; `<image>` que el navegador construye como
+`<img>`; ausencia de *longest match* en referencias con nombre; y el cierre de
+RAWTEXT sin exigir delimitador detrás. **Las tres últimas rechazan de más, nunca
+de menos.**
 
 ---
 
@@ -590,17 +694,21 @@ divergencia.
 
 Medidos con `npx jest --coverage=false` en el worktree.
 
-| | antes (`9f0a5d7`) | 1ª (`4c2453f`) | 2ª DD4/DD5 (`8ca02ee`) | 3ª D-1..D-4 (`HEAD`) |
-| - | - | - | - | - |
-| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
-| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** | **5 failed**, 1 skipped, 226 passed, **232** |
-| `webviewCsp.test.ts` | 62 | 87 | 102 | **115** |
+| | antes (`9f0a5d7`) | 1ª (`4c2453f`) | 2ª DD4/DD5 (`8ca02ee`) | 3ª D-1..D-4 (`453a422`) | 4ª D-1/D-3 (`HEAD`) |
+| - | - | - | - | - | - |
+| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
+| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** | **5 failed**, 1 skipped, 226 passed, **232** | **5 failed**, 1 skipped, 234 passed, **240** |
+| `webviewCsp.test.ts` | 62 | 87 | 102 | 115 | **123** |
 
-**+53 tests sobre el baseline, +53 verdes, 0 rojos nuevos.**
+**+61 tests sobre el baseline, +61 verdes, 0 rojos nuevos.** Ninguno de los 8
+errores de `tsc` está en `src/webview/`.
 
-Corpus de falsos positivos (fail-closed en la otra dirección): **210 ficheros HTML
-reales** del árbol, **209 tokenizados sin error**; el único rechazado es
-`Svg.html`, fixture sobre SVG — el límite declarado, no un falso positivo.
+Falsos positivos del **tokenizador**: 210 ficheros HTML del árbol (202 generados
+por istanbul en `coverage/`, 8 de `node_modules/`, **0 propios** — el repo no
+tiene HTML fuera de ahí), **209 sin error**; el único rechazo es `Svg.html`,
+fixture sobre SVG. **No es un corpus diverso** y así se dice: la evidencia buena
+de esta propiedad es la del revisor (40 HTML legítimos escritos a mano, 0 falsos
+positivos).
 
 Los **5 rojos históricos** son exactamente los mismos antes y después, todos en
 el mismo fichero de integración, **ninguno tocado por este WP**:
@@ -732,7 +840,10 @@ justo:
   **no se persigue**: se estrecha la entrada. Una divergencia nueva no es
   automáticamente un defecto de esta entrega; es una entrada que hay que
   rechazar, y el módulo ya declara que puede rechazar HTML válido.
-- **D-1/D-2 viven en `src/webview/htmlScan.ts`.** Ganchos: `decodeAttributeValue`
+- **D-1 (4ª ronda) vive en `security.ts`, no en el tokenizador**: la puerta es
+  `normalizeUrlForClassification` y los dos clasificadores que ahora la comparten.
+  Un bypass aquí sería una normalización de URL que el navegador haga y ésta no.
+- **D-2 vive en `src/webview/htmlScan.ts`.** Ganchos: `decodeAttributeValue`
   (numéricas, tabla `NAMED_REFS`, regla heredada del `;`), el marcado de
   referencias **no resueltas**, y `FOREIGN_CONTENT_ROOTS`. Recordar el alcance
   declarado en la cabecera: tokenizador **léxico**, sin árbol, con la tabla de
