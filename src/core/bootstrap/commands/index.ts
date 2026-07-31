@@ -8,10 +8,16 @@
 import { CommandEntry } from './types';
 import { webviewCommands } from './webviewCommands';
 import { hackerPanelCommands } from './hackerPanelCommands';
+import { analyticsCommands } from './analyticsCommands';
+import { processCommands } from './processCommands';
+import { aiCommands } from './aiCommands';
 
 export const commandTable: CommandEntry[] = [
     ...webviewCommands,
-    ...hackerPanelCommands
+    ...hackerPanelCommands,
+    ...analyticsCommands,
+    ...processCommands,
+    ...aiCommands
 ];
 
 export { CommandDeps, CommandEntry } from './types';
