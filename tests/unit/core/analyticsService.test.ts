@@ -130,8 +130,10 @@ describe('AnalyticsService', () => {
             
             expect(html).toBeDefined();
             expect(typeof html).toBe('string');
-            expect(html).toContain('<html>');
+            // WP-V66: el dashboard ahora emite <html lang> y meta CSP
+            expect(html).toContain('<html');
             expect(html).toContain('</html>');
+            expect(html).toContain('Content-Security-Policy');
         });
 
         it('should include analytics data in dashboard', async () => {
