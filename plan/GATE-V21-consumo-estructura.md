@@ -197,6 +197,6 @@ bloqueante: H1/H2/O2/O3 son huecos/observaciones enrutados a G
 | -- | --------- | --------- |
 | estructura externa citada por ruta | ✓ | tabla §1 (13 filas, rutas exactas de playground) |
 | frontera estructura/lienzo verificada por V | ✓ | greps G1b-G7 con exit codes (§2.a, §3) + contrastes `daef20b` (§2.b-2.d), todos re-ejecutados, ningún ✅ heredado |
-| cero VS Code hasta el gate | ✓ | el diff de este WP = este único documento en `plan/`; cero ficheros en `src/` (verificable: `git diff main --stat`) |
+| cero VS Code hasta el gate | ✓ | el diff de este WP = este único documento en `plan/`; cero ficheros en `src/` (verificado: `git diff main...HEAD --stat` = `plan/GATE-V21-consumo-estructura.md | 202 +` y nada más; el two-dot añade solo avance de main, ajeno a esta rama) |
 
 — WP-V21 · carril V · gate ejecutado como consumidor, 2026-07-31
