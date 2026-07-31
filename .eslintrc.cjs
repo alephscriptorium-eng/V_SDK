@@ -62,5 +62,64 @@ module.exports = {
         'no-useless-escape': 'warn', //   1
         'no-prototype-builtins': 'warn', //   1
         'no-self-assign': 'warn' //   1
-    }
+        ,
+        /**
+         * WP-V71 · TRINQUETE del log estructurado — TRES sensores.
+         *
+         * El destino del diagnóstico es el OutputChannel propio
+         * (`src/core/logging`), no la consola del Extension Host: un
+         * `console.log` no se ve sin abrir DevTools, así que en la máquina de
+         * un tercero equivale a no haber logueado.
+         *
+         * Se eligen REGLAS y no un grep porque leen el AST: a la vez cazan
+         * formas que un regex no ve y NO dan falso positivo con el texto
+         * «console.log» dentro de un literal (JS de webview embebido en una
+         * plantilla, p. ej. `src/socketMonitor.ts:613`).
+         *
+         * Por qué tres y no una: `no-console` sola deja pasar el ALIAS. Medido
+         * con una sonda de 9 formas de evasión (reporte de V71, CA1):
+         *   `no-console` .................... caza 6/9
+         *   + `no-restricted-globals` ....... caza 8/9 (añade `const c = console`
+         *                                     y `const { log } = console`)
+         *   + `no-restricted-properties` .... caza 9/9 (añade `globalThis.console`)
+         *
+         * Los tres en `error`: el lint FALLA en cuanto código nuevo los viola.
+         */
+        'no-console': 'error',
+        'no-restricted-globals': ['error', {
+            name: 'console',
+            message: 'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
+        }],
+        'no-restricted-properties': [
+            'error',
+            ...['globalThis', 'global', 'window', 'self'].map(object => ({
+                object,
+                property: 'console',
+                message: 'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
+            }))
+        ]
+    },
+    overrides: [
+        {
+            /**
+             * WP-V71 · carve-out temporal de FRONTERA, no de criterio.
+             *
+             * Estos dos ficheros son obra VIVA del carril V66 (CSP) en
+             * `wp/v66-csp` mientras se escribe esto; V71 no escribe obra ajena
+             * (invariante I-2 de `plan/PRACTICAS.md`). Sus 10 `console.*`
+             * quedan inventariados en `plan/REPORTES/WP-V71-log-estructurado.md`
+             * con la migración exacta ya redactada.
+             *
+             * AL CERRAR V66: borrar este bloque entero y migrar esos 10 sitios.
+             * Mientras tanto siguen VISIBLES como warning en cada corrida — la
+             * deuda se declara, no se silencia (`off` sería esconderla).
+             */
+            files: ['src/views/BaseHackerPanelProvider.ts', 'src/views/TeatroWebViewProvider.ts'],
+            rules: {
+                'no-console': 'warn',
+                'no-restricted-globals': 'warn',
+                'no-restricted-properties': 'warn'
+            }
+        }
+    ]
 };
