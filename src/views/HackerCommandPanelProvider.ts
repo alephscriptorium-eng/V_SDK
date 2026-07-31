@@ -1,5 +1,13 @@
 import * as vscode from 'vscode';
 import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · `handleMessage` recibe mensajes del webview, que es superficie no
+ * confiable: el payload sale al canal por el redactor (WP-V71 CA4).
+ */
+const log = getLogger('HackerCommandPanel', LogCategory.WEBVIEW);
 
 export interface CommandInfo {
     id: string;
@@ -89,36 +97,36 @@ export class HackerCommandPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
-        console.log('HackerCommandPanel received message:', message);
+        log.info('Received message from webview', { message });
         vscode.window.showInformationMessage(`HackerCommandPanel received: ${message.command}`);
         
         switch (message.command) {
             case 'executeCommand':
-                console.log('Executing command:', message.commandId);
+                log.info('Executing command', { commandId: message.commandId });
                 this.executeCommand(message.commandId, message.args);
                 break;
             case 'refreshCommands':
-                console.log('Refreshing commands');
+                log.info('Refreshing commands');
                 this.refreshCommands();
                 break;
             case 'getCommandInfo':
-                console.log('Getting command info:', message.commandId);
+                log.info('Getting command info', { commandId: message.commandId });
                 this.sendCommandInfo(message.commandId);
                 break;
             case 'requestInput':
-                console.log('Requesting input for command:', message.commandId);
+                log.info('Requesting input for command', { commandId: message.commandId });
                 this.requestCommandInput(message.commandId, message.inputType, message.options);
                 break;
             case 'exportCommands':
-                console.log('Exporting commands');
+                log.info('Exporting commands');
                 this.exportCommandList();
                 break;
             case 'showAllCommands':
-                console.log('Showing all commands');
+                log.info('Showing all commands');
                 this.showAllCommands();
                 break;
             default:
-                console.log('Unknown command:', message.command);
+                log.warn('Unknown command from webview', { command: message.command });
                 vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }

@@ -1,6 +1,14 @@
 import * as vscode from 'vscode';
 import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
 import { WebViewManager } from '../webViewManager';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · `handleMessage` recibe mensajes del webview, que es superficie no
+ * confiable: el payload sale al canal por el redactor (WP-V71 CA4).
+ */
+const log = getLogger('HackerControlPanel', LogCategory.WEBVIEW);
 
 export interface WebViewGroup {
     name: string;
@@ -37,10 +45,10 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected initializePanel(): void {
-        console.log('HackerControlPanelProvider.initializePanel called');
+        log.info('initializePanel called');
         // Initial status update
         setTimeout(() => {
-            console.log('Calling _updateStatus after 1 second delay');
+            log.info('Calling _updateStatus after 1 second delay');
             this._updateStatus();
         }, 1000);
     }
@@ -73,46 +81,46 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
-        console.log('HackerControlPanel received message:', message);
+        log.info('Received message from webview', { message });
         vscode.window.showInformationMessage(`HackerControlPanel received: ${message.command}`);
         
         switch (message.command) {
             case 'launchWebview':
-                console.log('Launching webview with commandId:', message.commandId);
+                log.info('Launching webview', { commandId: message.commandId });
                 this._launchWebview(message.commandId);
                 break;
             case 'refreshPanel':
-                console.log('Refreshing panel');
+                log.info('Refreshing panel');
                 this._refreshPanel();
                 break;
             case 'getStatus':
-                console.log('Getting status');
+                log.info('Getting status');
                 this._updateStatus();
                 break;
             case 'closeWebview':
-                console.log('Closing webview:', message.webviewId);
+                log.info('Closing webview', { webviewId: message.webviewId });
                 this._closeWebview(message.webviewId);
                 break;
             case 'reloadAllWebviews':
-                console.log('Reloading all webviews');
+                log.info('Reloading all webviews');
                 this._reloadAllWebviews();
                 break;
             default:
-                console.log('Unknown command:', message.command);
+                log.warn('Unknown command from webview', { command: message.command });
                 vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }
 
     private async _launchWebview(commandId: string): Promise<void> {
         try {
-            console.log(`Attempting to execute command: ${commandId}`);
+            log.info('Attempting to execute command', { commandId });
             vscode.window.showInformationMessage(`Launching webview with command: ${commandId}`);
             await vscode.commands.executeCommand(commandId);
-            console.log(`Successfully executed command: ${commandId}`);
+            log.info('Successfully executed command', { commandId });
             // Update status after launch
             setTimeout(() => this._updateStatus(), 2000);
         } catch (error) {
-            console.error(`Failed to launch webview: ${error}`);
+            log.error('Failed to launch webview', { error });
             vscode.window.showErrorMessage(`Failed to launch webview: ${error}`);
         }
     }
@@ -140,23 +148,23 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
     }
 
     private _updateStatus(): void {
-        console.log('HackerControlPanelProvider._updateStatus called');
+        log.info('_updateStatus called');
         if (this._view) {
             const webviewGroups = this._getWebViewGroups();
-            console.log('Sending webview groups to frontend:', webviewGroups);
+            log.info('Sending webview groups to frontend', { webviewGroups });
             this.postMessage({
                 command: 'updateStatus',
                 data: webviewGroups
             });
-            console.log('Posted updateStatus message to webview');
+            log.info('Posted updateStatus message to webview');
         } else {
-            console.log('No view available, cannot update status');
+            log.info('No view available, cannot update status');
         }
     }
 
     private _getWebViewGroups(): WebViewGroup[] {
         const activeWebviews = this.webViewManager.getAllWebViews();
-        console.log('Active webviews from WebViewManager:', activeWebviews);
+        log.info('Active webviews from WebViewManager', { activeWebviews });
         
         return [
             {
@@ -259,7 +267,7 @@ export class HackerControlPanelProvider extends BaseHackerPanelProvider {
 
     private _getWebViewStatus(webviewId: string, activeWebviews: any[]): 'available' | 'active' | 'error' {
         const active = activeWebviews.find(w => w.id === webviewId);
-        console.log(`Status check for ${webviewId}:`, active ? 'found active' : 'not found', active);
+        log.info('Status check', { webviewId, found: active ? 'found active' : 'not found', active });
         if (!active) return 'available';
         if (active.status === 'error') return 'error';
         return 'active';
