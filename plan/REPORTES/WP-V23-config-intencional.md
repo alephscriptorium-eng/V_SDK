@@ -653,7 +653,7 @@ sólo enseña el estado final esconde la mitad del trabajo.
 | ---- | ----- |
 | Devolución | contrarrevisión adversarial read-only · **2 bloqueantes (D1, D2)** + **D3, D4, D6** menores + **D5** · 2 apuntes de método |
 | D5 | **CERRADA por el custodio: DV-17** — el namespace se aplaza y V23 cierra con `aleph0`. Ya no es interpretación mía (§11.5) |
-| Commits de corrección | ver `git log` de la rama (`fix(V23): …`) |
+| Commits de corrección | `1718404` (D1, obra) · `cc4c462` (D2, docs de usuario) · `dd609ae` + este (reporte) |
 | Qué NO se rehace | lo que la contrarrevisión declaró que resiste (§11.10) |
 
 Los dos bloqueantes eran ciertos y los verifiqué **contra el código, no
