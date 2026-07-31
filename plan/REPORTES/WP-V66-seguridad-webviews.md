@@ -6,10 +6,10 @@
 | fecha | 2026-08-01 |
 | rama | `wp/v66-csp` (worktree `C:\S_LAB\wt\v-v66`) |
 | base | `336f481` · obra previa `2bc8cbc..9f0a5d7` (7 commits) |
-| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · este reporte |
+| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · `453a422` (D-1..D-4 + `srcdoc`) · este reporte |
 | eje(s) CA | tipo **seguridad** (PRACTICAS §4.4.4: *intenta el bypass, no releas la declaración*) + de facto sobre el HTML renderizado |
-| revisor distinto del worker | `⏳ pendiente` — 3ª contrarrevisión, **acotada a DD4 y DD5** y a que no se haya roto lo que resiste |
-| estado propuesto | listo para contrarrevisión acotada |
+| revisor distinto del worker | `⏳ pendiente` — contrarrevisión **final**, acotada a D-1, D-2, los dos falsos positivos y que no se haya roto lo que resiste |
+| estado propuesto | listo para contrarrevisión final |
 | alcance | **DD1/DD2/DD3 excluidos por decisión del orquestador** → WP nuevo **V89** (ver Parte 3 quater) |
 
 > **Nota de procedencia.** Este reporte se escribe en la corrección. El intento
@@ -63,7 +63,7 @@ comprueba una cosa y la guarda otra».
 ### Ficheros tocados
 
 - `src/webview/security.ts` — motor de invariantes + lista blanca de fuentes (D2/D3/D4/D5); reescrito sobre el tokenizador y con el modelo de amenaza en la cabecera (DD4/DD5)
-- `src/webview/htmlScan.ts` — **creado**: tokenizador HTML fail-closed (DD4/DD5)
+- `src/webview/htmlScan.ts` — **creado**: tokenizador HTML fail-closed (DD4/DD5); decodificación de referencias de carácter, rechazo de contenido extranjero, RAWTEXT en autocerrados y cabecera reescrita con sus límites (D-1..D-3)
 - `src/webViewManager.ts` — guarda de HTML de disco y scripts opt-in (D3); ruta de disco sin scripts y `getDriverUIConfig` inerte (DD4/DD5)
 - `tests/unit/webview/renderPointAnalysis.ts` — **creado**: derivación del censo desde el AST (D1)
 - `tests/unit/webview/webviewCsp.test.ts` — reescrito el censo; casos rojos D1–D5 y DD4/DD5
@@ -396,6 +396,98 @@ src="vscode-resource:…">` nonceado sigue pasando.
 
 ---
 
+## Parte 3 bis-2 · Tercera devolución: D-1, D-2, los dos falsos positivos y `srcdoc`
+
+DD4 y DD5 quedaron cerrados en todas sus formas devueltas. La 3ª revisión
+encontró **dos instancias nuevas de la misma clase** (confirmadas contra
+`parse5`) y **dos falsos positivos**.
+
+### La regla de cierre, y cómo ordena los arreglos
+
+> «Escribir un tokenizador que empate con el navegador es una carrera que no se
+> gana. Ésta es la última ronda en que la respuesta es *mejorar el tokenizador*.
+> A partir de aquí, cualquier divergencia nueva se resuelve **estrechando la
+> entrada**.»
+
+Acatada, y se nota en el reparto: de los cuatro arreglos, **dos son rechazar** y
+sólo uno es analizar mejor.
+
+| # | defecto | respuesta | por qué esa y no la otra |
+| - | ------- | --------- | ------------------------ |
+| D-1 | referencias de carácter sin decodificar en valores de atributo | **analizar mejor** | afecta a **todos** los documentos, incluidos los renders propios, y rompía una invariante que el reporte publica y testea (la 6). No se puede estrechar la entrada sin prohibir `&amp;` |
+| D-2 | `<svg>`/`<math>`: RCDATA aplicado sin contexto de namespace | **rechazar** | emular el constructor del árbol es exactamente perseguir al navegador |
+| D-3 | `<script/>` autocerrado | corregir falso positivo | el navegador ignora el `/` y entra en RAWTEXT |
+| D-4 | `<form action="">` | corregir falso positivo | es HTML válido; un falso positivo en una guarda es la vía por la que alguien la desactiva |
+| `srcdoc` | superficie no cubierta | **rechazar** | es un documento entero dentro de un atributo: analizarlo sería volver a perseguir al navegador |
+
+### D-1 · decodificación de referencias de carácter
+
+`decodeAttributeValue` (`htmlScan.ts`) se aplica a los tres estados de valor de
+atributo. Decodifica numéricas decimales y hexadecimales, con o sin `;`, y las
+con nombre de `NAMED_REFS` — donde se incluyen a propósito las que sirven para
+disfrazar un esquema o un separador: `Tab`, `NewLine`, `colon`, `sol`, `semi`,
+`num`. Implementa la regla heredada del spec para el contexto de atributo (un
+nombre sin `;` seguido de `=` o de alfanumérico **no** se decodifica).
+
+Lo que no está en la tabla **no se adivina**: se marca como no resuelta y
+`findWebviewHtmlViolations` rechaza el documento si aparece donde importa —una
+URL o el `content=` de una meta—, dejándola pasar donde es inocua (un `title=`).
+Así el fail-closed muerde donde hay riesgo sin convertir cada `&eacute;` de un
+tooltip en un rechazo.
+
+### D-2 · contenido extranjero: se rechaza, no se emula
+
+Todo documento con `<svg>` o `<math>` se rechaza. **Medido sobre el árbol
+completo**: 210 ficheros HTML reales, **209 tokenizan limpio** y el único
+rechazado es `Svg.html` —un fixture *sobre* SVG—, es decir el límite declarado
+disparando justo donde se declara. Ninguno de los 25 puntos de render propios lo
+usa, y hay un test que lo comprueba render a render en vez de afirmarlo.
+
+### Evidencia: payloads contra el motor anterior (`8ca02ee`) y el actual
+
+```
+D-1 · src="&#104;ttps://…"          ANTES []  → AHORA recurso remoto en <script src>: "https://evil.example/x.js"
+D-1 · src="&#x68;ttps://…"          ANTES []  → AHORA recurso remoto en <script src>
+D-1 · src="&Tab;https://…"          ANTES []  → AHORA recurso remoto en <script src>
+D-1 · baliza <img src="&#104;…">    ANTES []  → AHORA recurso remoto en <img src>
+D-2 · <svg><title> esconde marcado  ANTES []  → AHORA documento no analizable, se rechaza: contenido extranjero <svg>
+srcdoc · documento anidado          ANTES []  → AHORA <iframe srcdoc> no admitido: documento anidado sin analizar
+
+--- falsos positivos, deben desaparecer ---
+D-3 · <script/> con cuerpo          ANTES  handler inline presente: <div onclick=…>   → AHORA []
+D-4 · <form action="">              ANTES  recurso remoto en <form action>: ""        → AHORA []
+```
+
+### La declaración del módulo, reescrita
+
+La cabecera decía que implementaba «la misma máquina de estados que usa un
+navegador para lo que aquí importa». **Esa frase es la que convertía cada
+divergencia en defecto**, y era falsa en el sentido que importa: ningún parser a
+mano cumple esa promesa. Ahora declara lo que de verdad es —un tokenizador
+**acotado y deliberadamente incompleto**— y explicita su contrato como una
+**asimetría**: *puede rechazar HTML válido; no puede aprobar HTML que no haya
+entendido*. Debajo van enumerados los límites conocidos: contenido extranjero,
+ausencia de construcción de árbol, tabla de referencias con nombre acotada, y
+`srcdoc`.
+
+### Por qué D-1 y D-2 fueron deuda y no incidente
+
+Conviene que conste, porque es el argumento para seguir invirtiendo en la capa
+arquitectónica antes que en el tokenizador. El revisor buscó caminos alternativos
+de disco por todo `src/` y no encontró ninguno: `webViewManager.ts:246` es la
+única lectura de disco que alimenta un `webview.html`, y `enableScripts` se niega
+sobre el mismo campo del mismo objeto en la misma llamada. Es decir: **ni D-1 ni
+D-2 daban ejecución de JS**, porque la ruta de disco ya iba sin scripts.
+
+Esa capa la introduje en la corrección anterior (`8ca02ee`) por decisión propia,
+no porque estuviera en la devolución: la devolución pedía cerrar DD4/DD5, y
+añadí encima una defensa que no depende de que el análisis sea correcto. El
+resultado es que los dos hallazgos siguientes de la misma clase llegaron como
+deuda y no como incidente. La lección, para V89 y para quien herede esto: **una
+capa que no depende del parser vale más que un parser mejor**.
+
+---
+
 ## Parte 3 ter · Modelo de amenaza (qué defiende cada capa)
 
 Queda escrito aquí y en el contrato del helper (`src/webview/security.ts`,
@@ -467,6 +559,16 @@ cuando debería reconocer una operación**. Tres manifestaciones concretas:
    flujo de datos, y sin él «esta función produce un documento» no es decidible
    sintácticamente.
 
+4. **Aserción-por-grep, la misma fragilidad en otro sitio.** Los tests de la capa
+   arquitectónica (`webviewCsp.test.ts:681` y `:976`) verifican una propiedad de
+   **seguridad** —que la ruta de disco deniega scripts— leyendo el fichero
+   fuente con `readFileSync` y buscando cadenas con `indexOf`/`slice`. Un
+   reformateo los rompe; peor, un cambio semántico que conserve el texto los deja
+   pasar en falso. Es exactamente el vicio del censo aplicado a otra cosa. V89
+   debería sustituirlos por una comprobación sobre el **comportamiento**
+   (invocar `createWebView` con un `localPath` contra un doble de `vscode` y
+   observar las opciones con las que se creó el panel), no sobre el texto.
+
 Recomendación para V89, en orden de valor: (a) mover el análisis al **type
 checker** y resolver por símbolo; (b) hacer que la unidad sea la **operación**
 (escritura sobre `Webview.html`) y no la forma; (c) plantearse si la garantía
@@ -477,19 +579,28 @@ escribir qué adversario se persigue**, porque contra un contribuyente hostil el
 análisis estático del propio repo no puede ganar, y perseguirlo consume esfuerzo
 que rinde más en la guarda de ejecución.
 
+Y una recomendación transversal, que es la lección de las tres rondas: cuando una
+comprobación y la realidad puedan divergir, **invertir en que la divergencia no
+importe** (capas que no dependen del análisis) rinde más que en cerrar la
+divergencia.
+
 ---
 
 ## Parte 4 · Números de suite
 
 Medidos con `npx jest --coverage=false` en el worktree.
 
-| | antes (`9f0a5d7`) | 1ª corrección (`4c2453f`) | 2ª corrección DD4/DD5 (`HEAD`) |
-| - | - | - | - |
-| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
-| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** |
-| `webviewCsp.test.ts` | 62 | 87 | **102** |
+| | antes (`9f0a5d7`) | 1ª (`4c2453f`) | 2ª DD4/DD5 (`8ca02ee`) | 3ª D-1..D-4 (`HEAD`) |
+| - | - | - | - | - |
+| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
+| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** | **5 failed**, 1 skipped, 226 passed, **232** |
+| `webviewCsp.test.ts` | 62 | 87 | 102 | **115** |
 
-**+40 tests sobre el baseline, +40 verdes, 0 rojos nuevos.**
+**+53 tests sobre el baseline, +53 verdes, 0 rojos nuevos.**
+
+Corpus de falsos positivos (fail-closed en la otra dirección): **210 ficheros HTML
+reales** del árbol, **209 tokenizados sin error**; el único rechazado es
+`Svg.html`, fixture sobre SVG — el límite declarado, no un falso positivo.
 
 Los **5 rojos históricos** son exactamente los mismos antes y después, todos en
 el mismo fichero de integración, **ninguno tocado por este WP**:
@@ -613,19 +724,27 @@ Afirmaciones reformuladas al alcance real:
 
 ## Parte 7 · Para el contrarrevisor
 
-La 3ª contrarrevisión está **acotada a DD4 y DD5** y a que no se haya roto lo que
-resiste. Cuatro avisos para que el reintento sea justo:
+La contrarrevisión **final** está acotada a **D-1, D-2, los dos falsos positivos**
+y a que no se haya roto lo que resiste. Cinco avisos para que el reintento sea
+justo:
 
-- **DD4/DD5 viven en `src/webview/htmlScan.ts`.** El bypass sería un documento
-  cuyo marcado el navegador ejecute y que `scanHtml` tokenice distinto —o que
-  tokenice «bien» pero con `errors` vacío cuando no debería. Ganchos: los
-  cierres abruptos de comentario, el estado de valor de atributo (las tres
-  formas: `"`, `'`, sin comillas), y el tratamiento RAWTEXT/RCDATA. Recordar el
-  alcance declarado: es un tokenizador **léxico**, no un parser con árbol.
+- **Rige la regla de cierre.** Si aparece otra divergencia del tokenizador,
+  **no se persigue**: se estrecha la entrada. Una divergencia nueva no es
+  automáticamente un defecto de esta entrega; es una entrada que hay que
+  rechazar, y el módulo ya declara que puede rechazar HTML válido.
+- **D-1/D-2 viven en `src/webview/htmlScan.ts`.** Ganchos: `decodeAttributeValue`
+  (numéricas, tabla `NAMED_REFS`, regla heredada del `;`), el marcado de
+  referencias **no resueltas**, y `FOREIGN_CONTENT_ROOTS`. Recordar el alcance
+  declarado en la cabecera: tokenizador **léxico**, sin árbol, con la tabla de
+  nombres acotada a propósito.
 - **El motor sigue siendo `findWebviewHtmlViolations`**: si se encuentra un HTML
   hostil que devuelva lista vacía, eso es el bypass. Si devuelve
   `documento no analizable, se rechaza: …`, eso es el comportamiento correcto,
   no un fallo.
+- **Un rechazo no es un fallo.** Si un documento devuelve `documento no
+  analizable, se rechaza: …` o `contenido extranjero <svg>…`, eso es el
+  comportamiento contratado. El fallo sería lo contrario: un HTML que el
+  navegador ejecuta y que devuelva `[]`.
 - **No hace falta reintentar DD1/DD2/DD3**: están reconocidos como abiertos y
   enrutados a V89 (Parte 3 quater). Reintentarlos aquí encontrará lo ya
   admitido. Y **el censo no es una frontera de seguridad** (Parte 3 ter): un
