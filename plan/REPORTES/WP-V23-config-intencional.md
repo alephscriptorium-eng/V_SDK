@@ -5,7 +5,7 @@
 | agente | worker-V (background) |
 | fecha | 2026-08-01 |
 | rama | `wp/v23-config-intencional` · worktree `C:\S_LAB\wt\v-v23` |
-| base | `ef86fba` (main) |
+| base | `ef86fba` — tip de la rama al arrancar. `main` avanzó a `52e0de6` durante el turno (obra ajena de V66); **no rebaso ni fusiono**: eso es del orquestador |
 | commits | `b97151b` (obra) · `82ba4b2` (docs) · este reporte |
 | tipo(s) de WP | **estructural** (espacio de nombres) + **evidencia** (acta) — `plan/PRACTICAS.md:82-88` |
 | riesgo de revisión | **independiente** — clase contrato/configuración (`plan/PRACTICAS.md:105-116` §4.3) |
