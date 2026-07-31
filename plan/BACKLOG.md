@@ -38,7 +38,7 @@ de canal/puertas = **U236**.
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
 | **WP-V21** `P0` | **Gate de consumo de la estructura del Zigurat**: la materialización en playground es del HUB/G (G52·HUB-072); V la **consume y verifica** — ninguna UI antes de que exista con evidencia | estructura externa citada por ruta · frontera estructura/lienzo verificada por V · **cero VS Code** hasta el gate |
-| **WP-V22** `P0` 🔶 | **Mapa barrio → superficie**: por cada entrada del catálogo, a qué superficie va y **cuál no va a ninguna** | tabla completa sin `<pendiente>` · cada «no va» con motivo · ninguna fila implica jerarquía |
+| **WP-V22** `P0` ✅ | **Mapa barrio → superficie**: `plan/MAPA-SUPERFICIES.md` — las 14 entradas de `CATALOG_SEED` mapeadas (4 «no va (aún)» por `workspace: null`, destino V19 contra V20; filas solar condicionadas a V57/V20 y así declaradas); 43/50 piezas del workspace fuera del catálogo (contraste pendiente con el denominador de U179). Aceptado por el orquestador 2026-07-31 (rama `wp/v22-mapa-superficies`) | tabla completa sin `<pendiente>` ✓ · cada «no va» con motivo ✓ · ninguna fila implica jerarquía ✓ (citas muestreadas por el orquestador contra z-sdk) |
 | **WP-V27** `P1` | **Léxico del Zigurat** derivado de la ontología (barrio, zona, ámbito, edificio, pieza, corpus) | glosario citable · cada término con fuente · cero sinónimos compitiendo |
 
 ## LANE B · ENTRADA E IDENTIDAD — **P0**
