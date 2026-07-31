@@ -14,8 +14,19 @@ nombres**; `alephscript.*` y `mcpSocketManager.*` desaparecen y los segmentos
 salen del léxico (`aleph0.ciudad.*`, `aleph0.pieza.<pieza>.*`,
 `aleph0.superficie.*`). Las claves de esta guía son las nuevas. Sin
 migración automática: una clave vieja en tu `settings.json` queda huérfana y
-la extensión marca ⏳ nombrando la clave nueva que falta. Tabla completa en
-el README y acta en `plan/REPORTES/WP-V23-config-intencional.md`.
+**casi siempre** la extensión marca ⏳ nombrando la clave nueva que falta.
+
+⚠️ **Con una excepción que conviene conocer antes de probar.** Si no pones
+`aleph0.ciudad.*` **y** tienes un fichero de ópera con una UI primaria, el
+monitor de sockets **no dice ⏳**: se inventa `ws://localhost:<puerto de esa
+UI>` y lo da por bueno. Es un defecto preexistente, no lo arregla este WP
+(cae en WP-V31) y está documentado con su caso rojo en
+`plan/REPORTES/WP-V23-config-intencional.md` §11.2. Si ves el monitor
+apuntando a tu propia máquina sin haberlo pedido, es esto — no es que haya
+encontrado tu Ciudad.
+
+Tabla completa de migración en el README y acta en
+`plan/REPORTES/WP-V23-config-intencional.md`.
 
 **El `.vsix` es LOCAL.** Se construye en este árbol; **no** se descarga del
 Release `v0.1.0` de GitHub. Ese release publica el artefacto viejo

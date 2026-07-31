@@ -41,6 +41,12 @@ huérfana (aparece como *Unknown Configuration Setting*) y la extensión
 (invariante I-5: nadie ha usado nunca este código; no se preserva
 compatibilidad). Si tenías claves puestas, reescríbelas con esta tabla.
 
+En casi todos los casos la extensión te dirá qué falta: cada camino ⏳
+**nombra la clave nueva**. ⚠️ **Salvo uno**: sin `aleph0.ciudad.*`, si hay
+un fichero de ópera con una UI primaria, el monitor de sockets se inventa
+`ws://localhost:<puerto>` en vez de decir ⏳. Defecto preexistente,
+documentado con su caso rojo en el acta (§11.2) y enrutado a WP-V31.
+
 | clave vieja | clave nueva |
 | ----------- | ----------- |
 | `aleph0.mesh.host` | `aleph0.ciudad.host` |
@@ -51,7 +57,6 @@ compatibilidad). Si tenías claves puestas, reescríbelas con esta tabla.
 | `aleph0.launcher.port` | `aleph0.pieza.launcher.port` |
 | `aleph0.lineaEditor.host` | `aleph0.pieza.lineaEditor.host` |
 | `aleph0.lineaEditor.port` | `aleph0.pieza.lineaEditor.port` |
-| `aleph0.ollama.baseUrl` | `aleph0.pieza.ollama.baseUrl` |
 | `aleph0.reparto.path` | `aleph0.pieza.reparto.path` |
 | `alephscript.configurationFile` | `aleph0.mcp.configPath` *(fusionada)* |
 | `mcpSocketManager.configPath` | `aleph0.mcp.configPath` *(fusionada)* |
@@ -64,14 +69,17 @@ compatibilidad). Si tenías claves puestas, reescríbelas con esta tabla.
 | `alephscript.logging.showSource` | `aleph0.logging.showSource` |
 | `alephscript.logging.maxEntries` | `aleph0.logging.maxEntries` |
 
-**Seis claves desaparecen sin sustituta** porque estaban declaradas y
-**ningún código las leía** — prometían un efecto que no existía:
+**Siete claves desaparecen sin sustituta** porque estaban declaradas y
+**ningún código vivo las leía** — prometían un efecto que no existía:
 `aleph0.theater.configPath`, `aleph0.theater.autoStart`,
-`aleph0.theater.hackerMode`, `alephscript.autoLoadConfig`,
-`alephscript.configValidation`, `alephscript.statusBar.animation`.
+`aleph0.theater.hackerMode`, `aleph0.ollama.baseUrl`,
+`alephscript.autoLoadConfig`, `alephscript.configValidation`,
+`alephscript.statusBar.animation`.
 Ponerlas nunca hizo nada; quitarlas tampoco quita nada.
+(La de `ollama` se sumó tras la contrarrevisión: su cadena de lectura
+terminaba en dos métodos sin una sola llamada.)
 
-26 claves antes → **19 después**. El acta completa, con el porqué de cada
+26 claves antes → **18 después**. El acta completa, con el porqué de cada
 nombre y qué ve el usuario que pierde la suya, está en
 [`plan/REPORTES/WP-V23-config-intencional.md`](./plan/REPORTES/WP-V23-config-intencional.md).
 
