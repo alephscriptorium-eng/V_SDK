@@ -168,7 +168,7 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V81** `P0` 🔶 | **Fundación del plan**: `VISION.md` + `PRACTICAS.md` locales — ownership, ejes CA, riesgos, release, lenguaje INÉDITO; el backlog apunta, no duplica | contrato local único · invariantes fuera del backlog |
+| **WP-V81** `P0` ✅ | **Fundación del plan**: `plan/VISION.md` + `plan/PRACTICAS.md` — contrato local único del carril (invariantes I-1..I-5 literales en PRACTICAS §1; ejes CA §3; riesgo §4; evidencia §5). **El backlog apunta a ese par y no lo duplica.** Aceptado por el orquestador 2026-07-31 (rama `wp/v81-fundacion`) | contrato local único ✓ · invariantes fuera del backlog ✓ (worker no tocó BACKLOG; verificado) |
 | **WP-V77** `P0` ✅ | **Grafo de deps y contención**: `plan/GOBIERNO-EJECUCION-F2.md` §1–§3 — **aceptado por el orquestador (2026-07-31, GO ola 0)**; correcciones de forma aplicadas (V52→V86 · puerta=rooms) | lotes paralelos con alcance disjunto verificado |
 | **WP-V78** `P0` ✅ | **Gates por lane + definición de terminada**: íd. §4–§5 — **aceptado por el orquestador (2026-07-31, GO ola 0)** | cada lane con gate y evidencia · «terminada» = CAs, no opinión |
 | **WP-V79** `P1` ⬜ | **Plantilla de brief**. Entregable preparado: `plan/BRIEFS/PLANTILLA-BRIEF-F2.md` — pendiente de aceptación | un worker nuevo no repite las 9 trampas censadas |
