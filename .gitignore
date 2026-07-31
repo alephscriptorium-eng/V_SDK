@@ -5,6 +5,9 @@ out/
 *.vsix
 .DS_Store
 
+# Arnés Extension Host (WP-V68): VS Code descargado + perfiles aislados
+.vscode-test/
+
 # Despachador de ranura para procesos caros (scripts/slot.sh)
 .slot.lock/
 .slot.log

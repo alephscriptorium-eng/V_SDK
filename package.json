@@ -1237,6 +1237,8 @@
     "package:local": "node scripts/vsix.mjs package --local",
     "compile:tests": "tsc -p tsconfig.json",
     "test": "jest",
+    "test:exthost": "npm run compile && node tests/exthost/runTests.js",
+    "test:exthost:vsix": "npm run package:v1 && node tests/exthost/runTests.js --vsix",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:unit": "jest tests/unit",

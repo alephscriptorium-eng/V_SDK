@@ -8,6 +8,7 @@ out/**
 
 # Development
 .vscode/**
+.vscode-test/**
 tests/**
 coverage/**
 node_modules/**
