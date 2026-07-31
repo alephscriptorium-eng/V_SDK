@@ -150,7 +150,7 @@ de canal/puertas = **U236**.
 | **WP-V63** `P1` | **Estado declarado y regenerable** | inventario de estado · borrarlo no rompe · nada contradice al env |
 | **WP-V64** `P1` | **Superficie de error**: qué pasó y qué hacer, siempre | cero excepciones mudas · cero éxito parcial fingido |
 | **WP-V65** `P1` | **Resiliencia**: reconexión con backoff, sin tormentas ni zombis | sobrevive caída y vuelta · el corte se ve mientras dura |
-| **WP-V66** `P1` 🔶 | **Seguridad de webviews**: CSP, nonce, `localResourceRoots` | cero `unsafe-inline` · CSP verificada por test |
+| **WP-V66** `P1` 🔶 **DEVUELTO** | **Seguridad de webviews**: CSP, nonce, `localResourceRoots`. Obra sustancial **viva en rama `wp/v66-csp`** (tip `9f0a5d7`, worktree conservado) — **no mergeada**: la contrarrevisión adversarial halló 3 bypass no cazados (censo por fichero y no por punto de render · **script externo CON nonce, explotable** · `hasCspMeta` burlable con comentario HTML) + inyección de directivas en el helper. Defectos numerados y lo que SÍ resiste: **`plan/DEVOLUCION-V66-csp.md`** | cero `unsafe-inline` · CSP verificada por test |
 | **WP-V67** `P1` | **Tema y accesibilidad** | legible en claro/oscuro · navegación por teclado |
 | **WP-V71** `P1` | **OutputChannel + log estructurado** | depurable en máquina ajena · cero `console.log` sueltos |
 | **WP-V72** `P1` | **Menús/keybindings/`when`** coherentes con lo real | cero menús a comandos inexistentes |
