@@ -37,9 +37,9 @@ de canal/puertas = **U236**.
 
 | WP | brief | CA tentativo |
 | -- | ----- | ------------ |
-| **WP-V21** `P0` | **Gate de consumo de la estructura del Zigurat**: la materialización en playground es del HUB/G (G52·HUB-072); V la **consume y verifica** — ninguna UI antes de que exista con evidencia | estructura externa citada por ruta · frontera estructura/lienzo verificada por V · **cero VS Code** hasta el gate |
+| **WP-V21** `P0` 🔶 | **Gate de consumo de la estructura del Zigurat**: la materialización en playground es del HUB/G (G52·HUB-072); V la **consume y verifica** — ninguna UI antes de que exista con evidencia | estructura externa citada por ruta · frontera estructura/lienzo verificada por V · **cero VS Code** hasta el gate |
 | **WP-V22** `P0` ✅ | **Mapa barrio → superficie**: `plan/MAPA-SUPERFICIES.md` — las 14 entradas de `CATALOG_SEED` mapeadas (4 «no va (aún)» por `workspace: null`, destino V19 contra V20; filas solar condicionadas a V57/V20 y así declaradas); 43/50 piezas del workspace fuera del catálogo (denominador cerrado por U179: 51 = 50 workspace + 1 anidada). Aceptado por el orquestador 2026-07-31 (rama `wp/v22-mapa-superficies`) | tabla completa sin `<pendiente>` ✓ · cada «no va» con motivo ✓ · ninguna fila implica jerarquía ✓ (citas muestreadas por el orquestador contra z-sdk) |
-| **WP-V27** `P1` | **Léxico del Zigurat** derivado de la ontología (barrio, zona, ámbito, edificio, pieza, corpus) | glosario citable · cada término con fuente · cero sinónimos compitiendo |
+| **WP-V27** `P1` 🔶 | **Léxico del Zigurat** derivado de la ontología (barrio, zona, ámbito, edificio, pieza, corpus) | glosario citable · cada término con fuente · cero sinónimos compitiendo |
 
 ## LANE B · ENTRADA E IDENTIDAD — **P0**
 
@@ -150,7 +150,7 @@ de canal/puertas = **U236**.
 | **WP-V63** `P1` | **Estado declarado y regenerable** | inventario de estado · borrarlo no rompe · nada contradice al env |
 | **WP-V64** `P1` | **Superficie de error**: qué pasó y qué hacer, siempre | cero excepciones mudas · cero éxito parcial fingido |
 | **WP-V65** `P1` | **Resiliencia**: reconexión con backoff, sin tormentas ni zombis | sobrevive caída y vuelta · el corte se ve mientras dura |
-| **WP-V66** `P1` | **Seguridad de webviews**: CSP, nonce, `localResourceRoots` | cero `unsafe-inline` · CSP verificada por test |
+| **WP-V66** `P1` 🔶 | **Seguridad de webviews**: CSP, nonce, `localResourceRoots` | cero `unsafe-inline` · CSP verificada por test |
 | **WP-V67** `P1` | **Tema y accesibilidad** | legible en claro/oscuro · navegación por teclado |
 | **WP-V71** `P1` | **OutputChannel + log estructurado** | depurable en máquina ajena · cero `console.log` sueltos |
 | **WP-V72** `P1` | **Menús/keybindings/`when`** coherentes con lo real | cero menús a comandos inexistentes |
