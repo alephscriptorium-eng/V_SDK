@@ -6,9 +6,9 @@
 | fecha | 2026-08-01 |
 | rama | `wp/v66-csp` (worktree `C:\S_LAB\wt\v-v66`) |
 | base | `336f481` · obra previa `2bc8cbc..9f0a5d7` (7 commits) |
-| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · `453a422` (D-1..D-4 + `srcdoc`) · `84b0d77` (D-1 clasificador de URL + D-3 superficie) · este reporte |
+| commits | `4c2453f` (D1–D5) · `3aef24b` (reporte) · `8ca02ee` (DD4/DD5: tokenizador + ruta de disco sin scripts) · `453a422` (D-1..D-4 + `srcdoc`) · `84b0d77` (D-1 clasificador de URL + D-3 superficie) · `692f7c6` (D-A/D-B/D-C) · este reporte |
 | eje(s) CA | tipo **seguridad** (PRACTICAS §4.4.4: *intenta el bypass, no releas la declaración*) + de facto sobre el HTML renderizado |
-| revisor distinto del worker | `⏳ pendiente` — contrarrevisión final, acotada a D-1 (clasificador de URL), la rectificación del corpus, la decisión de D-3 y que no se haya roto lo que resiste |
+| revisor distinto del worker | `⏳ pendiente` — cierre, acotado a D-A (falso positivo de `a href`), D-B (`background`/`<image>` y la palabra «exhaustiva»), D-C (la frase de los límites) y que no se haya roto lo que resiste |
 | estado propuesto | listo para contrarrevisión final |
 | alcance | **DD1/DD2/DD3 excluidos por decisión del orquestador** → WP nuevo **V89** (ver Parte 3 quater) |
 
@@ -551,7 +551,9 @@ este repo no tiene ninguno fuera de esas dos carpetas.
 **La cifra era real pero la palabra «corpus» no**: 202 copias de una misma
 plantilla generada no son diversidad, son una muestra de tamaño ~3. Redactado
 como lo que es. La evidencia buena de esta propiedad **no es mía sino del
-revisor**: 40 HTML legítimos escritos a mano, 0 falsos positivos.
+revisor**: 40 HTML legítimos escritos a mano, 0 falsos positivos — medidos
+contra el `URL_BEARING` **de aquella ronda**, sin `a href` (ver Parte 3 bis-4,
+D-A: la cita no cubre las ampliaciones posteriores).
 
 Lo que sí sostiene mi medición, y sólo eso: sobre esos 210 ficheros el
 **tokenizador** no rompe (209 sin error; el único rechazo es `Svg.html`, un
@@ -569,26 +571,107 @@ Tras los cambios de esta ronda la cifra sigue siendo 209/210.
 «Una URL» prometía más que los 9 pares de `URL_BEARING`. Elegí **cerrarlo aquí**
 en vez de enrutarlo, porque se resuelve con la regla que ya existe:
 
-- **Añadidos** (una sola URL por atributo, misma regla, cero parsing nuevo):
-  `<a href>`, `<a ping>`, `<area href>`, `formaction` de `<button>` y `<input>`,
-  `<input src>`, `<video src>`, `<video poster>`, `<audio src>`, `<track src>`.
+- **Añadidos** (una sola URL por atributo): `<a ping>`, `formaction` de
+  `<button>` y `<input>`, `<input src>`, `<video src>`, `<video poster>`,
+  `<audio src>`, `<track src>`, y —desde la 5ª ronda— `background`.
+  *(`<a href>`/`<area href>`/`cite` se añadieron aquí como recurso remoto y eso
+  fue un error de categoría: ver Parte 3 bis-4, D-A.)*
 - **Rechazados** (llevan varias URLs o una URL embebida en otra sintaxis, y
   analizarlos pediría un mini-parser por sintaxis, o sea volver a perseguir al
   navegador): `srcset`, `imagesrcset` y `<meta http-equiv="refresh">`.
 
-`URL_BEARING` queda documentada como **exhaustiva respecto a lo que la guarda
-promete**: lo que no está en la lista y transporta URLs, se rechaza. Ya no hay
-tercera categoría de «no mirado en silencio».
+*(Rectificado en la 5ª ronda: llamar a la lista «exhaustiva» era falso —`<image>`
+y `background` la desmentían—. Ahora se declara **cerrada sobre tres
+categorías**, con lo que queda fuera enumerado. Ver Parte 3 bis-4, D-B.)*
 
 ### Los cuatro límites anotados por el revisor
 
-Añadidos a la cabecera de `htmlScan.ts`, contados como límites y no como
-defectos: `&#128;` frente a la tabla windows-1252 —**la única divergencia
-conocida en dirección insegura**, y ninguno de esos code points puede formar un
-esquema ni un separador de URL—; `<image>` que el navegador construye como
-`<img>`; ausencia de *longest match* en referencias con nombre; y el cierre de
-RAWTEXT sin exigir delimitador detrás. **Las tres últimas rechazan de más, nunca
-de menos.**
+Añadidos a la cabecera de `htmlScan.ts`. `&#128;` frente a la tabla
+windows-1252 (el revisor verificó carácter a carácter que ninguno de esos 32
+code points puede formar esquema ni separador); ausencia de *longest match* en
+referencias con nombre; y el cierre de RAWTEXT sin exigir delimitador detrás —
+estas dos **rechazan de más, nunca de menos**.
+
+*(El cuarto era `<image>`, y esta redacción lo contaba mal: iba en dirección
+INSEGURA, como decía el propio código. En la 5ª ronda se cerró en vez de
+anotarse — ver Parte 3 bis-4, D-B/D-C.)*
+
+---
+
+## Parte 3 bis-4 · Quinta devolución: una regresión mía y dos frases que no se sostenían
+
+Esta ronda no trae caza nueva. Trae **una regresión que introdujo mi arreglo
+anterior** y dos afirmaciones de este reporte que el código desmentía.
+
+### D-A · el falso positivo que introduje con el mismo argumento con que maté otro
+
+En la ronda anterior metí `a href` en `URL_BEARING` y lo vendí como «misma regla,
+cero parsing nuevo». Es un **error de categoría**: un `<a href>` **no carga
+nada**. La navegación externa en un webview abre el navegador del sistema, que es
+una función intencionada.
+
+Lo medido, y reproduzco la cifra del revisor: **202 de los 209 ficheros
+analizables del árbol disparaban esa regla y sólo ésa** —un pie de página con un
+enlace—. Caían `https://code.visualstudio.com/docs`, `mailto:`, `tel:`,
+`vscode://` y **`command:`, el idiom documentado de los webviews de VS Code**.
+
+Lo que lo hace peor: es **exactamente** el falso positivo que yo maté en
+`<form action="">`, con un argumento que dejé escrito en el propio fichero — *un
+falso positivo en una guarda es la vía por la que alguien acaba desactivándola*.
+Lo introduje en la misma ronda, sin declararlo, mientras citaba esa frase.
+
+**Arreglo.** Los atributos de URL se clasifican ahora por **lo que la URL hace**:
+
+| categoría | atributos | política |
+| --------- | --------- | -------- |
+| `resource` — el navegador carga solo | `script src`, `link href`, `iframe`/`frame src`, `embed src`, `object data`, `source src`, `img src`, `input src`, `video src`/`poster`, `audio src`, `track src`, **`background`** | sólo recurso de la extensión (o peer local donde el cerco lo permite) |
+| `resource` — petición de red con datos, aunque la dispare el usuario | `a ping` (baliza), `form action`, `formaction` | igual de estricto: es exfiltración, no navegación |
+| `navigation` — no carga nada | `a href`, `area href`, `cite` | sólo se prohíben los esquemas que **ejecutan**: `javascript:`, `data:`, `vbscript:` (y su disfraz con TAB) |
+
+```
+regla <a href> disparada sobre los 209 analizables:   ANTES 202  →  AHORA 0
+
+<a href="https://code.visualstudio.com/docs">   pasa      (legítimo)
+<a href="command:aleph0.abrir">                 pasa      (idiom de VS Code)
+<a href="javascript:alert(1)">                  CAE       esquema ejecutable en <a href>
+<a href="java&Tab;script:alert(1)">             CAE       (el disfraz tampoco cuela por aquí)
+<a ping="https://evil.example/p">               CAE       recurso remoto en <a ping>
+```
+
+**Contabilidad, corregida como se me pide**: los «40 HTML legítimos, cero falsos
+positivos» del revisor se midieron contra un `URL_BEARING` **sin** `a href`.
+Citarlos junto a la ronda que lo amplió era evidencia caducada. La cita queda
+acotada a lo que cubría, y la evidencia de esta ronda es la propia: 202 → 0 sobre
+los 209 analizables del árbol, más los casos dirigidos de arriba.
+
+### D-B · «exhaustiva» era falso, y el primer contraejemplo era mío
+
+- **`<image src>`** devolvía `[]` mientras mi propia cabecera admitía que el
+  navegador lo construye como `<img>`. Un atributo que porta URL, mirado en
+  silencio. **Cerrado en el tokenizador** con un renombre de una línea
+  (`image` → `img`) en vez de dejarlo anotado: rechazaba **de menos**, y eso no
+  se documenta, se arregla.
+- **`background`** (en `body`, `table`, `thead`, `tbody`, `tfoot`, `tr`, `td`,
+  `th`) lo cargan los tres navegadores como imagen de fondo, y no estaba ni en
+  `URL_BEARING` ni entre los no soportados. **Añadido** como `resource`.
+
+Y la palabra, corregida: la lista **ya no se declara exhaustiva sobre todo el
+HTML** —no se puede demostrar— sino **cerrada sobre tres categorías**: carga de
+subrecursos, destinos de navegación y envío de formularios. Lo que porta URL y
+queda fuera está **enumerado y rechazado** (`srcset`, `imagesrcset`,
+`meta http-equiv=refresh`, `srcdoc`), no mirado en silencio.
+
+### D-C · el reporte decía lo contrario que el código
+
+Escribí que `&#128;`/windows-1252 era «la única divergencia conocida en dirección
+insegura» y que las otras tres «rechazan de más, nunca de menos», cuando
+`htmlScan.ts` decía de `<image>`: *«va en dirección insegura sólo para
+`img-src`»*. **Eran dos, no una**, y la ejecución le daba la razón al código.
+
+Es, otra vez, la lección de esta ola: **el código lo sabía y el reporte no**. Con
+`<image>` cerrado la frase vuelve a ser cierta —la divergencia insegura conocida
+es una sola, la tabla windows-1252, que el revisor verificó carácter a carácter—
+pero lo es porque se arregló el código, no porque se reescribiera la frase.
 
 ---
 
@@ -694,21 +777,23 @@ divergencia.
 
 Medidos con `npx jest --coverage=false` en el worktree.
 
-| | antes (`9f0a5d7`) | 1ª (`4c2453f`) | 2ª DD4/DD5 (`8ca02ee`) | 3ª D-1..D-4 (`453a422`) | 4ª D-1/D-3 (`HEAD`) |
-| - | - | - | - | - | - |
-| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
-| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** | **5 failed**, 1 skipped, 226 passed, **232** | **5 failed**, 1 skipped, 234 passed, **240** |
-| `webviewCsp.test.ts` | 62 | 87 | 102 | 115 | **123** |
+| | antes (`9f0a5d7`) | 1ª (`4c2453f`) | 2ª DD4/DD5 (`8ca02ee`) | 3ª D-1..D-4 (`453a422`) | 4ª D-1/D-3 (`84b0d77`) | 5ª D-A/D-B (`HEAD`) |
+| - | - | - | - | - | - | - |
+| Test Suites | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** | 1 failed, 8 passed, **9** |
+| Tests | **5 failed**, 1 skipped, 173 passed, **179** | **5 failed**, 1 skipped, 198 passed, **204** | **5 failed**, 1 skipped, 213 passed, **219** | **5 failed**, 1 skipped, 226 passed, **232** | **5 failed**, 1 skipped, 234 passed, **240** | **5 failed**, 1 skipped, 239 passed, **245** |
+| `webviewCsp.test.ts` | 62 | 87 | 102 | 115 | 123 | **128** |
 
-**+61 tests sobre el baseline, +61 verdes, 0 rojos nuevos.** Ninguno de los 8
+**+66 tests sobre el baseline, +66 verdes, 0 rojos nuevos.** Ninguno de los 8
 errores de `tsc` está en `src/webview/`.
 
 Falsos positivos del **tokenizador**: 210 ficheros HTML del árbol (202 generados
 por istanbul en `coverage/`, 8 de `node_modules/`, **0 propios** — el repo no
 tiene HTML fuera de ahí), **209 sin error**; el único rechazo es `Svg.html`,
 fixture sobre SVG. **No es un corpus diverso** y así se dice: la evidencia buena
-de esta propiedad es la del revisor (40 HTML legítimos escritos a mano, 0 falsos
-positivos).
+de esta propiedad es la del revisor (40 HTML legítimos a mano, 0 falsos
+positivos, medidos contra el `URL_BEARING` previo a `a href`). La medida propia
+de la 5ª ronda sí es de la política: la regla `<a href>` pasó de dispararse en
+**202 de 209** ficheros analizables a **0**.
 
 Los **5 rojos históricos** son exactamente los mismos antes y después, todos en
 el mismo fichero de integración, **ninguno tocado por este WP**:
