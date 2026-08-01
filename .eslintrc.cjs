@@ -89,6 +89,13 @@ module.exports = {
         'no-restricted-globals': ['error', {
             name: 'console',
             message: 'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
+            // NO se restringe `globalThis` a secas, y se probó: cerraría también
+            // `Reflect.get(globalThis, 'console')`, pero hay un uso LEGÍTIMO en
+            // el árbol — `fetch.bind(globalThis)` en `src/mcp/client.ts:71`, que
+            // el fetch nativo exige para invocarse desmembrado. Restringirlo
+            // rompía `npm run lint` (1 error) o exigía el primer
+            // `eslint-disable` del árbol. `Reflect.get` queda como límite
+            // declarado; el precio de cerrarlo es peor que el hueco.
         }],
         'no-restricted-properties': [
             'error',
@@ -118,16 +125,54 @@ module.exports = {
         'no-restricted-syntax': [
             'error',
             {
-                selector: "MemberExpression[object.name='process'][property.name=/^(stdout|stderr)$/]",
+                // `process.stdout.write` y su forma computada `process['stdout']`.
+                selector:
+                    "MemberExpression[object.name='process'][property.name=/^(stdout|stderr)$/], " +
+                    "MemberExpression[object.name='process'][property.value=/^(stdout|stderr)$/]",
                 message:
                     'process.stdout/stderr escriben en la consola del Extension Host. ' +
                     'Usa el canal estructurado: getLogger() de src/core/logging (WP-V71).'
             },
             {
-                selector: 'VariableDeclarator[init.name=/^(globalThis|global|window|self)$/]',
+                // Aliasar por DECLARACIÓN: `const p = process`, `const {stdout} = process`,
+                // `const g = globalThis`, `const {console} = globalThis`.
+                selector: 'VariableDeclarator[init.name=/^(globalThis|global|window|self|process)$/]',
                 message:
-                    'Aliasar el objeto global elude el gate del log (WP-V71). ' +
+                    'Aliasar el objeto global o `process` elude el gate del log (WP-V71). ' +
                     'Si lo necesitas de verdad, justifícalo con un eslint-disable a la vista.'
+            },
+            {
+                // …y por ASIGNACIÓN: `let g; g = globalThis`. La 2ª devolución
+                // señaló que había cerrado la declaración y no la asignación.
+                selector: 'AssignmentExpression[right.name=/^(globalThis|global|window|self|process)$/]',
+                message:
+                    'Aliasar el objeto global o `process` elude el gate del log (WP-V71). ' +
+                    'Si lo necesitas de verdad, justifícalo con un eslint-disable a la vista.'
+            },
+            {
+                // `import { stdout } from 'node:process'` — que además es LO
+                // IDIOMÁTICO, así que dejarlo fuera era el hueco más probable.
+                selector: "ImportDeclaration[source.value=/^(node:)?process$/]",
+                message:
+                    'Importar de `process` da acceso a stdout/stderr por la puerta de atrás (WP-V71). ' +
+                    'Usa el canal estructurado: getLogger() de src/core/logging.'
+            },
+            {
+                selector: "CallExpression[callee.name='require'][arguments.0.value=/^(node:)?process$/]",
+                message:
+                    'Requerir `process` da acceso a stdout/stderr por la puerta de atrás (WP-V71). ' +
+                    'Usa el canal estructurado: getLogger() de src/core/logging.'
+            },
+            {
+                // El cast anula `object.name`: `(process as any)['stdout']` se
+                // colaba por debajo de los selectores de arriba. Medido: 0 casts
+                // legítimos sobre estos objetos en `src/`.
+                selector:
+                    "MemberExpression[object.type='TSAsExpression']" +
+                    '[object.expression.name=/^(globalThis|global|window|self|process)$/]',
+                message:
+                    'Castear el objeto global o `process` para alcanzar console/stdout elude el gate (WP-V71). ' +
+                    'Usa el canal estructurado: getLogger() de src/core/logging.'
             }
         ]
     },

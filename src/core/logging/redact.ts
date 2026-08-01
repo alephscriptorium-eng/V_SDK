@@ -33,46 +33,74 @@
  *   L4 · `-p valor` (bandera corta): NO se tapa a propósito — en medio
  *        ecosistema `-p` es «port» (`docker run -p 8080:80`), y taparlo sería
  *        una fábrica de falsos positivos. Las formas largas sí se tapan.
- *   L5 · secreto en prosa sin etiqueta: «la clave es hunter2» se tapa;
- *        «hunter2» a secas, no.
+ *   L5 · secreto en prosa **sin delimitador**: `clave: hunter2` y `clave=hunter2`
+ *        SÍ se tapan (hay `:` o `=`); «la clave es hunter2» NO — reconocer que
+ *        «es» delimita exigiría analizar lenguaje natural.
+ *        (Corregido en la 2ª devolución: la cabecera afirmaba que esta forma se
+ *        tapaba, y era falso. Ahora el test fija el límite donde de verdad
+ *        está, no en el lado que nadie cerraría nunca.)
+ *   L6 · **sobre-redacción** residual: la clave `claveDeOrdenacion` se tapa
+ *        aunque no sea un secreto. `REFERENCE_SUFFIXES` cubre los descriptores
+ *        frecuentes, pero no hay lista completa. Ciega, no fuga: es el lado
+ *        seguro del error, y se declara en vez de venderse como «cero falsos
+ *        positivos».
  */
 
 /** Marca visible de valor tapado. Se elige un literal improbable en datos reales. */
 export const REDACTED = '«redactado»';
 
 /**
- * Palabras que, como **token completo** de una clave, marcan su valor secreto.
+ * ── EL VOCABULARIO. Fuente ÚNICA. ────────────────────────────────────────
+ *
+ * Términos compuestos: valen como palabra suelta y **también pegados**
+ * (`apikey`, `accesstoken`, `privatekey`). De esta lista salen a la vez el
+ * camino de CLAVES y los cuatro caminos de CADENA — literalmente la misma
+ * constante, no dos listas que se parecen.
+ *
+ * Historia de por qué está así (dos devoluciones):
+ *  - 1ª: había cuatro listas paralelas; `?auth=` se tapaba y `--auth` no.
+ *    Se unificaron los caminos de cadena.
+ *  - 2ª: el camino de CLAVE seguía siendo una lista aparte, y como partía por
+ *    palabras no veía los compuestos pegados: `apiKey` se tapaba y `apikey`
+ *    fugaba **en la misma línea**. El mismo defecto un piso más abajo.
+ *    Ahora el camino de clave prueba estos términos ANCLADOS contra cada
+ *    palabra, así que `apikey` casa por `api[-_]?keys?` y `author` sigue sin
+ *    casar por `auth` (el anclaje preserva la frontera de palabra).
  *
  * Incluye castellano a propósito: este árbol comenta, documenta y planifica en
- * castellano, así que sus datos también lo harán. En la primera versión
- * `contraseña` fugaba y `secreto` se salvaba por casualidad (por contener
- * «secret»); eso no es criterio, es coincidencia.
- *
- * `author`/`authorship` no necesitan exclusión: son palabras distintas de
- * `auth` y la comparación es por palabra.
+ * castellano, así que sus datos también lo harán.
  */
-const SECRET_WORDS = new Set([
+const COMPOUND_SECRET_TERMS = [
     // inglés
-    'password', 'passwords', 'passwd', 'pass', 'passphrase', 'passphrases',
-    'secret', 'secrets', 'token', 'tokens', 'jwt',
-    'credential', 'credentials', 'cookie', 'cookies',
-    'authorization', 'auth', 'bearer', 'signature', 'signatures',
-    'otp', 'totp', 'seed', 'mnemonic',
+    'pass(?:words?|wds?|phrases?)?',
+    'secrets?', 'tokens?', 'jwt',
+    'api[-_]?keys?', 'access[-_]?(?:keys?|tokens?)',
+    'private[-_]?keys?', 'signing[-_]?keys?', 'session[-_]?keys?',
+    'secret[-_]?keys?', 'encryption[-_]?keys?', 'master[-_]?keys?',
+    'credentials?', 'cookies?', 'signatures?',
+    'authorization', 'auth', 'bearer',
+    'otp', 'totp', 'mnemonic', 'seed',
     // castellano
-    'clave', 'claves', 'contraseña', 'contraseñas', 'contrasena', 'contrasenas',
-    'contrasenya', 'contrasenyas', 'secreto', 'secretos',
-    'credencial', 'credenciales', 'firma', 'firmas', 'pwd', 'pin'
-]);
+    'secretos?', 'credenciales', 'credencial',
+    'claves?', 'contrase(?:ñ|n|ny)as?', 'firmas?', 'pwd', 'pin'
+];
 
 /**
- * Palabras que solo son secretas cuando son la clave **entera** (`key`, `sig`)
- * o el nombre completo de un parámetro o bandera (`?key=`, `--sig=`).
+ * Términos que solo son secretos cuando son el nombre **completo**: la clave
+ * entera (`{ key: … }`), el parámetro entero (`?key=`) o la bandera entera
+ * (`--sig=`).
  *
- * Como token suelto dentro de una clave compuesta no bastan: `settingKey` y
+ * Como palabra suelta dentro de una clave compuesta no bastan: `settingKey` y
  * `configKey` son nombres de ajuste, no credenciales — y este árbol loguea
  * `settingKey` de verdad (`src/views/HackerConfigPanelProvider.ts`).
  */
-const STANDALONE_SECRET_WORDS = new Set(['key', 'keys', 'sig']);
+const STANDALONE_SECRET_TERMS = ['keys?', 'sig'];
+
+/** Una palabra de clave es secreta si casa ENTERA con un término compuesto. */
+const WORD_IS_SECRET = new RegExp(`^(?:${COMPOUND_SECRET_TERMS.join('|')})$`, 'i');
+
+/** …o si es uno de los términos que solo valen como nombre completo. */
+const WORD_IS_STANDALONE = new RegExp(`^(?:${STANDALONE_SECRET_TERMS.join('|')})$`, 'i');
 
 /**
  * Calificadores que convierten `key` en secreto: `apiKey`, `privateKey`,
@@ -92,7 +120,11 @@ const KEY_QUALIFIERS = new Set([
  * para proteger uno que no.
  */
 const REFERENCE_SUFFIXES = new Set([
-    'env', 'envvar', 'name', 'varname', 'var', 'label', 'field'
+    'env', 'envvar', 'name', 'varname', 'var', 'label', 'field',
+    // 2ª devolución (D-6): estos sufijos describen el campo, no lo contienen.
+    // Sin ellos se cegaban `authorizationDocsUrl` y `cookieBannerShown`.
+    'url', 'uri', 'docs', 'doc', 'pattern', 'type', 'format', 'mode',
+    'policy', 'enabled', 'disabled', 'shown', 'visible', 'required', 'count'
 ]);
 
 /**
@@ -121,17 +153,19 @@ export function isSecretKey(key: string): boolean {
     }
 
     // La clave ENTERA es `key` / `sig`.
-    if (words.length === 1 && STANDALONE_SECRET_WORDS.has(words[0])) {
+    if (words.length === 1 && WORD_IS_STANDALONE.test(words[0])) {
         return true;
     }
 
-    // Alguna palabra es secreta por sí misma (`auth`, `token`, `contraseña`…).
-    if (words.some(word => SECRET_WORDS.has(word))) {
+    // Alguna palabra casa entera con un término del vocabulario. Al estar
+    // ANCLADO, `apikey` casa (por `api[-_]?keys?`) y `author` no casa por
+    // `auth` — que es justo lo que se quiere de las dos.
+    if (words.some(word => WORD_IS_SECRET.test(word))) {
         return true;
     }
 
     // `key` calificado: apiKey / privateKey / accessKey, pero NO settingKey.
-    if (words.some(word => STANDALONE_SECRET_WORDS.has(word))) {
+    if (words.some(word => WORD_IS_STANDALONE.test(word))) {
         return words.some(word => KEY_QUALIFIERS.has(word));
     }
 
@@ -139,23 +173,10 @@ export function isSecretKey(key: string): boolean {
 }
 
 /**
- * El MISMO vocabulario en forma de alternancia, para los caminos de texto
- * libre. No es una lista paralela: es el criterio de arriba escrito en regex.
+ * El MISMO vocabulario para los caminos de texto libre. No es una lista
+ * paralela: son literalmente las dos constantes de arriba concatenadas.
  */
-const SECRET_TERM_SOURCE = [
-    'pass(?:words?|wds?|phrases?)?',
-    'secrets?', 'secretos?',
-    'tokens?', 'jwt',
-    'api[-_]?keys?', 'access[-_]?(?:keys?|tokens?)',
-    'private[-_]?keys?', 'signing[-_]?keys?', 'session[-_]?keys?',
-    'secret[-_]?keys?', 'encryption[-_]?keys?',
-    'credentials?', 'credenciales', 'credencial',
-    'authorization', 'auth', 'bearer',
-    'cookies?', 'signatures?', 'sig',
-    'claves?', 'contrase(?:ñ|n|ny)as?',
-    'firmas?', 'pwd', 'pin', 'otp', 'totp', 'mnemonic', 'seed',
-    'keys?'
-].join('|');
+const SECRET_TERM_SOURCE = [...COMPOUND_SECRET_TERMS, ...STANDALONE_SECRET_TERMS].join('|');
 
 /** `scheme://usuario:contraseña@host` → las credenciales inline de una URL. */
 const URL_CREDENTIALS = /(\b[a-z][a-z0-9+.-]*:\/\/)[^/\s:@]+:[^/\s@]+@/gi;
@@ -164,13 +185,40 @@ const URL_CREDENTIALS = /(\b[a-z][a-z0-9+.-]*:\/\/)[^/\s:@]+:[^/\s@]+@/gi;
 const QUERY_SECRET = new RegExp(`([?&](?:${SECRET_TERM_SOURCE})=)[^&\\s"'\`]+`, 'gi');
 
 /**
- * Cabecera de autorización HTTP en cadena libre. Cubre los esquemas usuales y
- * no solo `Bearer`: `Basic` viaja con `usuario:contraseña` en base64 y fugaba
- * entero. El camino es real — `src/libs/alephscript-client.ts` loguea
- * `error.message` y `src/core/AracneBotService.ts` loguea `data` del mesh,
- * ambas cadenas libres que pueden traer la cabecera dentro.
+ * `etiqueta: valor` en cadena libre — la forma que faltaba.
+ *
+ * 2ª devolución (D-2): ningún patrón cubría los dos puntos; todos exigían `=`,
+ * `--` o `?`. Así fugaban `password: hunter2`, `contraseña: hunter2` y **el
+ * JSON embebido en una cadena** (`{"token":"abc"}`), que es justo lo que llega
+ * por `error.message` en `src/libs/alephscript-client.ts:125`.
+ *
+ * El valor se corta en el primer separador estructural para no comerse el
+ * resto del mensaje.
  */
-const AUTH_SCHEME = /\b(bearer|basic|digest|negotiate)\s+([A-Za-z0-9._~+/=-]{8,})/gi;
+const LABELED_SECRET = new RegExp(
+    `(["']?\\b(?:${SECRET_TERM_SOURCE})["']?\\s*:\\s*)(?:"[^"]*"|'[^']*'|[^\\s,;}\\])]+)`,
+    'gi'
+);
+
+/**
+ * Cabecera de autorización HTTP donde la credencial va **pegada al esquema**.
+ * `Basic` viaja con `usuario:contraseña` en base64 y fugaba entero.
+ *
+ * `Digest` **no** está aquí: en Digest la credencial no va pegada al esquema
+ * sino en parámetros (`response="…"`), así que este patrón tapaba el nombre de
+ * usuario y dejaba pasar el hash — prometía una protección que no daba
+ * (2ª devolución, D-7). Va aparte, abajo.
+ */
+const AUTH_SCHEME = /\b(bearer|basic|negotiate)\s+([A-Za-z0-9._~+/=-]{8,})/gi;
+
+/**
+ * `Digest username="ada", response="0f1e…", nonce="…"` — se tapan TODOS los
+ * parámetros, que es donde vive de verdad la credencial. Solo dispara cuando
+ * al esquema le siguen pares `clave=valor`, para no arrasar la palabra
+ * «digest» en prosa.
+ */
+const DIGEST_HEADER =
+    /\b(digest)\s+((?:[a-z]+\s*=\s*(?:"[^"]*"|[^,\s]+))(?:\s*,\s*[a-z]+\s*=\s*(?:"[^"]*"|[^,\s]+))*)/gi;
 
 /**
  * Banderas de línea de comandos en forma larga: `--token X`, `--password=X`.
@@ -247,9 +295,11 @@ export function redactString(text: string): string {
     out = out.replace(PEM_BLOCK, `-----BEGIN PRIVATE KEY----- ${REDACTED} -----END PRIVATE KEY-----`);
     out = out.replace(URL_CREDENTIALS, `$1${REDACTED}@`);
     out = out.replace(QUERY_SECRET, `$1${REDACTED}`);
+    out = out.replace(DIGEST_HEADER, `$1 ${REDACTED}`);
     out = out.replace(AUTH_SCHEME, `$1 ${REDACTED}`);
     out = out.replace(CLI_SECRET_FLAG, `$1${REDACTED}`);
     out = out.replace(ENV_ASSIGNMENT, `$1$2${REDACTED}`);
+    out = out.replace(LABELED_SECRET, `$1${REDACTED}`);
     out = maskHomePath(out);
     return out;
 }

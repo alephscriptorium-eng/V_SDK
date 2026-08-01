@@ -20,6 +20,10 @@ describe('WP-V71 · redact — claves secretas', () => {
         'privateKey', 'private_key', 'sessionKey', 'signature', 'otp',
         // la clave ENTERA
         'key', 'sig',
+        // compuestos PEGADOS, sin separador ni camelCase (2ª devolución, D-1):
+        // `apiKey` se tapaba y `apikey` fugaba en la misma línea
+        'apikey', 'apikeys', 'accesstoken', 'accesskey', 'privatekey',
+        'sessionkey', 'secretkey', 'signingkey', 'encryptionkey', 'masterkey',
         // castellano — el árbol comenta y documenta en castellano (devolución D4)
         'clave', 'claves', 'contraseña', 'contrasena', 'contrasenya',
         'credenciales', 'credencial', 'secreto', 'pwd', 'pin', 'firma'
@@ -34,6 +38,8 @@ describe('WP-V71 · redact — claves secretas', () => {
         'settingKey', 'configKey', 'keyName',
         // la clave nombra DÓNDE vive el valor, no el valor (devolución D5)
         'tokenEnv', 'repartoPolicyEnv', 'tokenName',
+        // descriptores, no valores (2ª devolución, D-6)
+        'authorizationDocsUrl', 'cookieBannerShown', 'tokenPattern', 'authType',
         // subcadenas que NO son la palabra: por qué se compara por palabras
         'pingInterval', 'spinner', 'passengers', 'pinnedAt', 'monkey', 'turnkey'
     ])('NO trata «%s» como secreta', key => {
@@ -89,11 +95,16 @@ describe('WP-V71 · redact — cadenas libres', () => {
         expect(out).toContain('page=2');
     });
 
-    it.each(['Bearer', 'Basic', 'Digest', 'Negotiate'])(
-        'tapa la cabecera de autorización con esquema %s',
+    it.each(['Bearer', 'Basic', 'Negotiate'])(
+        'tapa la cabecera de autorización con esquema %s (credencial pegada al esquema)',
         esquema => {
-            // `Basic` fugaba entero en la primera versión, y viaja con
-            // usuario:contraseña en base64 (devolución D4).
+            // `Basic` fugaba entero en la 1ª versión, y viaja con
+            // usuario:contraseña en base64 (1ª devolución, D4).
+            //
+            // `Digest` NO está en esta lista a propósito: su credencial no va
+            // pegada al esquema sino en parámetros, así que tratarlo aquí
+            // tapaba el usuario y dejaba pasar el hash (2ª devolución, D-7).
+            // Tiene su propio caso más abajo.
             const out = redactString(`Authorization: ${esquema} eyJhbGciOiSECRETOaaa`);
             expect(out).not.toContain('SECRETO');
         }
@@ -132,10 +143,45 @@ describe('WP-V71 · redact — cadenas libres', () => {
     });
 
     it('el vocabulario es el MISMO en query, bandera y entorno', () => {
-        // La inconsistencia que señaló la devolución: `?auth=` se tapaba pero
-        // `--auth` no. Los tres caminos derivan ya de una sola fuente.
+        // La inconsistencia que señaló la 1ª devolución: `?auth=` se tapaba
+        // pero `--auth` no. Los caminos derivan ya de una sola fuente.
         for (const forma of ['http://m/c?auth=SECRETO', 'node a.js --auth SECRETO', 'auth=SECRETO node a.js']) {
             expect(redactString(forma)).not.toContain('SECRETO');
+        }
+    });
+
+    it('tapa `etiqueta: valor` — incluido el JSON embebido en cadena libre', () => {
+        // 2ª devolución (D-2): ningún patrón cubría los dos puntos. Llega por
+        // `error.message` (src/libs/alephscript-client.ts:125).
+        for (const forma of [
+            'password: SECRETO',
+            'contraseña: SECRETO',
+            'clave: SECRETO',
+            'fallo al parsear {"token":"SECRETO","page":2}',
+            "Authorization: SECRETOxyz"
+        ]) {
+            expect(redactString(forma)).not.toContain('SECRETO');
+        }
+    });
+
+    it('D-7 · en `Digest` se tapan los PARÁMETROS, que es donde vive el hash', () => {
+        // El patrón de esquema tapaba el usuario y dejaba pasar `response`.
+        const out = redactString('Authorization: Digest username="ada", response="0f1e2d3c4b5a", nonce="xyz"');
+        expect(out).not.toContain('0f1e2d3c4b5a');
+        expect(out).not.toContain('ada');
+    });
+
+    it('«digest» en prosa NO arrasa la línea', () => {
+        expect(redactString('el message digest quedó calculado')).toBe('el message digest quedó calculado');
+    });
+
+    it('EL MISMO término se comporta igual por los DOS caminos (clave y cadena)', () => {
+        // Este es el invariante que las dos devoluciones han atacado: que el
+        // camino de CLAVE y el de CADENA no discrepen. Se prueba en pareja.
+        for (const termino of ['apikey', 'apiKey', 'accesstoken', 'privatekey', 'auth', 'clave', 'pwd']) {
+            expect(isSecretKey(termino)).toBe(true);
+            expect(redactString(`?${termino}=SECRETO`)).not.toContain('SECRETO');
+            expect(redactValue({ [termino]: 'SECRETO' })).toEqual({ [termino]: REDACTED });
         }
     });
 
@@ -185,8 +231,27 @@ describe('WP-V71 · redact — LÍMITES CONOCIDOS (declarados, no tapados)', () 
         expect(redactString('docker run -p 8080:80 img')).toBe('docker run -p 8080:80 img');
     });
 
-    it('L5 · secreto en prosa sin etiqueta', () => {
-        expect(redactString('me dijo hunter2 y colgó')).toContain('hunter2');
+    it('L5 · prosa SIN delimitador: «la clave es hunter2» fuga', () => {
+        // 2ª devolución (D-2): la cabecera afirmaba que ESTA forma se tapaba, y
+        // era falso; y el test solo fijaba el lado que nadie cerraría jamás
+        // («hunter2» a secas), así que cerrar el caso real no ponía rojo nada.
+        // Ahora el límite se fija DONDE ESTÁ: hay la palabra «clave», pero no
+        // hay `:` ni `=` que la ligue al valor.
+        expect(redactString('la clave es hunter2')).toContain('hunter2');
+
+        // Y se fija el borde exacto: con delimitador SÍ se tapa. Si alguien
+        // cierra el caso de arriba, este par deja de ser coherente y el
+        // primero falla — que es lo que debe pasar.
+        expect(redactString('la clave: hunter2')).not.toContain('hunter2');
+        expect(redactString('clave=hunter2')).not.toContain('hunter2');
+    });
+
+    it('L6 · sobre-redacción residual: ciega, no fuga', () => {
+        // `REFERENCE_SUFFIXES` cubre los descriptores frecuentes, pero no hay
+        // lista completa de sufijos «esto describe, no contiene».
+        expect(isSecretKey('claveDeOrdenacion')).toBe(true); // no es un secreto
+        // El lado seguro del error: se declara, no se vende como «cero falsos
+        // positivos».
     });
 });
 
