@@ -64,11 +64,41 @@ jobs:
       - name: Probe V08 (parser real)
         run: npm run probe:v08
 
-      # `continue-on-error`: el resultado de este paso NO condiciona el job.
-      # Declarado también en README §Qué verifica el CI.
-      - name: Test (legado — soft, no condiciona el resultado)
-        continue-on-error: true
-        run: npm test --if-present
+      # WP-V93 — aquí había UN paso blando: `npm test --if-present` con
+      # `continue-on-error: true`. Estaba declarado y documentado, y aun así no
+      # vigilaba nada, por tres motivos que se acumulaban:
+      #   · su resultado no condicionaba el job (`continue-on-error`);
+      #   · el gate de rojos por nombre NO se ejecutaba en ningún paso, o sea
+      #     que todo ese instrumento tenía fuerza sólo en la máquina de quien
+      #     se acordara de invocarlo;
+      #   · y el paso estaba permanentemente en rojo por deuda de cobertura,
+      #     con lo que su aportación real era cero.
+      # Se parte en DOS pasos que miden cosas distintas y BLOQUEAN los dos.
+      # En este flujo ya no queda ningún `continue-on-error`.
+      #
+      # También desaparece el `--if-present`: si el script `test` dejara de
+      # existir en package.json, ese flag convertiría su ausencia en un verde.
+      # Sin él, desaparecer la suite rompe el job, que es lo correcto.
+
+      # (1) EL GATE. Compara el conjunto de tests en rojo POR NOMBRE contra
+      # `scripts/rojos-jest.baseline.txt`, y falla en las DOS direcciones: un
+      # rojo nuevo y un rojo declarado que desaparece. Corre jest él mismo —no
+      # hay JSON intermedio que pueda quedarse rancio— y lo corre con
+      # `--coverage=false`, que fuerza el propio instrumento: con cobertura
+      # activa, un fallo de umbral no deja rastro CON NOMBRE en el JSON de jest
+      # y queda tapado por cualquier rojo. Por eso la cobertura se mide aparte,
+      # en el paso siguiente, con sus propios números.
+      - name: Gate · conjunto de rojos por nombre (BLOQUEA)
+        run: node scripts/rojos-jest.mjs --gate
+
+      # (2) EL TRINQUETE DE COBERTURA. Vuelve a correr la suite, ahora
+      # instrumentada, y aplica los umbrales de `jest.config.js`, que desde
+      # WP-V93 son el SUELO MEDIDO (~26 %) y no la meta (85 %). Este paso no
+      # exige subir la cobertura: exige que NO BAJE. Es una segunda corrida
+      # completa de la suite y su precio en tiempo está medido en
+      # `plan/REPORTES/WP-V93-ci-vigila.md` §5.
+      - name: Trinquete de cobertura (BLOQUEA si baja)
+        run: npm test
 
       - name: Package v1 .vsix
         run: npm run package:v1
