@@ -221,9 +221,12 @@ export class McpConfigurationManager {
      * `treeViews/socketsTreeView.ts:85,232`.
      *
      * Y devolver `''` **tampoco salva la superficie**: `socketsTreeView.ts:92`
-     * convierte el vacío en `'localhost:3000'` y `configsTreeView.ts:430` lo
-     * escribe **dentro del fichero de configuración que genera**. El invento
-     * ocurre con o sin fichero de ópera.
+     * convierte el vacío en `'localhost:3000'` (y el caso de arriba lo pinta
+     * como `localhost:7777`, sin esquema). `configsTreeView.ts:428-430`
+     * **escribe** este valor en el fichero que genera, en 2 de sus 3
+     * plantillas: lo que persiste es el retorno de este método, y sólo cae al
+     * literal `"ws://localhost:3000"` cuando no hay config cargada.
+     * El invento ocurre con o sin fichero de ópera.
      *
      * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
      * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca

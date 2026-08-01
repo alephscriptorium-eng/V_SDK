@@ -9,13 +9,13 @@
 | commits | `b97151b` (obra) · `82ba4b2` (docs) · este reporte |
 | tipo(s) de WP | **estructural** (espacio de nombres) + **evidencia** (acta) — `plan/PRACTICAS.md:82-88` |
 | riesgo de revisión | **independiente** — clase contrato/configuración (`plan/PRACTICAS.md:105-116` §4.3) |
-| `VEREDICTO_REVISOR` | **DEVUELTO 2 veces** · 1ª: D1-D6 → §11 (D1 **aceptada**) · 2ª: DD-1…DD-6 → **§12**; ⏳ pendiente de contrarrevisión final acotada a DD-1/DD-2 |
+| `VEREDICTO_REVISOR` | **DEVUELTO 3 veces** · 1ª: D1-D6 → §11 · 2ª: DD-1…DD-6 → §12 · 3ª (cierre, sólo documentación): D-1/D-2/D-3 → **§13**. Cierre verificado por el orquestador |
 
-> ⚠️ **Este reporte se lee de atrás adelante: §12 manda, luego §11, luego 0-10.** La devolución tumbó dos
+> ⚠️ **Este reporte se lee de atrás adelante: §13 manda, luego §12, §11 y 0-10.** La devolución tumbó dos
 > afirmaciones centrales de las secciones 1-10. **No se ha borrado nada**:
 > cada frase caída lleva marca `⛔ CAÍDA (D-n)` en su sitio y el texto
 > corregido vive en **§11** y, lo que §11 dejó incompleto, en **§12**. Las
-> cifras y afirmaciones vigentes son las de **§12**.
+> cifras y afirmaciones vigentes son las de **§13** (y §12 donde §13 no lo toca).
 
 ---
 
@@ -1312,8 +1312,10 @@ $ grep -rniE "no inventa|sin inventar|⏳ honesto|marca ⏳|nada inventado" \
 | `src/config/ziguratSettings.ts:3` | «sin inventar hosts/puertos» | ✅ cierto para ese módulo |
 | `src/core/mcpConfigurationManager.ts` | «no inventa localhost:puerto» | ⛔ era D2 → ya corregido |
 
-**Una sola promesa heredada falsa, y era DD-1.** El resto se sostiene con
-prueba. Lo dejo escrito para que la contrarrevisión no tenga que barrerlo.
+> ⛔ **CAÍDA (D-1)** — el barrido **no estaba cerrado**: mi propio patrón
+> devuelve **23 líneas en 15 ficheros** y esta tabla cubría 7. Faltaba una
+> octava afirmación falsa, en el docblock de `AracneBotService` que este WP
+> editó. **Eran dos heredadas falsas, no una.** Tabla vigente en **§13.4**.
 
 ## 12.8 · Nada roto — re-verificación tras DD-1…DD-6
 
@@ -1405,8 +1407,8 @@ de jest, va a dar falsos rojos por esto.
 
 | # | hallazgo | estado |
 | - | -------- | ------ |
-| **H-3** | hosts literales en `src/`: **7 sitios** (era «6», antes «3 líneas») | ampliado 2ª vez (DD-4) → **V31** |
-| **H-10** | `getDefaultSocketUrl()` inventa host. **6 llamadas** (no 8), definición `:223`. **Y devolver `''` no salva**: `socketsTreeView.ts:92` pinta `localhost:3000` y `configsTreeView.ts:430` lo **escribe** en el fichero generado. Ocurre **con o sin ópera** | ampliado (DD-2, DD-6) → **V31** |
+| **H-3** | hosts literales en `src/`: **7 sitios** (era «6», antes «3 líneas»). ⚠️ la mención «6 sitios» de §11.8 quedó sin marca: **el bueno es 7** | ampliado 2ª vez (DD-4) → **V31** |
+| **H-10** | ⚠️ *líneas rancias, vigentes en §13.6* — `getDefaultSocketUrl()` inventa host. **6 llamadas** (no 8), definición ~~`:223`~~ → `:235`. **Y devolver `''` no salva**: `socketsTreeView.ts:92` pinta `localhost:3000` y `configsTreeView.ts:430` lo **escribe** en el fichero generado. Ocurre **con o sin ópera** | ampliado (DD-2, DD-6) → **V31** |
 | **H-15** | **la suite jest no es determinista**: ≥1 test con umbral de reloj (`tests/basic.test.ts:32`) flapea bajo carga; ficheros idénticos a la base | **nuevo** (§12.11) → **V48 / V76**, y aviso al gate R7-V |
 | **H-14** | **`src/mcp/` entero es inalcanzable**: cero importadores desde `src/`; sus únicos consumidores están en `tests/`. Módulo completo de superficie muerta — incluida la resolución de endpoint que V28 entregó | **nuevo** (DD-3) → poda / **V28-revisita** |
 
@@ -1426,4 +1428,169 @@ H-1, H-2, H-4 … H-9, H-11 … H-13 siguen como estaban.
 
 ---
 
-— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la 2ª devolución
+— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la 2ª devolución *(§13 cierra lo que aquí quedó corto)*
+
+---
+
+# 13 · Corrección de cierre (D-1 · D-2 · D-3)
+
+| dato | valor |
+| ---- | ----- |
+| Naturaleza | **documentación pura — cero conducta**, confirmado por el revisor |
+| Qué resiste | DD-2 (3 variantes exactas), DD-3 entero, DD-4 (7 sitios, sin octavo), DD-5, DD-6, alcance limpio, y el flapeo (11 corridas del revisor: `5,5,5,6,7,5,5,5,5,5,5`) |
+| Citas de línea | **al commit de cierre**. Donde se puede, la cita es por **símbolo**; la línea acompaña, no es la referencia (lección de D-2) |
+
+## 13.1 · D-1 — había una octava, y estaba en el docblock que edité
+
+**Mi §12.7 afirmó un barrido cerrado y no lo estaba.** Mi propio patrón
+devuelve **23 líneas en 15 ficheros** (el revisor lo acotó a 12/7 con alcance
+más estrecho; con el mío es peor). **Mi tabla cubría 7 filas.** Y la que
+faltaba es DD-1 otra vez, letra por letra:
+
+**`src/core/AracneBotService.ts:9`** (antes de esta corrección) —
+`* Sin settings → ⏳ honesto, sin crash.`
+
+Edité `:8` —**la línea de encima, mismo docblock**— cambiándole
+`aleph0.mesh.*` → `aleph0.ciudad.*`, y dejé intacta la de debajo. Y edité
+**directamente** el docstring de `isPending()`, falso por la misma vía.
+
+**La cadena, verificada de punta a punta:**
+
+```text
+core/bootstrap/assembleContext.ts:109   socketUrl: mcpConfigManager.getDefaultSocketUrl()
+   → sin `aleph0.ciudad.*` + ópera con UI primaria → "ws://localhost:7777"
+AracneBotService.initialize()           socketUrl no vacío → pending = false
+   → isPending() = false · getPendingStatus() = "ready"
+   → connect() no dispara su guarda, y hay un comando de usuario que llega ahí
+```
+
+Es decir: **una cuarta superficie** —el bot Aracne— que ni la guía ni el
+README nombraban, y que además **contradice el docstring que la promete**.
+
+**Corregido (sólo prosa)**: el docblock de cabecera y el de `isPending()`
+declaran ahora la vía por la que el ⏳ no es honesto, con la cadena citada y
+el enrutado a V31. **Conducta intacta.**
+
+**Lo que retiro**: la frase «una sola promesa heredada falsa, y era DD-1» de
+§12.7. **Eran dos**, y la segunda estaba en un fichero que este WP editó dos
+veces. Tabla vigente en §13.4.
+
+## 13.2 · D-2 — cité líneas de antes de mi propio arreglo
+
+Rompí en §12.4/§12.6 la regla que acababa de escribir en §12.5 («toda salida
+citada lleva fecha o commit, o se re-ejecuta al cerrar»). El commit `7776b13`
+alargó el docstring **+9 líneas** y el reporte se escribió **después**:
+
+| dije | era cierto en | valor al cerrar |
+| ---- | ------------- | --------------- |
+| definición `:223` | el commit padre | **`:235`** |
+| `ws://localhost:${port}` en `:231` | el commit padre | **`:243`** |
+| «+3 líneas de comentario» | el commit padre | **4** (5 tras §13.1) |
+
+**Corregido en los tres sitios, incluido H-10** — que es el que abrirá V31 y
+el que más daño hacía: apuntaba a una línea de docstring.
+
+**Regla reforzada, y esta vez aplicada**: la referencia primaria es el
+**símbolo** (`McpConfigurationManager.getDefaultSocketUrl()`), no el número;
+el número acompaña y se declara «al commit de cierre».
+
+## 13.3 · D-3 — la plantilla no escribe lo que yo decía
+
+Cierto: es un **ternario**, y `"ws://localhost:3000"` es sólo la rama «sin
+config cargada». `src/treeViews/configsTreeView.ts` (`createFromTemplate`):
+
+```ts
+const defaultSocketUrl = this.configManager.isConfigLoaded()
+    ? this.configManager.getDefaultSocketUrl()   // ← puede ser el invento, o ""
+    : "ws://localhost:3000";                     // ← sólo si NO hay config
+```
+
+**Las tres variantes reales de lo que se persiste:**
+
+| condición | valor escrito en el fichero generado |
+| --------- | ------------------------------------ |
+| ópera + UI primaria | **`"ws://localhost:7777"`** ← otro invento, que yo no había dicho |
+| ópera sin UI primaria | **`""`** ← aquí mi aviso sobraba |
+| sin ópera | **`"ws://localhost:3000"`** ← la única que coincidía con lo que escribí |
+
+Y es en **2 de las 3 plantillas**: `xplus1` y `socket` (`url: defaultSocketUrl`);
+la de `ui` no usa este valor.
+
+**Corregido** en la guía, en el README, en el docstring de
+`getDefaultSocketUrl()` y en la fila de §11 de donde salió.
+
+**Contabilidad, también corregida:**
+
+- `docs/GUIA-PRUEBA-v2.md` decía que el árbol pinta `ws://localhost:<puerto>`.
+  El **método** devuelve eso; el **árbol** pinta **`localhost:7777`**, sin
+  esquema — `socketsTreeView.ts:86-92` lo recorta con una regex. Es la misma
+  distinción método/superficie que §12.2 dice haber aprendido, y la volví a
+  mezclar en la línea de al lado.
+- **H-3 descuadraba dentro del propio reporte**: §11.8 decía «6 sitios» y
+  §12.9 «7». Marcado el sitio viejo; **el bueno es 7**.
+
+## 13.4 · Tabla vigente del barrido de promesas (sustituye a §12.7)
+
+Patrón, con su alcance declarado:
+
+```text
+$ grep -rniE "no inventa|sin inventar|⏳ honesto|marca ⏳|nada inventado" \
+    README.md docs/ src/ --include=*.md --include=*.ts
+→ 23 líneas · 15 ficheros
+```
+
+| # | dónde | veredicto |
+| - | ----- | --------- |
+| 1 | `docs/GUIA-PRUEBA-v2.md` «no inventa endpoints» | ⛔ falsa (DD-1) → corregida |
+| 2 | `docs/GUIA-PRUEBA-v2.md` «casi toda la UI marca ⏳» | ✅ con su excepción |
+| 3 | `docs/GUIA-PRUEBA-v2.md` «`motivos_deny` no inventados» | ✅ ajena (V08) |
+| 4 | `README.md` «cada camino ⏳ nombra la clave» | ✅ con su excepción |
+| 5 | **`src/core/AracneBotService.ts` cabecera** | ⛔ **falsa (D-1)** → corregida |
+| 6 | **`src/core/AracneBotService.ts` `isPending()`** | ⛔ **falsa (D-1)** → corregida |
+| 7 | `src/core/mcpConfigurationManager.ts` «no inventa localhost:puerto» | ⛔ era D2 → corregida |
+| 8 | `src/config/ziguratSettings.ts:3` | ✅ cierta para ese módulo |
+| 9 | `src/core/bootstrap/assembleContext.ts:91` «no inventa room/mesh» | ✅ cierta: es el *join*, no el `socketUrl` |
+| 10 | `src/core/configurationService.ts:63` | ✅ mía, cierta |
+| 11 | `src/identity/RoomIdentityService.ts:71` | ✅ cierta |
+| 12 | `src/launcher/CatalogService.ts:10` | ✅ cierta |
+| 13 | `src/launcher/LauncherCatalogClient.ts:35` | ✅ cierta |
+| 14-16 | `src/launcher/settings.ts:14,29,37` | ✅ probadas en §12.3 |
+| 17-19 | `src/mcp/endpoint.ts:6,14,131` | ✅ ciertas **pero inalcanzables** (H-14) |
+| 20 | `src/mcp/types.ts:27` | ✅ cierta, mismo módulo muerto |
+| 21 | `src/mutation/parseEditorInfo.ts:21,140` | ✅ ciertas |
+| 22 | `src/mutation/settings.ts:21` | ✅ cierta |
+| 23 | `src/treeViews/mcpTreeView.ts:25,75` | ✅ ciertas (árbol MCP, no el de sockets) |
+
+**Dos falsas heredadas, no una** — y las dos en ficheros que este WP editó.
+
+## 13.5 · Cierre verificado
+
+| medida | vigente |
+| ------ | ------- |
+| claves declaradas | **18** · 0 fuera de `aleph0.` · 0 `ollama` |
+| G1 (prefijos viejos como config) | **`exit=1`** |
+| «no inventa endpoints» en docs | **0** |
+| residuales clasificadas | **116 líneas / 121 ocurrencias** |
+| huérfanas de `ConfigurationService` | **21** |
+| `servidor` \| `servicio` en las 18 descripciones | **0** |
+| `tsc --noEmit` | **8** (los mismos) |
+| `npm run lint` | 0 errores |
+| `compile` · `compile:production` · `probe:v08` | exit 0 · exit 0 · PASS |
+| jest | 5 rojos deterministas · 117 total (flapeo declarado, §12.11) |
+
+**Alcance de esta corrección**: `docs/GUIA-PRUEBA-v2.md`, `README.md`, este
+reporte, y **comentarios** en `src/core/AracneBotService.ts` y
+`src/core/mcpConfigurationManager.ts`. **Cero conducta.**
+
+## 13.6 · Hallazgos actualizados
+
+| # | hallazgo | estado |
+| - | -------- | ------ |
+| **H-10** | `McpConfigurationManager.getDefaultSocketUrl()` (def. `:235`, invento en `:243`) · **6 llamadas** · el `''` tampoco salva: `socketsTreeView.ts:92` pinta `localhost:3000` y **`configsTreeView.ts:428-430` persiste el valor en 2 de 3 plantillas** (3 variantes en §13.3) | ampliado, **líneas al cierre** → **V31** |
+| **H-16** | **`AracneBotService` es la 4ª superficie afectada**: con el invento inyectado, `isPending()=false` y `getPendingStatus()="ready"`; hay un comando de usuario que llega a `connect()` sin guarda | **nuevo** (D-1) → **V31**, misma raíz que H-10 |
+
+H-1 … H-9, H-11 … H-15 siguen como estaban. **H-3: 7 sitios** (§12.4).
+
+---
+
+— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de cierre

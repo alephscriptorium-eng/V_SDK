@@ -43,11 +43,12 @@ compatibilidad). Si tenías claves puestas, reescríbelas con esta tabla.
 
 En casi todos los casos la extensión te dirá qué falta: cada camino ⏳
 **nombra la clave nueva**. ⚠️ **Salvo el árbol de sockets**: sin
-`aleph0.ciudad.*` inventa un endpoint local en vez de decir ⏳ — `ws://localhost:<puerto>`
-si hay fichero de ópera con UI primaria, y `localhost:3000` si no lo hay. La
-plantilla de configuración llega a **escribir** ese `ws://localhost:3000` en
-el fichero que genera. Defecto preexistente, documentado con su caso rojo en
-el acta (§12) y enrutado a WP-V31.
+`aleph0.ciudad.*` inventa un endpoint local en vez de decir ⏳ —
+`localhost:7777` (el puerto de la UI primaria de tu fichero de ópera, sin
+esquema) o `localhost:3000` si no hay ópera o no hay UI primaria. Y **2 de
+las 3 plantillas** de configuración **escriben** ese valor inventado en el
+fichero que generan. Defecto preexistente, documentado con su caso rojo en
+el acta (§12-§13) y enrutado a WP-V31.
 
 | clave vieja | clave nueva |
 | ----------- | ----------- |

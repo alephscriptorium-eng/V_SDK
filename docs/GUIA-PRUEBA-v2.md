@@ -20,10 +20,16 @@ migración automática: una clave vieja en tu `settings.json` queda huérfana y
 `aleph0.ciudad.*`, el árbol de sockets **no dice ⏳**: inventa un endpoint en
 tu propia máquina y lo da por bueno. Ocurre **con o sin fichero de ópera**:
 
-- **con** fichero de ópera y una UI primaria → `ws://localhost:<puerto de esa UI>`;
-- **sin** fichero de ópera, o sin UI primaria → `localhost:3000` a secas;
-- y si generas una plantilla de configuración, ese `ws://localhost:3000`
-  **se escribe dentro del fichero generado**: el invento queda persistido.
+- **con** fichero de ópera y una UI primaria → el árbol pinta
+  `localhost:7777` (el puerto de esa UI, **sin esquema**: el árbol recorta
+  el `ws://` que devuelve el método);
+- **sin** fichero de ópera, o con ópera pero sin UI primaria → `localhost:3000`
+  a secas;
+- y si generas una plantilla de configuración (**2 de las 3**: `xplus1` y
+  `socket`; la de `ui` no usa este valor), lo que se **escribe dentro del
+  fichero generado** es el mismo valor inventado: `ws://localhost:7777` si
+  había UI primaria, `ws://localhost:3000` si no había ópera cargada, y
+  cadena vacía si había ópera sin UI primaria.
 
 Es un defecto preexistente, no lo arregla este WP (cae en WP-V31) y está
 documentado con su caso rojo en
