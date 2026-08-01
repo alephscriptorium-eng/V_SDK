@@ -175,11 +175,11 @@ el paso **puede fallar** y falla en cuanto código nuevo lo viola.
   que baje. La firma es un diff en `scripts/cobertura.suelo.json`.
 - **El trinquete no tiene tests propios**, al contrario que el gate de rojos
   (36). Deuda dicha, no disimulada.
-- **`release.yml` no corre ni un test, ni lint, ni el gate**: `npm ci` →
-  compilar → empaquetar → publicar. Y `ci.yml` **no se dispara con tags**
-  (solo `main`, `wp/**` y PR), así que un `push` de tag ejecuta **únicamente**
-  `release.yml`. **Se puede publicar un `.vsix` de un ref cuya suite no ha
-  corrido nunca.** Es el hueco más grande que queda.
+- ~~**`release.yml` no corre ni un test, ni lint, ni el gate**~~ — **cerrado
+  por WP-V97**. `ci.yml` sigue sin dispararse con tags (solo `main`, `wp/**` y
+  PR), así que un `push` de tag ejecuta únicamente `release.yml`; lo que cambia
+  es que ahora `release.yml` **ejecuta él mismo la cadena entera**, antes de
+  empaquetar y de publicar. Ver §`release.yml` más abajo.
 - El smoke vivo del probe V08 contra el servidor `linea-editor` sale `⏳`
   cuando no hay servidor: en CI **nunca** lo hay.
 - No publica en ningún marketplace (deferred, DV-10).
@@ -195,8 +195,54 @@ que este README declaraba antes de WP-V68.
 
 ### `release.yml` — tags `v*` y `workflow_dispatch`
 
+**Publicar ejecuta la misma verificación que empujar una rama** (WP-V97). Hasta
+esa ola este flujo iba `npm ci` → compilar → empaquetar → publicar, sin lint,
+sin tests, sin probes, sin gate, sin trinquete y sin arnés: el único momento en
+que el software llega a alguien era el único que no verificaba nada. No era
+teoría — el único release de la historia de este repo (tag `v0.1.0`, run
+`30158829091`) creó el release a las `12:57:45Z` y el `ci` de **esa misma
+revisión** no concluyó hasta las `12:58:02Z`: el `.vsix` estuvo descargable
+**17 segundos antes** de que existiera veredicto sobre él.
+
+Hoy el orden del job es:
+
+1. guarda: `workflow_dispatch` sólo desde `main`;
+2. resolver tag y nombre del `.vsix`;
+3. guarda: el tag no puede tener ya un release publicado;
+4. **guarda: la publicación verifica lo mismo que `ci.yml`** (abajo);
+5. `npm ci`;
+6. **`npm run lint` → `compile:production` → `probe:v08` → gate de rojos por
+   nombre → suite instrumentada → trinquete de cobertura → guarda
+   anti-marcas-blandas → arnés de Extension Host (fuente y `.vsix` instalado)**;
+7. `npm run package:v1` y crear el release con el asset.
+
+Los pasos del punto 6 son los **mismos comandos, con el mismo texto**, que
+`ci.yml` exige a cualquier rama, y todos **bloquean**: en `release.yml` tampoco
+queda ningún `continue-on-error`. Coste medido: la publicación pasa de ~40 s a
+~2 min en el runner ([`plan/REPORTES/WP-V97-publicar-con-red.md`](./plan/REPORTES/WP-V97-publicar-con-red.md) §5).
+
+Se eligió **reejecutar** en vez de **exigir que la revisión etiquetada ya
+tuviera un run verde**. El precio de lo descartado y las tres razones que lo
+descartan —el run de arriba publicó antes de que su `ci` concluyera; una
+etiqueta puede apuntar a una revisión que nunca fue rama ni PR y entonces no
+hay ningún verde que exigir; y hay **un** release en toda la historia del
+repo, así que el ahorro se cobra una vez cada varios meses— están en §4 del
+reporte.
+
+La guarda de paridad ([`scripts/verificacion-paridad.mjs`](./scripts/verificacion-paridad.mjs))
+existe porque esos pasos son una **copia**, y una copia se pudre: exige que
+todo comando `run:` de `ci.yml` esté en `release.yml` **y antes del paso que
+publica** —un gate que corre después de publicar no es un gate—, con las
+exclusiones firmadas dentro del propio script. Su límite, declarado: sólo corre
+al publicar, así que caza la deriva **al publicar y no al empujar**.
+
 El nombre del `.vsix` lo deriva [`scripts/vsix.mjs`](./scripts/vsix.mjs) de
 `package.json` (`<name>-<version>.vsix`, hoy `aleph-0-0.1.0.vsix`): subir la
-versión no deja flujos apuntando a un fichero inexistente. Dos guardas: el dispatch
-manual aborta fuera de `main`, y el flujo aborta si el tag resuelto ya tiene
-un release publicado (no se pisa un asset ya distribuido).
+versión no deja flujos apuntando a un fichero inexistente. Las dos guardas de
+WP-V16 siguen: el dispatch manual aborta fuera de `main`, y el flujo aborta si
+el tag resuelto ya tiene un release publicado (no se pisa un asset ya
+distribuido).
+
+**Lo que un verde de `release.yml` sigue sin decir**: hereda entero el §«Lo que
+el pipeline NO comprueba». Verifica **lo mismo** que una rama, ni una
+comprobación más.
