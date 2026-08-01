@@ -123,7 +123,9 @@ dice «CI PASS» a secas afirma más de lo que el flujo sostiene.
 | `npm run compile:production` | El bundle de esbuild se genera. | **Sí** |
 | `npm run probe:v08` | Compila `src/mutation/parseEditorInfo.ts` e importa **esa** pieza; contrato de `editor://info`. | **Sí** |
 | `node scripts/rojos-jest.mjs --gate` | El **conjunto de tests en rojo, por nombre**, contra [`scripts/rojos-jest.baseline.txt`](./scripts/rojos-jest.baseline.txt). Falla en las **dos** direcciones: un rojo nuevo, y un rojo declarado que desaparece. Corre jest sin cobertura. | **Sí** |
-| `npm test` | **Trinquete de cobertura.** Segunda corrida de la suite, ahora instrumentada, contra los umbrales de [`jest.config.js`](./jest.config.js). | **Sí** |
+| `npm test` | Segunda corrida de la suite, **instrumentada**: escribe el informe de cobertura. Por sí sola **no juzga** la cobertura. | **Sí** |
+| `node scripts/cobertura-trinquete.mjs` | **El trinquete.** (1) **Censo**: ningún fichero de `src` puede desaparecer del mapa de cobertura sin declararse. (2) **Unidades cubiertas** contra [`scripts/cobertura.suelo.json`](./scripts/cobertura.suelo.json). Falla si bajan **y si suben sin registrarse**. | **Sí** |
+| `grep continue-on-error` | Que no vuelva a entrar un paso blando en el flujo. | **Sí** |
 | `npm run package:v1` | `vsce package` produce el `.vsix` y se sube como artefacto. | **Sí** |
 
 **No queda ningún paso con `continue-on-error` en `ci.yml`** (WP-V93). Hasta
@@ -132,13 +134,25 @@ mismo README y aun así sin vigilar nada: su resultado no condicionaba el job,
 el gate de rojos no se ejecutaba en CI, y el paso estaba **permanentemente en
 rojo** por deuda de cobertura, con lo que su aportación real era cero.
 
-Sobre los umbrales de cobertura: **no son una meta, son el suelo medido**
-(hoy ~26/25/26/21 frente a un ~26.1/25.13/26.55/21.51 real). El paso **no
-exige subir** la cobertura; exige que **no baje**. La meta anterior —85 %—
-era deuda disfrazada de umbral: al no cumplirse ningún día, no vigilaba
-ninguno. El trinquete tiene **grano de 1 punto**: el suelo se calibró en
-Windows y CI corre en `ubuntu-latest`, y esa holgura es lo que evita un rojo
-falso de estreno. Razonado entero en `jest.config.js`.
+Sobre la cobertura: **el trinquete no mide porcentajes, mide unidades
+cubiertas** (hoy `statements 1541 · branches 545 · functions 272 ·
+lines 1519`, MEDIDO). No exige **subir** la cobertura; exige que **no baje** —
+y también que una **mejora se registre**, porque un trinquete que sólo se
+mueve a la baja es una pendiente.
+
+Por qué unidades y no porcentaje, con la medida delante: el denominador de
+este repo **no es estable**. Tres ficheros de `src` son código real que no
+compila (`TS2353`), así que no se instrumentan y sus sentencias no entran en
+el total. MEDIDO: al entrar al mapa, el denominador crece **+135 sentencias y
++67 ramas** sin que lo cubierto se mueva ni una unidad. Con un umbral de
+porcentaje eso significaba que **arreglar dos errores de tipos ponía CI en
+rojo**, y que **romper la compilación de un fichero mal cubierto subía el
+porcentaje** con la suite en verde. La meta histórica —85 %— era además deuda
+disfrazada de umbral: al no cumplirse ningún día, no vigilaba ninguno.
+
+Razonado entero, con las medidas, en [`jest.config.js`](./jest.config.js) y en
+la cabecera de
+[`scripts/cobertura-trinquete.mjs`](./scripts/cobertura-trinquete.mjs).
 
 Sobre el lint: hay ocho reglas que el legado viola (`no-explicit-any` 248,
 `no-unused-vars` 107 y seis más con 16 en total) y están en `warn` con su
@@ -152,9 +166,20 @@ el paso **puede fallar** y falla en cuanto código nuevo lo viola.
   gate y sus 36 tests propios **no pasan por eslint en ningún paso**.
 - **El gate no juzga si un test es bueno**, solo si el conjunto de rojos
   cambió. 410 tests en verde que no comprueben nada seguirían en verde.
-- **La cobertura no bloquea por ser baja**, solo por bajar. El 26 % actual
-  es deuda declarada, y el trinquete no la reduce: la congela.
-- **El trinquete no ve caídas menores de 1 punto** (grano declarado).
+- **La cobertura no bloquea por ser baja**, solo por bajar. El ~26 % actual
+  es deuda declarada, y el trinquete no la reduce: **la congela**. Nada en el
+  pipeline empuja hacia el 85 %.
+- **El trinquete no vigila `scripts/` ni `tests/`**: `collectCoverageFrom` es
+  solo `src/**`. El propio instrumento del gate queda fuera del número.
+- **El suelo se puede bajar**: el trinquete impide que baje *sin firma*, no
+  que baje. La firma es un diff en `scripts/cobertura.suelo.json`.
+- **El trinquete no tiene tests propios**, al contrario que el gate de rojos
+  (36). Deuda dicha, no disimulada.
+- **`release.yml` no corre ni un test, ni lint, ni el gate**: `npm ci` →
+  compilar → empaquetar → publicar. Y `ci.yml` **no se dispara con tags**
+  (solo `main`, `wp/**` y PR), así que un `push` de tag ejecuta **únicamente**
+  `release.yml`. **Se puede publicar un `.vsix` de un ref cuya suite no ha
+  corrido nunca.** Es el hueco más grande que queda.
 - El smoke vivo del probe V08 contra el servidor `linea-editor` sale `⏳`
   cuando no hay servidor: en CI **nunca** lo hay.
 - No publica en ningún marketplace (deferred, DV-10).

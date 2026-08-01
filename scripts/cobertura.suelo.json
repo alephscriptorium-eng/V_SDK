@@ -1,0 +1,79 @@
+{
+  "_": [
+    "SUELO DE COBERTURA DECLARADO — WP-V93, segunda vuelta.",
+    "",
+    "Este fichero es DATO. El instrumento que lo aplica es scripts/cobertura-trinquete.mjs,",
+    "y ahí está escrito el porqué de cada regla. Aquí sólo viven los números y los nombres,",
+    "para que moverlos sea UNA LÍNEA DE DIFF que alguien tiene que firmar — y no cuatro",
+    "dígitos enterrados en un comentario, que es como estaban en la primera entrega.",
+    "",
+    "POR QUÉ UNIDADES CUBIERTAS Y NO PORCENTAJE",
+    "  Un porcentaje es una razón sobre un denominador que NO es estable en este repo:",
+    "  3 ficheros de src son código real que no compila (TS2353), así que istanbul no los",
+    "  instrumenta y sus sentencias no entran en el total. MEDIDO: al entrar esos ficheros",
+    "  al mapa, el denominador crece +135 sentencias y +67 ramas mientras lo CUBIERTO no se",
+    "  mueve — o sea que ARREGLAR dos errores de tipos bajaría el porcentaje y pondría CI en",
+    "  rojo. Y el inverso: ROMPER la compilación de un fichero mal cubierto lo saca del",
+    "  denominador y SUBE el porcentaje, con la suite en verde.",
+    "  Las unidades cubiertas son inmunes a las dos cosas: sólo bajan si se pierde cobertura",
+    "  de verdad."
+  ],
+
+  "medido": {
+    "fecha": "2026-08-01",
+    "arbol": "C:/S_LAB/wt/v-v93",
+    "so": "Windows 11 · 12 CPU",
+    "node": "v22.21.1",
+    "jest": "29.7.0",
+    "suite": "411 tests · 410 pass · 1 skip · 0 fail",
+    "porcentajes_informativos": {
+      "statements": 26.1,
+      "branches": 25.13,
+      "functions": 21.51,
+      "lines": 26.55
+    },
+    "totales_del_dia": {
+      "statements": 5903,
+      "branches": 2168,
+      "functions": 1264,
+      "lines": 5720
+    }
+  },
+
+  "colchon": 0,
+
+  "cubiertas": {
+    "statements": 1541,
+    "branches": 545,
+    "functions": 272,
+    "lines": 1519
+  },
+
+  "censo": {
+    "_": [
+      "Ficheros de src/**/*.ts (sin .d/.test/.spec) que NO aparecen en el mapa de cobertura.",
+      "Estar aquí es la ÚNICA forma legítima de faltar. Un fichero que falte y no esté",
+      "declarado es un ERROR, y una declaración cuyo fichero ya aparece en el mapa también:",
+      "las dos direcciones se firman."
+    ],
+    "TIPOS": {
+      "motivo": "sólo tipos/interfaces: no emite JavaScript, así que no hay nada que instrumentar. Ausencia legítima y permanente (MEDIDO: cero declaraciones ejecutables en los seis).",
+      "ficheros": [
+        "src/core/bootstrap/commands/types.ts",
+        "src/core/bootstrap/context.ts",
+        "src/mcpTypes.ts",
+        "src/theatrical/core/interfaces/ICompany.ts",
+        "src/theatrical/core/interfaces/IPlay.ts",
+        "src/theatrical/core/interfaces/ITheatricalAgent.ts"
+      ]
+    },
+    "NO-COMPILA": {
+      "motivo": "DEUDA, no ausencia legítima: es código real que istanbul no puede instrumentar porque no compila. Los tres fallan por el MISMO error, TS2353 sobre `capabilities: { resources: {} }` contra los tipos de @modelcontextprotocol/sdk. La corrida lo dice en pantalla («Failed to collect coverage from …») mientras el porcentaje sale limpio, y ése es justo el estrechamiento silencioso que este censo existe para impedir. Arreglarlos es de otro WP: src/ no está en el ALCANCE_DIFF de V93.",
+      "ficheros": [
+        "src/launcher/LauncherCatalogClient.ts",
+        "src/mutation/LineaEditorClient.ts",
+        "src/resources/McpResourceClient.ts"
+      ]
+    }
+  }
+}

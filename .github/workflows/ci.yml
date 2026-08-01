@@ -91,14 +91,41 @@ jobs:
       - name: Gate · conjunto de rojos por nombre (BLOQUEA)
         run: node scripts/rojos-jest.mjs --gate
 
-      # (2) EL TRINQUETE DE COBERTURA. Vuelve a correr la suite, ahora
-      # instrumentada, y aplica los umbrales de `jest.config.js`, que desde
-      # WP-V93 son el SUELO MEDIDO (~26 %) y no la meta (85 %). Este paso no
-      # exige subir la cobertura: exige que NO BAJE. Es una segunda corrida
-      # completa de la suite y su precio en tiempo está medido en
-      # `plan/REPORTES/WP-V93-ci-vigila.md` §5.
-      - name: Trinquete de cobertura (BLOQUEA si baja)
+      # (2) LA SUITE INSTRUMENTADA. Segunda corrida completa —su precio en
+      # tiempo está medido en `plan/REPORTES/WP-V93-ci-vigila.md` §5—. Escribe
+      # `coverage/coverage-summary.json`, que es lo que lee el paso siguiente.
+      # OJO: desde WP-V93 este paso NO juzga la cobertura por sí solo
+      # (`jest.config.js` ya no lleva `coverageThreshold`, y allí está escrito
+      # por qué). Quien la juzga es (3).
+      - name: Suite instrumentada · escribe el informe de cobertura (BLOQUEA)
         run: npm test
+
+      # (3) EL TRINQUETE. Compara UNIDADES CUBIERTAS ABSOLUTAS contra
+      # `scripts/cobertura.suelo.json` —no porcentajes: el denominador de este
+      # repo no es estable, y el porqué está medido en el encabezado del
+      # instrumento— y falla en las DOS direcciones: si la cobertura baja, y si
+      # sube sin que nadie registre la mejora. Comprueba además que ningún
+      # fichero de `src` haya desaparecido del mapa de cobertura sin declararse.
+      # No vuelve a correr la suite: lee el informe que acaba de dejar (2), con
+      # guarda de frescura para que un informe rancio no pase por verde.
+      - name: Trinquete de cobertura · censo + unidades cubiertas (BLOQUEA)
+        run: node scripts/cobertura-trinquete.mjs
+
+      # (4) Que no vuelva a entrar un paso blando por la puerta de atrás.
+      # Sólo cuentan las apariciones FUNCIONALES: una clave YAML empieza la
+      # línea tras la sangría, así que los comentarios (que en este fichero
+      # hablan mucho de `continue-on-error`) no disparan.
+      # LÍMITE DECLARADO: este paso no puede protegerse de que alguien marque
+      # BLANDO ESTE MISMO PASO — un paso con `continue-on-error` no puede tumbar
+      # su propio job. Convierte una regresión silenciosa en un diff visible;
+      # no la hace imposible.
+      - name: Guarda · ningún paso blando en este flujo
+        run: |
+          if grep -rnE '^[[:space:]]*continue-on-error' .github/workflows/; then
+            echo "::error::ha vuelto un paso con continue-on-error — WP-V93 lo dejó a cero"
+            exit 1
+          fi
+          echo "cero pasos con continue-on-error funcional en .github/workflows/"
 
       - name: Package v1 .vsix
         run: npm run package:v1
