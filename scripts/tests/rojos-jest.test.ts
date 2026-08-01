@@ -65,13 +65,25 @@ let TMP = '';
 
 // --- § 0 · arnés --------------------------------------------------------------
 
+/**
+ * Tope por defecto de TODO este fichero.
+ *
+ * Cada test de aquí lanza al menos un subproceso, y varios lanzan dos. El tope
+ * de la casa son 10 s (`jest.config.js:46`); bajo la contención de la propia
+ * suite el peor margen medido para los tests «rápidos» de este fichero cae a
+ * ~3×, que es poco margen para algo que sólo puede fallar por impaciencia. El
+ * mismo argumento por el que los siete tests con jest real llevan 180 s vale
+ * para los demás, así que se sube el suelo de todo el fichero.
+ */
+jest.setTimeout(60_000);
+
 /** Invoca el instrumento (o un mutante suyo) como lo invoca el mundo. */
-function correr(args: string[], guion: string = INSTRUMENTO): Salida {
+function correr(args: string[], guion: string = INSTRUMENTO, entorno: Record<string, string> = {}): Salida {
     const r = spawnSync(process.execPath, [guion, ...args], {
         cwd: RAIZ,
         encoding: 'utf8',
         windowsHide: true,
-        env: { ...process.env, FORCE_COLOR: '0' }
+        env: { ...process.env, FORCE_COLOR: '0', ...entorno }
     });
     if (r.error) throw r.error;
     const out = r.stdout || '';
@@ -218,7 +230,9 @@ let miniRota: Mini;
 let miniSoloRota: Mini;
 let miniSinNombre: Mini;
 let miniCobertura: Mini;
+let miniAlterna: Mini;
 let espiaCobertura = '';
+let contadorAlterna = '';
 
 // Informes sintéticos, nombrados una vez y reutilizados.
 let fxClases = '';
@@ -334,7 +348,14 @@ beforeAll(() => {
                 status: 'failed',
                 assertionResults: [
                     { fullName: 'V91 zzz', title: 'zzz', status: 'failed' },
-                    { fullName: 'V91 aaa', title: 'aaa', status: 'failed' }
+                    { fullName: 'V91 aaa', title: 'aaa', status: 'failed' },
+                    // MAYÚSCULA y EÑE: sin ellas, el orden por unidad de código y
+                    // el orden por locale COINCIDEN, y la fixture no distingue las
+                    // dos implementaciones — o sea, no vigila nada. MEDIDO:
+                    //   unidad de código → Zulu, aaa, mmm, zzz, ñu
+                    //   locale           → aaa, mmm, ñu, Zulu, zzz
+                    { fullName: 'V91 Zulu', title: 'Zulu', status: 'failed' },
+                    { fullName: 'V91 ñu', title: 'ñu', status: 'failed' }
                 ]
             },
             {
@@ -400,6 +421,22 @@ beforeAll(() => {
 
     miniSoloRota = escribirMini('paqueteSoloRota', {
         'rota.test.js': "require('./no_existe_en_absoluto');\ntest('nunca llega', () => {});\n"
+    });
+
+    // Proyecto que da un conjunto DISTINTO en cada corrida sin usar azar: lleva
+    // la cuenta en disco y sólo falla la primera vez. Así el detector de
+    // discrepancias de `--repetir` se puede probar con una secuencia
+    // determinista, sin meter un test que flapee en la suite del mundo.
+    contadorAlterna = path.join(TMP, 'contador-alterna.txt');
+    miniAlterna = escribirMini('paqueteAlterna', {
+        'alterna.test.js':
+            "const fs = require('fs');\n" +
+            'const contador = ' + JSON.stringify(contadorAlterna) + ';\n' +
+            'let n = 0;\n' +
+            "try { n = Number(fs.readFileSync(contador, 'utf8')) || 0; } catch { n = 0; }\n" +
+            'n += 1;\n' +
+            'fs.writeFileSync(contador, String(n));\n' +
+            "test('V91 rojo sólo en la primera corrida', () => { expect(n).toBeGreaterThan(1); });\n"
     });
 
     // Corrida en la que TODO pasa y aun así jest fracasa: un reportero que
@@ -541,24 +578,44 @@ describe('WP-V91 · las cuatro clases del conjunto', () => {
 
     // --- los dos siguientes NACEN de un mutante que sobrevivió a la suite -----
 
-    it('ORDEN CANÓNICO · la salida va ordenada, que es lo que la hace comparable', () => {
+    it('ORDEN CANÓNICO · por unidad de código, no por locale', () => {
         // La promesa de cabecera del instrumento es «salida byte a byte igual
-        // entre corridas y entre sistemas operativos». Esa promesa la sostiene
-        // UNA línea: `lineas.sort(ordenEstable)`. Sin este test, invertir el
-        // orden dejaba la suite entera en verde (MEDIDO: 24/24 con el orden
-        // invertido). Aquí se asevera la salida COMPLETA, no un `toContain`.
+        // entre corridas y entre sistemas operativos» (`rojos-jest.mjs:17`), y
+        // la sostiene UNA línea: `lineas.sort(ordenEstable)`.
+        //
+        // Este test se ha tenido que reescribir dos veces, y la segunda es la
+        // lección: la primera versión sólo mataba al mutante que INVIERTE el
+        // orden. El mutante realista —cambiar el comparador por uno sensible a
+        // la locale, que es como se rompe de verdad la portabilidad— SOBREVIVÍA
+        // 28/28, porque la fixture era todo ASCII minúscula y ahí los dos
+        // comparadores dan el mismo resultado. Una fixture que no distingue dos
+        // implementaciones no vigila ninguna. Ahora lleva mayúscula y eñe.
         const esperado =
             [
                 'FALLA tests/unit/alfa.test.ts :: V91 mmm',
+                'FALLA tests/unit/zeta.test.ts :: V91 Zulu',
                 'FALLA tests/unit/zeta.test.ts :: V91 aaa',
                 'FALLA tests/unit/zeta.test.ts :: V91 zzz',
+                'FALLA tests/unit/zeta.test.ts :: V91 ñu',
                 'OMITE tests/unit/alfa.test.ts :: [pending] V91 bbb'
             ].join('\n') + '\n';
 
         const comprobar = (s: Salida): void => {
             expect(s.out).toBe(esperado);
         };
+
+        // Mutante 1: el orden invertido.
         pinza([fxOrden], comprobar, ['    lineas.sort(ordenEstable);', '    lineas.sort(ordenEstable).reverse();']);
+
+        // Mutante 2, el que importa: un comparador por locale. Es la vía por la
+        // que esta promesa se rompe de verdad — nadie invierte un `sort` a
+        // propósito, pero cambiar `a < b` por `a.localeCompare(b)` parece una
+        // mejora inocente.
+        elMutanteDebeCaer(
+            mutante(['    return a < b ? -1 : a > b ? 1 : 0;', '    return a.localeCompare(b);']),
+            [fxOrden],
+            comprobar
+        );
     });
 
     it('RAÍZ AJENA · un informe hecho en CI da la MISMA línea que uno hecho aquí', () => {
@@ -596,6 +653,73 @@ describe('WP-V91 · las tres guardas', () => {
         // Y así es como se veía el fallo B1: dos rojos, uno declarado, EXIT 0.
         expect(delMutante.out).toContain('conjunto de rojos IDENTICO al declarado');
         expect(delMutante.code).toBe(0);
+    });
+
+    it('DIRECCIÓN «−» · un rojo que DESAPARECE también es un diff', () => {
+        // BLOQUEANTE de la devolución, y era el agujero más grande: la suite
+        // tenía cuatro aserciones sobre la rama `+` de `diff()` y CERO sobre la
+        // rama `−`. Mutando esa rama, el instrumento decía «IDÉNTICO», EXIT 0,
+        // y los 28 tests seguían en verde. Es una de las cuatro garantías que
+        // la cabecera promete —«borrar un test tampoco cuela»— y no la vigilaba
+        // nadie: un gate contra el encogimiento del conjunto, sin un solo test
+        // de encogimiento.
+        //
+        // Importa porque es la dirección de la MEJORA APARENTE: apagar una
+        // suite, borrar un test o un `describe.skip` encogen el conjunto, y sin
+        // esta rama el gate lo aplaude.
+        const declaraDos = baseline('encoge.base.txt', [
+            'FALLA tests/unit/clon.test.ts :: V91 clonado',
+            'FALLA tests/unit/uno.test.ts :: V91 rojo que alguien borró'
+        ]);
+        const informeConUno = informe('encoge.json', {
+            success: false,
+            numTotalTests: 2,
+            testResults: [
+                {
+                    name: enElArbol('tests/unit/clon.test.ts'),
+                    status: 'failed',
+                    assertionResults: [{ fullName: 'V91 clonado', title: 'clonado', status: 'failed' }]
+                }
+            ]
+        });
+
+        const comprobar = (s: Salida): void => {
+            expect(s.code).toBe(1);
+            expect(s.out).toContain('conjunto de rojos DISTINTO del declarado');
+            expect(s.out).toContain("- FALLA tests/unit/uno.test.ts :: V91 rojo que alguien borró");
+        };
+
+        const delMutante = pinza(
+            ['--check', declaraDos, informeConUno],
+            comprobar,
+            ["if (tiene < n) fuera.push('- ' + l", "if (false) fuera.push('- ' + l"]
+        );
+        // Sin la rama, el conjunto encoge y el gate firma que todo sigue igual.
+        expect(delMutante.out).toContain('conjunto de rojos IDENTICO al declarado');
+        expect(delMutante.code).toBe(0);
+    });
+
+    it('DIRECCIÓN «−» · con multiplicidad: de dos rojos homónimos desaparece uno', () => {
+        // La otra mitad de la rama `−`: no que falte la línea entera, sino que
+        // falte UNA DE LAS DOS. El contador tiene que decir cuántas faltan.
+        const declaraDos = baseline('encoge-multi.base.txt', [
+            'FALLA tests/unit/clon.test.ts :: V91 clonado',
+            'FALLA tests/unit/clon.test.ts :: V91 clonado'
+        ]);
+        const informeConUno = informe('encoge-multi.json', {
+            success: false,
+            numTotalTests: 2,
+            testResults: [
+                {
+                    name: enElArbol('tests/unit/clon.test.ts'),
+                    status: 'failed',
+                    assertionResults: [{ fullName: 'V91 clonado', title: 'clonado', status: 'failed' }]
+                }
+            ]
+        });
+        const s = correr(['--check', declaraDos, informeConUno]);
+        expect(s.code).toBe(1);
+        expect(s.out).toContain('- FALLA tests/unit/clon.test.ts :: V91 clonado   [faltan 1 de 2]');
     });
 
     it('GUARDA 2 · EJECUCIÓN EFECTIVA: «no medí» no es «verde»', () => {
@@ -733,26 +857,82 @@ describe('WP-V91 · cobertura, paralelismo y el instrumento mudo', () => {
             expect(s.todo).toContain('estos argumentos serializan jest');
         };
 
-        for (const forma of [['--runInBand'], ['-i'], ['--maxWorkers=1'], ['-w', '1']]) {
+        // Las ONCE formas que dejan jest en UN SOLO PROCESO. No es una lista de
+        // formas imaginadas: es la lista MEDIDA con el arnés de 6 suites que
+        // anotan su PID (jest 29.7.0, `--no-cache`, 12 CPU). La primera versión
+        // de esta guarda cazaba las cuatro de la izquierda y dejaba pasar las
+        // siete de la derecha — y con cualquiera de ellas `--repetir 10` habría
+        // publicado «las 10 corridas dieron el MISMO conjunto» medido EN SERIE.
+        const serializan = [
+            ['--runInBand'], ['-i'], ['--maxWorkers=1'], ['-w', '1'],
+            ['--max-workers=1'], ['--max-workers', '1'], ['--runInBand=true'], ['-i=true'],
+            ['--maxWorkers=01'], ['--maxWorkers=1.0'], ['--maxWorkers=+1']
+        ];
+        for (const forma of serializan) {
             comprobar(correr(['--repetir', '2', '--', ...forma, '--config=v91-no-existe.json']));
         }
 
-        // DEFECTO HALLADO POR ESTE WP: la forma en DOS argumentos se colaba
-        // entera, porque la lista se miraba argumento a argumento y ni
-        // `--maxWorkers` ni `1` casan por separado.
+        // Y las que NO serializan no se rechazan (MEDIDO: 6 procesos las tres).
+        // Sin estos controles la guarda podría cazarlo todo y parecería correcta.
+        for (const forma of [['--maxWorkers=6'], ['--maxWorkers', '4'], ['--runInBand=false'], ['--maxWorkers=50%']]) {
+            const s = correr(['--repetir', '2', '--', ...forma, '--config=v91-no-existe.json']);
+            expect(s.todo).not.toContain('estos argumentos serializan jest');
+        }
+
         pinza(
             ['--repetir', '2', '--', '--maxWorkers', '1', '--config=v91-no-existe.json'],
             comprobar,
-            [
-                'const culpables = normalizarPares(extra).filter((a) => ARGS_SERIALES.some((re) => re.test(a)));',
-                'const culpables = [];'
-            ]
+            ['const culpables = argumentosSeriales(extra);', 'const culpables = [];']
         );
+    });
 
-        // Un paralelismo real no se rechaza (aquí jest falla luego, por la
-        // config inexistente: lo que importa es que la guarda no fue quien cortó).
-        const paralelo = correr(['--repetir', '2', '--', '--maxWorkers', '4', '--config=v91-no-existe.json']);
-        expect(paralelo.todo).not.toContain('estos argumentos serializan jest');
+    it('PARALELISMO · un porcentaje que resuelve a un proceso también serializa', () => {
+        // Esto quedó DECLARADO como hueco conocido en la primera vuelta y no
+        // cerrado, con el argumento de que depende de la máquina. El argumento
+        // era malo: depende de la máquina, sí, y la máquina que importa es
+        // ESTA, donde se está tomando la medida. MEDIDO con 12 CPU:
+        //   9 % → 1 proceso · 10 % → 1 · 20 % → 2 · 25 % → 3 · 50 % → 6,
+        // o sea floor(cpus × pct / 100), en cinco puntos.
+        const cpus = os.cpus().length;
+        const pctSerial = Math.max(1, Math.floor((100 * 1) / cpus)); // el mayor % que da 1
+        const s = correr(['--repetir', '2', '--', '--maxWorkers=' + pctSerial + '%', '--config=v91-no-existe.json']);
+        expect(s.code).toBe(2);
+        expect(s.todo).toContain('estos argumentos serializan jest');
+
+        // Y un porcentaje holgado no se rechaza en ninguna máquina razonable.
+        const holgado = correr(['--repetir', '2', '--', '--maxWorkers=100%', '--config=v91-no-existe.json']);
+        expect(holgado.todo).not.toContain('estos argumentos serializan jest');
+    });
+
+    it('PARALELISMO · medir en serie a petición sale 1: no vale como evidencia', () => {
+        // El veredicto de `--repetir` sale 1 aunque las corridas coincidan, si
+        // se midieron en serie. Sin este test, `seriales.length ? 1 : 0` → `0`
+        // sobrevivía: el instrumento publicaría como evidencia de determinismo
+        // una medida que él mismo declara inservible.
+        const args = ['--repetir', '1', '--permitir-serial', '--', '--runInBand', '--config=' + miniRota.config];
+        const comprobar = (s: Salida): void => {
+            expect(s.out).toContain('corriendo EN SERIE a petición');
+            expect(s.out).toContain('EN SERIE, no vale como evidencia');
+            expect(s.code).toBe(1);
+        };
+        pinza(args, comprobar, ['process.exit(seriales.length ? 1 : 0);', 'process.exit(0);']);
+    }, TOPE_JEST_REAL);
+
+    it('`--repetir` exige un entero >= 1', () => {
+        // Estaba en el reporte como «sonda que no dio nada», pero sin test: la
+        // validación se podía borrar entera sin que nada se pusiera rojo.
+        const comprobar = (s: Salida): void => {
+            expect(s.code).toBe(2);
+            expect(s.todo).toContain('--repetir necesita un entero >= 1');
+        };
+        for (const n of ['0', '-1', '1.5', 'abc', '']) {
+            comprobar(correr(['--repetir', n, '--', '--config=v91-no-existe.json']));
+        }
+        pinza(
+            ['--repetir', '0', '--', '--config=v91-no-existe.json'],
+            comprobar,
+            ['if (!Number.isInteger(n) || n < 1) morir(', 'if (false) morir(']
+        );
     });
 
     it('PARALELISMO · con `--permitir-serial` se puede, pero el veredicto no vale como evidencia', () => {
@@ -938,6 +1118,114 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
                 ';'
             ]);
             expect(ejecutar(sinImposicion).collectCoverage).toBe(true);
+        },
+        TOPE_JEST_REAL
+    );
+
+    it(
+        '`--gate` A SECAS: la invocación del mundo, con su baseline por defecto',
+        () => {
+            // La invocación real es `node scripts/rojos-jest.mjs --gate`, sin más.
+            // Los otros tests le pasan `--baseline` explícito, así que la
+            // resolución del baseline POR DEFECTO no la probaba nadie.
+            //
+            // Se corre contra el proyecto mínimo, no contra el producto: el
+            // conjunto obtenido no se parece en nada al declarado, así que TODAS
+            // las líneas del baseline real salen por la rama `−`. Prueba dos
+            // cosas de una: que el baseline por defecto se lee, y la dirección
+            // `−` con jest de verdad.
+            //
+            // Se cuenta contra el fichero, no contra su contenido: así el día que
+            // V48 arregle los cinco rojos este test no se pone rojo de rebote.
+            const declaradas = fs
+                .readFileSync(path.join(RAIZ, 'scripts', 'rojos-jest.baseline.txt'), 'utf8')
+                .split(/\r?\n/)
+                .map((l) => l.trim())
+                .filter((l) => l && !l.startsWith('#'));
+            expect(declaradas.length).toBeGreaterThan(0);
+
+            const s = correr(['--gate', '--', '--config=' + miniA.config]);
+            expect(s.code).toBe(1);
+            const menos = s.out.split('\n').filter((l) => l.startsWith('- '));
+            expect(menos).toHaveLength(declaradas.length);
+        },
+        TOPE_JEST_REAL
+    );
+
+    it(
+        'DISCREPANCIA · dos corridas que dan conjuntos distintos se denuncian',
+        () => {
+            // El detector de discrepancias de `--repetir` —la razón de ser del
+            // modo— no tenía test: se podía borrar entero y la suite seguía
+            // verde. Declararlo «no cubierto porque haría falta un test que
+            // flapea» era una excusa: no hace falta azar, basta una secuencia
+            // determinista. Este proyecto lleva un contador en disco y falla
+            // SÓLO en su primera corrida.
+            fs.rmSync(contadorAlterna, { force: true });
+            const s = correr(['--repetir', '2', '--', '--config=' + miniAlterna.config, '--coverage=false']);
+
+            const comprobar = (x: Salida): void => {
+                expect(x.code).toBe(1);
+                expect(x.out).toContain('VEREDICTO: corridas discrepantes respecto de la 1: 2');
+                expect(x.out).toContain('--- diff corrida 1 -> corrida 2 ---');
+                expect(x.out).toContain('- FALLA alterna.test.js :: V91 rojo sólo en la primera corrida');
+                expect(x.out).not.toContain('MISMO conjunto');
+            };
+            comprobar(s);
+
+            // Y sin el detector, dos conjuntos distintos se proclaman iguales.
+            fs.rmSync(contadorAlterna, { force: true });
+            const delMutante = elMutanteDebeCaer(
+                mutante(['if (texto(conjuntos[i]) !== primero) discrepantes.push(i + 1);', 'if (false) discrepantes.push(i + 1);']),
+                ['--repetir', '2', '--', '--config=' + miniAlterna.config, '--coverage=false'],
+                comprobar
+            );
+            expect(delMutante.out).toContain('MISMO conjunto por nombre');
+            expect(delMutante.code).toBe(0);
+        },
+        TOPE_JEST_REAL
+    );
+
+    it(
+        'M4 · una corrida abortada no deja directorios temporales atrás',
+        () => {
+            // `process.exit()` NO ejecuta los `finally`, y el instrumento sale
+            // por `morir()` desde dentro del `try` que debía limpiar. Cada
+            // corrida abortada dejaba su directorio —con el JSON de jest
+            // dentro— en `os.tmpdir()`. El fallo es heredado, pero esta suite
+            // recorre esos caminos cinco veces por corrida, así que lo convertía
+            // de raro en «cada `npm test`».
+            //
+            // La medida es hermética: se le da al subproceso un `os.tmpdir()`
+            // propio, y se cuenta sólo lo que deja el instrumento (jest crea ahí
+            // su caché, que no es asunto de este test).
+            const tmpPrivado = path.join(TMP, 'tmp-privado');
+            fs.rmSync(tmpPrivado, { recursive: true, force: true });
+            fs.mkdirSync(tmpPrivado, { recursive: true });
+            const restos = (): string[] =>
+                fs.readdirSync(tmpPrivado).filter((n) => n.startsWith('rojos-jest'));
+            const entorno = { TEMP: tmpPrivado, TMP: tmpPrivado, TMPDIR: tmpPrivado };
+
+            // Config inexistente: jest muere sin escribir el JSON y el
+            // instrumento sale por `morir()` desde dentro del `try`.
+            const args = ['--gate', '--baseline', baseVacia, '--', '--config=v91-no-existe.json'];
+            const comprobar = (s: Salida): void => {
+                expect(s.code).toBe(2);
+                expect(restos()).toHaveLength(0);
+            };
+            comprobar(correr(args, INSTRUMENTO, entorno));
+
+            // Y sin el gancho de salida, el directorio se queda ahí.
+            const sinGancho = mutante(["    process.on('exit', () => {", "    process.on('jamas', () => {"]);
+            fs.rmSync(tmpPrivado, { recursive: true, force: true });
+            fs.mkdirSync(tmpPrivado, { recursive: true });
+            let cayo = false;
+            try {
+                comprobar(correr(args, sinGancho, entorno));
+            } catch {
+                cayo = true;
+            }
+            expect(cayo).toBe(true);
         },
         TOPE_JEST_REAL
     );

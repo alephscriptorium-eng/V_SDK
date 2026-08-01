@@ -5,7 +5,7 @@
 | Carril | **V** · Aleph-0 (ℵ₀) |
 | Encargo | `plan/BACKLOG.md:105` |
 | Rama | `wp/v91-gate-del-instrumento` · base `629d502` |
-| Obra | `b8f341c` |
+| Obra | `b8f341c` (primera entrega) · `d44617f` (reporte) · **segunda vuelta tras devolución** |
 | Árbol de medida | `C:/S_LAB/wt/v-v91` · Windows 11 · 12 CPUs |
 | Herramienta | node v22.21.1 · jest 29.7.0 · ts-jest 29.2.5 |
 | Fecha de todas las medidas | **2026-08-01** |
@@ -23,30 +23,85 @@ prueba el instrumento, no el producto.** Está hecha así a propósito y el prec
 
 ---
 
+## 0.bis · La devolución: qué cayó, y por qué las tres tenían razón
+
+La primera entrega pasó el censo de mutación, los tres vectores del encargo y los dos defectos del
+instrumento. **Cayeron tres cosas, y las tres son la misma cosa dicha de tres maneras**:
+
+> **el conjunto de mutantes lo elegí yo, así que la suite cubría exactamente las vías que se me
+> habían ocurrido.**
+
+Que es —y esto es lo que duele— **literalmente la lección que yo mismo escribí en §7.2 de la primera
+entrega**, después de encontrar cuatro mutantes supervivientes. La escribí, la firmé, y volví a
+caer en ella tres veces más. Escribir la lección no es aplicarla.
+
+| # | qué dejaba pasar | estado |
+| - | ---------------- | ------ |
+| **B1** | la dirección **`−` del diff** —un rojo que DESAPARECE— tenía **cero** aserciones. Mutándola: «IDÉNTICO», EXIT 0, y mis 28 tests en verde | **cerrado** · §3.4 |
+| **B2** | la guarda de paralelismo se esquivaba por **siete formas más**; mi arreglo cerró 2 de 9. Y mi comentario afirmaba lo contrario | **cerrado** · §7.1 |
+| **B3** | el mutante de orden **por comparador de locale** sobrevivía 28/28: mi fixture era todo ASCII minúscula, donde los dos comparadores **coinciden** | **cerrado** · §7.2.bis |
+
+**B1 es el peor, y hay que decirlo entero.** Es una de las **cuatro garantías que mi propio reporte
+enumeraba** en §8 y que la cabecera del instrumento promete desde V90 («borrar un test tampoco
+cuela»). Entregué un gate contra el encogimiento del conjunto **sin un solo test de encogimiento**,
+y en el mismo documento presenté esa garantía como cubierta. Las cuatro aserciones de diff que tenía
+eran todas de la rama `+`.
+
+**B3 tiene la moraleja más útil del WP**, y es una regla que me llevo:
+
+> **Una fixture que no distingue dos implementaciones no vigila ninguna.** Antes de dar por cubierta
+> una promesa hay que preguntarse *con qué dato divergirían las dos versiones* — y meter ese dato.
+
+Mi fixture de orden era `aaa`, `mmm`, `zzz`. Con eso, `a < b` y `a.localeCompare(b)` dan el mismo
+resultado, así que el test no distinguía «orden por unidad de código» de «orden por locale» — que es
+**exactamente** la distinción que la promesa de portabilidad necesita. Basta una mayúscula y una eñe
+(MEDIDO: unidad de código → `Zulu, aaa, mmm, zzz, ñu`; locale → `aaa, mmm, ñu, Zulu, zzz`).
+
+Lo que el revisor **verificó y no hay que rehacer**: la suite no reintrodujo flapeo (5 corridas,
+403 tests, mismo conjunto, con su propio parser); mi censo **no es tautológico** (12 casos con
+mutación literal y equivalente); los cuatro supervivientes declarados mueren; D1 y D2 son defectos
+reales; el JSON sintético se parece al real en lo que la guarda mira; y `scripts/tests/` es la única
+ubicación posible.
+
+---
+
 ## 1 · El resumen en una tabla
 
-`scripts/tests/rojos-jest.test.ts` — **28 tests, 16 s**, corre con `npm test` como una suite más.
+`scripts/tests/rojos-jest.test.ts` — **36 tests**, corre con `npm test` como una suite más.
 
 | lo que había que cubrir | test(s) | mutación que lo mata | ¿muere? |
 | ----------------------- | ------- | -------------------- | ------- |
-| clase **FALLA** | `FALLA · el rojo sale con su nombre completo…` | se borra el `push('FALLA …')` | ✅ 12 rojos |
-| clase **OMITE** | `OMITE · skip y todo entran al conjunto…` | `t.status !== 'passed'` → `false` | ✅ 5 rojos |
-| clase **SUITE** | `SUITE · una suite que muere…` + real | `suite.status === 'failed' && fallidas === 0` → `false` | ✅ 3 rojos |
-| clase **SINNOMBRE** | `SINNOMBRE · sin esta clase…` + real | `informe.success === false && !explicado` → `false` | ✅ 2 rojos |
-| guarda **multiplicidad** | `GUARDA 1` + real | `contar()` devuelto a semántica de `Set` | ✅ 2 rojos |
-| guarda **ejecución efectiva** | `GUARDA 2` + real | `numTotalTests < 1` → `false` | ✅ 2 rojos |
-| guarda **frescura** (rancio) | `GUARDA 3` | `edad > maxSeg` → `false` | ✅ 3 rojos |
-| guarda **frescura** (futuro) | `GUARDA 3.ter` | `edad < -60` → `false` | ✅ 1 rojo |
-| guarda **frescura** (`--edad-max` NaN) | `GUARDA 3.quater` | `Number.isFinite(n)` → `false` | ✅ 1 rojo |
-| guarda **cobertura** (M7) | `COBERTURA` | `trae && !permitir` → `false` | ✅ 1 rojo |
-| guarda **paralelismo** (M6) | `PARALELISMO` | `culpables` → `[]` | ✅ 2 rojos |
-| **orden canónico** | `ORDEN CANÓNICO` | `sort(ordenEstable)` → `.reverse()` | ✅ 1 rojo |
-| **ruta normalizada** | `RAÍZ AJENA` | `lastIndexOf('tests')` → `-1` | ✅ 1 rojo |
-| **`--gate` fuerza `--coverage=false`** | test homónimo | se borra el `unshift` | ✅ 1 rojo |
-| **nunca mudo** | `NUNCA MUDO ·…` | se borra el `existsSync` del JSON | ✅ 1 rojo |
+| clase **FALLA** | `FALLA · el rojo sale con su nombre completo…` | se borra el `push('FALLA …')` | ✅ 14 rojos |
+| clase **OMITE** | `OMITE · skip y todo entran al conjunto…` | `t.status !== 'passed'` → `false` | ✅ 5 |
+| clase **SUITE** | `SUITE · una suite que muere…` + real | `suite.status === 'failed' && fallidas === 0` → `false` | ✅ 3 |
+| clase **SINNOMBRE** | `SINNOMBRE · sin esta clase…` + real | `informe.success === false && !explicado` → `false` | ✅ 2 |
+| guarda **multiplicidad** | `GUARDA 1` + real | `contar()` devuelto a semántica de `Set` | ✅ 3 |
+| guarda **ejecución efectiva** | `GUARDA 2` + real | `numTotalTests < 1` → `false` | ✅ 2 |
+| guarda **frescura** (rancio) | `GUARDA 3` | `edad > maxSeg` → `false` | ✅ 3 |
+| guarda **frescura** (futuro) | `GUARDA 3.ter` | `edad < -60` → `false` | ✅ 1 |
+| guarda **frescura** (`--edad-max` NaN) | `GUARDA 3.quater` | `Number.isFinite(n)` → `false` | ✅ 1 |
+| guarda **cobertura** (M7) | `COBERTURA` | `trae && !permitir` → `false` | ✅ 1 |
+| **orden canónico** (invertido **y por locale**) | `ORDEN CANÓNICO` | `sort` → `.reverse()` · comparador → `localeCompare` | ✅ 1 y 1 |
+| **ruta normalizada** | `RAÍZ AJENA` | `lastIndexOf('tests')` → `-1` | ✅ 1 |
+| **`--gate` fuerza `--coverage=false`** | test homónimo | se borra el `unshift` | ✅ 1 |
+| **nunca mudo** | `NUNCA MUDO ·…` | se borra el `existsSync` del JSON | ✅ 1 |
 
-**Censo de mutación completo: 15 mutaciones, CERO supervivientes** (§4).
-**El baseline no se mueve**: `--gate` sobre la suite completa → `IDENTICO`, exit 0, 403 tests (§6).
+**Lo que la devolución añadió** (§0.bis):
+
+| lo que faltaba | test(s) | mutación que lo mata | ¿muere? |
+| -------------- | ------- | -------------------- | ------- |
+| **dirección `−`: un rojo que DESAPARECE** | `DIRECCIÓN «−»` ×2 + `--gate` a secas | `if (tiene < n)` → `if (false)` | ✅ 4 rojos |
+| dirección `+`, por simetría | los de multiplicidad | `if (n > esperadas)` → `if (false)` | ✅ 4 |
+| **guarda de paralelismo, 11 formas medidas** | `PARALELISMO` ×2 | 4 mutaciones (guarda, booleanas, numéricas, porcentaje, canon) | ✅ 4/3/2/1/4 |
+| veredicto en serie sale **1** | `PARALELISMO · medir en serie…` | `seriales.length ? 1 : 0` → `0` | ✅ 1 |
+| **detector de discrepancias** de `--repetir` | `DISCREPANCIA` | `texto(…) !== primero` → `false` | ✅ 1 |
+| validación de `--repetir N` | `--repetir exige un entero >= 1` | se borra la validación | ✅ 1 |
+| **`--gate` A SECAS** (baseline por defecto) | test homónimo | se cambia la ruta por defecto | ✅ 1 |
+| **M4** · no dejar directorios temporales | `M4 · una corrida abortada…` | `process.on('exit')` → `('jamas')` | ✅ 1 |
+
+**Censo de mutación completo: 27 mutaciones, CERO supervivientes** (§4).
+**El baseline no se mueve**: `--gate` sobre la suite completa → `IDENTICO`, exit 0, **411 tests** (§6).
+**Coste**: la suite del gate pasa de ~25 s a ~50 s, y este fichero es el camino crítico (§5.1).
 
 ---
 
@@ -62,13 +117,33 @@ que **cada** clase y **cada** guarda se comprueba con dos brazos:
 El brazo 2 es la CA del WP dicha al derecho. Si un mutante sobrevive, el test se pone rojo con el
 mensaje `MUTANTE SUPERVIVIENTE` y dice qué argumentos y qué salida.
 
+### 2.1 · Lo que la pinza NO da, y me costó tres bloqueantes aprender
+
+La pinza garantiza que el test vigila **al mutante que yo escribí**. No garantiza nada sobre los
+mutantes que no se me ocurrieron, y ahí está todo el peligro, porque **la pinza se siente como
+cobertura demostrada**. Un test con su mutante muerto parece cerrado, y en los tres bloqueantes lo
+parecía y no lo estaba:
+
+| lo que yo tenía | lo que faltaba |
+| --------------- | -------------- |
+| mutante que **invierte** el orden | mutante que cambia el **comparador** (B3) |
+| cuatro aserciones sobre la rama `+` del diff | ninguna sobre la rama `−` (B1) |
+| mutante que apaga la guarda de paralelismo entera | las **siete formas** de esquivarla sin apagarla (B2) |
+
+De ahí salen dos reglas que aplico ahora y que están escritas en el propio fichero de tests:
+
+1. **Antes de dar por cubierta una promesa, preguntarse con qué dato divergirían las dos
+   implementaciones — y meter ese dato.** Una fixture que no las distingue no vigila ninguna.
+2. **Para una guarda que reconoce argumentos, la lista de formas no se imagina: se mide.** Las once
+   formas que hoy caza la guarda de paralelismo salen del arnés de PID (§7.1), no de mi cabeza.
+
 Hay una segunda trampa cazada de paso: si un ancla de mutación no aparece **exactamente una vez** en
 el instrumento, el helper revienta con `MUTACIÓN SIN ANCLA` en lugar de mutar a ciegas. Una mutación
 que ya no apunta a código real no prueba nada, y eso tiene que ser ruidoso, no silencioso. **Coste
 declarado**: quien refactorice el instrumento tendrá que reapuntar mutaciones. El mensaje dice cuál.
 
 **Por qué subproceso y no `import`.** El instrumento es un ejecutable: despacha sobre `process.argv`
-y termina con `process.exit()` (`scripts/rojos-jest.mjs:402-403` en adelante). Importarlo dentro de jest
+y termina con `process.exit()` (`scripts/rojos-jest.mjs:468-469` en adelante). Importarlo dentro de jest
 ejecutaría ese despacho **con los argumentos de jest** y mataría al worker. Además, lo que el mundo
 consume es su contrato de línea de órdenes —salida y código de salida—, no sus funciones.
 
@@ -133,37 +208,108 @@ El test de frescura se ejecuta también **sobre un informe que ha escrito jest d
 retoque es `startTime`, que es precisamente lo que hace el paso del tiempo. Esperar 900 s dentro de
 un test no es una opción, y se dice en el fichero.
 
+### 3.4 · Y el cuarto vector, que el encargo no pedía y mi suite no cubría: **la dirección `−`**
+
+Es el bloqueante **B1**. El encargo nombraba tres vectores y los cubrí los tres; lo que no cubrí es
+una garantía que el instrumento promete desde V90 y que mi propio §8 enumeraba: **un rojo que
+DESAPARECE también tiene que dar diff**. Es la dirección de la *mejora aparente* —apagar una suite,
+borrar un test, un `describe.skip`— y es la que un gate contra el maquillaje más necesita.
+
+MEDIDO **con la rama mutada**, baseline que declara dos rojos e informe que trae uno:
+
+```
+conjunto de rojos IDENTICO al declarado          EXIT=0     ← el rojo borrado no deja rastro
+```
+
+Con el instrumento tal como está:
+
+```
+conjunto de rojos DISTINTO del declarado:
+- FALLA tests/unit/uno.test.ts :: V91 rojo que alguien borró                    EXIT=1
+```
+
+y la variante con multiplicidad, que también faltaba —de dos homónimos declarados desaparece uno—:
+
+```
+- FALLA tests/unit/clon.test.ts :: V91 clonado   [faltan 1 de 2]                EXIT=1
+```
+
+Con jest **real** lo cubre además el test de `--gate` **a secas**, que mata dos pájaros: al comparar
+el proyecto mínimo contra el baseline **por defecto** del repo, todas las líneas declaradas salen por
+la rama `−`. Prueba a la vez la resolución del baseline por defecto —la invocación literal del mundo,
+que tampoco tenía test— y la dirección `−` sobre un informe que ha escrito jest. El test cuenta las
+líneas **leyendo el fichero**, no fijando su contenido, para que el día que V48 arregle los cinco
+rojos no se ponga rojo de rebote.
+
 ---
 
 ## 4 · El censo de mutación completo (la CA: mutar el instrumento pone roja su propia suite)
 
 No basta con las pinzas: éstas mutan **copias**. Aquí se mutó `scripts/rojos-jest.mjs` **en el
-árbol**, se corrió su suite, y se restauró. MEDIDO, 15 mutaciones:
+árbol**, se corrió su suite, y se restauró. MEDIDO, **27 mutaciones** (15 en la primera vuelta, 12
+añadidas en la segunda):
 
 ```
-clase FALLA                        | 12 rojos
-clase OMITE                        |  5 rojos
-clase SUITE                        |  3 rojos
-clase SINNOMBRE                    |  2 rojos
-orden canonico                     |  1 rojo
-normalizacion de ruta              |  1 rojo
-guarda 1 multiplicidad             |  2 rojos
-guarda 2 ejecucion efectiva        |  2 rojos
-guarda 3 frescura (rancio)         |  3 rojos
-guarda 3 frescura (futuro)         |  1 rojo
-guarda 3 edad-max NaN              |  1 rojo
-guarda cobertura                   |  1 rojo
-guarda paralelismo                 |  2 rojos
-gate impone --coverage=false       |  1 rojo
-nunca mudo (JSON ausente)          |  1 rojo
+clase FALLA                          | 14 rojos      B2 paralelismo: guarda entera   |  4 rojos
+clase OMITE                          |  5 rojos      B2 paralelismo: solo booleanas  |  3 rojos
+clase SUITE                          |  3 rojos      B2 paralelismo: solo numericas  |  2 rojos
+clase SINNOMBRE                      |  2 rojos      B2 paralelismo: porcentaje      |  1 rojo
+B3 orden: invertido                  |  1 rojo       B2 paralelismo: canon           |  4 rojos
+B3 orden: comparador de LOCALE       |  1 rojo       veredicto serial sale 1         |  1 rojo
+normalizacion de ruta                |  1 rojo       detector de discrepancias       |  1 rojo
+B1 diff: rama '-' (encoge)           |  4 rojos      validacion de --repetir N       |  1 rojo
+diff: rama '+' (crece)               |  4 rojos      M4 gancho de limpieza           |  1 rojo
+guarda 1 multiplicidad               |  3 rojos      gate impone --coverage=false    |  1 rojo
+guarda 2 ejecucion efectiva          |  2 rojos      gate: baseline por defecto      |  1 rojo (*)
+guarda 3 frescura (rancio)           |  3 rojos      nunca mudo (JSON ausente)       |  1 rojo
+guarda 3 frescura (futuro)           |  1 rojo
+guarda 3 edad-max NaN                |  1 rojo
+guarda cobertura                     |  1 rojo
 
 === instrumento restaurado? === IDENTICO
 ```
 
-**Cero supervivientes.** Y lo que importa no es el cardinal: es que **los rojos son los tests que
-nombran esa pieza**. Desactivar `SINNOMBRE` enrojece los dos tests de `SINNOMBRE` —el sintético y el
-de jest real— y ninguno más. Desactivar la multiplicidad enrojece `GUARDA 1` y el test de jest real
-que la reproduce. No hay rojos por simpatía.
+*(\*) Esa fila salió «SUPERVIVIENTE» en la primera pasada por un fallo MÍO al escribir la mutación,
+no del instrumento ni de la suite. Se cuenta en §4.2, con la medida que lo demuestra.*
+
+**Cero supervivientes**, y hay que precisar qué significa eso y qué no.
+
+En la primera entrega escribí «**no hay rojos por simpatía**». **Es falso y lo retiro.** Apagar la
+clase `FALLA` enrojece **14** tests, muchos de los cuales no la nombran: la fixture de orden, la de
+raíz ajena, las de frescura, la de cobertura… todas llevan líneas `FALLA` dentro y aseveran sobre la
+salida completa, así que caen de rebote. Lo mismo con la rama `−` del diff (4 rojos) o la guarda de
+paralelismo (4).
+
+Lo que sí se sostiene, y es lo que hace útil al censo, es lo contrario de una afirmación de
+precisión: **ninguna mutación pasa desapercibida**, y en todas ellas **el test que nombra la pieza
+está entre los rojos**. Desactivar `SINNOMBRE` enrojece exactamente sus dos tests —el sintético y el
+de jest real—; desactivar el comparador de locale, exactamente el de orden. Que además caigan otros
+es ruido de diagnóstico, no un problema de cobertura: se ve en cuanto se lee la lista, porque el
+primero de la lista es el que da el nombre.
+
+### 4.2 · Una mutación mía no mordía, y lo digo porque es el mismo error otra vez
+
+En la primera pasada de este censo ampliado una fila salió **SUPERVIVIENTE**: «gate: baseline por
+defecto». No lo era. **La mutación que escribí era un no-op**: cambiaba
+`baseline = 'scripts/rojos-jest.baseline.txt'` por
+`baseline = 'scripts/…baseline.txt'; baseline = process.argv[99] || baseline;`, y como `process.argv[99]`
+es `undefined`, el valor **no cambiaba**. Verificado aparte:
+
+```
+baseline tras la mutacion: scripts/rojos-jest.baseline.txt -> SIN CAMBIO (no-op)
+```
+
+Repetida con una mutación de verdad (apuntar a `scripts/rojos-jest.OTRO.txt`):
+
+```
+× `--gate` A SECAS: la invocación del mundo, con su baseline por defecto
+Tests: 1 failed, 35 passed, 36 total
+```
+
+Muere, y muere en el test que le toca. Lo cuento porque es **la misma clase de error que los tres
+bloqueantes**, un escalón más arriba: el arnés de tests comprueba que un ancla exista una vez, pero
+**nadie comprueba que la mutación cambie la conducta**. Una mutación que no muerde se lee igual que
+una laguna de cobertura, y sólo se distingue mirándola. Va dicho para quien herede el censo.
 
 *(Método: `git stash` no se usó. La restauración es una copia del fichero en el scratchpad de la
 sesión, restaurada tras cada mutación y verificada con `diff -q`.)*
@@ -200,13 +346,58 @@ de «nunca mudo» y de ejecución efectiva lo mandan a **exit 2**, que tampoco e
    tres ficheros `.js` cada uno, contra los que se invoca **jest 29 de verdad**.
 
 El resultado buscado: estos tests se ponen rojos cuando se rompe el **instrumento**, y no cuando
-cambia el **producto**. Coste temporal: **16 s** frente a los ~90 s que cuesta una corrida completa.
+cambia el **producto**.
 
-**El precio, dicho entero.** Lo que compro con lo sintético es velocidad y aislamiento; lo que
-pago es que *«el JSON sintético se parece al de jest»* es una **hipótesis mía**. Por eso la mitad de
-la suite (§4 del fichero de tests, 7 tests) no usa JSON sintético en absoluto: corre jest y le deja
-escribir el informe. Las cuatro clases, la multiplicidad y la guarda 2 están medidas **también**
-contra jest real. Lo que queda apoyado **sólo** en JSON sintético es:
+### 5.1 · El precio TEMPORAL, bien contado esta vez
+
+La primera entrega decía «**16 s** frente a los ~90 s que cuesta una corrida completa». Estaba mal
+**dos veces**, y el revisor tenía razón en las dos:
+
+- los **16 s** eran el fichero corriendo **solo**. Dentro de la suite, compartiendo máquina con las
+  otras diez, tarda mucho más;
+- los **~90 s** no son de `npm test`: son del comando **con cobertura**, que es otro. Comparaba mi
+  coste contra un total que no es el que yo engordo.
+
+MEDIDO hoy en este árbol, dos corridas de cada (reloj de pared, `--coverage=false`, que es lo que
+corre el gate):
+
+```
+SIN el fichero de V91        30,9 s  ·  24,8 s
+CON el fichero de V91        51,3 s  ·  47,2 s
+jest --coverage (otro comando, el de los «~90 s»)      65,4 s
+```
+
+y el reparto por suite de la corrida completa:
+
+```
+  47,1 s  scripts/tests/rojos-jest.test.ts     ← camino crítico
+  22,6 s  tests/unit/webview/webviewCsp.test.ts
+  20,8 s  tests/integration/managerFactory.test.ts
+  …
+```
+
+**Dicho sin adornos: la suite del gate pasa de ~25 s a ~50 s, o sea que se DUPLICA, y mi fichero es
+el camino crítico** — el resto termina en ~25 s y la corrida espera a que yo acabe. La causa es
+estructural y no la disimulo: 36 tests que lanzan **entre uno y cuatro subprocesos cada uno**, y
+once de ellos arrancan un jest entero. El arranque de jest bajo contención es casi todo el gasto.
+
+**La palanca, que no la aplico y explico por qué.** jest reparte por FICHERO, no por `describe`: un
+solo fichero se ejecuta entero en un worker y por eso es el camino crítico. **Partirlo en tres
+ficheros** (clases · guardas · jest real) con el arnés en un módulo compartido —`scripts/tests/arnes.ts`,
+que al no acabar en `.test.ts` no lo recoge jest— dejaría a los tres corriendo en paralelo y bajaría
+el reloj de pared a algo cercano al segundo más lento. No lo hago **en esta ronda**: es una
+reestructuración de la suite entera, entra sin más contrarrevisión por delante, y el riesgo de
+romper por descuido un fichero cuyo único mérito es ser hermético supera lo que se gana. **Queda
+propuesto**, es barato, y no toca ninguna zona prohibida ni degrada la CA.
+
+### 5.2 · El precio de lo SINTÉTICO
+
+Lo que compro con lo sintético es velocidad y aislamiento; lo que pago es que *«el JSON sintético se
+parece al de jest»* es una **hipótesis mía** (el revisor la verificó: se parece en lo que la guarda
+mira). Por eso **once de los 36 tests** lanzan jest de verdad, y en **ocho** de ellos jest llega a
+ejecutar tests. Las cuatro clases, la multiplicidad, la guarda 2, el detector de discrepancias y las
+dos formas del `--gate` están medidas **también** contra jest 29 real. Lo que queda apoyado **sólo**
+en JSON sintético es:
 
 | apoyado sólo en sintético | por qué se aceptó |
 | ------------------------- | ----------------- |
@@ -220,12 +411,16 @@ contra jest real. Lo que queda apoyado **sólo** en JSON sintético es:
 - **La suite del producto en sí.** Si `jest.config.js` cambiara de forma que el JSON dejara de tener
   la estructura esperada, mis proyectos mínimos —que traen su propia config— **no se enterarían**.
   Lo cubre en la práctica el `--gate` del mundo, no esta suite.
-- **`--repetir N` con N > 1 y discrepancia real.** Se prueba `--repetir 1` y `--repetir 2` en el
-  camino de error. **No hay test de dos corridas que discrepen**: fabricar flapeo a demanda pide un
-  test no determinista, que es justo lo que este carril lleva dos WP erradicando. El bloque de
-  `diff()` que imprime las discrepancias queda cubierto sólo por la vía de `--check`.
-- **`--gate` bajo interrupción.** Que borre su directorio temporal si lo matan a mitad no se prueba.
+- **`--gate` bajo interrupción (SIGINT/SIGKILL).** El gancho de limpieza cuelga de `process.on('exit')`,
+  que cubre la salida por `process.exit()` —que era el agujero real, §7.3— pero **no** un `kill -9`.
+  No se prueba y no se arregla: un `SIGKILL` no ejecuta nada, ahí no hay defensa posible.
 - **La cifra de cobertura del producto** (24,91 %, CITA de WP-V90) no se remide aquí.
+
+*(Lo que en la primera entrega figuraba aquí como no cubierto —«`--repetir` con dos corridas que
+discrepan»— **está cubierto desde esta ronda**. Lo declaré imposible sin un test que flapee, y era
+una excusa: no hace falta azar, basta una secuencia determinista. El proyecto mínimo lleva un
+contador en disco y falla **sólo en su primera corrida**, así que las dos corridas dan conjuntos
+distintos siempre, y el detector se ejercita de verdad.)*
 
 ---
 
@@ -235,7 +430,7 @@ MEDIDO tras la obra, comando canónico:
 
 ```
 $ node scripts/rojos-jest.mjs --repetir 1 -- --coverage=false
---- corrida 1/1 (jest exit=1, 403 tests ejecutados) ---
+--- corrida 1/1 (jest exit=1, 411 tests ejecutados) ---
 FALLA tests/integration/managerFactory.test.ts :: … should create process manager
 FALLA tests/integration/managerFactory.test.ts :: … should create webview manager
 FALLA tests/integration/managerFactory.test.ts :: … should handle concurrent manager creation
@@ -247,9 +442,9 @@ $ node scripts/rojos-jest.mjs --gate
 conjunto de rojos IDENTICO al declarado          GATE_EXIT=0
 ```
 
-**375 → 403 tests** (los 28 míos), **el conjunto declarado intacto**. `scripts/rojos-jest.baseline.txt`
+**375 → 411 tests** (los 36 míos), **el conjunto declarado intacto**. `scripts/rojos-jest.baseline.txt`
 **no se ha tocado**, que era la predicción: lo que el baseline declara son rojos y omisiones, y mis
-28 tests son verdes.
+36 tests son verdes.
 
 ### 6.1 · Por qué el fichero está en `scripts/tests/` — decisión, no descuido
 
@@ -304,25 +499,57 @@ Tres formas de escribirlo mal, tres veces el informe rancio bendecido, **y ni un
 Compárese con la vía legítima de apagarla, `--edad-max 0`, que lo grita por stderr. Una guarda sólo
 puede apagarse a propósito y en voz alta. **Arreglado**: valor no finito → `morir`, EXIT 2.
 
-**(D2) La guarda de PARALELISMO se esquivaba separando la bandera de su valor.** `ARGS_SERIALES` se
-aplicaba argumento a argumento, y ni `--maxWorkers` ni `1` casan por separado. MEDIDO **antes** del
-arreglo: `--repetir 2 -- --maxWorkers 1` y `-w 1` **pasaban la guarda entera**.
+**(D2) La guarda de PARALELISMO se esquivaba de NUEVE maneras, y en la primera vuelta cerré dos.**
 
-Antes de arreglarlo comprobé que la evasión es real, no cosmética — que esas formas **serializan
-jest de verdad**. MEDIDO con 6 suites que anotan su PID en un fichero:
+Éste es el bloqueante **B2** y conviene contarlo en orden, porque el error de método está en el
+medio. En la primera vuelta encontré que `--maxWorkers 1` en **dos argumentos** se colaba —la lista
+de expresiones regulares se aplicaba argumento a argumento— lo medí, lo arreglé, y escribí en el
+código: *«las cuatro formas serializan igual, así que las cuatro tienen que caer igual»*.
+
+**Esa frase era falsa cuando la escribí.** No hay cuatro formas: hay al menos nueve, y mi arreglo
+cerró dos. MEDIDO con el arnés de 6 suites que anotan su PID (jest 29.7.0, `--no-cache`, 12 CPU):
 
 ```
---maxWorkers=6   -> pids distintos: 6
---maxWorkers=1   -> pids distintos: 1
---maxWorkers 1   -> pids distintos: 1        ← se colaba
--w 1             -> pids distintos: 1        ← se colaba
---runInBand      -> pids distintos: 1
+=== controles: paralelismo de verdad ===        === las que dejan UN solo proceso ===
+--maxWorkers=6      -> 6 procesos               --maxWorkers=1     -> 1     (cazada)
+--runInBand=false   -> 6 procesos               -w 1               -> 1     (cazada)
+--maxWorkers=50%    -> 6 procesos               --runInBand        -> 1     (cazada)
+                                                -i                 -> 1     (cazada)
+                                                --max-workers=1    -> 1     ← COLADA
+                                                --max-workers 1    -> 1     ← COLADA
+                                                --runInBand=true   -> 1     ← COLADA
+                                                -i=true            -> 1     ← COLADA
+                                                --maxWorkers=01    -> 1     ← COLADA
+                                                --maxWorkers=1.0   -> 1     ← COLADA
+                                                --maxWorkers=+1    -> 1     ← COLADA
+                                                --maxWorkers=10%   -> 1     ← COLADA (y declarada)
 ```
 
-Las cuatro formas serializadoras dejan jest en **un** proceso. La guarda cazaba dos y dejaba pasar
-dos, y con las que dejaba pasar `--repetir 10` habría publicado «las 10 corridas dieron el MISMO
-conjunto» medido **en serie** — el resultado exacto que la guarda existe para no dejar publicar.
-**Arreglado**: se normaliza el par `--maxWorkers 1` → `--maxWorkers=1` antes de mirar.
+*(La primera medida de los controles salió mal: con tests rápidos jest se pasa a modo in-band por su
+propia heurística de tiempos y `--maxWorkers=6` daba **1** proceso, lo que habría hecho creer que
+todo serializa. Se repitió con tests de 1,2 s y `--no-cache`, y ahí los controles dan 6.)*
+
+**El error de método, que es lo que hay que aprender**: la guarda comparaba la **forma literal** del
+argumento contra una lista de expresiones regulares, y la forma literal de una bandera de jest tiene
+muchas variantes —alias corto, kebab-case, `=valor` frente a valor suelto, ceros a la izquierda,
+decimales, signo, porcentaje, booleana explícita—. Una lista de formas sólo caza las que a alguien
+se le ocurrieron, y **a mí se me ocurrieron cuatro de once**.
+
+**Arreglado de raíz**: la guarda ya no compara formas, **analiza el argumento** — canonicaliza el
+nombre (sin guiones, sin mayúsculas: `--max-workers`, `--maxWorkers` y `-w` son lo mismo), separa el
+valor venga pegado o suelto, y pregunta **cuántos procesos deja**. Las booleanas sólo cuentan si no
+llevan `=false`/`=0`/`=no`; las numéricas se resuelven con `Number()` —que se come `01`, `1.0` y
+`+1`— y los porcentajes con `floor(cpus × pct / 100)`, fórmula **medida en cinco puntos** (9 % → 1,
+10 % → 1, 20 % → 2, 25 % → 3, 50 % → 6 sobre 12 CPU).
+
+El porcentaje merece una nota, porque en la primera vuelta lo **declaré como hueco conocido y no lo
+cerré**, con el argumento de que depende de la máquina. El argumento era malo: depende de la
+máquina, sí, y **la máquina que importa es aquella en la que se está tomando la medida**. Si ahí
+resuelve a un proceso, la corrida es en serie y el veredicto no vale. Cerrado.
+
+Los once casos y los cuatro controles están en el test `PARALELISMO · …se niega a medir determinismo
+en serie`, y el porcentaje en uno propio que se calcula contra `os.cpus().length` para no depender
+de esta máquina en concreto.
 
 ### 7.2 · Cuatro MUTANTES que sobrevivieron a mi propia suite
 
@@ -346,11 +573,52 @@ Los cuatro importan, y el primero más que ninguno:
 | **normalización de ruta** | el baseline se escribe en un árbol y se compara en otro. Si la ruta no se normaliza igual, **todo** el conjunto sale distinto y el gate se vuelve inservible justo en CI, que es donde más falta hace | `RAÍZ AJENA`, con una ruta de CI en linux |
 | **reloj en el futuro** | la otra mitad de la frescura: un reloj adelantado (VM, contenedor) haría que **cualquier** informe pareciera recién hecho, para siempre. `edad` sale negativa y `edad > maxSeg` nunca se cumple | `GUARDA 3.ter` |
 
-Tras añadir los cuatro tests, los cuatro mutantes mueren (§4). La lección, que es la del encargo: **mi
-primera suite cubría exactamente las vías que yo ya había imaginado.** Sólo atacándola apareció que
-la promesa más publicitada del instrumento —el orden— era la que menos vigilada estaba.
+Tras añadir los cuatro tests, los cuatro mutantes mueren (§4).
 
-### 7.3 · Un hallazgo no previsto: la guarda 2 tapa a la clase SUITE
+### 7.2.bis · Y otros TRES que sobrevivieron a la segunda suite — los encontró el revisor, no yo
+
+Aquí es donde la lección se cobra. Escribí, al cerrar §7.2: *«mi primera suite cubría exactamente
+las vías que yo ya había imaginado»*. Escribí la frase **y volví a hacerlo**: la suite de 28 tests
+tenía otros tres supervivientes, y los tres son los bloqueantes de la devolución.
+
+| superviviente | por qué mi suite era ciega | qué lo cubre ahora |
+| ------------- | -------------------------- | ------------------ |
+| **rama `−` del diff** (B1) | mis cuatro aserciones de diff eran **todas de la rama `+`**. Nunca escribí un caso en que el conjunto ENCOGE, que es la dirección de la mejora aparente | dos tests: línea que desaparece entera, y una de dos homónimas (`[faltan 1 de 2]`) |
+| **comparador de locale** (B3) | mi fixture era `aaa`/`mmm`/`zzz`: **ASCII minúscula, donde los dos comparadores coinciden**. El test distinguía «ordenado» de «invertido», no «por unidad de código» de «por locale» | la fixture lleva `Zulu` y `ñu`, y hay un segundo mutante con `localeCompare` |
+| **siete formas de serializar** (B2) | probé las formas que se me ocurrieron en vez de **medir** cuáles serializan | las once formas medidas, más cuatro controles que no deben caer |
+
+La diferencia entre esta tanda y la anterior es quién las encontró, y por eso la regla que me llevo
+no es «ataca tu suite» —eso ya lo hice— sino la más concreta:
+
+> **Una fixture que no distingue dos implementaciones no vigila ninguna.** Y para una guarda que
+> reconoce argumentos, la lista de formas **se mide, no se imagina**.
+
+Con esos tres cerrados, y con los mutantes nuevos que añadí de paso —la rama `+`, las cuatro piezas
+por separado de la guarda de paralelismo, el detector de discrepancias, la validación de
+`--repetir N`, el veredicto en serie, el gancho de limpieza y la resolución del baseline por
+defecto—, el censo pasa de 15 mutaciones a **27, con cero supervivientes** (§4).
+
+### 7.3 · M4 · el instrumento dejaba basura en `os.tmpdir()`, y yo lo empeoré
+
+Denunciado en la devolución y confirmado: `--gate` y `--repetir` crean un directorio temporal y lo
+borran en un `finally`. Pero **`process.exit()` no ejecuta los `finally`**, y el instrumento sale
+por `morir()` desde DENTRO de ese `try` en cinco caminos distintos (jest no escribió el JSON, la
+corrida no ejecutó tests, el informe trae cobertura…). Cada una de esas salidas dejaba su
+directorio, con el JSON de jest dentro.
+
+**El fallo es heredado de V90, pero es mío el haberlo convertido de raro en cotidiano**: mi suite
+recorre justamente esos caminos, así que pasaba a fugar cinco directorios **en cada `npm test`**.
+Y contradecía de plano mi propio §9.1 («nada escrito fuera del worktree»), que era falso.
+
+**Arreglado** con un `tmpEfimero()` que cuelga el borrado de `process.on('exit')` —que sí corre en
+`process.exit()`—. El `finally` se queda, redundante y sin estorbar. El test es hermético: le da al
+subproceso un `os.tmpdir()` propio y cuenta sólo lo que deja el instrumento, así que no depende de
+qué más haya en el temporal de la máquina.
+
+Lo que **no** cubre, dicho: un `SIGKILL` no ejecuta ganchos de salida. Ahí no hay defensa y no la
+finjo.
+
+### 7.4 · Un hallazgo no previsto: la guarda 2 tapa a la clase SUITE
 
 Al escribir el test real de `SUITE` monté un proyecto con **sólo** la suite rota. Salió **2**, no la
 línea `SUITE`. La causa es correcta y no la he cambiado: una suite que muere al importarse no ejecuta
@@ -362,7 +630,7 @@ tenerlo escrito, porque acota la clase: **`SUITE` sólo aparece cuando algún ot
 No es el conjunto de rojos de un mundo apagado. Queda como test propio
 (`SUITE · si la suite rota va SOLA…`) para que nadie lo redescubra a base de susto.
 
-### 7.4 · Ataques que NO dieron nada (para que no se repitan)
+### 7.5 · Ataques que NO dieron nada (para que no se repitan)
 
 | vector probado | resultado |
 | -------------- | --------- |
@@ -370,17 +638,18 @@ No es el conjunto de rojos de un mundo apagado. Queda como test propio
 | `--json=false` colado en los args extra | falla cerrado, misma vía |
 | baseline con BOM, espacios de sobra, comentarios `#` y líneas vacías | tolerado y correcto (hay test) |
 | `--baseline` sin valor | `no existe el baseline: undefined`, EXIT 2 |
-| `--repetir 0` / `--repetir -1` / no entero | EXIT 2 |
 
-Y **dos cosas que dejo señaladas sin arreglar**, porque no son defectos claros y tocarlas sería
-ensanchar el WP:
+Y **una sola cosa que dejo señalada sin arreglar**:
 
-1. **`--maxWorkers=10%`** puede resolver a 1 worker en una máquina pequeña y **no** lo caza la guarda
-   de paralelismo. Cazarlo obligaría al instrumento a saber cuántas CPU hay, que es una medida del
-   entorno, no del argumento. Queda dicho.
-2. **`--repetir 1`** proclama «las 1 corridas dieron el MISMO conjunto». No es falso, pero es una
-   afirmación de determinismo sobre una sola corrida. Yo mismo lo uso así en un test (para leer el
-   conjunto emitido), lo cual es honesto pero conviene que conste.
+- **`--repetir 1`** proclama «las 1 corridas dieron el MISMO conjunto». No es falso, pero es una
+  afirmación de determinismo sobre una sola corrida. Yo mismo lo uso así en dos tests (para leer el
+  conjunto emitido), lo cual es honesto pero conviene que conste.
+
+*(De la lista anterior salen dos entradas que ya no pertenecen aquí: **`--maxWorkers=10%`** estaba
+declarado como hueco conocido y **ahora está cerrado** (§7.1); y **`--repetir 0 / -1 / no entero`**
+figuraba como «sonda que no dio nada» pero **no tenía test**, así que la validación se podía borrar
+entera sin consecuencias. Ahora lo tiene. Presentar una sonda manual como cobertura era, en
+pequeño, el mismo pecado que B1.)*
 
 ---
 
@@ -427,6 +696,12 @@ Entonces, dicho entero:
   (`.github/workflows/` es zona prohibida) y no lo he tocado, pero sin esta frase la anterior sería
   más ancha que la evidencia.
 
+  Y la devolución añade dos datos que lo empeoran y que conviene dejar juntos: **ningún paso de CI
+  corre el gate** (`--gate` no aparece en el workflow), y **ese paso está permanentemente en rojo
+  hoy**, así que su aportación es cero. O sea que, a día de hoy, **toda la fuerza de este gate es
+  local**: vive en que alguien corra `npm test` o `--gate` y mire el resultado. Eso no invalida el
+  WP —el gate hace lo que promete cuando se ejecuta— pero sí acota dónde muerde.
+
 > **El gate convierte «el mundo empeoró en silencio» en «alguien firmó que el mundo empeoró». Eso es
 > lo que se pedía. No es una garantía de que el mundo no empeore.**
 
@@ -456,8 +731,12 @@ Ningún cambio altera el conjunto que el instrumento emite: §6 lo mide.
 - **`git stash`: no usado.** Las mutaciones en el árbol se restauraron con una copia en el scratchpad
   de la sesión y se verificaron con `diff -q` (§4). La pila del repositorio no se tocó.
 - **`npx`: no usado.** Ni por mí ni por el instrumento. El binario de jest se resuelve con
-  `createRequire`, igual que hace `scripts/rojos-jest.mjs:218-235`, y se lanza con el node actual.
-- **Nada escrito fuera del worktree** salvo el scratchpad de la sesión.
+  `createRequire`, igual que hace `scripts/rojos-jest.mjs:238-255`, y se lanza con el node actual.
+- **Fuera del worktree**: el scratchpad de la sesión, y `os.tmpdir()`, que es donde viven los
+  proyectos jest mínimos y los mutantes mientras corre la suite (se crean con `mkdtemp` y se borran
+  en `afterAll`). **En la primera entrega esta línea decía «nada escrito fuera del worktree» y era
+  falsa**: además de lo anterior, el instrumento **fugaba cinco directorios temporales por corrida**
+  (§7.3). El fallo está arreglado y la frase, corregida.
 - **Regla 4, comprobada por mí y no citada de nadie**: MEDIDO, `git status --porcelain` antes y
   después de una corrida completa de la suite da **exactamente lo mismo** (sólo mis dos entradas).
   Correr la suite en este árbol **no** ensucia ningún fichero rastreado.
@@ -471,19 +750,29 @@ Ningún cambio altera el conjunto que el instrumento emite: §6 lo mide.
 
 | etiqueta | resultado | HEAD | árbol | nota |
 | -------- | --------- | ---- | ----- | ---- |
-| `gate` | **PASS** | `b8f341c` | limpio | conjunto `IDENTICO`, exit 0, 403 tests (375 + los 28 de V91) |
-| `test-instrumento` | **PASS** | `b8f341c` | limpio | `scripts/tests/rojos-jest.test.ts` 28/28 en 16 s |
-| `censo-mutacion` | **PASS** | `b8f341c` | limpio | 15 mutaciones del instrumento, 0 supervivientes |
+| `gate` | **PASS** | 2.ª vuelta | limpio | conjunto `IDENTICO`, exit 0, **411 tests** (375 + los 36 de V91) |
+| `test-instrumento` | **PASS** | 2.ª vuelta | limpio | `scripts/tests/rojos-jest.test.ts` **36/36** |
+| `censo-mutacion` | **PASS** | 2.ª vuelta | limpio | **27 mutaciones**, 0 supervivientes (§4.2) |
 
 ---
 
 ## 10 · Para el orquestador
 
-**Nada que enrutar a otro WP.** Lo único que sale de aquí es la propuesta de §6.1 sobre
-`package.json`, y viene con la recomendación de **no** aplicarla.
+**Nada que enrutar a otro WP.** Salen **dos propuestas**, ninguna aplicada, las dos fuera de mi
+alcance o de esta ronda:
 
-Queda señalado, sin reclamar arreglo: `--maxWorkers=10%` (§7.4) y la afirmación de determinismo de
-`--repetir 1` (§7.4).
+| # | propuesta | recomendación |
+| - | --------- | ------------- |
+| 1 | un `test:instrumento` propio en `package.json` (§6.1) | **NO aplicarla**: un script aparte no corre con `npm test`, y entonces romper el instrumento deja de poner rojo el gate. Degrada la CA de este WP |
+| 2 | **partir `rojos-jest.test.ts` en tres ficheros** con el arnés en `scripts/tests/arnes.ts` (§5.1) | **sí, pero no ahora**. jest reparte por fichero: partirlo devolvería el reloj de pared de ~50 s a cerca de ~25 s. Es barato y no toca zona prohibida, pero es reestructurar la suite entera sin contrarrevisión por delante |
+
+Queda señalado, sin reclamar arreglo, **un** flanco: la afirmación de determinismo de `--repetir 1`
+(§7.5). El que quedaba de la primera vuelta, `--maxWorkers=10%`, **está cerrado** (§7.1).
+
+**Sobre CI**, y agradeciendo los dos datos que sumaste: que ningún paso corra el gate y que el paso
+del `npm test` esté permanentemente en rojo convierte mi «la suite corre en CI» en una afirmación sin
+consecuencias prácticas. Está dicho en §8 con esas palabras. No he tocado `.github/workflows/` — es
+zona prohibida — y queda enteramente en tu carril.
 
 Un apunte que puede interesar a quien lleve la cobertura: **no conseguí que jest recogiera cobertura
 con `rootDir` en un directorio temporal** en esta máquina (`coverageMap` vacío, `coverage-summary`
