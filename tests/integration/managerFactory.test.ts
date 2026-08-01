@@ -301,12 +301,19 @@ describe('ManagerFactory Integration Tests', () => {
         });
 
         it('should create managers within performance threshold', async () => {
-            const startTime = Date.now();
-            await factory.createManager('logging');
-            const endTime = Date.now();
+            // WP-V90 (censo #8): borrada `expect(creationTime).toBeLessThan(100)`
+            // con su par de lecturas de `Date.now()`. Era la única aserción del
+            // test. Un presupuesto de 100 ms de reloj de pared mide la carga de
+            // la máquina, no `createManager`; y este fichero es precisamente el
+            // que aloja los cinco rojos deterministas del mundo, así que aquí un
+            // rojo por flapeo es el que más daño hace: se confunde con ellos.
+            // ALCANCE: V90 sólo toca ESTE `it`. El resto del fichero —incluido
+            // «should handle concurrent manager creation», que es uno de los
+            // cinco rojos históricos— es territorio de otro WP y queda intacto.
+            const manager = await factory.createManager('logging');
 
-            const creationTime = endTime - startTime;
-            expect(creationTime).toBeLessThan(100); // Should create within 100ms
+            expect(manager).toBeDefined();
+            expect(manager).toHaveProperty('dispose');
         });
 
         it('should handle concurrent manager creation', async () => {

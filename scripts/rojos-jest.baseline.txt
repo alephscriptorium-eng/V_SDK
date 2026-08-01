@@ -1,0 +1,71 @@
+# =============================================================================
+# CONJUNTO DECLARADO DE ROJOS DE JEST — por NOMBRE, no por cardinal · WP-V90
+# =============================================================================
+#
+# Este fichero es el oráculo del gate. Se compara así:
+#
+#   npx jest --coverage=false --json --outputFile=<tmp>/jest.json
+#   node scripts/rojos-jest.mjs --check scripts/rojos-jest.baseline.txt <tmp>/jest.json
+#
+# Sale 0 si el conjunto obtenido es IDÉNTICO al declarado. Sale 1 ante
+# CUALQUIER diferencia, en cualquier dirección: un rojo nuevo, un rojo que
+# desaparece, un test renombrado, un test saltado, una suite que deja de
+# compilar. No hay dirección «buena» que pase sin firma: arreglar un rojo
+# EXIGE borrar su línea de aquí en el mismo commit, y eso es justo lo que se
+# quiere: que el cambio de estado del mundo lo firme alguien.
+#
+# MEDIDO en este árbol el 2026-08-01: diez corridas consecutivas del comando
+# canónico, con los workers en PARALELO (los de jest por defecto, 11 sobre 12
+# CPUs), dieron este mismo conjunto las diez veces.
+#
+# Lo que NO está aquí, y por qué: los umbrales de cobertura. Jest sale con
+# código 1 por ellos, pero en su JSON no queda ni rastro del motivo, así que
+# no tienen nombre que declarar. Por eso el comando canónico lleva
+# `--coverage=false` y la cobertura se comprueba aparte. Estado medido hoy:
+# statements 24,91 % (umbral 85), branches 24,9 % (75), lines 25,33 % (85),
+# functions 20,49 % (80). Rojo abierto y documentado desde WP-V13; NO es de
+# V90 cerrarlo, y este fichero no lo tapa: lo señala.
+#
+# Las líneas que empiezan por «#» y las vacías se ignoran.
+#
+# -----------------------------------------------------------------------------
+# LOS CINCO ROJOS DETERMINISTAS, CON SU CAUSA
+#
+# Los cinco comparten UNA sola causa, medida hoy leyendo los cinco mensajes de
+# fallo: los cinco lanzan exactamente
+#
+#     TypeError: vscode.window.onDidCloseTerminal is not a function
+#         at new TerminalManager (src/terminalManager.ts:24)
+#         at new ProcessManager  (src/processManager.ts:33 → :38)
+#         at ManagerFactory.createManager (src/core/managerFactory.ts:71, y :75 vía webViewManager.ts:42/:51)
+#
+# El origen NO es el mock compartido. `tests/integration/managerFactory.test.ts`
+# declara su PROPIO mock inline con `jest.mock('vscode', …)` en :9-53, que
+# desplaza al `moduleNameMapper` de jest.config.js:36-38. Ese mock inline da un
+# `window` con cuatro claves —showInformationMessage, showErrorMessage,
+# createOutputChannel, createWebviewPanel— y ninguna es `onDidCloseTerminal`
+# (`grep -n onDidCloseTerminal tests/integration/managerFactory.test.ts` → 0).
+# El mock compartido `tests/mocks/vscode.mock.js` SÍ la expone (:83) desde
+# dfddc87 (2026-07-31 19:33:29 +0200), pero a esta suite no la alcanza nunca.
+#
+# Corolario para quien los arregle (V48): tocar vscode.mock.js no mueve ni uno
+# de los cinco. Lo que hay que ampliar es el mock inline de :9-53.
+# -----------------------------------------------------------------------------
+
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create process manager
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create webview manager
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Performance should handle concurrent manager creation
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should create all standard managers
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should have proper dependency chain in standard managers
+
+# -----------------------------------------------------------------------------
+# OMISIÓN DECLARADA (una)
+#
+# Un `skip` no es un verde: es un rojo escondido, salvo que esté firmado. Éste
+# lo está —es el «skip-honesto» de WP-V28— y por eso figura aquí por su nombre
+# completo. Que aparezca en el conjunto es deliberado: si mañana alguien
+# saltara un test para quitarlo de la lista de rojos, saldría en el diff igual
+# que sale éste.
+# -----------------------------------------------------------------------------
+
+OMITE tests/unit/mcp/clienteMcp.test.ts :: [pending] WP-V28 · contra runtime real (skip-honesto) skip-honesto: conectar/listar/leer contra mcp-launcher y linea-editor VIVOS de z-sdk — exige runtime real de la Ciudad arrancado (no disponible en este arnés unit); no se simula como verde

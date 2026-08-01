@@ -108,6 +108,30 @@ export const createMockContext = () => ({
 });
 
 // Performance measurement utilities for tests
+//
+// WP-V90 · `duration` ES UNA OBSERVACIÓN, NO UN ORÁCULO. NO SE ASEVERA SOBRE ELLA.
+//
+// Este fichero lo carga TODA la suite (jest.config.js:33, `setupFilesAfterEnv`),
+// así que lo que se ofrezca aquí se usa en todas partes. `duration` es reloj de
+// PARED: mide lo que la máquina tardó, incluidos el ruido del planificador y la
+// contención entre los workers de jest. Sirve para mirar y para reportar; no
+// sirve para decidir verde o rojo.
+//
+// Si `expect(duration)…` vuelve a esta suite, vuelve el problema que arregló
+// V90: el estado del mundo se compara por CONJUNTO DE ROJOS POR NOMBRE
+// (scripts/rojos-jest.mjs), y un rojo que va y viene con la carga hace que un
+// rojo REAL se pueda despachar como flapeo.
+//
+// Y NO, un reloj falso no lo salva. MEDIDO en este árbol —jest 29.7.0 con
+// @sinonjs/fake-timers 10.3.0—: `jest.useFakeTimers()` moderno REEMPLAZA
+// `process.hrtime.bigint`, igual que `Date.now` y `performance.now`. Bajo
+// timers falsos `duration` vale exactamente lo que el propio test haya
+// avanzado con `advanceTimersByTime` —cero si no avanza nada—, de modo que la
+// aserción sobrevive convertida en tautología sobre su propio guion: verde
+// perpetuo que no mide nada. Si de verdad hace falta reloj de pared con timers
+// falsos, la salida es `jest.useFakeTimers({ doNotFake: ['hrtime', 'performance'] })`,
+// también comprobado aquí — pero entonces vuelve a ser reloj de pared, con
+// todo lo anterior.
 export const measurePerformance = async (fn: Function): Promise<{ result: any; duration: number }> => {
     const startTime = process.hrtime.bigint();
     const result = await fn();
