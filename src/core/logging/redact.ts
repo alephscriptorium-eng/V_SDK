@@ -9,11 +9,18 @@
  * pegado en un issue público, no.
  *
  * ── Cómo decide (reescrito en la corrección de la devolución, D4/D5) ──────
- * Hay UN vocabulario (`SECRET_WORDS` + `SECRET_TERM_SOURCE`) del que derivan
- * TODOS los caminos: claves de objeto, banderas de CLI, asignaciones de
- * entorno y parámetros de query. La primera versión tenía cuatro listas que no
- * coincidían entre sí — `?auth=` se tapaba pero `--auth` no —, y eso no es un
- * criterio: es un hueco con aspecto de criterio.
+ * Hay UN vocabulario (`COMPOUND_SECRET_TERMS`) del que derivan **las dos
+ * mitades**: `WORD_IS_SECRET` para claves de objeto y `SECRET_TERM_SOURCE`
+ * para cadenas — banderas de CLI, asignaciones de entorno y parámetros de
+ * query. Es la **misma alternancia anclada**, y por eso `apikey` casa como
+ * clave y como cadena mientras `author` no casa por ninguna vía.
+ *
+ * Esta frontera se ha roto **dos veces** y siempre por lo mismo: cuatro listas
+ * que no coincidían entre sí (`?auth=` se tapaba y `--auth` no), y luego una
+ * lista aparte para claves que no veía los compuestos pegados (`apikey` en
+ * claro junto a `apiKey` tapado, en la misma línea). Un criterio partido en
+ * dos no es un criterio: es un hueco con aspecto de criterio. Por eso el test
+ * fija el invariante **en pareja** por cada término.
  *
  * Las claves se comparan **por palabras**, no por subcadena: `authToken` se
  * parte en `auth|token` y se tapa; `author` es la palabra `author` y NO se
