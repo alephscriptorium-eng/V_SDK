@@ -50,10 +50,8 @@
  *    U+20AC, el euro), y aquí se devuelve U+0080. Es la única divergencia
  *    conocida que va en dirección INSEGURA, pero ninguno de esos code points
  *    puede formar un esquema ni un separador de URL.
- *  - **`<image>`**: el navegador lo construye como `<img>`; aquí se tokeniza
- *    con su nombre literal, así que no se le aplican las reglas de `<img>`.
- *    Va en dirección insegura sólo para `img-src`, que es la directiva menos
- *    crítica; se anota en vez de emular la corrección de nombres del árbol.
+ *    (`<image>` fue el segundo caso de esta lista y ya NO lo es: se normaliza
+ *    a `<img>` al tokenizar, porque rechazaba de menos y costaba una línea.)
  *  - **Referencias con nombre sin *longest match***: el spec resuelve la
  *    coincidencia más larga; aquí se lee el nombre completo y, si no está en
  *    la tabla, se marca no resuelta. Rechaza de más, nunca de menos.
@@ -313,7 +311,12 @@ export function scanHtml(html: string): HtmlScan {
         while (p < n && !isHtmlSpace(html[p]) && html[p] !== GT && html[p] !== SOLIDUS) {
             p++;
         }
-        const name = lower.slice(nameStart, p);
+        // D-B/D-C · `<image>` lo construye el navegador como `<img>`. Dejarlo con
+        // su nombre literal hacía que NO se le aplicaran las reglas de `<img>`:
+        // una divergencia que rechazaba de MENOS. Un renombre de una línea la
+        // cierra, así que se cierra en vez de anotarla.
+        const rawName = lower.slice(nameStart, p);
+        const name = rawName === 'image' ? 'img' : rawName;
 
         const attrs = new Map<string, string>();
         const unresolvedRefAttrs = new Set<string>();

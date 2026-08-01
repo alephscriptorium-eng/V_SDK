@@ -988,7 +988,6 @@ describe('WP-V66 · D-3 · superficie de atributos de URL', () => {
 
     test('los atributos de una sola URL añadidos sí se inspeccionan', () => {
         for (const [frag, esperado] of [
-            ['<a href="https://evil.example/x">x</a>', 'recurso remoto en <a href>'],
             ['<a ping="https://evil.example/p">x</a>', 'recurso remoto en <a ping>'],
             ['<button formaction="https://evil.example/f"></button>', 'recurso remoto en <button formaction>'],
             ['<input formaction="https://evil.example/f">', 'recurso remoto en <input formaction>'],
@@ -997,6 +996,57 @@ describe('WP-V66 · D-3 · superficie de atributos de URL', () => {
             ['<track src="https://evil.example/t.vtt">', 'recurso remoto en <track src>']
         ] as Array<[string, string]>) {
             expect(findWebviewHtmlViolations(doc(frag))).toContainEqual(expect.stringContaining(esperado));
+        }
+    });
+
+    test('D-A · un <a href> externo NO es recurso remoto: no carga nada', () => {
+        // el falso positivo que introdujo la ronda anterior: 202 de los 209
+        // ficheros analizables del árbol disparaban esta regla y sólo ésta
+        for (const href of [
+            'https://code.visualstudio.com/docs',
+            'mailto:alguien@example.com',
+            'tel:+34123456789',
+            'vscode://extension/foo',
+            'command:aleph0.showPanel',      // idiom documentado de los webviews
+            '#seccion',
+            'media/guia.html'
+        ]) {
+            expect(findWebviewHtmlViolations(doc(`<a href="${href}">x</a>`))).toEqual([]);
+        }
+    });
+
+    test('D-A · pero un esquema EJECUTABLE en <a href> sí cae', () => {
+        for (const href of ['javascript:alert(1)', 'data:text/html,<script>x</script>', 'vbscript:msgbox']) {
+            expect(findWebviewHtmlViolations(doc(`<a href="${href}">x</a>`)))
+                .toContainEqual(expect.stringContaining('esquema ejecutable en <a href>'));
+        }
+        // y el disfraz con TAB tampoco cuela por la vía de navegación
+        expect(findWebviewHtmlViolations(doc('<a href="java&Tab;script:alert(1)">x</a>')))
+            .toContainEqual(expect.stringContaining('esquema ejecutable en <a href>'));
+    });
+
+    test('D-A · lo que provoca petición de red sigue siendo estricto', () => {
+        // ping (baliza) y formaction/action (envío de datos) NO son navegación
+        expect(findWebviewHtmlViolations(doc('<a ping="https://evil.example/p">x</a>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <a ping>'));
+        expect(findWebviewHtmlViolations(doc('<form action="https://evil.example/rob"></form>')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <form action>'));
+    });
+
+    test('D-B · <image> se normaliza a <img> y se le aplican sus reglas', () => {
+        expect(scanHtml('<image src="x.png">').tags[0].name).toBe('img');
+        expect(findWebviewHtmlViolations(doc('<image src="https://evil.example/x.png">')))
+            .toContainEqual(expect.stringContaining('recurso remoto en <img src>'));
+    });
+
+    test('D-B · el atributo background sí se inspecciona', () => {
+        for (const frag of [
+            '<body background="https://evil.example/bg.png"></body>',
+            '<table background="https://evil.example/bg.png"></table>',
+            '<td background="https://evil.example/bg.png"></td>'
+        ]) {
+            expect(findWebviewHtmlViolations(doc(frag)))
+                .toContainEqual(expect.stringContaining('background>: "https://evil.example/bg.png"'));
         }
     });
 

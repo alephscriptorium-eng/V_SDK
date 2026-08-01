@@ -271,35 +271,81 @@ export function isExtensionResourceUrl(rawUrl: string): boolean {
 }
 
 /**
- * Atributos que cargan (o navegan a) un recurso, con la política de cada uno.
- *
- * D-3 · Esta lista es EXHAUSTIVA respecto a lo que la guarda promete: un
- * atributo de URL que no esté aquí no se inspecciona. Por eso los que no se
- * pueden comprobar con esta misma regla —porque llevan varias URLs o una URL
- * embebida en otra sintaxis— no se dejan sin mirar: se RECHAZAN abajo
- * (`UNSUPPORTED_URL_ATTRS`), en vez de afirmar una cobertura que no hay.
+ * Esquemas que ejecutan código o incrustan un documento al NAVEGAR. Son los
+ * únicos prohibidos en un destino de navegación.
  */
-const URL_BEARING: Array<{ tag: string; attr: string; allowLocalPeer: boolean; allowData: boolean }> = [
-    { tag: 'script', attr: 'src', allowLocalPeer: false, allowData: false },
-    { tag: 'link', attr: 'href', allowLocalPeer: false, allowData: false },
-    { tag: 'iframe', attr: 'src', allowLocalPeer: true, allowData: false },
-    { tag: 'frame', attr: 'src', allowLocalPeer: true, allowData: false },
-    { tag: 'embed', attr: 'src', allowLocalPeer: false, allowData: false },
-    { tag: 'object', attr: 'data', allowLocalPeer: false, allowData: false },
-    { tag: 'source', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'img', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'form', attr: 'action', allowLocalPeer: false, allowData: false },
-    // — añadidos en D-3: misma regla, una URL por atributo —
-    { tag: 'a', attr: 'href', allowLocalPeer: false, allowData: false },
-    { tag: 'a', attr: 'ping', allowLocalPeer: false, allowData: false },
-    { tag: 'area', attr: 'href', allowLocalPeer: false, allowData: false },
-    { tag: 'button', attr: 'formaction', allowLocalPeer: false, allowData: false },
-    { tag: 'input', attr: 'formaction', allowLocalPeer: false, allowData: false },
-    { tag: 'input', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'video', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'video', attr: 'poster', allowLocalPeer: false, allowData: true },
-    { tag: 'audio', attr: 'src', allowLocalPeer: false, allowData: true },
-    { tag: 'track', attr: 'src', allowLocalPeer: false, allowData: false }
+const DANGEROUS_NAV_SCHEMES = new Set(['javascript', 'data', 'vbscript']);
+
+/**
+ * Atributos que transportan una URL, clasificados por lo que la URL HACE:
+ *
+ *  - `resource` — el navegador **carga** ese URL sin que nadie haga nada. Un
+ *    origen externo aquí es una fuga real, así que sólo se admiten recursos de
+ *    la extensión (y peers locales donde el cerco lo permite).
+ *  - `navigation` — el URL **no carga nada**: es un destino al que se va si el
+ *    usuario pincha, y en un webview de VS Code eso abre el navegador del
+ *    sistema, que es una función intencionada. Tratarlo como «recurso remoto»
+ *    era un error de categoría (D-A) y metía un falso positivo mayor: `<a
+ *    href="https://code.visualstudio.com/docs">`, `mailto:`, `tel:`, `vscode:`
+ *    y `command:` —el idiom documentado de los webviews— caían todos. Aquí sólo
+ *    se prohíben los esquemas que ejecutan (`javascript:`, `data:`,
+ *    `vbscript:`).
+ *
+ * `ping`, `action` y `formaction` se quedan en `resource` a propósito aunque
+ * los dispare el usuario: provocan una petición de red real con datos del
+ * documento (baliza y envío de formulario), que es exfiltración, no navegación.
+ *
+ * D-3/D-B · Esta lista NO se declara exhaustiva sobre todo el HTML — no se
+ * puede demostrar. Es **cerrada sobre tres categorías**: carga de subrecursos,
+ * destinos de navegación y envío de formularios. Lo que queda fuera y porta URL
+ * está enumerado en `UNSUPPORTED_URL_ATTRS` (se rechaza) o en la nota de abajo.
+ */
+type UrlAttrKind = 'resource' | 'navigation';
+const URL_BEARING: Array<{
+    tag: string;
+    attr: string;
+    kind: UrlAttrKind;
+    allowLocalPeer: boolean;
+    allowData: boolean;
+}> = [
+    // — carga de subrecursos —
+    { tag: 'script', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'link', attr: 'href', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'iframe', attr: 'src', kind: 'resource', allowLocalPeer: true, allowData: false },
+    { tag: 'frame', attr: 'src', kind: 'resource', allowLocalPeer: true, allowData: false },
+    { tag: 'embed', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'object', attr: 'data', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'source', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'img', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'input', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'video', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'video', attr: 'poster', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'audio', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: true },
+    { tag: 'track', attr: 'src', kind: 'resource', allowLocalPeer: false, allowData: false },
+    // — D-B · `background` lo cargan los tres navegadores como imagen de fondo —
+    ...['body', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th'].map(tag => ({
+        tag,
+        attr: 'background',
+        kind: 'resource' as UrlAttrKind,
+        allowLocalPeer: false,
+        allowData: true
+    })),
+    // — envío de formulario: petición de red con datos del documento —
+    { tag: 'form', attr: 'action', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'button', attr: 'formaction', kind: 'resource', allowLocalPeer: false, allowData: false },
+    { tag: 'input', attr: 'formaction', kind: 'resource', allowLocalPeer: false, allowData: false },
+    // — baliza: petición de red en segundo plano —
+    { tag: 'a', attr: 'ping', kind: 'resource', allowLocalPeer: false, allowData: false },
+    // — destinos de navegación: no cargan nada —
+    { tag: 'a', attr: 'href', kind: 'navigation', allowLocalPeer: false, allowData: false },
+    { tag: 'area', attr: 'href', kind: 'navigation', allowLocalPeer: false, allowData: false },
+    ...['blockquote', 'q', 'del', 'ins'].map(tag => ({
+        tag,
+        attr: 'cite',
+        kind: 'navigation' as UrlAttrKind,
+        allowLocalPeer: false,
+        allowData: false
+    }))
 ];
 
 /**
@@ -422,6 +468,18 @@ export function findWebviewHtmlViolations(html: string): string[] {
             // positivo, y un falso positivo en una guarda es la vía por la que
             // alguien acaba desactivándola.
             if (url.trim() === '') {
+                continue;
+            }
+            // D-A · un destino de navegación no carga nada: sólo se prohíben
+            // los esquemas que ejecutan. `https:`, `mailto:`, `tel:`,
+            // `vscode:` y `command:` son legítimos aquí.
+            if (rule.kind === 'navigation') {
+                const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/
+                    .exec(normalizeUrlForClassification(url))?.[1]
+                    .toLowerCase();
+                if (scheme !== undefined && DANGEROUS_NAV_SCHEMES.has(scheme)) {
+                    problems.push(`esquema ejecutable en <${rule.tag} ${rule.attr}>: "${url}"`);
+                }
                 continue;
             }
             const ok =
