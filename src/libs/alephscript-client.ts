@@ -11,6 +11,18 @@
  * @épica MCP-CHANNELS-1.0.0
  */
 import { io, Socket } from 'socket.io-client';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · el prefijo `[nombre]` de estos mensajes pasa a ser el campo `client`
+ * del dato: el origen de la línea ya dice `AlephScriptClient`, y el nombre de la
+ * instancia se conserva como dato greppable en vez de empotrado en el texto.
+ *
+ * Superficie sensible: la URL del mesh puede traer credenciales inline o un
+ * `?token=…`; sale por el redactor (WP-V71 CA4).
+ */
+const log = getLogger('AlephScriptClient', LogCategory.SOCKET);
 
 function getHash(key: string): string {
     const l = (s: string) => s.substring(s.length - 2);
@@ -69,7 +81,7 @@ export class AlephScriptClient {
         this.namespace = mergedConfig.namespace!;
 
         if (!this.url) {
-            console.warn(`[${this.name}] ${this.pendingReason} — cliente diferido`);
+            log.warn(`${this.pendingReason} — cliente diferido`, { client: this.name });
             return;
         }
         
@@ -83,7 +95,7 @@ export class AlephScriptClient {
         });
 
         this.io.on("connect", () => {
-            console.log(`[${this.name}] Connected to ${fullUrl} (id: ${this.io?.id})`);
+            log.info('Connected', { client: this.name, url: fullUrl, socketId: this.io?.id });
             this.configurationSet = true;
             this.initTriggers = [...this.initTriggersDefinition];
             
@@ -100,7 +112,7 @@ export class AlephScriptClient {
         });
 
         this.io.on("disconnect", () => {
-            console.log(`[${this.name}] Disconnected`);
+            log.info('Disconnected', { client: this.name });
             if (this.interval) {
                 clearInterval(this.interval);
             }
@@ -110,7 +122,7 @@ export class AlephScriptClient {
         });
 
         this.io.on("connect_error", (error) => {
-            console.error(`[${this.name}] Connection error:`, error.message);
+            log.error('Connection error', { client: this.name, error: error.message });
             if (this._onError) {
                 this._onError(error);
             }
@@ -136,7 +148,7 @@ export class AlephScriptClient {
 
     connect(): void {
         if (!this.io) {
-            console.warn(`[${this.name}] ${this.pendingReason}`);
+            log.warn(this.pendingReason, { client: this.name });
             return;
         }
         if (!this.io.connected) {
@@ -162,7 +174,7 @@ export class AlephScriptClient {
     // Room operations (AlephScript protocol)
     room(event: string, data: any, roomName?: string): void {
         if (!this.io) {
-            console.warn(`[${this.name}] ${this.pendingReason}`);
+            log.warn(this.pendingReason, { client: this.name });
             return;
         }
         const targetRoom = roomName || `${this.name}_ROOM`;

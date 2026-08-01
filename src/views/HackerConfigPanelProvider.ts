@@ -2,6 +2,14 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · `handleMessage` recibe mensajes del webview, que es superficie no
+ * confiable: el payload sale al canal por el redactor (WP-V71 CA4).
+ */
+const log = getLogger('HackerConfigPanel', LogCategory.WEBVIEW);
 
 export interface ConfigGroup {
     name: string;
@@ -71,32 +79,32 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
-        console.log('HackerConfigPanel received message:', message);
+        log.info('Received message from webview', { message });
         vscode.window.showInformationMessage(`HackerConfigPanel received: ${message.command}`);
         
         switch (message.command) {
             case 'openVSCodeSetting':
-                console.log('Opening VS Code setting:', message.settingKey);
+                log.info('Opening VS Code setting', { settingKey: message.settingKey });
                 this._openVSCodeSetting(message.settingKey);
                 break;
             case 'openConfigFile':
-                console.log('Opening config file:', message.filePath);
+                log.info('Opening config file', { filePath: message.filePath });
                 this._openConfigFile(message.filePath);
                 break;
             case 'refreshConfigs':
-                console.log('Refreshing configs');
+                log.info('Refreshing configs');
                 this._refreshConfigs();
                 break;
             case 'openWorkspaceSettings':
-                console.log('Opening workspace settings');
+                log.info('Opening workspace settings');
                 this._openWorkspaceSettings();
                 break;
             case 'openUserSettings':
-                console.log('Opening user settings');
+                log.info('Opening user settings');
                 this._openUserSettings();
                 break;
             default:
-                console.log('Unknown command:', message.command);
+                log.info('Unknown command from webview', { command: message.command });
                 vscode.window.showWarningMessage(`Unknown command: ${message.command}`);
         }
     }

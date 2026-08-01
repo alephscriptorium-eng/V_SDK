@@ -3,6 +3,16 @@ import { BaseHackerPanelProvider } from './BaseHackerPanelProvider';
 import { CatalogService } from '../launcher/CatalogService';
 import type { CatalogSnapshot } from '../launcher/types';
 
+import { LogCategory } from '../loggingManager';
+import { getLogger } from '../core/logging';
+
+/**
+ * WP-V71 · `handleMessage` recibe mensajes del webview (superficie no
+ * confiable) y las tareas vienen de `.vscode/tasks.json` del usuario, cuyas
+ * líneas de comando pueden traer credenciales: todo sale por el redactor.
+ */
+const log = getLogger('HackerTasksPanel', LogCategory.WEBVIEW);
+
 const FALLBACK_MARK = '[FALLBACK MARCADO — no es catálogo launcher]';
 
 /**
@@ -154,19 +164,19 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
         );
 
         this.fileWatcher.onDidChange(() => {
-            console.log('tasks.json changed, reloading...');
+            log.info('tasks.json changed, reloading...');
             this.loadTasksFromWorkspace();
             this.updateTaskDisplay();
         });
 
         this.fileWatcher.onDidCreate(() => {
-            console.log('tasks.json created, loading...');
+            log.info('tasks.json created, loading...');
             this.loadTasksFromWorkspace();
             this.updateTaskDisplay();
         });
 
         this.fileWatcher.onDidDelete(() => {
-            console.log('tasks.json deleted, clearing tasks...');
+            log.info('tasks.json deleted, clearing tasks...');
             this.categories.clear();
             this.allTasks.clear();
             this.updateTaskDisplay();
@@ -225,7 +235,7 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
         if (snap.availability === 'ready' && snap.servers.length > 0) {
             this.ingestCatalogTasks(snap);
             catalogLoaded = true;
-            console.log(`Loaded ${snap.servers.length} catalog servers as tasks`);
+            log.info('Loaded catalog servers as tasks', { servers: snap.servers.length });
         } else {
             const pending = this.parseTask({
                 label: 'WAIT: Catalog [Pending]',
@@ -259,16 +269,16 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
                         }
                     }
                     workspaceLoaded = true;
-                    console.log(`Merged workspace tasks.json`);
+                    log.info('Merged workspace tasks.json');
                 }
             } catch (error) {
-                console.log(`Could not load tasks.json from workspace:`, error);
+                log.info('Could not load tasks.json from workspace', { error });
             }
         }
 
         // Fallback MARCADO solo si no hay catálogo ni tasks.json
         if (!catalogLoaded && !workspaceLoaded) {
-            console.log('Using FALLBACK MARCADO embedded tasks (not live catalog)');
+            log.info('Using FALLBACK MARCADO embedded tasks (not live catalog)');
             for (const rawTask of FALLBACK_DEFAULT_TASKS_MARKED) {
                 const task = this.parseTask(rawTask);
                 // Re-prefix category visually under FB when from marked fallback
@@ -282,7 +292,7 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
             }
         }
 
-        console.log(`Final: ${this.allTasks.size} tasks in ${this.categories.size} categories`);
+        log.info('Task load finished', { tasks: this.allTasks.size, categories: this.categories.size });
     }
 
     private ingestCatalogTasks(snap: CatalogSnapshot): void {
@@ -522,7 +532,7 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
     }
 
     protected handleMessage(message: any): void {
-        console.log('HackerTasksPanel received message:', message);
+        log.info('Received message from webview', { message });
 
         switch (message.command) {
             case 'runTask':
@@ -545,20 +555,20 @@ export class HackerTasksPanelProvider extends BaseHackerPanelProvider {
                 break;
             case 'ready':
                 // Webview is ready, wait for tasks to load then send data
-                console.log('HackerTasksPanel: webview ready, waiting for tasks to load...');
+                log.info('Webview ready, waiting for tasks to load...');
                 if (this.tasksLoadPromise) {
                     this.tasksLoadPromise
                         .then(() => {
-                            console.log('HackerTasksPanel: tasks loaded, updating display');
+                            log.info('Tasks loaded, updating display');
                             this.updateTaskDisplay();
                         })
                         .catch((err) => {
-                            console.error('HackerTasksPanel: error loading tasks:', err);
+                            log.error('Error loading tasks', { error: err });
                             // Still try to update display (will show defaults or empty)
                             this.updateTaskDisplay();
                         });
                 } else {
-                    console.log('HackerTasksPanel: no load promise, updating display directly');
+                    log.info('No load promise, updating display directly');
                     this.updateTaskDisplay();
                 }
                 break;
