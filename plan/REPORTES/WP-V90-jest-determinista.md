@@ -5,7 +5,7 @@
 | Carril | **V** · Aleph-0 (ℵ₀) |
 | Encargo | `plan/BACKLOG.md:153` |
 | Rama | `wp/v90-jest-determinista` · base `c241c22` |
-| Obra | `70a54b0` |
+| Obra | `70a54b0` (primera entrega) · `ccf1d08` (reporte) · **segunda vuelta tras devolución** |
 | Árbol de medida | `C:/S_LAB/wt/v-v90` · Windows 11 · 12 CPUs · 17 GB |
 | Herramienta | node v22.21.1 · jest 29.7.0 · ts-jest 29.2.5 · @sinonjs/fake-timers 10.3.0 |
 | Fecha de todas las medidas | **2026-08-01** |
@@ -22,6 +22,36 @@ corrigen abajo con la prueba delante: el efecto de los relojes falsos sobre `pro
 (§2) y cuál de las dos aserciones de `basic.test.ts` es la que flapea de verdad (§3.4).
 
 Las citas `fichero:línea` de este reporte se comprobaron **abriendo el fichero**, una a una.
+
+---
+
+## 0.bis · La devolución: qué cayó, y por qué tenía toda la razón
+
+La primera entrega pasó el censo, los tres brazos y la reasignación del encargo ajeno. **Cayó el
+gate, que era el blanco principal.** Los tres bloqueantes eran la misma cosa dicha de tres maneras:
+
+> **el instrumento se fiaba de su propia salida sin comprobar que la salida fuese real.**
+
+Que es, literalmente, la pregunta que este WP existe para contestar. Lo escribo sin adornos porque el
+detalle importa más que la vergüenza:
+
+| # | qué dejaba pasar | estado |
+| - | ---------------- | ------ |
+| **B1** | `diff()` comparaba **conjuntos sin multiplicidad**: un rojo NUEVO con el mismo nombre que uno ya declarado pasaba invisible | **cerrado** · §5.5 |
+| **B2** | `--repetir` proclamaba «mismo conjunto» cuando jest **no había ejecutado ni un test** | **cerrado** · §5.5 |
+| **B3** | `--check` leía el JSON **sin prueba de frescura**: un JSON bueno anterior bendecía una corrida que había reventado | **cerrado** · §5.5 |
+| **B4** | dije «cuatro nombres prometen de más». Eran **nueve** | **corregido** · §8.5 |
+
+**B1 es el que duele, y hay que decirlo entero**: en ese vector concreto **el cardinal que este WP
+vino a abolir era estrictamente más fuerte que el conjunto que puse en su lugar**. El conteo pasaba
+de 5 a 6 y lo cazaba; mi gate decía «IDÉNTICO» y salía 0. Un WP cuya tesis es «un cardinal es ruido»
+entregó un sustituto que, para esa familia de fallos, era ruido peor. Está medido y reproducido en
+§5.5 antes y después del arreglo.
+
+**B4 tiene su propia moraleja, y es la mejor del WP**: conté mal un cardinal, en el reporte de un WP
+cuyo pecado original declarado es un cardinal mal contado en un censo sobre cardinales. Lo llamativo
+no es el error: es que **el gate que construí habría cazado ese error si se lo hubiera aplicado a mi
+propio reporte**. Un conjunto declarado, comparado por diff, no se equivoca al contar; la prosa sí.
 
 ---
 
@@ -50,6 +80,18 @@ El barrido **(C)** es el que cierra el flanco de la notación: busca la comparac
 (`expect(duration < 100).toBe(true)`, `if (duration > x) throw`) en lugar del *matcher*. **Cero
 aciertos**: en este árbol no hay ninguna variante escondida. El censo por sintaxis y el censo por
 operación coinciden, y ahora se sabe **por qué**, no por suerte.
+
+**Una CUARTA clase de reloj que el barrido original no nombraba** (señalada en la devolución).
+Existe una vía más de dependencia temporal: **un temporizador de PRODUCTO con plazo, aseverado por su
+efecto**. Barrido dedicado (`timeoutMs|timeout:|plazo|AbortSignal|setTimeout\(` sobre `tests/`):
+**una sola instancia**, `tests/unit/mcp/clienteMcp.test.ts:210-226` — un cliente MCP construido con
+`{ timeoutMs: 100 }` (`:219`) contra un servidor que jamás responde, y la aserción es
+`expect(res.reason).toContain('100ms')` (`:225`).
+
+**El cardinal DOCE resiste**, y por una razón de clase, no de conveniencia: ahí no se asevera sobre
+un delta medido, sino sobre el **error tipado** que produce un plazo configurado. El servidor nunca
+responde, así que el temporizador vence siempre: es robusto por construcción, no por suerte. Pero es
+reloj de pared vivo en la suite y queda **declarado**, que es lo que faltaba.
 
 Queda una tercera vía de aserción temporal que no es de nadie y conviene nombrar: **`testTimeout: 10000`**
 (`jest.config.js:46`) es una aserción de reloj de pared de la que ningún test es dueño — cualquier test que
@@ -81,16 +123,19 @@ Sin eufemismos. «Borrada» quiere decir borrada; en ningún caso se ha **subido
 | - | -------------------- | -------- | --------- | ----------------- |
 | 1 | `tests/basic.test.ts:31` | `expect(duration).toBeGreaterThanOrEqual(10)` | **RELOJ CONTROLADO** | **no** — fragilidad no observada |
 | 2 | `tests/basic.test.ts:32` | `expect(duration).toBeLessThan(100)` | **RELOJ CONTROLADO** | **SÍ**, MEDIDO (§3.4) |
-| 3 | `tests/performance/serviceStartup.test.ts:17` | `expect(duration).toBeLessThan(100)` | **BORRADA** | **SÍ**, MEDIDO (§3.3) |
-| 4 | `tests/performance/serviceStartup.test.ts:54` | `expect(duration).toBeLessThan(500)` | **BORRADA** | no observado |
-| 5 | `tests/performance/serviceStartup.test.ts:85` | `expect(duration).toBeLessThan(50)` | **BORRADA** | **SÍ**, MEDIDO (§3.3) |
-| 6 | `tests/performance/serviceStartup.test.ts:107` | `expect(duration).toBeLessThan(100)` | **BORRADA** | no observado |
+| 3 | `tests/performance/serviceStartup.test.ts:17` | `expect(duration).toBeLessThan(100)` | **FICHERO BORRADO** (§7.5) | **SÍ**, MEDIDO (§3.3) |
+| 4 | `tests/performance/serviceStartup.test.ts:54` | `expect(duration).toBeLessThan(500)` | **FICHERO BORRADO** | no observado |
+| 5 | `tests/performance/serviceStartup.test.ts:85` | `expect(duration).toBeLessThan(50)` | **FICHERO BORRADO** | **SÍ**, MEDIDO (§3.3) |
+| 6 | `tests/performance/serviceStartup.test.ts:107` | `expect(duration).toBeLessThan(100)` | **FICHERO BORRADO** | no observado |
 | 7 | `tests/unit/core/aiAssistantService.test.ts:233` | `expect(duration).toBeLessThan(500)` | **BORRADA** | no observado |
 | 8 | `tests/integration/managerFactory.test.ts:309` | `expect(creationTime).toBeLessThan(100)` | **BORRADA** | no observado |
 | 9 | `tests/basic.test.ts:131` | `expect(memoryGrowth).toBeGreaterThan(0)` | **BORRADA** | no observado |
 | 10 | `tests/basic.test.ts:132` | `expect(memoryGrowth).toBeLessThan(10 MB)` | **BORRADA** | no observado |
-| 11 | `tests/performance/serviceStartup.test.ts:37` | `expect(memoryGrowth).toBeLessThan(5 MB)` | **BORRADA** | no observado |
+| 11 | `tests/performance/serviceStartup.test.ts:37` | `expect(memoryGrowth).toBeLessThan(5 MB)` | **FICHERO BORRADO** | no observado |
 | 12 | `tests/unit/core/aiAssistantService.test.ts:287` | `expect(memoryIncrease).toBeLessThan(10 MB)` | **BORRADA** | no observado |
+
+*(Las cinco de `serviceStartup.test.ts` se retiraron primero una a una; en la segunda vuelta el
+fichero entero se ha borrado — §7.5. El veredicto de cada línea no cambia, cambia el radio.)*
 
 **Se dice claro: sólo 3 de las 12 se vieron flapear.** Las otras 9 se retiran por argumento, no por
 flagrancia. El argumento es el mismo en las nueve —miden la máquina, no el producto— pero la
@@ -104,8 +149,8 @@ Además, y sin ser aserciones, se retiran **dos entradas aleatorias**:
 
 | extra | fichero:línea (base) | qué era | veredicto |
 | ----- | -------------------- | ------- | --------- |
-| a | `serviceStartup.test.ts:46` | `setTimeout(resolve, Math.random() * 10)` | sustituido por `i % 5` |
-| b | `serviceStartup.test.ts:94` | `value: Math.random()` en 10.000 elementos | sustituido por rampa `i / 10000` |
+| a | `serviceStartup.test.ts:46` | `setTimeout(resolve, Math.random() * 10)` | primero → `i % 5`; ahora **fichero borrado** |
+| b | `serviceStartup.test.ts:94` | `value: Math.random()` en 10.000 elementos | primero → rampa `i / 10000`; ahora **fichero borrado** |
 
 La (b) importa más de lo que parece: con valores aleatorios, **cuántos** elementos pasaban el filtro
 cambiaba en cada corrida, y la única aserción de contenido (`result.forEach(...)`) no aseveraba
@@ -115,16 +160,23 @@ cambiaba en cada corrida, y la única aserción de contenido (`result.forEach(..
 ### 1.4 · Cómo queda el árbol (CA-2, MEDIDO tras la obra)
 
 `grep -rnE 'Date\.now|process\.hrtime|performance\.now' tests/` pasa de **9** lecturas de reloj a
-**4**, y las cuatro justificadas una a una:
+**2**, y las dos son el mismo reloj **controlado**:
 
 | hoy | dónde | por qué se queda |
 | --- | ----- | ---------------- |
-| `basic.test.ts:39`, `:45` | `Date.now()` | bajo `jest.useFakeTimers()`: es reloj **controlado**, no de pared |
-| `setup.ts:136`, `:138` | `process.hrtime.bigint()` | `measurePerformance` sigue devolviendo `duration`, pero **ninguna aserción la mira** |
+| `basic.test.ts:48`, `:54` | `Date.now()` | bajo `jest.useFakeTimers()`: reloj **controlado**, no de pared |
 
-Y: **cero** `process.memoryUsage()` y **cero** `Math.random()` en `tests/` (los aciertos residuales del
-grep son mis propios comentarios citando lo que se borró). Cero aserciones cuyo operando sea un delta
-de reloj de pared o de montón.
+En la primera entrega quedaban además `setup.ts:136` y `:138` (`process.hrtime.bigint()` dentro de
+`measurePerformance`), justificadas con un «ninguna aserción la mira». Al borrar
+`serviceStartup.test.ts` ese helper se quedó **sin un solo consumidor**
+(`grep -rn measurePerformance tests/ src/`), así que se ha ido con él (§7.5). Resultado:
+
+> **`tests/` no contiene ni una sola lectura de reloj de PARED.** Las dos que quedan son de un reloj
+> falso que el propio test gobierna.
+
+Y: **cero** `process.memoryUsage()`, **cero** `Math.random()` (los aciertos residuales del grep son
+mis propios comentarios citando lo que se borró). Cero aserciones cuyo operando sea un delta de reloj
+de pared o de montón.
 
 ---
 
@@ -263,6 +315,31 @@ mismo y cierra con:
 VEREDICTO: las 10 corridas dieron el MISMO conjunto por nombre
 ```
 
+### 3.3.bis · Re-medido tras la devolución (el árbol cambió, la evidencia se rehace)
+
+Borrar `serviceStartup.test.ts` y renombrar cuatro tests cambia la suite: **375 tests en 10 suites**,
+antes 380 en 11. La evidencia anterior ya no cubre este árbol, así que las diez corridas se
+**repitieron enteras** sobre el árbol final, con workers en paralelo (10:56:56Z → 10:59:21Z):
+
+```
+--- corrida 1/10 (jest exit=1, 375 tests ejecutados) ---
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create process manager
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create webview manager
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Performance should handle concurrent manager creation
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should create all standard managers
+FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should have proper dependency chain in standard managers
+OMITE tests/unit/mcp/clienteMcp.test.ts :: [pending] WP-V28 · contra runtime real (skip-honesto) skip-honesto: conectar/listar/leer contra mcp-launcher y linea-editor VIVOS de z-sdk — exige runtime real de la Ciudad arrancado (no disponible en este arnés unit); no se simula como verde
+…corridas 2 a 10, el mismo bloque de seis líneas…
+
+VEREDICTO: las 10 corridas ejecutaron 375 tests y dieron el MISMO conjunto por nombre
+```
+
+Nótese el veredicto nuevo: **dice cuántos tests se ejecutaron**. Ésa es la cicatriz de B2 — antes
+podía proclamar «mismo conjunto» sobre diez corridas que no habían ejecutado nada.
+
+**El conjunto declarado no cambia**, y era la predicción: los cinco tests borrados y los cuatro
+renombrados estaban todos en verde, y lo que el baseline declara son rojos y omisiones.
+
 ### 3.4 · Cuál de las dos aserciones de `basic.test.ts` cae — el punto que el crítico disputaba
 
 El brief exigía no dar por bueno el argumento del tick de Windows y tratar `:31` como fragilidad no
@@ -344,19 +421,35 @@ orquestador enruta. La corrección de fondo, para quien reescriba H-8: *el orige
 ### 5.1 · Comando canónico
 
 ```bash
+node scripts/rojos-jest.mjs --gate
+```
+
+Eso es todo. **El instrumento corre jest él mismo**, a un fichero con nonce en `os.tmpdir()` que
+escribe y borra, y luego compara. Se hace así por B3: mientras el JSON lo escribiera otro y el
+instrumento se limitara a leerlo de una ruta convenida, siempre existía la corrida que revienta sin
+escribir y deja que el **JSON de la vez anterior** pase por bueno. Un gate que no controla su propia
+medida no es un gate. Sale **0** si el conjunto coincide con el declarado, **1** si difiere, **2** si
+no hubo medida válida.
+
+La forma en dos pasos sigue existiendo para quien ya tenga un JSON, pero **ahora exige pruebas**:
+
+```bash
 npx jest --coverage=false --json --outputFile="$TMP/jest.json"
 node scripts/rojos-jest.mjs --check scripts/rojos-jest.baseline.txt "$TMP/jest.json"
 ```
 
-Sale **0** si el conjunto obtenido es idéntico al declarado; **1** ante cualquier diferencia.
-Sin `--runInBand`: workers en paralelo, que es la configuración que produce contención y por tanto
-la única bajo la que el resultado significa algo.
+y ese `--check` rechaza (con salida **2**, no con un veredicto) un informe que: no ejecutó ni un test,
+trae `coverageMap`, o arrancó hace más de 900 s. Cada rechazo es uno de los tres bloqueantes.
 
-Y el atajo para reproducir la CA de un tirón:
+Sin `--runInBand`: workers en paralelo, que es la configuración que produce contención y por tanto la
+única bajo la que el resultado significa algo. El atajo para reproducir la CA de un tirón:
 
 ```bash
 node scripts/rojos-jest.mjs --repetir 10 -- --coverage=false
 ```
+
+que ahora **se niega** si alguien le cuela `--runInBand`, `-i` o `--maxWorkers=1` (M6): ese atajo
+convertía la CA en un trámite, y es justo el que declaré haber evitado a mano.
 
 ### 5.2 · Por qué no se puede burlar
 
@@ -383,7 +476,30 @@ de estado del mundo lo firma alguien, con nombre y en el diff.
 
 Contra el pecado original —comparar cardinales— el conjunto es inmune por construcción: **dos rojos
 distintos con el mismo cardinal dan diff**, y era exactamente eso lo que dejaba pasar un rojo real
-como flapeo.
+como flapeo. Desde la devolución también es inmune al caso contrario: **dos rojos con el mismo
+nombre ya no colapsan en uno** (§5.5, B1).
+
+#### 5.2.bis · Y la frase que faltaba: **un rojo nuevo se legaliza con una línea**
+
+Lo anterior describe una sola dirección, y por eso se quedaba corto. La otra, dicha entera:
+
+> **Cualquiera puede legalizar un rojo nuevo añadiendo su línea al baseline. Una línea. Y nada en
+> este mecanismo le obliga a arreglarlo nunca.**
+
+Está medido y **es diseño, no descuido**: la firma va en el diff, y un humano tiene que ver pasar esa
+línea en una revisión. Pero un mecanismo cuya única defensa es «alguien mirará el diff» tiene que
+decirlo, porque hoy:
+
+- `scripts/rojos-jest.baseline.txt` es **un `.txt` sin *checksum*** — nada ata su contenido a una revisión;
+- **no tiene dueño por línea**: ninguna línea dice quién la metió, cuándo, ni con qué justificación;
+- **no hay gate en CI** que lo vigile (`ci.yml:70` lleva `continue-on-error: true`, §8.3), así que
+  añadir una línea no dispara ninguna alarma automática.
+
+O sea: el gate convierte «el mundo empeoró en silencio» en «alguien firmó que el mundo empeoró». Eso
+es una mejora real y es lo que se pedía; **no** es una garantía de que el mundo no empeore. Quien
+quiera lo segundo tiene tres palancas, ninguna en el alcance de V90 y las tres baratas: fecha y WP
+obligatorios por línea, revisión humana obligatoria sobre el fichero (`CODEOWNERS`), y quitar el
+`continue-on-error` de CI.
 
 ### 5.3 · El único hueco conocido, dicho en voz alta
 
@@ -449,6 +565,68 @@ conjunto de rojos DISTINTO del declarado:
 
 Los ficheros del oráculo eran temporales y **están borrados**; el árbol quedó limpio (verificado
 con `git status`).
+
+### 5.5 · Los cuatro vectores de la devolución: reproducidos, y cerrados
+
+Ninguno se arregló «por si acaso»: primero se reprodujo con jest de verdad, luego se arregló, luego
+se volvió a disparar el mismo vector.
+
+**B1 · multiplicidad.** Dos `it` con el mismo nombre, ambos en rojo, y un baseline que declara uno:
+
+```
+ANTES                                                    DESPUÉS
+Tests: 2 failed, 2 total                                 (mismo JSON, mismo baseline)
+conjunto de rojos IDENTICO al declarado                  conjunto de rojos DISTINTO del declarado:
+GATE_EXIT=0     ← el rojo nuevo pasa invisible           + FALLA …VECTOR B1 rojo clonado  [sobran 1 de 2]
+                                                         GATE_EXIT=1
+```
+
+Aquí está la humillación útil: **el cardinal iba de 1 a 2 y lo cazaba; mi conjunto no.** `diff()`
+construía `Set`. Ahora cuenta multiplicidades y las anota (`[sobran 1 de 2]`, `[faltan 1 de 2]`).
+
+**B2 · ejecución efectiva.** `--repetir 3` con una config inexistente:
+
+```
+ANTES  → 3× "jest no llegó a escribir el JSON (code=1)"
+       → "las 3 corridas dieron el MISMO conjunto por nombre"    EXIT=0
+DESPUÉS→ rojos-jest: corrida 1/3: jest no llegó a escribir el JSON (exit=1).
+           N fallos catastróficos reproducibles NO son determinismo: son N veces sin medir.
+                                                                  EXIT=2
+```
+
+Tres catástrofes idénticas se presentaban como determinismo demostrado — con el comando que yo
+proponía publicar como evidencia de la CA principal. Ahora una corrida sin JSON, o con
+`numTotalTests === 0`, **corta**; y el veredicto declara cuántos tests se ejecutaron.
+
+**B3 · frescura.** Un JSON bueno anterior en la ruta esperada:
+
+```
+DESPUÉS→ rojos-jest: el informe es VIEJO: arrancó hace 3894 s (tope 900 s) — …/gate.json
+           Un JSON rancio en la ruta esperada es exactamente como una corrida que revienta sin
+           escribir pasa por verde.                               EXIT=2
+```
+
+Se usa `startTime`, la marca que jest pone al arrancar: es la corrida hablando de sí misma y **no la
+mueve un `touch`**. Y el modo `--gate` elimina la clase entera, porque escribe él el fichero.
+
+**M7 · cobertura.** El dato estaba en el JSON desde el principio y el instrumento no lo miraba:
+
+```
+DESPUÉS→ rojos-jest: el informe trae cobertura (coverageMap): …/baseline.json
+           Con cobertura activa, un fallo de umbral NO deja rastro con nombre en el JSON y queda
+           tapado por cualquier rojo con nombre.                  EXIT=2
+```
+
+**M6 · paralelismo.** `--repetir` prometía paralelo y no lo imponía:
+
+```
+DESPUÉS→ rojos-jest: estos argumentos serializan jest: --runInBand
+           `--repetir` existe para medir determinismo BAJO CONTENCIÓN. En serie la suite sale
+           idéntica sin que nadie haya arreglado nada.            EXIT=2
+```
+
+Con `--permitir-serial` se puede forzar, pero entonces la salida lo grita y el veredicto sale **1**:
+una medida en serie no se convierte en evidencia por haberla pedido.
 
 ---
 
@@ -540,6 +718,49 @@ está en `webviewCsp.test.ts:257-262`. Verificado abriendo ambos.)*
   del árbol**, para no dejar contrabando ni aunque se interrumpa.
 - **Ranura**: las corridas caras se lanzaron con `bash scripts/slot.sh run …`; la ranura quedó libre.
 
+### 7.5 · Lo que SÍ he borrado en la segunda vuelta, y por qué (M3)
+
+**`tests/performance/serviceStartup.test.ts` — fichero entero, cinco tests.**
+
+La devolución señaló que mi frase «cada test conserva la aserción funcional que sí podía demostrar»
+era **más ancha que la evidencia**, y tenía razón: ahí no había función de producto que demostrar.
+MEDIDO:
+
+```
+$ grep -nE "^import|require\(" tests/performance/serviceStartup.test.ts
+5:import { measurePerformance } from '../setup';
+$ (imports desde src/) → CERO
+```
+
+Un solo import, y del arnés. Tras retirar las cinco aserciones de reloj y montón, los cinco tests
+aseveraban **únicamente sobre datos que el propio test construía**: que `setTimeout` resuelve, que
+`Promise.all` resuelve, que `Array.filter` filtra. Eso no prueba nada del producto: prueba Node.
+Cinco verdes perpetuos en un fichero titulado «Performance tests for critical extension operations».
+
+Y un verde que no mide nada es peor que un rojo — que es, palabra por palabra, el argumento con el
+que este mismo reporte rechazó tapar las aserciones con relojes falsos (§2). Aplicármelo a mí mismo
+era lo coherente. **Borrado.**
+
+**`measurePerformance` en `tests/setup.ts` — se va con él.** Era su único consumidor
+(`grep -rn measurePerformance tests/ src/`). Sin él quedaba código muerto, pero de una clase
+peculiar: un cronómetro de reloj de PARED ofrecido por el fichero que carga toda la suite. El arma
+cargada que este WP existe para descargar, dejada sobre la mesa. Es el cambio de mayor radio que he
+hecho en `setup.ts` y **es un solo hunk, trivial de revertir** si algún worktree vivo lo necesitaba;
+lo señalo aquí precisamente para que se vea antes de fusionar.
+
+**Consecuencias, dichas y no escondidas:**
+
+- La suite pasa de **380 tests / 11 suites** a **375 / 10**. Cualquier reporte que cite «374 passed»
+  o «380 total» queda rancio — y es la mejor ilustración posible de por qué el gate **no** compara
+  cardinales: ninguno de esos números estaba en el baseline, y el baseline **no ha cambiado**.
+- **`WP-V66:813` queda RANCIA**: cita `Performance Tests › Service Initialization › should initialize
+  services within time threshold` (`tests/performance/serviceStartup.test.ts:9`), y ese test ya no
+  existe. No he tocado ese reporte (aceptado, otro escritor); lo declaro aquí y enrutas tú.
+- `WP-V23:1375` («`git diff --quiet … → IDÉNTICO a la base`») y `WP-V23:1385-1386` (la tabla de
+  umbrales) hablan de un fichero que ya no está. Misma situación.
+- **`WP-V71:523`** citaba ya ese mismo `grep` de imports. O sea: que este fichero no tocaba producto
+  **estaba documentado desde V71** y nadie sacó la conclusión. Ahora está sacada.
+
 ---
 
 ## 8 · Lo que pido, con el texto exacto
@@ -550,13 +771,17 @@ Zona prohibida por la cadena serial. Que lo aplique quien tenga el turno; texto 
 junto a `"test": "jest"` (`package.json:1195`):
 
 ```json
-"test:rojos": "jest --coverage=false --json --outputFile=.jest-rojos.json && node scripts/rojos-jest.mjs --check scripts/rojos-jest.baseline.txt .jest-rojos.json",
+"test:rojos": "node scripts/rojos-jest.mjs --gate",
 "test:rojos:diez": "node scripts/rojos-jest.mjs --repetir 10 -- --coverage=false"
 ```
 
-Aviso para quien lo aplique: `jest` sale con código **1** cuando hay rojos, así que con `&&` el
-segundo tramo no correría. La forma robusta en npm es `;` o separar en dos scripts. Lo dejo dicho en
-vez de dejarlo roto. Y `.jest-rojos.json` querría una línea en `.gitignore`.
+**Esta propuesta ha cambiado respecto de la primera entrega, y el motivo es un bloqueante.** Antes
+proponía encadenar `jest … && node scripts/rojos-jest.mjs --check …`, y advertía de que `jest` sale
+**1** cuando hay rojos, así que el `&&` cortaría y había que usar `;`. Ese `;` era **exactamente el
+vector de B3**: con `;`, una corrida que revienta sin escribir el JSON deja que el fichero de la vez
+anterior pase por bueno. La solución no era elegir mejor el operador: era que **el instrumento corra
+jest él mismo**. Con `--gate` no hay encadenado, no hay fichero intermedio en el árbol, y no hace
+falta una línea en `.gitignore`.
 
 ### 8.2 · `plan/GOBIERNO-EJECUCION-F2.md` — texto propuesto, **pendiente de tu visto bueno**
 
@@ -568,7 +793,7 @@ Documento aceptado (V77/V78, cabecera `:7`). **No lo he tocado.** Dos sitios:
 
 Propuesto (añade la cláusula que faltaba; **no** toca las tres existentes):
 
-> | **R7-V** | F2-1 cimientos | arnés corre un test trivial de activación **en CI** · bootstrap troceado compila · CSP presente en los 4 paneles (verificada por test, no por lectura) · **el conjunto de rojos de jest es IDÉNTICO POR NOMBRE al declarado en `scripts/rojos-jest.baseline.txt`, verificado con `node scripts/rojos-jest.mjs --check` sobre una corrida con `--coverage=false` y workers en paralelo. Nunca por cardinal: un cardinal no distingue un rojo nuevo de un rojo que se fue** |
+> | **R7-V** | F2-1 cimientos | arnés corre un test trivial de activación **en CI** · bootstrap troceado compila · CSP presente en los 4 paneles (verificada por test, no por lectura) · **el conjunto de rojos de jest es IDÉNTICO POR NOMBRE al declarado en `scripts/rojos-jest.baseline.txt`, verificado con `node scripts/rojos-jest.mjs --gate` (que corre jest él mismo, con workers en paralelo y sin cobertura, y rechaza toda corrida que no ejecutara tests). Nunca por cardinal: un cardinal no distingue un rojo nuevo de un rojo que se fue — y un conjunto sin multiplicidad tampoco distingue dos rojos homónimos de uno** |
 
 **(b) `:99` — casilla de la checklist.** Hoy dice:
 
@@ -606,21 +831,39 @@ que compara). Sin el segundo el gate es una propuesta, no una cosa que corra. No
 fichero existente de `scripts/`. **Si lo prefieres en otro sitio** (`plan/`, por ejemplo), es mover
 un fichero de texto y cambiar una ruta.
 
-### 8.5 · Cuatro nombres de test que ahora prometen de más
+### 8.5 · Los NUEVE nombres que prometían de más — B4, corregido y resuelto
 
-He **mantenido todos los nombres de test** a propósito, para no crear citas rancias: renombrar
-`should initialize services within time threshold` dejaría desfasada `WP-V66:813`, que lo cita por
-su nombre completo. Pero conviene decirlo: cuatro nombres han quedado más anchos que lo que su test
-verifica, y cada uno lleva debajo un comentario `WP-V90` explicando exactamente qué se le quitó.
+Escribí «cuatro». **Eran nueve.** Un cardinal mal contado, en el reporte del WP que existe porque
+alguien contó mal un cardinal en un censo sobre cardinales. No lo escondo: lo dejo como la mejor
+prueba de la tesis. Un conjunto declarado y comparado por diff no se equivoca al contar; la prosa sí.
 
-| nombre actual | nombre honesto propuesto | coste |
-| ------------- | ------------------------ | ----- |
-| `should initialize services within time threshold` | `should initialize services` | deja rancia `WP-V66:813` |
-| `should cleanup resources efficiently` | `should cleanup all resources` | ninguno |
-| `should process large datasets efficiently` | `should process large datasets` | ninguno |
-| `should create managers within performance threshold` | `should create a manager through the factory` | ninguno |
+Aquí están los nueve, **todos**, y qué se ha hecho con cada uno. Ya no es una propuesta: está hecho.
 
-Son verdes, así que renombrarlos **no** toca el baseline. Decides tú; yo no lo hago por mi cuenta.
+| # | test (nombre original) | fichero | qué perdió | resolución |
+| - | ---------------------- | ------- | ---------- | ---------- |
+| 1 | `should initialize services within time threshold` | serviceStartup | duración | **fichero borrado** (§7.5) |
+| 2 | `should not cause significant memory leaks` | serviceStartup | montón | **fichero borrado** |
+| 3 | `should handle concurrent requests efficiently` | serviceStartup | duración | **fichero borrado** |
+| 4 | `should cleanup resources efficiently` | serviceStartup | duración | **fichero borrado** |
+| 5 | `should process large datasets efficiently` | serviceStartup | duración | **fichero borrado** |
+| 6 | `should validate memory usage patterns` | basic | montón ×2 | **renombrado** → `should build and release a large object graph` |
+| 7 | `should process requests within performance threshold` | aiAssistantService | duración | **renombrado** → `should resolve a request with success status` |
+| 8 | `should handle large number of requests without memory leaks` | aiAssistantService | montón | **renombrado** → `should resolve fifty concurrent requests` |
+| 9 | `should create managers within performance threshold` | managerFactory | duración | **renombrado** → `should create a manager through the factory` |
+
+Los nueve eran verdes, así que **el baseline no se mueve** — verificado con las diez corridas de
+§3.3.bis. En el renombrado #9 hubo que tener cuidado: se renombra el `it`, **jamás** el
+`describe('Performance')` que lo contiene, porque ese `describe` forma parte del nombre completo de
+uno de los cinco rojos declarados (`…Performance should handle concurrent manager creation`).
+Tocarlo habría movido el baseline sin que nadie lo pidiera. Queda dicho en el propio fichero.
+
+**El décimo, que no está en la lista y merece párrafo (M4):** `Jest Setup Verification › should
+measure performance` **conserva su nombre**, y el nombre promete de más. Bajo reloj controlado ese
+test verifica el *idioma* de medida y ya no mide nada del mundo: es, en rigor, la misma tautología
+que §2 reprocha en otros sitios. Se mantiene porque **`WP-V23:1346-1354` lo cita literalmente** como
+el flapeador histórico del mundo, y renombrarlo rompería esa cita en un reporte aceptado. Prefiero un
+nombre ancho **documentado en el propio fichero** a una cita rota en silencio — pero es una decisión
+discutible y la dejo señalada, no escondida en un comentario.
 
 ---
 
@@ -629,12 +872,12 @@ Son verdes, así que renombrarlos **no** toca el baseline. Decides tú; yo no lo
 | CA | veredicto | evidencia |
 | -- | --------- | --------- |
 | **CA-1** · las doce censadas, con tabla y veredicto | ✅ | §1.2 (los 22 aciertos clasificados) y §1.3 (las 12 con veredicto y con la columna «¿flapeó de facto?») |
-| **CA-2** · (a) cero deltas de reloj en aserciones; (b) cada lectura de reloj justificada | ✅ | §1.4: de 9 lecturas a 4, justificadas una a una; cero aserciones sobre delta |
-| **CA-3** · 10 corridas, mismo conjunto por nombre | ✅ | §3.3, salida real, `VEREDICTO_EXIT=0` |
+| **CA-2** · (a) cero deltas de reloj en aserciones; (b) cada lectura de reloj justificada | ✅ | §1.4: de 9 lecturas a **2**, y las dos de reloj controlado. **Cero** lecturas de reloj de pared en `tests/`. Y la cuarta clase (temporizador de producto) declarada en §1.1 |
+| **CA-3** · 10 corridas, mismo conjunto por nombre | ✅ | §3.3 y, sobre el árbol final, §3.3.bis: `375 tests ejecutados`, `VEREDICTO_EXIT=0` |
 | **CA-4** · veredicto de **obra** para las cuatro de montón | ✅ | las cuatro **borradas** (§1.3 #9-#12), no un párrafo. Dicho también lo que no puedo demostrar: ninguna se observó caer |
-| **CA-5** · oráculo del instrumento, con `it.each` | ✅ | §5.4: conjunto **predicho a mano antes de correr**, diff vacío; interpolados incluidos; verde ausente; y las clases `SUITE` y `SINNOMBRE` medidas aparte |
+| **CA-5** · oráculo del instrumento, con `it.each` | ✅ | §5.4: conjunto **predicho a mano antes de correr**, diff vacío; interpolados incluidos; verde ausente; `SUITE` y `SINNOMBRE` medidas aparte; y §5.5, los cuatro vectores de la devolución reproducidos antes y después |
 | **CA-6** · gobierno, con visto bueno previo y nombres medidos | ⏳ | §8.2: texto exacto propuesto, **documento intacto**. Espera tu GO |
-| **CA-7** · comando canónico escrito | ✅ | §5.1 |
+| **CA-7** · comando canónico escrito | ✅ | §5.1 — ahora `--gate`, que corre jest él mismo (cierra B3 por construcción) |
 | **CA-8** · la cadena completa en el reporte + H-8 rancia con fecha correcta | ✅ | §4 (cadena medida desde los `failureMessages`) y §4.1 (`dfddc87`, **2026-07-31 19:33:29 +0200**) |
 | **CA-9** · las diez **en paralelo** | ✅ **y con control** | §3: 11 workers, sin `--runInBand`. Y el brazo A —árbol sin arreglar, misma máquina, misma carga— **discrepa en 6 de 10**, que es lo que hacía falta para que esta CA pudiera fallar |
 | **CA-10** · territorio respetado | ✅ | §7.3, `git status` limpio, y los 5 rojos exactamente iguales en las **20 corridas del árbol arreglado** |
@@ -654,8 +897,19 @@ Para que nadie lo lea como más ancho de lo que es:
 - **La cobertura sigue roja** y no la cierro (§6).
 - **El no-determinismo de `readdirSync`** en el territorio del WP vecino sigue vivo: reportado, no
   arreglado (§7.2).
-- **30 corridas no son una prueba de determinismo**, son 30 corridas. Lo que sí son es 30 más de las
-  que tenía el gate anterior, y con el control del brazo A al lado.
+- **30 corridas no son una prueba de determinismo**, son 30 corridas (40 contando las diez de
+  §3.3.bis sobre el árbol final). Lo que sí son es 40 más de las que tenía el gate anterior, y con el
+  control del brazo A al lado.
+- **El baseline se puede engordar con una línea y nadie lo impide** (§5.2.bis). El gate garantiza
+  *firma*, no *mejora*. Es diseño, pero es un límite y ahora está escrito.
+- **Los brazos A y B se midieron sobre el árbol de la primera entrega**, que aún tenía
+  `serviceStartup.test.ts`. El árbol final se re-midió (§3.3.bis, 10/10) pero **sin el generador de
+  carga**: no he vuelto a correr el brazo B contra el árbol final. Lo que sostiene el resultado bajo
+  carga sigue siendo la medida de la primera entrega, y las líneas responsables del flapeo ya no
+  existen — pero la distinción es real y la dejo dicha.
+- **El instrumento no se autocomprueba en CI.** Sus cuatro clases y sus tres guardas están probadas
+  a mano en §5.4 y §5.5; no hay un test que las vigile de aquí en adelante. Un `rojos-jest.test.ts`
+  sería lo suyo, y no está en el alcance de V90.
 
 ---
 
@@ -663,11 +917,11 @@ Para que nadie lo lea como más ancho de lo que es:
 
 | fichero | qué |
 | ------- | --- |
-| `scripts/rojos-jest.mjs` | **nuevo** · el instrumento: JSON de jest → conjunto de rojos por nombre. Modos: emitir, `--check`, `--repetir N` |
+| `scripts/rojos-jest.mjs` | **nuevo** · el instrumento. Modos: emitir, `--gate` (recomendado: corre jest él mismo), `--check`, `--repetir N`. Diff de **multiconjuntos**; guardas de ejecución efectiva, frescura, cobertura y paralelismo |
 | `scripts/rojos-jest.baseline.txt` | **nuevo** · el conjunto declarado, con la causa de los cinco |
-| `tests/basic.test.ts` | censo #1, #2 (reloj controlado) · #9, #10 (borradas) |
-| `tests/performance/serviceStartup.test.ts` | censo #3, #4, #5, #6, #11 (borradas) · dos `Math.random()` retirados |
-| `tests/unit/core/aiAssistantService.test.ts` | censo #7, #12 (borradas) · rama muerta `if (global.gc)` retirada |
-| `tests/integration/managerFactory.test.ts` | censo #8 (borrada) · **sólo** el `it` de `:303-310` |
+| `tests/basic.test.ts` | censo #1, #2 (reloj controlado) · #9, #10 (borradas) · un test renombrado (B4 #6) |
+| `tests/performance/serviceStartup.test.ts` | **BORRADO ENTERO** (§7.5) · contenía el censo #3, #4, #5, #6, #11 y los dos `Math.random()`; cero imports de producto |
+| `tests/unit/core/aiAssistantService.test.ts` | censo #7, #12 (borradas) · rama muerta `if (global.gc)` retirada · dos tests renombrados (B4 #7, #8) |
+| `tests/integration/managerFactory.test.ts` | censo #8 (borrada) · un test renombrado (B4 #9) · **sólo** el `it` de `:303-310`; el `describe` NO se toca |
 | `tests/unit/core/analyticsService.test.ts` | marca explícita en `Performance Tracking`; **sin cambio de conducta** |
-| `tests/setup.ts` | marca explícita sobre `measurePerformance`; **sin cambio de conducta** — es el fichero que carga toda la suite |
+| `tests/setup.ts` | **`measurePerformance` eliminado** al quedarse sin consumidor (§7.5) — es el cambio de mayor radio del WP y es un solo hunk, reversible |

@@ -300,8 +300,13 @@ describe('ManagerFactory Integration Tests', () => {
             });
         });
 
-        it('should create managers within performance threshold', async () => {
+        it('should create a manager through the factory', async () => {
             // WP-V90 (censo #8): borrada `expect(creationTime).toBeLessThan(100)`
+            // y renombrado el test, que prometía un umbral que ya no comprueba.
+            // OJO: se renombra el `it`, NUNCA el `describe('Performance')` — el
+            // nombre del describe forma parte del nombre completo de uno de los
+            // cinco rojos declarados («…Performance should handle concurrent
+            // manager creation»), y tocarlo movería el baseline.
             // con su par de lecturas de `Date.now()`. Era la única aserción del
             // test. Un presupuesto de 100 ms de reloj de pared mide la carga de
             // la máquina, no `createManager`; y este fichero es precisamente el

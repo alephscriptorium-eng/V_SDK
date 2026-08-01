@@ -4,19 +4,44 @@
 #
 # Este fichero es el oráculo del gate. Se compara así:
 #
-#   npx jest --coverage=false --json --outputFile=<tmp>/jest.json
-#   node scripts/rojos-jest.mjs --check scripts/rojos-jest.baseline.txt <tmp>/jest.json
+#   node scripts/rojos-jest.mjs --gate
+#
+# El instrumento corre jest él mismo, a un fichero con nonce fuera del árbol.
+# Se hace así a propósito: mientras el JSON lo escribiera otro y el gate se
+# limitara a leerlo de una ruta convenida, una corrida que revienta sin
+# escribir dejaba que el JSON de la vez ANTERIOR pasara por bueno.
 #
 # Sale 0 si el conjunto obtenido es IDÉNTICO al declarado. Sale 1 ante
 # CUALQUIER diferencia, en cualquier dirección: un rojo nuevo, un rojo que
 # desaparece, un test renombrado, un test saltado, una suite que deja de
-# compilar. No hay dirección «buena» que pase sin firma: arreglar un rojo
-# EXIGE borrar su línea de aquí en el mismo commit, y eso es justo lo que se
-# quiere: que el cambio de estado del mundo lo firme alguien.
+# compilar. Y sale 2 si no hubo medida válida (jest no ejecutó ni un test, o
+# el informe trae cobertura, o es rancio) — porque «no medí» no es «verde».
+#
+# La comparación es de MULTICONJUNTOS: dos rojos con el mismo nombre completo
+# no colapsan en uno. Con `Set` —como estuvo escrito hasta la devolución de
+# este WP— un rojo NUEVO pasaba invisible con sólo llamarse igual que uno ya
+# declarado, y en ese vector el cardinal viejo era MÁS FUERTE que este fichero.
+#
+# ------------------------------------------------------------------------
+# LO QUE ESTE FICHERO **NO** GARANTIZA — léase antes de confiar en él
+#
+# Cualquiera puede legalizar un rojo nuevo AÑADIENDO SU LÍNEA AQUÍ. Una línea.
+# Y nada obliga a arreglarlo nunca. Es diseño —la firma queda en el diff y
+# alguien tiene que verla pasar en una revisión—, pero conviene decirlo entero:
+#
+#   · esto es un .txt SIN checksum;
+#   · ninguna línea dice quién la metió, cuándo, ni por qué;
+#   · CI no lo vigila (.github/workflows/ci.yml:70 lleva continue-on-error).
+#
+# O sea: el gate convierte «el mundo empeoró en silencio» en «alguien firmó
+# que el mundo empeoró». Eso es lo que se pedía; no es una garantía de que el
+# mundo no empeore.
+# ------------------------------------------------------------------------
 #
 # MEDIDO en este árbol el 2026-08-01: diez corridas consecutivas del comando
 # canónico, con los workers en PARALELO (los de jest por defecto, 11 sobre 12
-# CPUs), dieron este mismo conjunto las diez veces.
+# CPUs), ejecutando 375 tests cada una, dieron este mismo conjunto las diez
+# veces.
 #
 # Lo que NO está aquí, y por qué: los umbrales de cobertura. Jest sale con
 # código 1 por ellos, pero en su JSON no queda ni rastro del motivo, así que

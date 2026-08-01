@@ -20,6 +20,15 @@ describe('Jest Setup Verification', () => {
         expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
+    // WP-V90 · EL NOMBRE DE ESTE TEST SE MANTIENE A PROPÓSITO, Y PROMETE DE MÁS.
+    // Bajo reloj controlado esto verifica el IDIOMA de medida (leer reloj,
+    // esperar, leer reloj) y ya no mide nada del mundo: es, en rigor, una
+    // tautología sobre el guion del propio test — la misma figura que este WP
+    // reprocha en otros sitios. Se conserva el nombre porque
+    // WP-V23:1346-1354 cita literalmente `Jest Setup Verification › should
+    // measure performance` como el flapeador histórico del mundo, y renombrarlo
+    // dejaría rancia esa cita en un reporte aceptado. Se prefiere un nombre
+    // ancho documentado a una cita rota callada.
     it('should measure performance', async () => {
         // WP-V90 · RELOJ CONTROLADO (censo #1 y #2).
         // Antes esto cronometraba un `setTimeout` real contra el reloj de pared
@@ -130,8 +139,10 @@ describe('Jest Setup Verification', () => {
         expect(parsed.features).toHaveLength(3);
     });
 
-    it('should validate memory usage patterns', () => {
+    it('should build and release a large object graph', () => {
         // WP-V90 · ASERCIONES DE MONTÓN BORRADAS (censo #9 y #10).
+        // El test se llamaba «should validate memory usage patterns» y ya no
+        // valida ningún patrón de memoria: renombrado a lo que hace de verdad.
         // Aquí había dos aserciones sobre el delta de `process.memoryUsage()`:
         //   expect(memoryGrowth).toBeGreaterThan(0)
         //   expect(memoryGrowth).toBeLessThan(10 * 1024 * 1024)

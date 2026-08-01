@@ -222,8 +222,10 @@ describe('AIAssistantService', () => {
             service = AIAssistantService.getInstance(mockLogging as any, mockConfig as any, mockAnalytics as any);
         });
 
-        it('should process requests within performance threshold', async () => {
+        it('should resolve a request with success status', async () => {
             // WP-V90 (censo #7): borrada `expect(duration).toBeLessThan(500)`,
+            // y con ella el nombre que prometía umbral («should process requests
+            // within performance threshold»): ya no hay umbral que verificar.
             // con su par de lecturas de `Date.now()`. Era la ÚNICA aserción del
             // test: cronometrado contra el reloj de pared, bajo contención de
             // workers un verde y un rojo aquí no se distinguen de un cambio de
@@ -266,8 +268,10 @@ describe('AIAssistantService', () => {
             expect(() => service.dispose()).not.toThrow();
         });
 
-        it('should handle large number of requests without memory leaks', async () => {
+        it('should resolve fifty concurrent requests', async () => {
             // WP-V90 (censo #12): borrada
+            // —y con ella el nombre «…without memory leaks», que prometía una
+            // vigilancia de memoria que este test ya no ejerce—
             // `expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024)` con sus
             // dos lecturas de `process.memoryUsage().heapUsed`. Era la única
             // aserción del test y dependía de cuándo entrase el GC de V8.
