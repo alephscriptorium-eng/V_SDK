@@ -105,6 +105,26 @@ describe('AnalyticsService', () => {
         });
     });
 
+    // WP-V90 · MARCA EXPLÍCITA — este bloque toca el reloj, pero NO lo asevera.
+    //
+    // `startTracking` lee el reloj de pared en PRODUCTO
+    // (src/core/analyticsService.ts:279, `const startTime = Date.now()`) y la
+    // duración acaba registrada por `trackPerformance`. La espera de 10 ms de
+    // más abajo existe sólo para que esa duración registrada no sea cero.
+    //
+    // Queda declarado, tras contarlo en este árbol: NINGUNA aserción de este
+    // fichero mira esa duración, ni cuenta eventos, ni mide longitudes
+    // (`grep -nE 'getEvents|getStatistics|totalEvents|toHaveLength|\.length'`
+    // sobre este fichero → cero aciertos). Por tanto el reloj entra aquí como
+    // DATO y no como MEDIDA: este bloque no puede flapear, y por eso V90 lo
+    // marca en vez de tocarlo.
+    //
+    // Riesgo latente, no realizado: AnalyticsService es un singleton sin
+    // reinicio entre tests (src/core/analyticsService.ts:98 y :130-136, con
+    // `dispose()` vacío en :566-569), así que los eventos se acumulan a lo
+    // largo del fichero. El día que alguien escriba aquí una aserción sobre un
+    // CARDINAL de eventos, nacerá un flapeador dependiente del orden. Que se
+    // reinicie el singleton antes que eso.
     describe('Performance Tracking', () => {
         it('should start and complete tracking', async () => {
             const tracker = analyticsService.startTracking('test_operation');
@@ -116,10 +136,10 @@ describe('AnalyticsService', () => {
 
         it('should track operation duration', async () => {
             const tracker = analyticsService.startTracking('test_operation');
-            
+
             // Simulate some work
             await new Promise(resolve => setTimeout(resolve, 10));
-            
+
             await tracker(true);
         });
     });

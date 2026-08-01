@@ -222,15 +222,21 @@ describe('AIAssistantService', () => {
             service = AIAssistantService.getInstance(mockLogging as any, mockConfig as any, mockAnalytics as any);
         });
 
-        it('should process requests within performance threshold', async () => {
-            const startTime = Date.now();
-            
-            await service.processRequest(createMockAIRequest({
+        it('should resolve a request with success status', async () => {
+            // WP-V90 (censo #7): borrada `expect(duration).toBeLessThan(500)`,
+            // y con ella el nombre que prometía umbral («should process requests
+            // within performance threshold»): ya no hay umbral que verificar.
+            // con su par de lecturas de `Date.now()`. Era la ÚNICA aserción del
+            // test: cronometrado contra el reloj de pared, bajo contención de
+            // workers un verde y un rojo aquí no se distinguen de un cambio de
+            // código. Queda la aserción funcional —que la petición se resuelve
+            // y con qué estado—, que es lo que este test podía demostrar.
+            const result = await service.processRequest(createMockAIRequest({
                 data: { query: 'performance test' }
             }));
 
-            const duration = Date.now() - startTime;
-            expect(duration).toBeLessThan(500); // 500ms threshold
+            expect(result).toBeDefined();
+            expect(result.status).toBe('success');
         });
 
         it('should handle concurrent requests', async () => {
@@ -262,10 +268,19 @@ describe('AIAssistantService', () => {
             expect(() => service.dispose()).not.toThrow();
         });
 
-        it('should handle large number of requests without memory leaks', async () => {
-            const initialMemory = process.memoryUsage().heapUsed;
-            
-            // Process many requests
+        it('should resolve fifty concurrent requests', async () => {
+            // WP-V90 (censo #12): borrada
+            // —y con ella el nombre «…without memory leaks», que prometía una
+            // vigilancia de memoria que este test ya no ejerce—
+            // `expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024)` con sus
+            // dos lecturas de `process.memoryUsage().heapUsed`. Era la única
+            // aserción del test y dependía de cuándo entrase el GC de V8.
+            // Se va con ella la rama muerta `if (global.gc) { global.gc(); }`:
+            // este árbol no arranca node con `--expose-gc` (package.json:1195
+            // es «jest» a secas), así que `global.gc` es siempre undefined y la
+            // rama NUNCA se ejecutó. Dejarla es prometer un control del GC que
+            // no se tiene.
+            // Queda lo verificable: las 50 peticiones se resuelven, todas.
             const requests = Array(50).fill(null).map((_, i) =>
                 service.processRequest(createMockAIRequest({
                     id: `memory-test-${i}`,
@@ -273,18 +288,13 @@ describe('AIAssistantService', () => {
                 }))
             );
 
-            await Promise.all(requests);
-            
-            // Force garbage collection if available
-            if (global.gc) {
-                global.gc();
-            }
-            
-            const finalMemory = process.memoryUsage().heapUsed;
-            const memoryIncrease = finalMemory - initialMemory;
-            
-            // Memory increase should be reasonable (less than 10MB)
-            expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
+            const results = await Promise.all(requests);
+
+            expect(results).toHaveLength(50);
+            results.forEach(result => {
+                expect(result).toBeDefined();
+                expect(result.status).toBe('success');
+            });
         });
     });
 

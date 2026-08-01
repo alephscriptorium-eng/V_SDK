@@ -107,14 +107,30 @@ export const createMockContext = () => ({
     asAbsolutePath: jest.fn((relativePath: string) => `/mock/extension/path/${relativePath}`)
 });
 
-// Performance measurement utilities for tests
-export const measurePerformance = async (fn: Function): Promise<{ result: any; duration: number }> => {
-    const startTime = process.hrtime.bigint();
-    const result = await fn();
-    const endTime = process.hrtime.bigint();
-    const duration = Number(endTime - startTime) / 1000000; // Convert to milliseconds
-    return { result, duration };
-};
+// WP-V90 · AQUÍ VIVÍA `measurePerformance`, Y SE HA IDO. NO SE REPONE.
+//
+// Devolvía `{ result, duration }` con `duration` medida en
+// `process.hrtime.bigint()`. Su único consumidor era
+// `tests/performance/serviceStartup.test.ts`, que V90 ha borrado entero por no
+// importar ni una línea de producto. Sin consumidor, esto era código muerto —
+// pero código muerto de una clase peculiar: un cronómetro de reloj de PARED
+// ofrecido por el fichero que carga TODA la suite (`jest.config.js:33`,
+// `setupFilesAfterEnv`). Es decir, el arma cargada que este WP existe para
+// descargar, dejada en la mesa.
+//
+// Si alguien necesita medir tiempos, que monte un banco que se REPORTE y se
+// compare consigo mismo a lo largo del tiempo. Lo que no debe volver a esta
+// suite es `expect(duration)…`: el estado del mundo se compara por CONJUNTO DE
+// ROJOS POR NOMBRE (`scripts/rojos-jest.mjs`), y un rojo que va y viene con la
+// carga hace que un rojo REAL se pueda despachar como flapeo.
+//
+// Y no, un reloj falso no lo habría salvado. MEDIDO en este árbol —jest 29.7.0
+// con @sinonjs/fake-timers 10.3.0—: `jest.useFakeTimers()` moderno REEMPLAZA
+// `process.hrtime.bigint`, igual que `Date.now` y `performance.now`. Bajo
+// timers falsos la duración vale exactamente lo que el propio test haya
+// avanzado con `advanceTimersByTime` —cero si no avanza nada—, así que la
+// aserción sobrevive convertida en tautología sobre su propio guion: verde
+// perpetuo que no mide nada.
 
 // Global test constants
 export const TEST_CONSTANTS = {
