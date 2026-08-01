@@ -61,6 +61,16 @@
 //   2   error de uso, o el JSON de jest falta o es ilegible (NUNCA se emite
 //       un conjunto vacío por no haber podido leer: un instrumento mudo que
 //       parece verde es exactamente el fallo que este WP viene a corregir)
+//
+// QUIÉN VIGILA A ESTE VIGILANTE — WP-V91
+//   `scripts/tests/rojos-jest.test.ts`, que corre con `npm test` como una suite
+//   más. Cada clase y cada guarda tiene su caso rojo, y cada una está anclada a
+//   un MUTANTE: la suite exige que, si se desactiva el trozo que dice vigilar,
+//   el test se ponga rojo. Un test que sobrevive a su propia mutación no
+//   vigilaba nada, y la suite lo denuncia por su nombre.
+//
+//   Si editas este fichero y la suite se queja de «MUTACIÓN SIN ANCLA», no es
+//   un falso positivo: una mutación dejó de apuntar a código real. Reapúntala.
 // =============================================================================
 
 import fs from 'node:fs';
@@ -294,9 +304,37 @@ function exigirFrescura(informe, rutaJson, maxSeg) {
 }
 
 /** M6 · `--repetir` promete PARALELO; que no lo desactive un argumento suelto. */
-const ARGS_SERIALES = [/^--runInBand$/, /^-i$/, /^--maxWorkers[= ]?1$/, /^--maxWorkers=1$/, /^-w[= ]?1$/];
+const ARGS_SERIALES = [/^--runInBand$/, /^-i$/, /^(--maxWorkers|-w)[= ]?1$/];
+
+/**
+ * WP-V91 · las banderas de jest se pueden escribir en DOS argumentos, y así se
+ * colaban: la lista se miraba argumento a argumento, y ni `--maxWorkers` ni `1`
+ * casan por separado. `--repetir 10 -- --maxWorkers 1` pasaba la guarda entera
+ * y devolvía «las 10 corridas dieron el MISMO conjunto» medido EN SERIE — que
+ * es exactamente el resultado que esta guarda existe para no dejar publicar.
+ *
+ * MEDIDO en este árbol (6 suites que anotan su PID, jest 29.7.0):
+ * `--maxWorkers=1`, `--maxWorkers 1`, `-w 1` y `--runInBand` dejan jest en UN
+ * solo proceso; `--maxWorkers=6` da 6. Las cuatro formas serializan igual, así
+ * que las cuatro tienen que caer igual. Se normaliza el par antes de mirar.
+ */
+function normalizarPares(extra) {
+    const fuera = [];
+    for (let i = 0; i < extra.length; i++) {
+        const a = extra[i];
+        const siguiente = extra[i + 1];
+        if ((a === '--maxWorkers' || a === '-w') && siguiente !== undefined && !String(siguiente).startsWith('-')) {
+            fuera.push(a + '=' + siguiente);
+            i++;
+        } else {
+            fuera.push(a);
+        }
+    }
+    return fuera;
+}
+
 function exigirParalelo(extra, permitir) {
-    const culpables = extra.filter((a) => ARGS_SERIALES.some((re) => re.test(a)));
+    const culpables = normalizarPares(extra).filter((a) => ARGS_SERIALES.some((re) => re.test(a)));
     if (culpables.length && !permitir) {
         morir(
             'estos argumentos serializan jest: ' + culpables.join(' ') +
@@ -333,12 +371,32 @@ function sacarBandera(argv, nombre) {
     return true;
 }
 
+/**
+ * WP-V91 · aquí había un `Number(v)` a pelo, y era un agujero en la guarda de
+ * frescura: `Number(undefined)` —`--edad-max` escrito al final, sin valor— y
+ * `Number('900s')` valen **NaN**, y `NaN > maxSeg` es **false**. O sea que un
+ * dedo gordo apagaba la prueba de frescura SIN UNA LÍNEA DE AVISO y el informe
+ * rancio pasaba con EXIT 0, que es justo lo que la guarda existe para impedir.
+ * MEDIDO antes del arreglo, con un informe de hace una hora: `--edad-max`,
+ * `--edad-max 900s` y `--edad-max xyz` daban los tres «IDENTICO», EXIT 0.
+ *
+ * Una guarda sólo puede apagarse a propósito y en voz alta (`--edad-max 0`,
+ * que lo grita por stderr). Nunca por un descuido.
+ */
 function sacarValor(argv, nombre, pordefecto) {
     const i = argv.indexOf(nombre);
     if (i < 0) return pordefecto;
     const v = argv[i + 1];
     argv.splice(i, 2);
-    return Number(v);
+    const n = Number(v);
+    if (!Number.isFinite(n)) {
+        morir(
+            nombre + ' necesita un número de segundos, y recibió «' + (v === undefined ? '(nada)' : v) + '».' +
+            '\n  Un valor ilegible deja NaN, y NaN no es mayor que nada: la guarda se apagaría sola.' +
+            '\n  Para desactivarla a propósito, y que conste en la salida: `' + nombre + ' 0`.'
+        );
+    }
+    return n;
 }
 
 // --- despacho ----------------------------------------------------------------
