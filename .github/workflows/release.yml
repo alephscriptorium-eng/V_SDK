@@ -1,6 +1,27 @@
 # WP-V10 · GitHub Release con .vsix v1 (DV-08 GO Release = v1).
 # Marketplace (VS Marketplace / Open VSX): deferred (DV-10) — NO publicar.
 # Secrets: NPM_USERNAME + NPM_PASSWORD (DV-09); valores nunca se imprimen.
+#
+# WP-V97 — hasta hoy este flujo iba `npm ci` → compilar → empaquetar →
+# publicar: SIN lint, SIN tests, SIN probes, SIN el gate de rojos, SIN el
+# trinquete y SIN el arnés de Extension Host. Y `ci.yml` no se dispara con
+# etiquetas (`ci.yml:3-7`: sólo `main`, `wp/**` y PR contra `main`), así que un
+# `push` de etiqueta ejecutaba ÚNICAMENTE este fichero. Todo el aparato de
+# vigilancia de las olas 5-7 no protegía el único momento en que el software
+# llega a alguien.
+#
+# No era teoría. El único release de la historia de este repo (run 30158829091,
+# tag v0.1.0, 2026-07-25) creó el release a las 12:57:45Z; el `ci` de ESA MISMA
+# revisión no concluyó hasta las 12:58:02Z. El .vsix estuvo descargable 17
+# segundos antes de que existiera veredicto sobre él. Salió verde por suerte:
+# nada en el flujo lo condicionaba.
+#
+# Desde WP-V97 la cadena de verificación de `ci.yml` corre AQUÍ, entera, ANTES
+# de empaquetar y de publicar. El precio está medido en
+# `plan/REPORTES/WP-V97-publicar-con-red.md` §5. La alternativa —exigir que la
+# revisión etiquetada YA tenga un run verde en vez de reejecutar— se descartó
+# con sus motivos en §4 del mismo reporte; el run de arriba es el primero de
+# ellos.
 name: Release
 
 on:
@@ -79,6 +100,19 @@ jobs:
           fi
           echo "sin release previo para ${TAG} — se puede crear"
 
+      # WP-V97 — guarda 3: la que impide que este fichero se quede atrás.
+      # Los pasos de verificación de abajo son una COPIA de los de `ci.yml`, y
+      # una copia se pudre: `ci.yml` gana un control en la ola 8, éste no se
+      # entera, y se vuelve a publicar por debajo de lo que el mundo cree que
+      # vigila — en silencio, con los dos ficheros «verdes». El instrumento
+      # exige que todo comando `run:` de `ci.yml` esté aquí Y ANTES del paso que
+      # publica; las exclusiones son dato firmado dentro del propio script.
+      # Es node puro, sin dependencias: corre antes de `npm ci` y aborta en
+      # milisegundos. Su límite —sólo se aplica al publicar, no al empujar—
+      # está declarado en su cabecera.
+      - name: Guarda · la publicación verifica lo mismo que ci.yml
+        run: node scripts/verificacion-paridad.mjs
+
       - name: Detect registry credentials
         id: creds
         env:
@@ -109,8 +143,75 @@ jobs:
       - name: Install
         run: npm ci
 
+      # ─────────────────────────────────────────────────────────────────────
+      # WP-V97 · LA RED. De aquí al final del bloque, los MISMOS comandos que
+      # `ci.yml` exige a cualquier rama, con el MISMO texto —esa identidad es
+      # lo que comprueba la guarda de paridad de arriba— y todos ANTES de
+      # empaquetar y publicar. Ninguno lleva `continue-on-error`: en este flujo
+      # tampoco queda un solo paso blando.
+      #
+      # Por qué reejecutar y no exigir un run verde previo: reporte §4. En
+      # corto, tres razones que la medida sostiene: (1) el único release real
+      # de este repo publicó ANTES de que su `ci` concluyera, así que un gate
+      # que preguntase «¿hay verde?» habría visto un run EN CURSO; (2) una
+      # etiqueta puede apuntar a una revisión que nunca fue rama ni PR, y
+      # entonces no existe ningún run que exigir; (3) el coste medido de la
+      # consulta se ahorra una vez cada varios meses —hay UN release en toda la
+      # historia del repo— a cambio de un gate con tres modos de fallo.
+      # ─────────────────────────────────────────────────────────────────────
+
+      - name: Lint (eslint · src)
+        run: npm run lint
+
       - name: Compile production
         run: npm run compile:production
+
+      - name: Probe V08 (parser real)
+        run: npm run probe:v08
+
+      # EL GATE. Conjunto de tests en rojo POR NOMBRE contra
+      # `scripts/rojos-jest.baseline.txt`; falla en las dos direcciones. Corre
+      # jest él mismo, con `--coverage=false` — el porqué está en la cabecera
+      # del instrumento.
+      - name: Gate · conjunto de rojos por nombre (BLOQUEA)
+        run: node scripts/rojos-jest.mjs --gate
+
+      # LA SUITE INSTRUMENTADA. Segunda corrida; escribe
+      # `coverage/coverage-summary.json` para el paso siguiente.
+      - name: Suite instrumentada · escribe el informe de cobertura (BLOQUEA)
+        run: npm test
+
+      # EL TRINQUETE. Censo de `src` + unidades cubiertas absolutas contra
+      # `scripts/cobertura.suelo.json`. Lee el informe que dejó el paso
+      # anterior, con guarda de frescura.
+      - name: Trinquete de cobertura · censo + unidades cubiertas (BLOQUEA)
+        run: node scripts/cobertura-trinquete.mjs
+
+      # Que no vuelva a entrar un paso blando por la puerta de atrás. El grep
+      # barre `.github/workflows/` entero, así que desde WP-V97 una marca
+      # blanda en CUALQUIER flujo también tumba la publicación, no sólo el CI.
+      # Mismo límite declarado que en `ci.yml`: no puede protegerse de que
+      # alguien marque blando ESTE MISMO PASO.
+      - name: Guarda · ningún paso blando en este flujo
+        run: |
+          if grep -rnE '^[[:space:]]*continue-on-error' .github/workflows/; then
+            echo "::error::ha vuelto un paso con continue-on-error — WP-V93 lo dejó a cero"
+            exit 1
+          fi
+          echo "cero pasos con continue-on-error funcional en .github/workflows/"
+
+      # WP-V68 · el arnés de Extension Host, y aquí es donde más pinta: es lo
+      # único que comprueba que el ARTEFACTO QUE SE VA A DISTRIBUIR arranca en
+      # un VS Code real. El segundo modo empaqueta el .vsix, lo INSTALA en un
+      # extensions-dir aislado y prueba lo instalado. Van antes del empaquetado
+      # final: `test:exthost` recompila con sourcemaps y `package:v1` vuelve a
+      # compilar en modo producción después, así que el artefacto que se sube
+      # es el minificado.
+      - name: Arnés Extension Host — modo fuente
+        run: xvfb-run -a npm run test:exthost
+
+      - name: Arnés Extension Host — modo .vsix empaquetado
+        run: xvfb-run -a npm run test:exthost:vsix
 
       - name: Package v1 .vsix
         run: npm run package:v1
@@ -124,9 +225,16 @@ jobs:
             ## Aleph-0 (ℵ₀) ${{ steps.tag.outputs.name }} (extension-id `scriptorium.aleph-0`)
 
             - Artifact: `${{ steps.vsix.outputs.name }}`
-            - Pipeline de ESTE flujo: `npm ci` → `compile:production` → `vsce package`.
-              Sin lint, sin tests y sin probes: eso corre en `ci.yml`. Ver
-              README §«Qué verifica el pipeline».
+            - Pipeline de ESTE flujo (WP-V97): `npm ci` → **lint** →
+              `compile:production` → **probe V08** → **gate de rojos por
+              nombre** → **suite instrumentada** → **trinquete de cobertura** →
+              **guarda anti-marcas-blandas** → **arnés de Extension Host
+              (fuente y .vsix instalado)** → `vsce package` → publicar.
+              Los mismos controles que `ci.yml` exige a cualquier rama, todos
+              bloqueantes y todos ANTES de publicar. Antes de WP-V97 este flujo
+              no ejecutaba ni un test. Ver README §«Qué verifica el pipeline».
+            - Lo que un verde aquí NO dice: README §«Lo que el pipeline NO
+              comprueba». Este flujo hereda esos límites enteros.
             - Marketplace: **deferred** (DV-10) — not published to VS Marketplace / Open VSX
             - Install: `code --install-extension ${{ steps.vsix.outputs.name }}`
 
