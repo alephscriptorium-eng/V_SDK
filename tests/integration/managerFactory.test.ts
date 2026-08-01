@@ -5,52 +5,79 @@
 import { ManagerFactory, createStandardManagers } from '../../src/core/managerFactory';
 import { createMockContext } from '../setup';
 
-// Mock vscode module
-jest.mock('vscode', () => ({
-    window: {
-        showInformationMessage: jest.fn(),
-        showErrorMessage: jest.fn(),
-        createOutputChannel: jest.fn().mockReturnValue({
-            appendLine: jest.fn(),
-            show: jest.fn(),
-            clear: jest.fn(),
-            dispose: jest.fn()
-        }),
-        createWebviewPanel: jest.fn().mockReturnValue({
-            webview: { html: '' },
-            dispose: jest.fn()
-        })
-    },
-    workspace: {
-        getConfiguration: jest.fn().mockImplementation((section?: string) => ({
-            get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
-                // Return appropriate values based on the section and key
-                if (section === 'aleph0.logging') {
-                    switch (key) {
-                        case 'level': return 'info';
-                        case 'enabledCategories': return ['general', 'extension', 'ui'];
-                        case 'showTimestamp': return true;
-                        case 'showLevel': return true; 
-                        case 'showCategory': return true;
-                        default: return defaultValue;
+// WP-V48 · EL MOCK DE `vscode` DE ESTE FICHERO ES **DERIVADO**, NO PARALELO.
+//
+// Aquí vivió, desde el commit fundacional 6b77afb, un mock inline COMPLETO y
+// `{virtual: true}` que desplazaba al `moduleNameMapper` de jest.config.js:36-38.
+// Declaraba un `window` de CUATRO claves —showInformationMessage,
+// showErrorMessage, createOutputChannel, createWebviewPanel— y ninguna era
+// `onDidCloseTerminal`. Ésa fue la causa ÚNICA de los cinco rojos deterministas
+// del mundo: `TerminalManager` (src/terminalManager.ts:24) la llama en su
+// constructor, y los cinco tests que llegan hasta él por `ProcessManager`
+// (src/processManager.ts:33) o por `WebViewManager` (src/webViewManager.ts:42)
+// morían con `TypeError: vscode.window.onDidCloseTerminal is not a function`.
+//
+// El mock COMPARTIDO —tests/mocks/vscode.mock.js:83— sí la expone desde
+// dfddc87 (WP-V66), que la añadió justamente porque `TerminalManager` la
+// necesitaba. Es decir: el mundo ya reparó esto una vez, y este fichero no se
+// enteró porque tenía su propia copia. Ése es el mecanismo, y no se cierra
+// añadiendo la clave que falta: se cierra dejando de tener una copia.
+//
+// Por qué queda un `jest.mock` en vez de borrarlo entero: de las cuarenta y
+// cinco líneas que había, UNA aportaba algo que el mock compartido no da.
+// `tests/mocks/vscode.mock.js:110-120` devuelve `get: () => 'test-value'` para
+// TODA clave; `LoggingManager.loadConfiguration()` (src/loggingManager.ts:89-106)
+// lee `enabledCategories` esperando un ARRAY —hace `new Set(enabledCats)`— y
+// `maxEntries` esperando un NÚMERO.
+//
+// MEDIDO con una sonda temporal en este mismo fichero, comparando las dos
+// `getConfiguration('aleph0.logging')` lado a lado en la misma corrida:
+//
+//   con este override : enabledCategories=["general","extension","ui"]
+//                       new Set(…).size = 3 · maxEntries = 10000 · level="info"
+//   compartido a secas: enabledCategories="test-value"
+//                       new Set(…).size = 8   ← las 8 letras distintas de la cadena
+//
+// O sea que sin este trozo, este fichero construiría un LoggingManager con
+// OCHO categorías de una letra y un tope de entradas que es la cadena
+// 'test-value'. Nada lo asertaba, pero degradar en silencio el objeto bajo
+// prueba no es arreglar un test.
+//
+// Así que se conserva EXACTAMENTE ese trozo —la `getConfiguration` consciente
+// de la sección `aleph0.logging`, que WP-V23 (b97151b) ya mantuvo viva al
+// renombrar el espacio de nombres— y todo lo demás se toma del compartido.
+// El resto de la suite no se ve afectado: aquí no se toca vscode.mock.js.
+//
+// `requireActual` y no `require`: el `moduleNameMapper` resuelve 'vscode' a
+// ESTE MISMO fichero, así que un `require` normal vuelve a entrar en esta
+// fábrica y recursa. MEDIDO: `RangeError: Maximum call stack size exceeded`,
+// suite entera caída, cero tests ejecutados.
+jest.mock('vscode', () => {
+    const base = jest.requireActual('../mocks/vscode.mock.js');
+    return {
+        ...base,
+        workspace: {
+            ...base.workspace,
+            getConfiguration: jest.fn().mockImplementation((section?: string) => ({
+                get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
+                    // Return appropriate values based on the section and key
+                    if (section === 'aleph0.logging') {
+                        switch (key) {
+                            case 'level': return 'info';
+                            case 'enabledCategories': return ['general', 'extension', 'ui'];
+                            case 'showTimestamp': return true;
+                            case 'showLevel': return true;
+                            case 'showCategory': return true;
+                            default: return defaultValue;
+                        }
                     }
-                }
-                return defaultValue || true;
-            }),
-            update: jest.fn()
-        })),
-        onDidChangeConfiguration: jest.fn().mockReturnValue({
-            dispose: jest.fn()
-        })
-    },
-    commands: {
-        registerCommand: jest.fn(),
-    },
-    Uri: {
-        file: jest.fn().mockImplementation((path: string) => ({ fsPath: path, path })),
-    },
-    ExtensionContext: jest.fn()
-}), { virtual: true });
+                    return defaultValue || true;
+                }),
+                update: jest.fn()
+            }))
+        }
+    };
+});
 
 describe('ManagerFactory Integration Tests', () => {
     let mockContext: any;
