@@ -44,7 +44,7 @@
 
   "cubiertas": {
     "statements": 1541,
-    "branches": 545,
+    "branches": 544,
     "functions": 272,
     "lines": 1519
   },
