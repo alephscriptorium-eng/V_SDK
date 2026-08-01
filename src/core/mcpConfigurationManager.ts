@@ -5,9 +5,10 @@ import { AlephScriptConfiguration, MCPServerConfig, MCPServersConfig, MCPWebsCon
 import { LogCategory, createLogger } from '../loggingManager';
 import {
     resolveMeshSocketUrl,
-    resolveOllamaBaseUrl,
     resolveLauncherPort,
     ZIGURAT_PENDING,
+    ALEPH0_SECTION,
+    MCP_CONFIG_PATH_SUBKEY,
 } from '../config/ziguratSettings';
 
 export class McpConfigurationManager {
@@ -34,15 +35,9 @@ export class McpConfigurationManager {
      */
     async initialize(): Promise<void> {
         try {
-            // First try to get config path from VS Code settings
-            const vscodeConfig = vscode.workspace.getConfiguration('mcpSocketManager');
-            let configPath = vscodeConfig.get<string>('configPath');
-
-            // Also check the alephscript configuration for backward compatibility
-            if (!configPath) {
-                const alephConfig = vscode.workspace.getConfiguration('alephscript');
-                configPath = alephConfig.get<string>('configurationFile');
-            }
+            // Ruta del fichero de piezas MCP: única clave (WP-V23)
+            const vscodeConfig = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+            let configPath = vscodeConfig.get<string>(MCP_CONFIG_PATH_SUBKEY);
 
             // If no path in settings, look for sample-config.json in workspace
             if (!configPath && vscode.workspace.workspaceFolders) {
@@ -91,7 +86,6 @@ export class McpConfigurationManager {
      * Sin rutas absolutas de otra máquina, sin flota fija, sin puertos inventados.
      */
     private setEmptyPendingConfiguration(): void {
-        const ollamaFromSettings = resolveOllamaBaseUrl();
         const launcherPort = resolveLauncherPort();
 
         this.config = {
@@ -99,7 +93,10 @@ export class McpConfigurationManager {
                 "type": "arrakis-theater-opera"
             },
             "launcher": {
-                "ollamaUrl": ollamaFromSettings,
+                // WP-V23 · corrección D1: aquí venía `aleph0.ollama.baseUrl`.
+                // La clave se demolió porque su única cadena de lectura estaba
+                // muerta (`getOllamaUrl()` y `getLauncherConfig()`: 0 llamadas).
+                "ollamaUrl": "",
                 "requiredModel": "",
                 "mcpServiceLauncherPort": launcherPort ?? 0,
                 "healthCheckTimeout": 30000,
@@ -172,18 +169,16 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Get Ollama URL — aleph0.ollama.baseUrl, luego archivo; vacío = ⏳.
+     * Get Ollama URL — del fichero de ópera; vacío = ⏳.
+     * WP-V23 · D1: ya no consulta ajustes. No había clave que consultar con
+     * efecto: este método no lo llama nadie (poda pendiente, ver reporte V23).
      */
     getOllamaUrl(): string {
-        const fromSettings = resolveOllamaBaseUrl();
-        if (fromSettings) {
-            return fromSettings;
-        }
         return this.config?.launcher?.ollamaUrl || '';
     }
 
     /**
-     * Get MCP service launcher port — aleph0.launcher.port, luego archivo; undefined = ⏳.
+     * Get MCP service launcher port — aleph0.pieza.launcher.port, luego archivo; undefined = ⏳.
      */
     getMcpServiceLauncherPort(): number | undefined {
         const fromSettings = resolveLauncherPort();
@@ -212,8 +207,30 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Socket URL por defecto: aleph0.mesh.*, luego UI primaria del archivo.
-     * Vacío si nada configurado (⏳ — no inventa localhost:puerto).
+     * Socket URL por defecto: aleph0.ciudad.*, luego UI primaria del archivo.
+     *
+     * ⚠️ WP-V23 · D2 — ESTE MÉTODO SÍ INVENTA HOST. El comentario anterior
+     * decía «no inventa localhost:puerto» y la línea de abajo lo desmiente:
+     * sin ajuste, si el fichero de ópera trae una UI primaria con puerto,
+     * devuelve `ws://localhost:<puerto>` — un valor plausible y equivocado,
+     * sin ⏳, sin log y sin nombrar la clave que falta.
+     *
+     * **6 llamadas** consumen este valor: `bootstrap/assembleContext.ts:109`,
+     * `socketMonitor.ts:280` (desde su wrapper privado homónimo de `:276`) y
+     * `socketMonitor.ts:643`, `treeViews/configsTreeView.ts:429`,
+     * `treeViews/socketsTreeView.ts:85,232`.
+     *
+     * Y devolver `''` **tampoco salva la superficie**: `socketsTreeView.ts:92`
+     * convierte el vacío en `'localhost:3000'` (y el caso de arriba lo pinta
+     * como `localhost:7777`, sin esquema). `configsTreeView.ts:428-430`
+     * **escribe** este valor en el fichero que genera, en 2 de sus 3
+     * plantillas: lo que persiste es el retorno de este método, y sólo cae al
+     * literal `"ws://localhost:3000"` cuando no hay config cargada.
+     * El invento ocurre con o sin fichero de ópera.
+     *
+     * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
+     * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca
+     * por número). Ver `plan/REPORTES/WP-V23-config-intencional.md` §12-DD2.
      */
     getDefaultSocketUrl(): string {
         const fromSettings = resolveMeshSocketUrl();
@@ -271,12 +288,10 @@ export class McpConfigurationManager {
      * Update VS Code settings to point to the configuration file
      */
     async updateVSCodeSettings(configPath: string): Promise<void> {
-        const config = vscode.workspace.getConfiguration('mcpSocketManager');
-        await config.update('configPath', configPath, vscode.ConfigurationTarget.Workspace);
-
-        // Also update the extension-specific setting for better visibility
-        const alephConfig = vscode.workspace.getConfiguration('alephscript');
-        await alephConfig.update('configurationFile', configPath, vscode.ConfigurationTarget.Workspace);
+        // WP-V23: una sola clave que escribir (antes se escribían dos con el
+        // mismo valor, en dos espacios de nombres distintos).
+        const config = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+        await config.update(MCP_CONFIG_PATH_SUBKEY, configPath, vscode.ConfigurationTarget.Workspace);
 
         this.logger.info(`Updated VS Code settings to use configuration file: ${configPath}`);
     }

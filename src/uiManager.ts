@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ProcessManager, ProcessInfo } from './processManager';
 import { buildCspMeta, createNonce } from './webview/security';
+import { ALEPH0_SECTION, MCP_CONFIG_PATH_SUBKEY } from './config/ziguratSettings';
 
 export interface UIInstance {
     id: string;
@@ -67,8 +68,8 @@ export class UIManager {
 
     private async loadUIsFromConfig() {
         try {
-            const config = vscode.workspace.getConfiguration('mcpSocketManager');
-            const configPath = config.get<string>('configPath');
+            const config = vscode.workspace.getConfiguration(ALEPH0_SECTION);
+            const configPath = config.get<string>(MCP_CONFIG_PATH_SUBKEY);
             
             if (configPath) {
                 const fs = require('fs');

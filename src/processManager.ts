@@ -191,10 +191,10 @@ export class ProcessManager {
         const launcherPort = resolveLauncherPort();
         if (launcherPort === undefined) {
             log.warn(
-                `${ZIGURAT_PENDING} aleph0.launcher.port no configurado — no se arranca launcher con puerto inventado`
+                `${ZIGURAT_PENDING} aleph0.pieza.launcher.port no configurado — no se arranca launcher con puerto inventado`
             );
             vscode.window.showWarningMessage(
-                `${ZIGURAT_PENDING} Configure aleph0.launcher.port antes de arrancar el launcher`
+                `${ZIGURAT_PENDING} Configure aleph0.pieza.launcher.port antes de arrancar el launcher`
             );
             return false;
         }

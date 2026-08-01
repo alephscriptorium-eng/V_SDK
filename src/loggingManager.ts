@@ -58,7 +58,7 @@ export class LoggingManager {
         
         // Listen for configuration changes
         vscode.workspace.onDidChangeConfiguration((event) => {
-            if (event.affectsConfiguration('alephscript.logging')) {
+            if (event.affectsConfiguration('aleph0.logging')) {
                 this.loadConfiguration();
             }
         });
@@ -87,7 +87,7 @@ export class LoggingManager {
     }
 
     private loadConfiguration(): void {
-        const config = vscode.workspace.getConfiguration('alephscript.logging');
+        const config = vscode.workspace.getConfiguration('aleph0.logging');
         
         this.currentLogLevel = this.parseLogLevel(config.get('level', 'info'));
         

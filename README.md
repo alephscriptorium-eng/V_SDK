@@ -17,43 +17,78 @@ Semilla de producto importada desde
 de la extensión se podó en WP-V13; queda en el historial y en el tag
 `archive/pre-poda-ola-f`.
 
-## Migración de ajustes (WP-V15 · DV-16.a)
+## Ajustes: un solo espacio de nombres (WP-V23)
 
-El extension-id pasa a **`scriptorium.aleph-0`** y los ajustes al espacio de
-nombres **`aleph0.*`**. La v0.1.0 tiene 0 descargas conocidas, así que esto
-no rescata a nadie: se escribe porque un renombrado sin tabla es una
-migración escondida.
+Los ajustes viven en **un único espacio de nombres**, `aleph0.*`, y sus
+segmentos salen del léxico del dominio
+([`plan/LEXICO-ZIGURAT.md`](./plan/LEXICO-ZIGURAT.md)), no del gusto:
+
+| grupo | qué contiene |
+| ----- | ------------ |
+| `aleph0.ciudad.*` | dónde escucha el runtime de la Ciudad (socket-server de Z) |
+| `aleph0.room.id` | la room a la que el IDE hace join |
+| `aleph0.pieza.<pieza>.*` | dónde vive cada **pieza** ajena que V consume |
+| `aleph0.mcp.configPath` | fichero heredado que declara piezas MCP locales |
+| `aleph0.superficie.*` | ajustes de las superficies de periferia de V |
+| `aleph0.logging.*` | diagnóstico de la propia extensión |
+
+Los otros dos prefijos que convivían —`alephscript.*` y
+`mcpSocketManager.*`— **ya no existen** como ajustes.
 
 **VS Code no migra ajustes solo.** Una clave vieja en `settings.json` queda
 huérfana (aparece como *Unknown Configuration Setting*) y la extensión
-**no** la lee. Hay que reescribirlas a mano.
+**no** la lee: **no hay migración automática, hay pérdida declarada**
+(invariante I-5: nadie ha usado nunca este código; no se preserva
+compatibilidad). Si tenías claves puestas, reescríbelas con esta tabla.
+
+En casi todos los casos la extensión te dirá qué falta: cada camino ⏳
+**nombra la clave nueva**. ⚠️ **Salvo el árbol de sockets**: sin
+`aleph0.ciudad.*` inventa un endpoint local en vez de decir ⏳ —
+`localhost:7777` (el puerto de la UI primaria de tu fichero de ópera, sin
+esquema) o `localhost:3000` si no hay ópera o no hay UI primaria. Y **2 de
+las 3 plantillas** de configuración **escriben** ese valor inventado en el
+fichero que generan. Defecto preexistente, documentado con su caso rojo en
+el acta (§12-§13) y enrutado a WP-V31.
 
 | clave vieja | clave nueva |
 | ----------- | ----------- |
-| `zigurat.mesh.host` | `aleph0.mesh.host` |
-| `zigurat.mesh.port` | `aleph0.mesh.port` |
-| `zigurat.mesh.baseUrl` | `aleph0.mesh.baseUrl` |
-| `zigurat.launcher.host` | `aleph0.launcher.host` |
-| `zigurat.launcher.port` | `aleph0.launcher.port` |
-| `zigurat.ollama.baseUrl` | `aleph0.ollama.baseUrl` |
-| `zigurat.room.id` | `aleph0.room.id` |
-| `zigurat.lineaEditor.host` | `aleph0.lineaEditor.host` |
-| `zigurat.lineaEditor.port` | `aleph0.lineaEditor.port` |
-| `zigurat.reparto.path` | `aleph0.reparto.path` |
-| `arrakisTheater.configPath` | `aleph0.theater.configPath` |
-| `arrakisTheater.autoStart` | `aleph0.theater.autoStart` |
-| `arrakisTheater.hackerMode` | `aleph0.theater.hackerMode` |
+| `aleph0.mesh.host` | `aleph0.ciudad.host` |
+| `aleph0.mesh.port` | `aleph0.ciudad.port` |
+| `aleph0.mesh.baseUrl` | `aleph0.ciudad.baseUrl` |
+| `aleph0.room.id` | `aleph0.room.id` *(sin cambio)* |
+| `aleph0.launcher.host` | `aleph0.pieza.launcher.host` |
+| `aleph0.launcher.port` | `aleph0.pieza.launcher.port` |
+| `aleph0.lineaEditor.host` | `aleph0.pieza.lineaEditor.host` |
+| `aleph0.lineaEditor.port` | `aleph0.pieza.lineaEditor.port` |
+| `aleph0.reparto.path` | `aleph0.pieza.reparto.path` |
+| `alephscript.configurationFile` | `aleph0.mcp.configPath` *(fusionada)* |
+| `mcpSocketManager.configPath` | `aleph0.mcp.configPath` *(fusionada)* |
+| `alephscript.statusBar.visible` | `aleph0.superficie.statusBar.visible` |
+| `alephscript.logging.level` | `aleph0.logging.level` |
+| `alephscript.logging.enabledCategories` | `aleph0.logging.enabledCategories` |
+| `alephscript.logging.showTimestamp` | `aleph0.logging.showTimestamp` |
+| `alephscript.logging.showLevel` | `aleph0.logging.showLevel` |
+| `alephscript.logging.showCategory` | `aleph0.logging.showCategory` |
+| `alephscript.logging.showSource` | `aleph0.logging.showSource` |
+| `alephscript.logging.maxEntries` | `aleph0.logging.maxEntries` |
 
-**13 claves.** Las tres `arrakisTheater.*` se renombran porque el panel de
-Ajustes las titulaba «Arrakis Theater: …» — nombre vetado a la vista del
-usuario (RES-2 de WP-V14).
+**Siete claves desaparecen sin sustituta** porque estaban declaradas y
+**ningún código vivo las leía** — prometían un efecto que no existía:
+`aleph0.theater.configPath`, `aleph0.theater.autoStart`,
+`aleph0.theater.hackerMode`, `aleph0.ollama.baseUrl`,
+`alephscript.autoLoadConfig`, `alephscript.configValidation`,
+`alephscript.statusBar.animation`.
+Ponerlas nunca hizo nada; quitarlas tampoco quita nada.
+(La de `ollama` se sumó tras la contrarrevisión: su cadena de lectura
+terminaba en dos métodos sin una sola llamada.)
 
-**Claves que NO cambian** (heredadas, sin marca vetada; el brief de V15 no
-las incluye): `alephscript.configurationFile`, `alephscript.autoLoadConfig`,
-`alephscript.configValidation`, `alephscript.statusBar.visible`,
-`alephscript.statusBar.animation`, las siete `alephscript.logging.*` y
-`mcpSocketManager.configPath` (**14 claves**). El espacio de ajustes queda
-por tanto **mixto** hasta que el custodio decida sobre ellas.
+26 claves antes → **18 después**. El acta completa, con el porqué de cada
+nombre y qué ve el usuario que pierde la suya, está en
+[`plan/REPORTES/WP-V23-config-intencional.md`](./plan/REPORTES/WP-V23-config-intencional.md).
+
+El renombrado previo de `zigurat.*` / `arrakisTheater.*` a `aleph0.*`
+(WP-V15 · DV-16.a) queda como historia: su tabla está en
+`plan/REPORTES/WP-V15-espacios-nombres.md` §3 *[cita inerte]*.
 
 ### Comandos
 

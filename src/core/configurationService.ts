@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LoggingManager, LogCategory, LogLevel } from '../loggingManager';
+import { ALEPH0_SECTION } from '../config/ziguratSettings';
 import { errorBoundary } from './errorBoundary';
 
 export interface ConfigurationDefinition {
@@ -55,7 +56,12 @@ export interface AlephScriptConfig {
 export class ConfigurationService {
     private static instance: ConfigurationService;
     private readonly loggingManager: LoggingManager;
-    private readonly configSection = 'alephscript';
+    // WP-V23 · única sección de configuración de la extensión.
+    // AVISO declarado en el acta de V23: de las definiciones de abajo, sólo
+    // las cuatro `logging.*` existen en `contributes.configuration`; el resto
+    // se lee de una sección que no las declara, así que siempre devuelven su
+    // `defaultValue`. Este WP mueve la sección, no inventa el schema que falta.
+    private readonly configSection = ALEPH0_SECTION;
     
     private readonly configDefinitions: ConfigurationDefinition[] = [
         // Logging

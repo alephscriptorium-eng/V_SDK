@@ -5,11 +5,11 @@ import {
 } from './types';
 
 /**
- * Lectura de settings aleph0.launcher.* (schema canónico V05).
+ * Lectura de settings aleph0.pieza.launcher.* (schema canónico V05).
  *
  * Keys:
- * - aleph0.launcher.port (number|null, requerido)
- * - aleph0.launcher.host (string, requerido; vacío = ⏳)
+ * - aleph0.pieza.launcher.port (number|null, requerido)
+ * - aleph0.pieza.launcher.host (string, requerido; vacío = ⏳)
  *
  * Sin inventar host/puerto por defecto.
  */

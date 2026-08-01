@@ -9,6 +9,37 @@
 migración en el README); comandos con prefijo único **`aleph0.`** y
 categoría de paleta «Aleph-0».
 
+**Qué cambia además con WP-V23**: los ajustes tienen ya **un solo espacio de
+nombres**; `alephscript.*` y `mcpSocketManager.*` desaparecen y los segmentos
+salen del léxico (`aleph0.ciudad.*`, `aleph0.pieza.<pieza>.*`,
+`aleph0.superficie.*`). Las claves de esta guía son las nuevas. Sin
+migración automática: una clave vieja en tu `settings.json` queda huérfana y
+**casi siempre** la extensión marca ⏳ nombrando la clave nueva que falta.
+
+⚠️ **Con una excepción que conviene conocer antes de probar.** Si no pones
+`aleph0.ciudad.*`, el árbol de sockets **no dice ⏳**: inventa un endpoint en
+tu propia máquina y lo da por bueno. Ocurre **con o sin fichero de ópera**:
+
+- **con** fichero de ópera y una UI primaria → el árbol pinta
+  `localhost:7777` (el puerto de esa UI, **sin esquema**: el árbol recorta
+  el `ws://` que devuelve el método);
+- **sin** fichero de ópera, o con ópera pero sin UI primaria → `localhost:3000`
+  a secas;
+- y si generas una plantilla de configuración (**2 de las 3**: `xplus1` y
+  `socket`; la de `ui` no usa este valor), lo que se **escribe dentro del
+  fichero generado** es el mismo valor inventado: `ws://localhost:7777` si
+  había UI primaria, `ws://localhost:3000` si no había ópera cargada, y
+  cadena vacía si había ópera sin UI primaria.
+
+Es un defecto preexistente, no lo arregla este WP (cae en WP-V31) y está
+documentado con su caso rojo en
+`plan/REPORTES/WP-V23-config-intencional.md` §12. Si ves el monitor
+apuntando a tu propia máquina sin haberlo pedido, es esto — no es que haya
+encontrado tu Ciudad.
+
+Tabla completa de migración en el README y acta en
+`plan/REPORTES/WP-V23-config-intencional.md`.
+
 **El `.vsix` es LOCAL.** Se construye en este árbol; **no** se descarga del
 Release `v0.1.0` de GitHub. Ese release publica el artefacto viejo
 (`scriptorium-zigurat-0.1.0.vsix`, extension-id `scriptorium.zigurat`) y
@@ -33,20 +64,22 @@ coincide con lo de arriba, el manifiesto cambió y esta guía se queda corta.
 
 ```json
 {
-  "aleph0.mesh.host": "127.0.0.1",
-  "aleph0.mesh.port": 3010,
-  "aleph0.launcher.host": "127.0.0.1",
-  "aleph0.launcher.port": 3050,
+  "aleph0.ciudad.host": "127.0.0.1",
+  "aleph0.ciudad.port": 3010,
+  "aleph0.pieza.launcher.host": "127.0.0.1",
+  "aleph0.pieza.launcher.port": 3050,
   "aleph0.room.id": "<room-zeus-local>",
-  "aleph0.reparto.path": "<ruta-absoluta>/fixtures/reparto-v1-demo.json",
-  "aleph0.lineaEditor.host": "",
-  "aleph0.lineaEditor.port": null
+  "aleph0.pieza.reparto.path": "<ruta-absoluta>/fixtures/reparto-v1-demo.json",
+  "aleph0.pieza.lineaEditor.host": "",
+  "aleph0.pieza.lineaEditor.port": null
 }
 ```
 
-Vacío/`null` en mesh/launcher/room ⇒ la UI marca ⏳ (no inventa endpoints).
-Los puertos `3010`/`3050` son los del runtime local del custodio, **no**
-defaults del schema: el schema entrega `""` / `null`.
+Vacío/`null` en ciudad/pieza/room ⇒ **casi toda** la UI marca ⏳ y nombra la
+clave que falta. ⚠️ **No toda**: el árbol de sockets y las plantillas de
+configuración inventan `localhost:3000` en vez de decir ⏳ (ver el aviso de
+arriba). Los puertos `3010`/`3050` son los del runtime local del custodio,
+**no** defaults del schema: el schema entrega `""` / `null`.
 
 ## Pasos
 
@@ -79,7 +112,7 @@ defaults del schema: el schema entrega `""` / `null`.
    de forma visible (toast/log) y no escribir nada. Demo verde/rojo
    `ZEUS_LINEA_*` = residual V08 ⏳.
 10. `Aleph-0: Refresh elenco (reparto → cast-table)` con
-    `aleph0.reparto.path` apuntando al fixture — filas de cast-table; el
+    `aleph0.pieza.reparto.path` apuntando al fixture — filas de cast-table; el
     panel Elenco es ≠ compañía teatral (`ICompany`).
 
 **PASS custodio:** activación con el id nuevo + catálogo en caliente + un

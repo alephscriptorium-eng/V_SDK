@@ -1,10 +1,30 @@
 /**
  * Lectura tipada de settings workspace `aleph0.*`.
  * Defaults vacíos en schema → ⏳ honesto (hostil-omite); sin inventar hosts/puertos.
+ *
+ * WP-V23 — espacio de nombres ÚNICO: `aleph0` es la única sección de
+ * configuración de la extensión. Los segmentos salen del léxico
+ * (`plan/LEXICO-ZIGURAT.md` §1): `ciudad` (runtime de Z que V observa),
+ * `room` (canal del socket-server), `pieza` (unidad de obra ajena que V
+ * consume — C1: «pieza», nunca «servidor/servicio» en superficie).
+ * Los identificadores de código NO se renombran (DV-16.a).
  */
 import * as vscode from 'vscode';
 
 export const ZIGURAT_PENDING = '⏳';
+
+/** Única sección de configuración de la extensión (WP-V23). */
+export const ALEPH0_SECTION = 'aleph0';
+
+/**
+ * Sub-clave del fichero heredado que declara las piezas MCP locales.
+ * WP-V23 la **fusiona**: antes eran dos claves distintas apuntando al mismo
+ * fichero (`mcpSocketManager.configPath` y `alephscript.configurationFile`).
+ */
+export const MCP_CONFIG_PATH_SUBKEY = 'mcp.configPath';
+
+/** Sub-clave de visibilidad de la barra de estado (superficie de periferia). */
+export const STATUSBAR_VISIBLE_SUBKEY = 'superficie.statusBar.visible';
 
 export interface ZiguratSettings {
     meshHost: string;
@@ -12,7 +32,6 @@ export interface ZiguratSettings {
     meshBaseUrl: string;
     launcherHost: string;
     launcherPort: number | undefined;
-    ollamaBaseUrl: string;
     /** Room a la que el IDE hace join (WP-V07). Vacío = ⏳. */
     roomId: string;
     /** Override endpoint linea-editor (WP-V08). Vacío = resolver desde catálogo. */
@@ -41,18 +60,17 @@ function readString(value: unknown): string {
 
 /** Lee configuración aleph0.* (defaults de schema = vacío). */
 export function getZiguratSettings(): ZiguratSettings {
-    const cfg = vscode.workspace.getConfiguration('aleph0');
+    const cfg = vscode.workspace.getConfiguration(ALEPH0_SECTION);
     return {
-        meshHost: readString(cfg.get('mesh.host')),
-        meshPort: readNumber(cfg.get('mesh.port')),
-        meshBaseUrl: readString(cfg.get('mesh.baseUrl')),
-        launcherHost: readString(cfg.get('launcher.host')),
-        launcherPort: readNumber(cfg.get('launcher.port')),
-        ollamaBaseUrl: readString(cfg.get('ollama.baseUrl')),
+        meshHost: readString(cfg.get('ciudad.host')),
+        meshPort: readNumber(cfg.get('ciudad.port')),
+        meshBaseUrl: readString(cfg.get('ciudad.baseUrl')),
+        launcherHost: readString(cfg.get('pieza.launcher.host')),
+        launcherPort: readNumber(cfg.get('pieza.launcher.port')),
         roomId: readString(cfg.get('room.id')),
-        lineaEditorHost: readString(cfg.get('lineaEditor.host')),
-        lineaEditorPort: readNumber(cfg.get('lineaEditor.port')),
-        repartoPath: readString(cfg.get('reparto.path')),
+        lineaEditorHost: readString(cfg.get('pieza.lineaEditor.host')),
+        lineaEditorPort: readNumber(cfg.get('pieza.lineaEditor.port')),
+        repartoPath: readString(cfg.get('pieza.reparto.path')),
     };
 }
 
@@ -84,10 +102,6 @@ export function resolveMeshSocketUrl(settings: ZiguratSettings = getZiguratSetti
 
 export function resolveLauncherPort(settings: ZiguratSettings = getZiguratSettings()): number | undefined {
     return settings.launcherPort;
-}
-
-export function resolveOllamaBaseUrl(settings: ZiguratSettings = getZiguratSettings()): string {
-    return settings.ollamaBaseUrl;
 }
 
 export function isMeshConfigured(settings: ZiguratSettings = getZiguratSettings()): boolean {

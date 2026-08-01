@@ -12,6 +12,7 @@ import {
     renderAiStatsPage,
     renderAiWorkflowPage
 } from '../../../webview/bootstrapPages';
+import { ALEPH0_SECTION } from '../../../config/ziguratSettings';
 import { CommandEntry } from './types';
 
 export const aiCommands: CommandEntry[] = [
@@ -133,7 +134,7 @@ export const aiCommands: CommandEntry[] = [
                     data: {
                         workspace_folders: vscode.workspace.workspaceFolders?.map(f => f.uri.fsPath),
                         extensions: vscode.extensions.all.filter(ext => ext.isActive).map(ext => ext.id),
-                        settings: vscode.workspace.getConfiguration().get('alephscript') || {}
+                        settings: vscode.workspace.getConfiguration().get(ALEPH0_SECTION) || {}
                     },
                     timestamp: new Date().toISOString(),
                     session_id: 'default'

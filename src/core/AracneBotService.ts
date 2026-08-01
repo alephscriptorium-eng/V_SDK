@@ -5,8 +5,17 @@
  * con el AlephScript mesh, permitiendo comunicación bidireccional
  * entre el IDE y los servidores MCP.
  * 
- * URL: aleph0.mesh.* / config.socketUrl — sin puerto hardcodeado.
- * Sin settings → ⏳ honesto, sin crash.
+ * URL: aleph0.ciudad.* / config.socketUrl — sin puerto hardcodeado.
+ *
+ * ⚠️ WP-V23 · D-1 — «Sin settings → ⏳ honesto» es FALSO por una vía:
+ * `bootstrap/assembleContext.ts:109` inyecta `socketUrl` desde
+ * `McpConfigurationManager.getDefaultSocketUrl()`, que sin `aleph0.ciudad.*`
+ * puede devolver un `ws://localhost:<puerto>` inventado (ver el docblock de
+ * ese método). Con ese valor, `initialize()` toma la rama normal:
+ * `pending = false`, estado `ready`, y `connect()` no dispara su guarda —
+ * hay un comando de usuario que llega hasta aquí. Sin settings Y sin ese
+ * invento, el ⏳ sí es honesto. Quitar el invento es WP-V31; aquí sólo se
+ * corrige la afirmación. Ver `plan/REPORTES/WP-V23-config-intencional.md` §13.
  * 
  * @épica MCP-CHANNELS-1.0.0
  */
@@ -33,7 +42,7 @@ export interface AracneBotConfig {
     capabilities?: string[];
 }
 
-/** Defaults sin URL — se resuelve desde aleph0.mesh.* en initialize. */
+/** Defaults sin URL — se resuelve desde aleph0.ciudad.* en initialize. */
 export const DEFAULT_ARACNE_CONFIG: AracneBotConfig = {
     socketUrl: undefined,
     botName: "vscode-extension",
@@ -79,7 +88,12 @@ export class AracneBotService {
         return AracneBotService.instance;
     }
 
-    /** true si falta aleph0.mesh.* / socketUrl (hostil-omite). */
+    /**
+     * true si falta aleph0.ciudad.* Y socketUrl. ⚠️ D-1: NO basta con que
+     * falte el ajuste — si `assembleContext` inyectó el `ws://localhost:<puerto>`
+     * inventado, esto devuelve `false` aunque el usuario no haya configurado
+     * nada. Ver el docblock de cabecera.
+     */
     public isPending(): boolean {
         return this.pending;
     }
@@ -110,7 +124,7 @@ export class AracneBotService {
             this.pending = true;
             this.client = undefined;
             log.warn(
-                `${ZIGURAT_PENDING} aleph0.mesh.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
+                `${ZIGURAT_PENDING} aleph0.ciudad.baseUrl (o host+port) no configurado — sin cliente Socket.IO`
             );
             return;
         }
@@ -255,7 +269,7 @@ export class AracneBotService {
     public connect(): void {
         if (this.pending || !this.client) {
             log.warn(
-                `${ZIGURAT_PENDING} sin mesh configurado. Configure aleph0.mesh.baseUrl (o host+port).`
+                `${ZIGURAT_PENDING} sin mesh configurado. Configure aleph0.ciudad.baseUrl (o host+port).`
             );
             return;
         }
