@@ -5,15 +5,78 @@
 | agente | worker V · rama única, worktree `C:\S_LAB\wt\v-v71` |
 | fecha | 2026-08-01 |
 | rama | `wp/v71-log-estructurado` (base `main` = `ef86fba`) |
-| commits | obra: `dbae546` · `e319ae3` · `322997a` · `8bc976d` · `b2a2ebf` · `84009f5` · `e78c1a1` · `717b840` — corrección: `b8f6ec3` · `0acf7fd` · `3a5166e` · `2277283` |
+| commits | obra: `dbae546` · `e319ae3` · `322997a` · `8bc976d` · `b2a2ebf` · `84009f5` · `e78c1a1` · `717b840` — 1ª corrección: `b8f6ec3` · `0acf7fd` · `3a5166e` · `2277283` · `f8245c6` — 2ª: `0afaade` |
 | eje(s) CA | **estructural** (pieza ancha, «cero cambio observable») + roce de **frontera de confianza** (secretos en el log) |
 | riesgo de revisión | `independiente` — §4.5 de `plan/PRACTICAS.md`: «cero cambio observable» sobre pieza ancha |
-| revisor distinto del worker | 1ª contrarrevisión: **DEVUELTO** · 2ª: `⏳ pendiente` (acotada a D1, D2, `auth`/`tokenEnv`, castellano y las dos formas del gate) |
-| estado propuesto | **devuelto-corregido** — desvío D1 **aprobado por el orquestador**; los 6 puntos de la devolución, cerrados (§−1) |
+| revisor distinto del worker | 1ª contrarrevisión **DEVUELTO** (6 puntos) · 2ª **DEVUELTO** (1 bloqueante + 6) · 3ª `⏳ pendiente`, acotada a D-1, D-2, D-3 y a no haber roto nada |
+| estado propuesto | **devuelto-corregido (2ª vuelta)** — desvío D1 **aprobado por el orquestador**; los 7 puntos de la 2ª devolución, cerrados (§−2) |
 
 ---
 
-## §−1 · CORRECCIÓN DE LA DEVOLUCIÓN
+## §−2 · CORRECCIÓN DE LA **2ª** DEVOLUCIÓN
+
+| # | qué pedía | qué hice | commit |
+| - | --------- | -------- | ------ |
+| **D-1** `bloq.` | `apikey` fuga y `apiKey` se tapa: el camino de CLAVE seguía siendo lista aparte | **una** constante de la que salen literalmente los dos caminos | `0afaade` |
+| **D-2** | L5 declaraba el límite donde no estaba y su test no podía fallar | se cubre `etiqueta: valor`; L5 reescrito **donde sí está**, con el borde fijado | `0afaade` |
+| **D-3** | el comparador de niveles no viajaba en el entregable | `scripts/probes/v71-paridad-niveles.mjs`, barriendo **todo** `src/` | `0afaade` |
+| **D-4** | el gate afirma más de lo que cierra; «5 límites» eran ≥16 | 7 selectores nuevos; sonda de 27 formas → **23 cazadas, 3 límites** | `0afaade` |
+| **D-5** | el revert en solitario ya no es posible; el reporte lo afirma en presente | corregido en §0 | este commit |
+| **D-6** | «cero falsos positivos» es falso en una matriz más ancha | sufijos ampliados; residuo declarado como **L6** y fijado por test | `0afaade` |
+| **D-7** | `Digest` no protege lo que dice | sale de `AUTH_SCHEME`; patrón propio que tapa los **parámetros** | `0afaade` |
+
+### D-1 — el mismo defecto un piso más abajo, y tenías razón en llamarlo así
+
+Lo reproduje con el módulo real antes de tocar nada:
+
+```
+isSecretKey(apikey       ) = false      redactString('?apikey=x')      = ?apikey=«redactado»
+isSecretKey(apiKey       ) = true       redactString('?accesstoken=x') = ?accesstoken=«redactado»
+isSecretKey(accesstoken  ) = false      redactString('?privatekey=x')  = ?privatekey=«redactado»
+isSecretKey(accessToken  ) = true
+isSecretKey(privatekey   ) = false
+isSecretKey(privateKey   ) = true
+```
+
+En la 1ª devolución unifiqué los cuatro caminos de **cadena** y me quedé ahí; el
+camino de **clave** siguió siendo una lista aparte (`SECRET_WORDS`) que, al
+partir por palabras, no veía los compuestos pegados. Mi propia batería probó
+`api_key`, `apiKey`, `API-KEY` y `APIKey` — las cuatro que la partición sí ve —
+y no la quinta. La afirmación «un vocabulario del que derivan claves, banderas,
+entorno y query» era **falsa en la misma frontera ya devuelta una vez**.
+
+Arreglo de raíz: `SECRET_WORDS` **desaparece**. Queda una sola constante,
+`COMPOUND_SECRET_TERMS`, y de ella salen literalmente las dos cosas:
+
+- `SECRET_TERM_SOURCE` (cadenas) = `[...COMPOUND, ...STANDALONE].join('|')`
+- `WORD_IS_SECRET` (claves) = la **misma** alternancia, **anclada** `^(?:…)$`
+
+El anclaje es lo que da las dos propiedades a la vez: `apikey` casa por
+`api[-_]?keys?`, y `author` sigue sin casar por `auth` (frontera de palabra
+gratis). Y hay un test que prueba el invariante **en pareja** —
+`isSecretKey(t)`, `redactString('?t=…')` y `redactValue({t})` para cada término—
+porque ésta es la frontera que ya se ha roto dos veces.
+
+### D-4 — y una corrección mía sobre la marcha, que conviene que conste
+
+Cerré por selector: `process['stdout']` computado, `const {stdout} = process`,
+`const p = process`, la **asignación** (`g = globalThis`, `q = process`), el
+`import`/`require` de `node:process`, y el **cast** `(process as any)[…]` que
+anulaba `object.name`. La sonda pasa de 19 a **27 formas: 23 cazadas, 3 límites**
+(`eval`, `new Function`, `Reflect.get`) — no «5».
+
+Probé además a restringir `globalThis` entero, lo que **también** habría cerrado
+`Reflect.get`. **Lo deshice**: hay un uso legítimo en el árbol —
+`fetch.bind(globalThis)` en `src/mcp/client.ts:71`, que el `fetch` nativo exige
+para invocarse desmembrado—. Con la regla puesta, `npm run lint` daba **1 error**
+y habría roto CI, o exigido el **primer `eslint-disable` del árbol**. Mi grep
+previo estaba truncado con `head` y por eso escribí «0 usos legítimos»: era
+falso, y el propio lint me lo dijo. `Reflect.get` queda como límite declarado
+porque el precio de cerrarlo es peor que el hueco.
+
+---
+
+## §−1 · CORRECCIÓN DE LA **1ª** DEVOLUCIÓN
 
 Seis puntos, seis commits de corrección. Nada de lo que el contrarrevisor
 declaró «resiste» se ha tocado.
@@ -28,6 +91,26 @@ declaró «resiste» se ha tocado.
 | **gate** | cerrar `process.stdout/stderr` y el alias de `globalThis`; declarar el resto; corregir el «9/9» | dos selectores nuevos; sonda ampliada a 19 formas; afirmación reescrita | `3a5166e` |
 | **D6** | decidir y declarar lo del `dispose` en `deactivate` | **se retira**: el canal ya no se cierra. Razonado en el código y en §8bis | `2277283` |
 | — | acotar la afirmación de `forOperation` (multi-módulo) | acotada en cabecera, jsdoc **y fijada por test** | `2277283` |
+
+> **El instrumento viaja ya en el entregable** (2ª dev., D-3):
+> `scripts/probes/v71-paridad-niveles.mjs`. Antes solo estaba pegada su salida,
+> y una medida que nadie puede repetir es una cita — el revisor tuvo que
+> escribir el suyo para confirmarme. El de ahora barre **todo** `src/**/*.ts`
+> (no una lista de 11 ficheros elegida a mano, que era el sesgo), con un
+> extractor **único** aplicado a los dos lados: es simétrico por construcción, y
+> los 10 sitios del carve-out cuadran igual que los migrados.
+>
+> ```
+> $ node scripts/probes/v71-paridad-niveles.mjs
+>   TOTAL base=108  árbol=108
+>   Nota de cuadre: 108 = 105 llamadas reales + 3 que viven dentro de literales
+>   DESVÍOS DE NIVEL: 0
+> PASS · ninguna línea cambió de nivel en la migración          (exit 0)
+> ```
+>
+> Y **muerde**: inyectando `log.info`→`log.warn` en
+> `HackerControlPanelProvider.ts` da `FAIL`, `exit 1` y
+> `llamada #5: base=info árbol=warn`.
 
 ### Sobre D1 — lo que de verdad se rompía
 
@@ -138,10 +221,15 @@ Worktrees vivos medidos en el momento de escribir esto (`git worktree list`):
 (`wp/v66-csp`), `v-v71` (yo). V37/V38/V39 (los «3 inquilinos» de la fila de
 webviews) son **ola F2-5**: sin rama y sin worktree.
 
-**Está aislado en un solo commit (`8bc976d`) a propósito**: si el orquestador
-lee la frontera en sentido estricto, `git revert 8bc976d` lo deshace entero y
-el WP queda en 49/105 sin tocar nada más. No lo revierto yo porque no me
-corresponde decidirlo.
+**Se aisló en un solo commit (`8bc976d`) a propósito**, para que revertirlo
+fuera barato si el orquestador leía la frontera en sentido estricto.
+
+> **Ya no es revertible en solitario** (2ª dev., D-5): `git revert --no-commit
+> 8bc976d` da conflicto en tres ficheros, porque la corrección de D1 reescribió
+> **esas mismas líneas** (los tres `Unknown command` que volvieron a `info`).
+> El desvío está aprobado, así que el daño es documental — pero lo digo en vez
+> de dejar la frase en presente. Deshacerlo hoy exige revertir `8bc976d` y
+> `b8f6ec3` juntos, o quitar a mano los 4 ficheros.
 
 ### D2 · El log cambia de destino y de formato — esa ES la obra, no un efecto colateral
 
@@ -265,18 +353,33 @@ familia console.* (9)                    no-console  +globals  +properties  +syn
                                            ─────      ─────      ─────      ─────
                                             6/9        8/9        9/9        9/9
 
-fuera de la familia — CERRADAS en la corrección (5)
+fuera de la familia — CERRADAS (5 en la 1ª corrección, 9 más en la 2ª)
 10  process.stdout.write('j')                 ✗          ✗          ✗          ✓
 11  process.stderr.write('k')                 ✗          ✗          ✗          ✓
 12  const o = process.stdout; o.write('l')    ✗          ✗          ✗          ✓
 13  const g = globalThis; g.console.log('m')  ✗          ✗          ✗          ✓
 14  const {console:k} = globalThis; k.log()   ✗          ✗          ✗          ✓
+15  const {stdout} = process; stdout.write()  ✗          ✗          ✗          ✓ ←2ª
+16  const p = process; p.stdout.write('q')    ✗          ✗          ✗          ✓ ←2ª
+17  process['stdout'].write('r')              ✗          ✗          ✗          ✓ ←2ª
+18  let g; g = globalThis; g.console.log()    ✗          ✗          ✗          ✓ ←2ª
+19  let q; q = process; q.stdout.write('t')   ✗          ✗          ✗          ✓ ←2ª
+20  import {stdout} from 'node:process'       ✗          ✗          ✗          ✓ ←2ª
+21  require('node:process').stdout.write()    ✗          ✗          ✗          ✓ ←2ª
+22  (process as any)['stdout'].write('r')     ✗          ✗          ✗          ✓ ←2ª
+23  (globalThis as any)['con'+'sole'].log()   ✗          ✗          ✗          ✓ ←2ª
                                                                              ─────
-                                                                              5/5
+                                                                             14/14
 ```
 
-**Afirmación acotada: 9/9 de la familia `console.*`, más 5 cerradas fuera de
-ella (14/14 de lo cerrable), y 5 declaradas como límite** — no «9/9» a secas.
+**Afirmación acotada: 9/9 de la familia `console.*`, más 14 cerradas fuera de
+ella — 23 de 27 formas probadas — y 3 declaradas como límite.**
+
+En la 1ª corrección dije «5 límites» y eran **≥16**: no era criterio, era
+contabilidad. La 2ª devolución lo midió y cinco de los que pasaban eran **la
+misma clase que yo ya había cerrado** un nivel más arriba (destructuring, alias
+por declaración… pero no por **asignación**; y `import` de `node:process`, que
+además es lo idiomático). Cerrados los siete selectores, el número real es 3.
 
 `no-console` sola habría dejado pasar 3 de 9 dentro de su propia familia, y las
 5 de fuera. Las dos que cerró la corrección no son exóticas: `process.stdout.write`
@@ -287,30 +390,27 @@ escribe en la **misma** consola que el gate destierra y es idiomático; y aliasa
 
 ### Límites conocidos del gate (declarados, no callados)
 
-Ningún lint **estático** puede con estos, y así hay que decirlo:
+**Tres**, y ningún lint **estático** puede con ellos:
 
 ```
-15  eval('console.log(1)')                            ✗ — cadena en tiempo de ejecución
-16  new Function('console.log(1)')()                  ✗ — idem
-17  Reflect.get(globalThis, 'console').log('o')       ✗ — acceso reflexivo
-18  (globalThis as any)['con'+'sole'].log('p')        ✗ — clave computada por concatenación
-19  const n='console'; (globalThis as any)[n].log()   ✗ — clave computada por variable
+25  eval('console.log(1)')                            ✗ — código generado de una cadena
+26  new Function('console.log(1)')()                  ✗ — idem
+27  Reflect.get(globalThis, 'console').log('o')       ✗ — acceso reflexivo
 ```
 
-Cerrarlos exigiría análisis con tipos o en tiempo de ejecución, no un
-`.eslintrc`. Los cinco son **deliberadamente hostiles**: quien escriba
-`Reflect.get(globalThis,'console')` en este repo no se está saltando un lint por
-descuido. Salida literal de la sonda con la configuración real:
+Los dos primeros son código construido en tiempo de ejecución: cerrarlos exige
+un analizador, no un `.eslintrc`.
 
-```
-$ npx eslint src/__bypass_probe.ts -f compact
-L4 L5 L7 L8 L9 L10   (no-console + no-restricted-globals)
-L11                  (no-restricted-properties · globalThis.console)
-L12 L13              (no-restricted-globals · alias y destructuring de console)
-L15 L16 L17          (no-restricted-syntax · process.stdout/stderr, incl. alias)
-L18 L19              (no-restricted-syntax · alias y destructuring de globalThis)
-   → 14 formas cazadas; L21–L25 (los 5 límites) no aparecen, como está declarado
-```
+El tercero **sí** se podía cerrar —restringiendo `globalThis` a secas— y
+**decidí no hacerlo**: hay un uso legítimo en el árbol, `fetch.bind(globalThis)`
+en `src/mcp/client.ts:71`, que el `fetch` nativo exige para invocarse
+desmembrado. Con la regla puesta `npm run lint` daba **1 error** — CI roto — o
+había que meter el **primer `eslint-disable` del árbol**. El precio es peor que
+el hueco, y quien escriba `Reflect.get(globalThis,'console')` aquí no se está
+saltando un lint por descuido.
+
+Salida de la sonda de 27 formas con la configuración real: **23 cazadas**, y las
+3 de arriba no aparecen — como está declarado.
 
 ### Salida del gate sobre el árbol
 
@@ -376,8 +476,8 @@ Todo re-verificado de facto en este worktree; ningún ✅ heredado.
 | | antes (`main`) | después (`HEAD`) | delta |
 | --- | --- | --- | --- |
 | Test Suites | 1 failed, 7 passed, **8** | 1 failed, 9 passed, **10** | +2 (los míos) |
-| Tests | **117** | **234** | +117 (los míos) |
-| passed | 111 | 228 | +117 |
+| Tests | **117** | **252** | +135 (los míos) |
+| passed | 111 | 246 | +135 |
 | **failed** | **5** | **5** | **0** |
 | skipped | 1 | 1 | 0 |
 
@@ -401,6 +501,53 @@ IDENTICOS
 Causa (preexistente, ajena a V71): `vscode.window.onDidCloseTerminal is not a
 function` en `tests/mocks/vscode.mock.js` — el doble no implementa ese método.
 Es el rojo que V48 tiene encomendado.
+
+### Un sexto rojo intermitente — lo declaro yo, con la parte que me toca
+
+En algunas corridas **en paralelo** sale un 6º rojo. Nunca el mismo: he visto
+los tres casos de **reloj de pared** que tiene la suite —
+`Performance Tests › Resource Cleanup`,
+`Performance Tests › Service Initialization` (`118.67ms` contra umbral `100`) y
+`Jest Setup Verification › should measure performance` (`tests/basic.test.ts:23`,
+que cronometra un `setTimeout(10)` contra `< 100`).
+
+Evidencia de que **no es una regresión de V71**:
+
+```
+1 · ¿los toca V71?
+    $ git diff --stat main...HEAD -- tests/performance/ tests/basic.test.ts \
+                                     jest.config.js tests/setup.ts
+    (vacío — 0 líneas)
+
+2 · ¿dependen de mi código?
+    $ grep -nE "^import|require\(" tests/performance/serviceStartup.test.ts
+    5:import { measurePerformance } from '../setup';
+    → no importan NADA de src/. Cronometran un setTimeout(10) y un bucle de arrays.
+
+3 · aislados
+    $ npx jest tests/performance   ×4     →  5 passed, 5 total   (las cuatro)
+
+4 · suite completa EN SERIE, cinco pasadas seguidas — frecuencia de fallo:
+    $ for i in 1..5; do npx jest --coverage=false --runInBand; done
+      5  ManagerFactory … › should have proper dependency chain in standard managers
+      5  ManagerFactory … › should create all standard managers
+      5  ManagerFactory … › should handle concurrent manager creation
+      5  ManagerFactory … › should create webview manager
+      5  ManagerFactory … › should create process manager
+    → los 5 del baseline, 5 de 5 veces, y NI UN extra.
+```
+
+Son tests de **reloj de pared** contra umbrales fijos: fallan por contención
+entre workers, no por código.
+
+**Y la parte que me toca, que no me callo:** V71 añade 135 tests, así que la
+suite carga más la máquina y ese test flaky **falla más a menudo que antes**. No
+cambia el comportamiento del producto ni el conjunto determinista de rojos —
+`--runInBand` da los 5 de siempre—, pero es un efecto real de mi cambio sobre la
+*suite*, y prefiero decirlo a que lo encuentre la contrarrevisión.
+
+**Medida canónica de este WP: `npx jest --runInBand` → 5 rojos, los mismos por
+nombre.** Queda como hallazgo §9.5.
 
 ### Compilación
 
@@ -448,17 +595,24 @@ asignaciones de entorno, bloques PEM, y sustituye el home del usuario por `~`.
 | antes | ahora |
 | ----- | ----- |
 | 4 listas paralelas que no coincidían (`?auth=` se tapaba, `--auth` no) | **un** vocabulario del que derivan claves, banderas, entorno y query |
-| comparación por **subcadena** → había que sacrificar `auth` para salvar `author` | comparación por **palabras** → `auth` entra y `author` no se toca |
+| …y aun así el camino de **clave** seguía aparte: `apiKey` sí, `apikey` no (2ª dev.) | `SECRET_WORDS` **borrado**; claves y cadenas salen de la MISMA constante (§−2) |
+| comparación por **subcadena** → había que sacrificar `auth` para salvar `author` | alternancia **anclada** por palabra → `auth` entra, `author` no se toca, y `apikey` sí |
 | `tokenEnv` cegado (falso positivo sobre un campo real) | sufijos de referencia (`env`, `name`, `var`…): `tokenEnv` conserva su valor |
 | solo inglés; `contraseña` fugaba y `secreto` se salvaba de casualidad | castellano explícito: `clave`, `contraseña`, `credenciales`, `pwd`, `pin`, `firma` |
-| solo `Bearer` | `Basic` incluido — viaja con `usuario:contraseña` en base64 |
+| solo `Bearer` | `Basic` y `Negotiate` (credencial pegada) + `Digest` aparte, tapando sus **parámetros** (2ª dev., D-7) |
 | `ENV=` solo en MAYÚSCULAS | `/i` + delimitación por `_`: `token=x` se tapa, `SPINNER=x` no |
+| ningún patrón cubría `etiqueta: valor` | `LABELED_SECRET`: cierra `password: x`, `contraseña: x` y el **JSON embebido en cadena** (2ª dev., D-2) |
 
-Matriz hostil verificada (tests permanentes): **37 claves secretas** detectadas,
-**20 claves limpias** intactas (`author`, `authorship`, `tokenEnv`, `settingKey`,
-`pingInterval`, `spinner`, `passengers`, `monkey`, `turnkey`…), **18 cadenas
-hostiles** tapadas, **6 cadenas limpias** sin tocar (`--port 3000`,
-`NODE_ENV=production`, `docker run -p 8080:80`…). Cero falsos positivos.
+Matriz hostil verificada (tests permanentes): **47 claves secretas** detectadas
+—incluidos los compuestos pegados `apikey`, `accesstoken`, `privatekey`—,
+**24 claves limpias** intactas (`author`, `authorship`, `tokenEnv`, `settingKey`,
+`authorizationDocsUrl`, `cookieBannerShown`, `pingInterval`, `spinner`,
+`passengers`, `monkey`, `turnkey`…), y las cadenas limpias sin tocar
+(`--port 3000`, `NODE_ENV=production`, `docker run -p 8080:80`, `message digest`
+en prosa…).
+
+**No digo «cero falsos positivos»**: era cierto en mi matriz de 20 y falso en una
+más ancha (2ª dev., D-6). Queda como límite **L6**, declarado abajo.
 
 ### Límites del redactor — declarados **y fijados por test**
 
@@ -472,8 +626,16 @@ límite callado es un hueco; uno fijado por test es una decisión.
 | **L1** | secreto en el PATH de una URL | nada en el nombre lo anuncia |
 | **L2** | blob base64/hex suelto | indistinguible de un hash, un id o contenido legítimo; taparlo por su forma cegaría más de lo que protege |
 | **L3** | secreto usado como **clave** (`{ 'ghp_…': 'activo' }`) | se redacta el valor, no el nombre del campo |
-| **L4** | `-p valor` | en medio ecosistema `-p` es «port» (`docker run -p 8080:80`); taparlo sería una fábrica de falsos positivos. **El comentario que prometía cubrirlo estaba mal y se corrigió** (D3) |
-| **L5** | secreto en prosa sin etiqueta | «la clave es hunter2» se tapa; «hunter2» a secas, no |
+| **L4** | `-p valor` | en medio ecosistema `-p` es «port» (`docker run -p 8080:80`); taparlo sería una fábrica de falsos positivos. **El comentario que prometía cubrirlo estaba mal y se corrigió** (1ª dev., D3) |
+| **L5** | prosa **sin delimitador**: «la clave es hunter2» | reconocer que «es» delimita exige analizar lenguaje natural. **`clave: x` y `clave=x` SÍ se tapan** — el borde está fijado por test |
+| **L6** | sobre-redacción: `claveDeOrdenacion` se tapa sin ser secreto | `REFERENCE_SUFFIXES` cubre los descriptores frecuentes, pero no hay lista completa. **Ciega, no fuga**: es el lado seguro del error |
+
+**L5 estaba mal declarado y su test no podía fallar** (2ª dev., D-2): la cabecera
+afirmaba que «la clave es hunter2» *se tapaba* —falso— y el test solo fijaba
+«hunter2» a secas, o sea el lado que nadie cerraría jamás. Corregido: el límite
+se fija donde de verdad está, y el test fija **también el borde** (con `:` o `=`
+sí se tapa), de modo que cerrar el caso real deja el par incoherente y pone rojo.
+De los 6 límites, **los 6 muerden** ahora.
 
 La probe planta 4 secretos reales por caminos distintos y verifica que ninguno
 sale (§6).
@@ -652,6 +814,16 @@ un VS Code de verdad. Lo cubre el arnés de V68.
 4. **Umbrales de cobertura de `jest.config.js`** (85/80/75) son ficción contra un
    12,6% real: `npm test` falla siempre por eso. O se bajan a la realidad o se
    suben cubriendo. Candidato para V48/V68.
+5. **Tres tests de reloj de pared son flaky por diseño**:
+   `tests/performance/serviceStartup.test.ts` (`duration < 100` sobre un
+   `setTimeout(10)`; `duration < 50` sobre un bucle de 50 arrays) y
+   `tests/basic.test.ts:23` (`setTimeout(10)` contra `< 100`). Bajo contención
+   de workers fallan, y falla un caso **distinto** cada vez. Ensuciará cualquier CI
+   compartido y hace ruido justo sobre el gate de «mismos rojos» que usan todos
+   los WPs de este carril — **y empeora con cada WP que añada tests**, como
+   acaba de pasar con éste (§4). O se le da holgura, o se marca como no-CI, o
+   se mide otra cosa (p. ej. trabajo por unidad de tiempo, no tiempo absoluto).
+   No lo toqué: fuera de alcance.
 
 ---
 
@@ -668,24 +840,34 @@ un VS Code de verdad. Lo cubre el arnés de V68.
       regla 1:1 que lo sostiene, **medida** con el comparador de §−1, no
       inspeccionada.
 - [x] **Gate de dedup**: no se duplica `LogLevel`/`LogCategory`; se reutilizan.
-- [x] **Gates ejecutados de verdad**: lint, sonda de evasión (19 formas),
-      117 tests del módulo, probe, tsc, esbuild — todas las salidas pegadas son
-      literales.
-- [x] **Commits convencionales**: 12, todos `wp(V71): …`.
-- [x] **Afirmaciones acotadas a lo que la evidencia sostiene**: el «9/9» del
-      gate y el «multi-módulo» de `forOperation` se estrecharon tras la
-      devolución; ambos límites están **fijados por test**.
+- [x] **Gates ejecutados de verdad**: lint, sonda de evasión (27 formas),
+      135 tests del módulo, dos probes, tsc, esbuild — todas las salidas
+      pegadas son literales.
+- [x] **Commits convencionales**: 14, todos `wp(V71): …`.
+- [x] **Afirmaciones acotadas a lo que la evidencia sostiene**: se estrecharon
+      el «9/9» del gate (→ 23/27 con 3 límites), el «multi-módulo» de
+      `forOperation`, el «cero falsos positivos» del redactor (→ límite L6) y
+      el «5 límites» del gate (era ≥16). Los límites están **fijados por test**.
+- [x] **Los instrumentos viajan con el WP**: el comparador de niveles ya no es
+      una salida pegada sino `scripts/probes/v71-paridad-niveles.mjs`.
+- [x] **Errores propios declarados**: el «0 usos legítimos de `globalThis`» que
+      escribí salía de un grep truncado con `head` y era falso; lo dice §−2.
 - [ ] **Verificación en host real**: ⏳ sin verificar (arnés V68). Incluye D6
       (que el canal sobreviva al «Reload Window»).
 
 ## §11 · Evidencia de riesgo y contrarrevisión
 
 - `CASOS_ADVERSARIALES`:
-  - `[automatizado]` **19 formas de evasión del gate** → 14/14 de lo cerrable
-    cazadas; 5 declaradas como límite de cualquier lint estático (§3.1).
-  - `[automatizado]` **matriz hostil del redactor**: 37 claves secretas,
-    20 limpias, 18 cadenas hostiles, 6 limpias → cero fugas, cero falsos
-    positivos. 5 límites **fijados por test** (§5).
+  - `[automatizado]` **27 formas de evasión del gate** → **23 cazadas**;
+    3 declaradas como límite (§3.1), una de ellas por decisión de coste
+    explicada.
+  - `[automatizado]` **matriz hostil del redactor**: 47 claves secretas
+    (incluidos los compuestos pegados que fugaban), 24 limpias, cadenas
+    hostiles y limpias → cero fugas. **6 límites fijados por test**, los 6
+    capaces de fallar (§5).
+  - `[automatizado]` **el mismo término por los DOS caminos** (clave y cadena),
+    en pareja: la frontera que se rompió en las dos devoluciones, ahora con
+    test propio.
   - `[automatizado]` **canal roto** (`appendLine` lanza) → el logger no propaga
     y **no** cae a `console` (espías sobre los 3 métodos).
   - `[automatizado]` **sin API de `OutputChannel`** → no lanza; el anillo retiene.
@@ -693,18 +875,22 @@ un VS Code de verdad. Lo cubre el arnés de V68.
     mensaje no-string) → nunca lanza, siempre una sola línea.
   - `[automatizado]` **4 secretos plantados** en línea de comando, URL, cabecera
     y dato → ninguno llega al canal; `author` sí (no cegar).
-  - `[automatizado]` **paridad de nivel 1:1** sobre los 95 sitios, cotejada en
-    orden contra `main` (§−1) → 0 desvíos.
+  - `[automatizado]` **paridad de nivel 1:1** sobre **todo `src/`**, cotejada en
+    orden contra `main` con probe que viaja en el entregable → 108↔108,
+    0 desvíos; y **verificada capaz de fallar** inyectando un re-nivelado.
   - `[manual]` **solape con V66** inspeccionado hunk a hunk: ninguna de las 10
     líneas del carve-out cae dentro de un hunk de V66.
+  - `[manual]` **el sexto rojo intermitente** perseguido hasta su causa: test de
+    reloj de pared, ajeno a `src/`, reproducible bajo carga (§4).
 - `DEPENDENCIAS_DIRECTAS_VERIFICADAS`: el módulo nuevo usa **solo** `vscode` y
   built-ins de Node (`process`). Cero dependencias nuevas; `package.json` y
   `package-lock.json` **intactos** (`npm ci`, no `npm install`).
 - `INSTALACION_LIMPIA`: `no aplica` — este WP no toca empaquetado. `npm ci` en
   worktree limpio + `npm run esbuild-base` verde.
 - `TEST_AUTOMATIZADO_VS_EVIDENCIA_MANUAL`:
-  - Automatizado: 117 tests jest nuevos · probe de 24 aserciones · sonda de
-    evasión de 19 casos · comparador de niveles · diffs de tsc y de rojos.
+  - Automatizado: 135 tests jest nuevos · probe del canal (24 aserciones) ·
+    probe de paridad de niveles sobre todo `src/` · sonda de evasión de 27
+    formas · diffs de tsc y de rojos.
   - Manual: lectura de los hunks de `wp/v66-csp`; enumeración de las 18
     apariciones textuales de `console` supervivientes; verificación de primera
     mano del censo de `author`/`tokenEnv` que desmontó mi propia justificación.
