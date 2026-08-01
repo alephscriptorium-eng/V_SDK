@@ -84,9 +84,15 @@ ejecutar jest de verdad y la segunda sí.
 
 ### 2.1 · Raíz parametrizada (el instrumento real, la fixture real)
 
-`scratchpad/repro-v95.mjs`: copia del instrumento con **una** línea cambiada
-—`const RAIZ = process.cwd()` → `process.env.V95_RAIZ || process.cwd()`— y nada
-más. Todo lo demás es el original: la fixture, la aserción y la mutación.
+> **Los guiones de esta sección viven en el scratchpad de la sesión y NO se
+> commitean** — son andamio, no obra. Se describen enteros para que cualquiera
+> los rehaga en dos minutos.
+
+Copia del instrumento con **una** línea cambiada
+—`const RAIZ = process.cwd()` → `const RAIZ = process.env.V95_RAIZ || process.cwd()`—
+y nada más. Todo lo demás es el original: la fixture, la aserción y la mutación
+(`lastIndexOf('tests')` → `-1`). Se corre el par real/mutante contra las dos
+raíces y se compara la salida:
 
 ```
 === fixture VIEJA (V91) ===
@@ -432,7 +438,7 @@ de CI no lo decía, y por eso el fallo se leía como un misterio.
 |---|---|---|
 | 1 | el síntoma en el remoto | `gh run view 30717696234 --log-failed` |
 | 2 | la asimetría de `path.relative` | `node -e "…path.relative…"` |
-| 3 | repro con raíz parametrizada | `node scratchpad/repro-v95.mjs <árbol>` |
+| 3 | repro con raíz parametrizada | guion de scratchpad, descrito entero en §2.1 |
 | 4 | el `subst` no sirve (jest hace realpath) | sonda `sonda-raiz.test.ts` dentro de jest |
 | 5 | **rojo antes**, condición B | jest sobre la copia con la fixture transpuesta → **1 failed / 36** |
 | 6 | **verde después**, condición B | ídem con el fichero de V95 → **37 passed** |
@@ -440,6 +446,6 @@ de CI no lo decía, y por eso el fallo se leía como un misterio.
 | 8 | eje B (dónde vive el árbol) | suite pre-arreglo en la copia → **36 passed** |
 | 9 | eje C (`tests` en el temporal) | `TEMP=TMP=TMPDIR=…\tests\tmp` → **4 failed / 37** |
 | 10 | eje C.bis (otra unidad) | temporal en `V:` → **5 failed / 37**, la 5ª avisa por su nombre |
-| 11 | ejes D y E | `node scratchpad/sondas-barrido.mjs` |
+| 11 | ejes D y E | guion de scratchpad: `localeCompare` sobre la fixture de `ORDEN`, y la aritmética de `PARALELISMO` sobre 7 valores de `os.cpus().length` |
 | 12 | eje F (separadores) | 3 mutaciones × suite completa → 37 / 37 / **14 failed** |
 | 13 | el gate del mundo | `node scripts/rojos-jest.mjs --gate` → **IDENTICO**, exit 0 |
