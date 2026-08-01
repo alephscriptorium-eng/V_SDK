@@ -56,12 +56,34 @@
 # Estado medido por V48:  statements 26,10 % · branches 25,13 % · lines 26,55 % · functions 21,51 %
 # Umbrales:                          85 %                75 %             85 %               80 %
 #
-# La subida NO es mérito de cobertura nueva: es que los cinco tests que morían
-# en el constructor de `TerminalManager` ahora recorren de verdad
-# TerminalManager, ProcessManager, WebViewManager y CommandPaletteManager. Un
-# rojo también tapa las líneas que no llega a ejecutar. Sigue siendo un rojo
-# abierto y documentado desde WP-V13; NO era de V90 ni de V48 cerrarlo, y este
-# fichero no lo tapa: lo señala.
+# La subida NO es cobertura nueva: los cinco tests que morían en el constructor
+# de `TerminalManager` dejan de morir ahí, y lo que se cubre es LO QUE VIENE
+# DESPUÉS. Los +70 statements, POR FICHERO (medido con `--coverageReporters=
+# json-summary` sobre las dos versiones en el mismo árbol):
+#
+#     src/commandPaletteManager.ts        +40    src/loggingManager.ts               +2
+#     src/core/managerFactory.ts          +11    src/core/logging/structuredLog.ts   +1
+#     src/processManager.ts                +6    src/terminalManager.ts              +0  ← CERO
+#     src/core/mcpConfigurationManager.ts  +6
+#     src/webViewManager.ts                +4
+#
+# ATENCIÓN, porque aquí nació una frase FALSA que la primera entrega de V48
+# sembró en este mismo fichero y que la devolución tumbó midiendo:
+# `src/terminalManager.ts` sale **bit a bit idéntico** antes y después
+# —lines 9/97 · functions 1/14 · statements 9/99 · branches 0/27, o sea
+# 9,09 % de sentencias y 0 % de ramas en los dos lados—. La razón es fina y
+# conviene saberla: **istanbul incrementa el contador de la sentencia ANTES de
+# evaluarla**, así que las líneas del constructor YA contaban como cubiertas en
+# la corrida roja, excepción incluida. «Un rojo tapa lo que no llega a
+# ejecutarse» es cierto en general y FALSO justo para el fichero donde muere la
+# excepción.
+#
+# Corolario que no debe perderse: **ningún test asevera nada sobre terminales**,
+# y el callback que se registra en `onDidCloseTerminal` no se invoca jamás en la
+# suite. La CA «cubren ciclo de vida de terminales» NO la cierra V48.
+#
+# El rojo de umbral sigue abierto y documentado desde WP-V13; NO era de V90 ni
+# de V48 cerrarlo, y este fichero no lo tapa: lo señala.
 #
 # Las líneas que empiezan por «#» y las vacías se ignoran.
 #
@@ -106,6 +128,16 @@
 # 19 `it`, los mismos 19 nombres, y ahora los 19 en verde. MEDIDO con
 # `--gate`: al aplicar el cambio, el conjunto obtenido difería del declarado en
 # exactamente cinco líneas, las cinco en dirección «-», y ninguna «+».
+#
+# QUÉ **NO** PRUEBAN ESTOS CINCO, para que nadie lo deduzca de que estén verdes:
+# prueban que la CADENA DE CONSTRUCCIÓN de managers se completa sin lanzar. Sus
+# 29 aserciones ejecutadas son `toBeDefined`, `toHaveProperty('dispose')`,
+# `hasManager(…)` y `toHaveLength(5)`: **ninguna nombra un terminal**, y el
+# callback registrado en `onDidCloseTerminal` no se invoca nunca. Además, en la
+# corrida canónica del fichero se construye **UN SOLO `TerminalManager`** (en
+# `should create process manager`); los otros cuatro reciben los singletons
+# estáticos que dejó el primero. En aislamiento (`-t <nombre>`) los cuatro sí lo
+# construyen. El ciclo de vida de terminales sigue SIN cubrir.
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------

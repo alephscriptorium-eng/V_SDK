@@ -5,6 +5,7 @@
 | Carril | **V** · Aleph-0 (ℵ₀) |
 | Encargo | `plan/BACKLOG.md:104` |
 | Rama | `wp/v48-cinco-rojos` · base `629d502` |
+| Obra | `0af368a` (primera entrega) · **segunda vuelta tras devolución** (sólo prosa: cero líneas de código cambiadas) |
 | Árbol de medida | `C:/S_LAB/wt/v-v48` · Windows 11 · 12 CPUs |
 | Herramienta | node v22.21.1 · jest 29.7.0 · ts-jest 29.2.5 |
 | Fecha de todas las medidas | **2026-08-01** |
@@ -21,6 +22,26 @@ Las citas `fichero:línea` se comprobaron abriendo el fichero, una a una.
 Dos números que iban a entrar como **CITA** se volvieron a medir aquí para no citarlos de
 memoria: la cobertura del árbol base (§5.3) y el conjunto de rojos de partida (§1).
 Ambos reproducen exactamente lo que declaraba `scripts/rojos-jest.baseline.txt`.
+
+### 0.bis · La devolución: cayeron dos frases, ninguna línea de código
+
+La primera entrega (`0af368a`) pasó la contrarrevisión en **todo lo sustantivo** — el arreglo, la
+vía elegida, el radio de explosión, la contrafactual del `size = 8`, la línea base y los ocho
+números de cobertura. **Cayeron dos afirmaciones, las dos de prosa, y las dos son la misma:**
+
+| # | qué afirmé | estado |
+| - | ---------- | ------ |
+| **B1** | «los cinco tests ahora **recorren de verdad** `TerminalManager`…» — atribuí la subida de cobertura al fichero que da nombre a la CA | **FALSO, medido**: `terminalManager.ts` sale **bit a bit idéntico**. §5.3.bis |
+| **B2** | una tabla de «qué recorre cada uno» que describía la cadena completa | **describía el comportamiento AISLADO** presentándolo como el de la corrida medida: en la corrida canónica se construye **un solo `TerminalManager`**. §4.1 |
+
+Consecuencia, aceptada: **la CA «cubren ciclo de vida de terminales» NO la cierra este WP** (§8),
+y la fila que sí lo haría va propuesta en §10.
+
+**Lo que más pesa no es el error, sino dónde acabó escrito**: B1 estaba en
+`scripts/rojos-jest.baseline.txt`, el artefacto compartido que el próximo WP lee como estado
+declarado del mundo. Un WP que existe en parte para desmontar una nota rancia sembró una nota
+falsa en el sitio de máxima propagación. El registro de frases cambiadas está en **§11** y la
+lección, que es nueva para este swarm, en **§11.1**.
 
 ---
 
@@ -150,6 +171,32 @@ fichero.
    constructor, y por eso un mock incompleto revienta *al construir* en vez de *al usar*. Eso es
    producto, está fuera del ALCANCE_DIFF de este WP, y **no lo he tocado**. Queda dicho en §6.
 
+> **AMPLIADO tras la devolución.** Esta sección decía ser «el precio dicho entero» y le faltaban
+> tres cosas. Las tres son inocuas hoy y **medidas**, pero omitirlas de una lista que se anuncia
+> como completa es exactamente el vicio que este reporte denuncia en otros.
+
+5. **Mi propia derivación reintroduce el mecanismo una capa más adentro.** «Deja de haber copia»
+   es cierto un nivel arriba y **falso uno abajo**: mi override vuelve a declarar la **forma** del
+   objeto de configuración. El compartido devuelve `{get, update, has, inspect}`
+   (`tests/mocks/vscode.mock.js:110-120`); el mío devuelve **`{get, update}`**. Si mañana algo en
+   `src/` llama `config.has(...)` o `config.inspect(...)`, este fichero volverá a ser el único que
+   revienta — el mismo cuento, un piso más abajo. **Inocuo hoy, y medido**: cero llamadas a
+   `.has(` o `.inspect(` sobre un objeto de configuración en todo `src/` (los 20 aciertos de
+   `.has(` son `Map`/`Set`). Se queda así a propósito, porque copiar `has`/`inspect` sería
+   ampliar la copia; lo que corresponde el día que hagan falta es **derivar también el objeto de
+   configuración**, no añadirle claves.
+6. **Dos rebajas de superficie respecto de lo que este fichero tenía**, heredadas del compartido:
+   - `workspace.onDidChangeConfiguration` pasa de devolver `{dispose: jest.fn()}` (mock inline) a
+     devolver **`undefined`** (`tests/mocks/vscode.mock.js:121` es `jest.fn()` a secas). MEDIDO,
+     cuatro consumidores en `src/`: dos **descartan** el retorno (`src/loggingManager.ts:60`,
+     `src/core/configurationService.ts:426`) y dos lo **guardan** —
+     `src/elenco/RepartoElencoService.ts:35` en `this.configSub`, que hace `.dispose()` en `:162`,
+     y `src/core/HackerStatusBarManager.ts:37`, que hace `context.subscriptions.push(...)` en
+     `:46`. Ninguno de esos dos está en la ruta de estos tests, así que hoy no rompe nada; pero si
+     alguien los trae a este fichero, `undefined.dispose()` es lo que se encontrará.
+   - desaparece `ExtensionContext: jest.fn()`. **Inocuo y comprobado**: `vscode.ExtensionContext`
+     se usa en `src/` sólo como **tipo**, y los tipos se borran al compilar; cero usos como valor.
+
 ---
 
 ## 3 · Los dos experimentos, y lo que enseñaron
@@ -215,22 +262,71 @@ Cero líneas del diff contienen `it(`, `expect(`, `describe(`, `.skip`, `.todo` 
 únicos hunks son `@@ -8,28 +8,65 @@` y `@@ -37,17 +74,7 @@`: **ambos dentro del bloque del mock**.
 El fichero tenía 19 `it` y tiene 19 `it`, con los mismos 19 nombres.
 
-Y lo que los cinco siguen ejerciendo de verdad, que es lo que importa:
+### 4.1 · Lo que los cinco prueban — **medido en la corrida que de verdad se corre**
 
-| test | qué recorre ahora que antes no llegaba a recorrer |
-| ---- | -------------------------------------------------- |
-| `should create process manager` | `ProcessManager.getInstance()` → constructor → **construye un `TerminalManager` entero**, incluido el registro del listener `onDidCloseTerminal` (`src/terminalManager.ts:24`) y la creación de su `OutputChannel` (`:20`) |
-| `should create webview manager` | lo anterior **arrastrado desde `WebViewManager`** (`src/webViewManager.ts:42`), que es la cadena real de la extensión: webview → process → terminal |
-| `should create all standard managers` | `createStandardManagers()` completo: los **nueve** managers, en orden de dependencia, con las nueve aserciones `toBeDefined()` intactas — incluidos `commandPaletteManager`, `analyticsService` y `aiAssistantService`, que sólo se alcanzan si los anteriores no revientan |
-| `should have proper dependency chain …` | que tras `createStandardManagers` el registro del factory contiene `logging`, `config`, `analytics` y `ai-assistant` (`hasManager(...) === true`, cuatro aserciones) |
-| `should handle concurrent manager creation` | cinco `createManager` **en `Promise.all`** — los cinco resueltos, `toHaveLength(5)` y cada uno con `dispose` |
+> **CORREGIDO tras la devolución.** La versión anterior de esta tabla describía el comportamiento
+> de cada test **en aislamiento** y lo presentaba como lo que ocurre en la corrida canónica del
+> fichero. No es lo mismo, y la diferencia es grande. Lo que sigue está medido.
 
-Que el ciclo de vida de terminales queda **cubierto** y no sólo «no roto» se ve en la cobertura:
-subió sin que se añadiera un solo test (§5.3). Un rojo también tapa las líneas a las que no llega.
+MEDIDO con una sonda temporal (`afterEach` contando construcciones de `TerminalManager` vía
+`onDidCloseTerminal.mock.calls.length` y `createOutputChannel('AlephScript Terminals')`; retirada
+tras medir). Corrida canónica del fichero entero, los 19 `it`:
 
-**Ningún test resultó no probar nada útil**, así que no propongo borrar ninguno. (El único `it` de
-este fichero que no probaba nada útil ya lo trató WP-V90: el del presupuesto de 100 ms, en
-`Performance`. Aquí no hacía falta repetir esa poda.)
+```
+SONDA-B2 TMctor=1 ocTerminals=1 :: … Manager Creation should create process manager
+SONDA-B2 TMctor=0 ocTerminals=0 :: … Manager Creation should create webview manager
+SONDA-B2 TMctor=0 ocTerminals=0 :: … Standard Managers Creation should create all standard managers
+SONDA-B2 TMctor=0 ocTerminals=0 :: … Standard Managers Creation should have proper dependency chain …
+SONDA-B2 TMctor=0 ocTerminals=0 :: … Performance should handle concurrent manager creation
+   (y TMctor=0 en los otros catorce)
+```
+
+**Se construye UN SOLO `TerminalManager` en todo el fichero.** Los otros cuatro reciben los
+singletons estáticos que dejó el primero (`ProcessManager.instance`, `WebViewManager.instance`
+nunca se limpian; `factory.disposeAll()` vacía el `Map` del factory, no los estáticos). Así que
+«la cadena real webview → process → terminal» **se corta en process**, y «los nueve managers» no
+construye ninguno de los tres.
+
+Contra-evidencia, que es justa con los tests: **en aislamiento sí lo construyen todos**. MEDIDO,
+cuatro corridas con `-t <nombre>`:
+
+```
+TMctor=1 :: should create webview manager
+TMctor=1 :: should create all standard managers
+TMctor=1 :: should have proper dependency chain in standard managers
+TMctor=1 :: should handle concurrent manager creation
+```
+
+O sea: los tests **no están vacíos**. Lo que estaba mal era mi frase, que atribuía a la corrida
+medida un recorrido que sólo ocurre aislado. Y hay un detalle simétrico que conviene dejar
+escrito: **en rojo los cinco sí llegaban al constructor**, precisamente porque la excepción
+impedía cachear el singleton.
+
+| test | qué prueba, dicho sin adornos |
+| ---- | ----------------------------- |
+| `should create process manager` | que `createManager('process')` resuelve y devuelve algo con `dispose` — **el único de los cinco que construye `TerminalManager`** en la corrida canónica |
+| `should create webview manager` | que `createManager('webview')` resuelve; construye `WebViewManager`, que recibe el `ProcessManager` **ya cacheado** |
+| `should create all standard managers` | que `createStandardManagers()` completa los nueve pasos sin lanzar y devuelve los nueve campos definidos (10 `toBeDefined`) |
+| `should have proper dependency chain …` | que tras eso el registro del factory contiene `logging`, `config`, `analytics` y `ai-assistant` (4 × `hasManager(...) === true`) |
+| `should handle concurrent manager creation` | que cinco `createManager` en `Promise.all` resuelven los cinco, con `toHaveLength(5)` y `dispose` en cada uno |
+
+**Lo que estos cinco prueban es que la CADENA DE CONSTRUCCIÓN de managers se completa sin
+lanzar.** Es lo que estaba roto y es lo que se arregló. No es poco: era la excepción que
+contaminaba toda medición del mundo.
+
+**Lo que NO prueban.** Las 29 aserciones ejecutadas de los cinco (21 en el texto; el `forEach` de
+`concurrent` corre 2 × 5) son `toBeDefined`, `toHaveProperty('dispose')`, `hasManager(...)` y
+`toHaveLength(5)`. **Ninguna nombra un terminal** (`grep` sobre el fichero: cero `expect(` que
+mencione «terminal»), y el callback registrado en `onDidCloseTerminal` **no se invoca jamás** —
+el mock es `jest.fn().mockReturnValue({dispose})`, que nunca llama a su argumento. Son humo de la
+cadena de construcción.
+
+**Consecuencia honesta: la CA «cubren ciclo de vida de terminales» NO la cierra este WP.** El
+encargo tenía dos mitades y sólo he cerrado una. La fila que sí la cerraría va propuesta en §10.
+
+**Ningún test resultó no probar nada útil**, así que no propongo borrar ninguno — pero tampoco
+propongo cobrarlos como cobertura de terminales. (El único `it` de este fichero que no probaba
+nada útil ya lo trató WP-V90: el del presupuesto de 100 ms, en `Performance`.)
 
 ---
 
@@ -292,9 +388,50 @@ La fila «antes» reproduce **exactamente** los cuatro números que declaraba
 `scripts/rojos-jest.baseline.txt` (medidos por V90), lo cual vale de control de que el árbol
 mide lo mismo que el suyo.
 
-La subida no es cobertura nueva: es que los cinco tests ahora recorren de verdad
-`TerminalManager`, `ProcessManager`, `WebViewManager` y `CommandPaletteManager`. **Sigue siendo
-rojo de umbral, abierto desde WP-V13, y no es de V48 cerrarlo.**
+#### 5.3.bis · POR FICHERO — y aquí es donde mi primera entrega mintió
+
+> **CORREGIDO tras la devolución.** Escribí que la subida era «que los cinco tests ahora recorren
+> de verdad `TerminalManager`, `ProcessManager`, `WebViewManager` y `CommandPaletteManager`».
+> **`TerminalManager` sobra en esa lista, y es justo el fichero que da nombre a la CA.**
+
+MEDIDO con `--coverageReporters=json-summary` sobre las dos versiones en el mismo árbol,
+comparando `coverage-summary.json` fichero a fichero. **Statements cubiertos, delta:**
+
+| fichero | Δ statements |
+| ------- | ---: |
+| `src/commandPaletteManager.ts` | **+40** |
+| `src/core/managerFactory.ts` | +11 |
+| `src/processManager.ts` | +6 |
+| `src/core/mcpConfigurationManager.ts` | +6 |
+| `src/webViewManager.ts` | +4 |
+| `src/loggingManager.ts` | +2 |
+| `src/core/logging/structuredLog.ts` | +1 |
+| **`src/terminalManager.ts`** | **+0** |
+| *(los otros ~90 ficheros)* | 0 |
+| **suma** | **+70** |
+
+Y `src/terminalManager.ts` sale **bit a bit idéntico** — comparación de objetos completa,
+`IDENTICO? true`:
+
+```
+antes    lines 9/97 · functions 1/14 · statements 9/99 · branches 0/27
+después  lines 9/97 · functions 1/14 · statements 9/99 · branches 0/27
+         → statements 9,09 % · branches 0 % · lines 9,27 % · functions 7,14 %
+```
+
+**Por qué mi intuición falló, que es lo interesante:** istanbul incrementa el contador de la
+sentencia **antes de evaluarla**. Las tres sentencias del constructor de `TerminalManager`
+(`:20` `createOutputChannel`, `:21` `createLogger`, `:24` `onDidCloseTerminal(...)`) **ya contaban
+como cubiertas en la corrida roja**, excepción incluida: la excepción ocurre *durante* la
+evaluación, cuando el contador ya subió. «Un rojo tapa las líneas a las que no llega» es cierto
+en general y **falso justo para el fichero donde muere la excepción**.
+
+Así que la frase correcta es: **los cinco dejan de morir en el constructor de `TerminalManager`,
+y lo que se cubre es lo que viene después** — sobre todo `commandPaletteManager` (+40), que sólo
+se alcanza si `createStandardManagers` no revienta antes. `terminalManager.ts` sigue en **9,09 %
+de sentencias y 0 % de ramas**, y **ningún test asevera nada de terminales** (§4.1).
+
+**Sigue siendo rojo de umbral, abierto desde WP-V13, y no es de V48 cerrarlo.**
 
 ### 5.4 · Determinismo — el aviso del brief, atendido
 
@@ -343,6 +480,24 @@ Lo anoto porque significa que `jest.requireActual` + *spread* **tipa limpio**.
   eso un hueco en el mock revienta al *construir*. **No propongo cambiarlo desde aquí**: cambiar
   el momento en que un manager se suscribe a eventos es cambio de producto con superficie propia,
   y el brief pedía pararse y decirlo antes de tocarlo. Dicho queda; no tocado.
+
+  > **AMPLIADO tras la devolución.** Dije «`TerminalManager`» como si fuera un caso aislado.
+  > **No lo es**, y dos de sus hermanos están en la ruta de estos mismos tests. Buscado en `src/`:
+
+  | clase | dónde se suscribe | ¿en la ruta de estos tests? |
+  | ----- | ----------------- | --------------------------- |
+  | `TerminalManager` | constructor, `src/terminalManager.ts:24` (`window.onDidCloseTerminal`) | **sí** — es la que provocaba los cinco |
+  | `LoggingManager` | constructor, `src/loggingManager.ts:60` (`workspace.onDidChangeConfiguration`) | **sí** — `createManager('logging')`, y además la construye `ConfigurationService` en `:243` |
+  | `ConfigurationService` | constructor `src/core/configurationService.ts:242-244` → `setupConfigurationWatcher()` → `:426` | **sí** — `createManager('config')` |
+  | `RepartoElencoService` | constructor, `src/elenco/RepartoElencoService.ts:35` | no |
+
+  (`HackerStatusBarManager:37` tiene la misma suscripción pero en `initialize(context)`, **no** en
+  el constructor: es la forma sana, y por eso no la cuento aquí.)
+
+  O sea que **la forma se repite al menos cuatro veces**, y hoy sólo no duele porque el mock
+  compartido cubre `onDidChangeConfiguration`. Es el mismo pozo del que salieron los cinco rojos:
+  el día que falte una de esas claves, vuelve a reventar **al construir**, y otra vez lejos de la
+  causa. Sigue sin tocarse desde aquí — es producto.
 - **No borré ningún test** ni propongo borrarlo (§4).
 - **No usé `git stash`** (prohibido: la pila es del repositorio y hay más worktrees vivos) ni
   `npx`. Para las idas y vueltas entre la versión base y la mía usé copias en el scratchpad
@@ -389,7 +544,11 @@ El resto del diff de ese fichero (52 líneas añadidas, 27 borradas en total) so
 | **Sin ablandar lo que prueban** | ✅ | §4 — cero `it`/`expect`/`describe`/`.skip` en el diff, comprobado con grep; 19 `it` antes y después, mismos nombres; ambos hunks dentro del mock |
 | **Efecto medido sobre el conjunto entero** | ✅ | §5.1 (gate: 5 «−», 0 «+») · §5.2 (375 → 375, 5 → 0 rojos) · §5.4 (3 corridas paralelas, mismo conjunto) |
 | **Diff de la línea base** | ✅ | §7 — 5 retiradas, 0 añadidas |
-| **Cubren ciclo de vida de terminales** | ✅ | §4 — tabla de lo que recorre cada uno; corroborado por la subida de cobertura sin tests nuevos (§5.3) |
+| **Cubren ciclo de vida de terminales** | ❌ **NO la cierra este WP** | §4.1 · §5.3.bis — `terminalManager.ts` sale **bit a bit idéntico** en cobertura (9,09 % sentencias, 0 % ramas); en la corrida canónica se construye **un solo** `TerminalManager`; **ninguna aserción nombra un terminal** y el callback nunca se invoca. La fila que sí la cerraría, en §10 |
+
+**Este eje lo puse ✅ en la primera entrega y era falso.** No lo bajo a ❌ por prudencia: lo bajo
+porque está medido que lo es (§5.3.bis). Los cinco rojos están cerrados; el ciclo de vida de
+terminales sigue sin cubrir, y son dos cosas distintas que el encargo juntaba en una línea.
 
 ---
 
@@ -405,3 +564,80 @@ El resto del diff de ese fichero (52 líneas añadidas, 27 borradas en total) so
    objeto bajo prueba**, y nada en la suite lo habría detectado porque nada lo asertaba (§2.1).
    Lo detectó una sonda de dos líneas. Cuando un arreglo de test parece gratis, conviene medir
    qué recibe el código bajo prueba, no sólo qué devuelve el `expect`.
+4. **UNA CIFRA QUE SUBE NO DICE POR QUÉ SUBE — ANTES DE ATRIBUIRLA, MÍRALA POR FICHERO.**
+   Es la lección nueva de este WP y va desarrollada en §11, porque no es del mismo tipo que las
+   que este swarm venía persiguiendo.
+
+---
+
+## 10 · La fila que SÍ cerraría «cubren ciclo de vida de terminales»
+
+El encargo de V48 juntaba dos cosas en una línea de CA: *«los 5 en verde · cubren ciclo de vida
+de terminales»*. **La primera está cerrada y la segunda no**, y no lo estaba antes tampoco: los
+cinco nunca aseveraron nada sobre terminales, ni en rojo ni en verde. Lo que hicieron durante
+varias olas fue **morir** en el constructor de `TerminalManager`, que no es lo mismo que probarlo.
+
+Propongo una fila nueva, y a propósito **no me la asigno**: es trabajo de otra naturaleza —
+escribir tests que hoy no existen— y el ALCANCE_DIFF de V48 no lo cubre.
+
+> **WP-V48b `P2` — el ciclo de vida de terminales, probado de verdad.** `src/terminalManager.ts`
+> está al **9,09 % de sentencias y 0 % de ramas** (medido en `WP-V48:§5.3.bis`), y **ninguna
+> aserción de la suite nombra un terminal**. La clase gestiona un `Map<string, TerminalInfo>` con
+> altas, bajas y estados (`'running' | 'stopped' | 'error'`), y su pieza más delicada no se ejerce
+> jamás: **el callback de `onDidCloseTerminal` (`:24-34`), que busca el terminal cerrado en el
+> `Map`, le pone `status='stopped'` y lo borra**. Hoy ese callback se registra y **no se invoca
+> nunca**, porque el mock es `jest.fn()` y jamás llama a su argumento.
+> **CA**: que el mock **dispare** el evento y se asevere el efecto — terminal marcado `stopped`,
+> entrada retirada del `Map`, y el caso de un terminal ajeno que no debe tocar nada; más las
+> ramas de `createAndRunTerminal` / `killTerminal`. **Cuidado declarado**: exigirá `createTerminal`
+> con identidad distinguible entre llamadas (el mock compartido devuelve hoy **el mismo objeto**
+> siempre, `tests/mocks/vscode.mock.js:60-69`), y eso **sí** toca el fichero de mayor radio de
+> explosión de la suite. **Dependencia**: mejor después de decidir si la suscripción a eventos
+> sale del constructor (§6), porque cambia cómo se monta el test.
+
+---
+
+## 11 · QUÉ FRASES CAMBIÉ TRAS LA DEVOLUCIÓN, Y POR QUÉ
+
+**Cero líneas de código cambiadas.** El arreglo, la vía elegida y los números de la suite
+resistieron la contrarrevisión; lo que cayó fue **prosa**. Registro completo:
+
+| # | dónde estaba | qué decía | qué dice ahora | por qué |
+| - | ------------ | --------- | -------------- | ------- |
+| 1 | **`scripts/rojos-jest.baseline.txt:59-61`** | «los cinco tests … ahora recorren de verdad `TerminalManager`, `ProcessManager`, `WebViewManager` y `CommandPaletteManager`» | los cinco **dejan de morir** en el constructor; la cobertura que sube es la de **lo que viene después**, con el desglose por fichero y `terminalManager +0` | **FALSO, medido**: `terminalManager.ts` sale bit a bit idéntico (§5.3.bis) |
+| 2 | reporte §5.3 (final) | la misma frase | §5.3.bis entera: tabla de deltas por fichero, el `IDENTICO? true`, y la explicación de istanbul | igual |
+| 3 | reporte §4, tabla «qué recorre» | describía la cadena `webview → process → terminal` y «los nueve managers» construyendo | §4.1: sonda con las construcciones **medidas**; **un solo `TerminalManager`** en toda la corrida, y la contra-evidencia en aislamiento | describía el comportamiento **aislado** presentándolo como el de la corrida medida |
+| 4 | reporte §8, eje 5 | ✅ «Cubren ciclo de vida de terminales» | ❌ **no la cierra este WP**, con la fila que sí lo haría en §10 | consecuencia honesta de 1-3 |
+| 5 | fila V48 del BACKLOG | «la subida es que los cinco ahora **recorren** el ciclo de vida de terminales» | el desglose real y la CA declarada **no cerrada** | igual que 1 |
+| 6 | reporte §2.2 «el precio dicho entero» | tres precios | **seis**: + mi override redeclara la forma del objeto de config (`{get,update}` vs `{get,update,has,inspect}`) · + `onDidChangeConfiguration` pasa a devolver `undefined`, con los 4 consumidores medidos (2 lo descartan, **2 lo guardan**) · + desaparece `ExtensionContext` | una lista que se anuncia como completa y no lo está es el vicio que este mismo reporte denuncia |
+| 7 | reporte §6, deuda de producto | sólo `TerminalManager` | **cuatro clases** con la misma forma, **dos de ellas en la ruta de estos tests** (`LoggingManager`, `ConfigurationService`) | estaba bien leída pero corta |
+
+Y una cifra que **no** cambio pero que conviene precisar, porque circulan dos números correctos:
+los cinco tests tienen **21 `expect(` en el texto** y **29 aserciones ejecutadas** — el `forEach`
+de `should handle concurrent manager creation` corre 2 × 5. Las dos cuentas son ciertas; miden
+cosas distintas.
+
+### 11.1 · La lección, con todas las letras
+
+Este swarm venía persiguiendo **afirmaciones más anchas que la evidencia**. Ésta no era eso.
+
+**Ésta era una afirmación que la evidencia CONTRADICE.** No exageré un alcance: dije que subía la
+cobertura de un fichero cuya cobertura **no se movió ni un bit**. Y no la escribí de mala fe ni
+por descuido: la escribí desde una intuición que es **correcta en general** —«un rojo tapa las
+líneas a las que no llega a ejecutar»— y que resulta **falsa justo en el fichero donde muere la
+excepción**, porque istanbul cuenta la sentencia antes de evaluarla. La intuición razonable es
+precisamente lo que la hizo pasar: sonaba a explicación, y por eso no la medí.
+
+Hay un agravante que es lo que de verdad importa: **la sembré en un artefacto compartido.**
+`scripts/rojos-jest.baseline.txt` no es mi reporte — es el estado declarado del mundo, lo primero
+que abre el próximo WP que toque la suite. Y la ironía es completa: **este WP existe, en parte,
+para desmontar una nota que caducó sin que nadie la tocara** (H-8, §1.1). La mía no caducó.
+**Nació falsa.** Y la puse en el sitio de máxima propagación.
+
+De ahí la regla, que doy por buena para el método:
+
+> **Una cifra que sube no dice POR QUÉ sube. Antes de atribuirla, mírala por fichero.**
+
+Y su corolario operativo, que es lo que me habría salvado: el desglose **ya estaba disponible** —
+`--coverageReporters=json-summary` sobre las dos versiones son dos comandos y un `diff`. No me
+faltó instrumento. Me faltó desconfiar de una frase que me sonaba bien.
