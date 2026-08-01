@@ -476,3 +476,9 @@ body {
         height: 200px;
     }
 }
+/* WP-V66 (CSP): estado inicial oculto sin atributos style= inline.
+   El JS lo revela con el CSSOM (element.style.display), permitido por CSP. */
+.editor-preview.hidden,
+.validation-panel.hidden {
+    display: none;
+}

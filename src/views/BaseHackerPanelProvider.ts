@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { buildCspMeta, createNonce } from '../webview/security';
 
 /**
  * Base class for Hacker-themed WebView panels with common functionality
@@ -28,7 +29,8 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri]
+            // WP-V66: solo media/ — lo único que estos paneles cargan de verdad.
+            localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'media')]
         };
 
         webviewView.webview.html = this.getHtmlContent(webviewView.webview);
@@ -94,7 +96,7 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}' ${webview.cspSource};">
+            ${buildCspMeta({ scriptNonce: nonce, styleSource: webview.cspSource })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${baseStyleUri}" rel="stylesheet">
             <link href="${styleUri}" rel="stylesheet">
@@ -134,7 +136,7 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
                     </div>
                 </div>
             </div>
-            <script src="${themeScriptUri}"></script>
+            <script nonce="${nonce}" src="${themeScriptUri}"></script>
             <script nonce="${nonce}" src="${scriptUri}"></script>
         </body>
         </html>`;
@@ -149,13 +151,9 @@ export abstract class BaseHackerPanelProvider implements vscode.WebviewViewProvi
         }
     }
 
+    /** WP-V66: nonce criptográfico por render (helper único de seguridad). */
     protected getNonce(): string {
-        let text = '';
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 32; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
+        return createNonce();
     }
 
     public refresh(): void {

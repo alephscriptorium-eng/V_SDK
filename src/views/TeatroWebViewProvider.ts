@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TeatroTreeDataProvider } from './TeatroTreeDataProvider';
+import { buildCspMeta, createNonce } from '../webview/security';
 
 export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'alephscript.teatro.webview';
@@ -23,7 +24,8 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri]
+            // WP-V66: solo media/ — lo único que este webview carga de verdad.
+            localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'media')]
         };
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -130,7 +132,7 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}' ${webview.cspSource};">
+    ${buildCspMeta({ scriptNonce: nonce, styleSource: webview.cspSource })}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="${baseStyleUri}" rel="stylesheet">
     <link href="${teatroStyleUri}" rel="stylesheet">
@@ -200,9 +202,9 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
                 <section class="teatro-actions">
                     <h2>⚡ Acciones Rápidas</h2>
                     <div class="actions-grid">
-                        <button class="action-btn primary" onclick="refreshTeatro()">🔄 Actualizar Teatro</button>
-                        <button class="action-btn secondary" onclick="openAllChats()">💬 Abrir Panel de Chat</button>
-                        <button class="action-btn tertiary" onclick="showSystemInfo()">ℹ️ Info del Sistema</button>
+                        <button class="action-btn primary" data-action="refreshTeatro">🔄 Actualizar Teatro</button>
+                        <button class="action-btn secondary" data-action="openAllChats">💬 Abrir Panel de Chat</button>
+                        <button class="action-btn tertiary" data-action="showSystemInfo">ℹ️ Info del Sistema</button>
                     </div>
                 </section>
             </div>
@@ -216,7 +218,7 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
         </div>
     </div>
 
-    <script src="${themeScriptUri}"></script>
+    <script nonce="${nonce}" src="${themeScriptUri}"></script>
     <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
@@ -226,13 +228,9 @@ export class TeatroWebViewProvider implements vscode.WebviewViewProvider {
         this._view?.webview.postMessage(message);
     }
 
+    /** WP-V66: nonce criptográfico por render (helper único de seguridad). */
     private getNonce(): string {
-        let text = '';
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 32; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
+        return createNonce();
     }
 
     private getCurrentTheme(): 'matrix' | 'light' | 'dark' {

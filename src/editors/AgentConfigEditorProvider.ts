@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { buildCspMeta, createNonce, escapeHtml } from '../webview/security';
 
 export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
@@ -30,7 +31,8 @@ export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvide
     ): Promise<void> {
         webviewPanel.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this.context.extensionUri]
+            // WP-V66: solo media/ — lo único que este editor carga de verdad.
+            localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')]
         };
 
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
@@ -93,10 +95,10 @@ export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvide
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+            ${buildCspMeta({ scriptNonce: nonce, styleSource: webview.cspSource })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
-            <title>⚙️ Editor de Configuración - ${agentId}</title>
+            <title>⚙️ Editor de Configuración - ${escapeHtml(agentId)}</title>
         </head>
         <body>
             <div class="config-editor-container">
@@ -104,15 +106,15 @@ export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvide
                     <div class="header-info">
                         <h1>⚙️ Editor de Configuración de Agente</h1>
                         <div class="agent-info">
-                            <span class="agent-id">${agentId}</span>
-                            <span class="file-path">${document.fileName}</span>
+                            <span class="agent-id">${escapeHtml(agentId)}</span>
+                            <span class="file-path">${escapeHtml(document.fileName)}</span>
                         </div>
                     </div>
                     <div class="header-actions">
                         <button id="validateBtn" class="btn btn-secondary">
                             ✅ Validar JSON
                         </button>
-                        <button id="openContentBtn" class="btn btn-primary" data-content-path="${contentPath}">
+                        <button id="openContentBtn" class="btn btn-primary" data-content-path="${escapeHtml(contentPath)}">
                             📝 Abrir Contenido
                         </button>
                         <button id="previewBtn" class="btn btn-success">
@@ -449,11 +451,7 @@ export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvide
     }
 }
 
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+/** WP-V66: nonce criptográfico por render (helper único de seguridad). */
+function getNonce(): string {
+    return createNonce();
 }

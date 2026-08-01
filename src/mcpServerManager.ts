@@ -3,6 +3,7 @@ import { ProcessManager, ProcessInfo } from './processManager';
 import { McpConfigurationManager } from './core/mcpConfigurationManager';
 import { MCPConfiguration } from './theatrical/core/interfaces';
 import { MCPServersConfig } from './mcpTypes';
+import { buildCspMeta, createNonce } from './webview/security';
 
 export interface MCPServerInfo {
     id: string;
@@ -26,7 +27,9 @@ export class MCPServerManager {
             'MCP Server Manager',
             vscode.ViewColumn.One,
             {
-                enableScripts: true
+                enableScripts: true,
+                // WP-V66: la página no carga recursos locales.
+                localResourceRoots: []
             }
         );
 
@@ -200,13 +203,25 @@ export class MCPServerManager {
     }
 
     private getMCPManagerWebview(): string {
-        return `<!DOCTYPE html>
+        return renderMcpManagerPage();
+    }
+}
+
+/**
+ * WP-V66: página del gestor MCP con CSP del helper único.
+ * Exportada como función pura para el test de facto del censo.
+ * Cero handlers inline: delegación por `data-action`/`data-server-id`.
+ */
+export function renderMcpManagerPage(): string {
+    const nonce = createNonce();
+    return `<!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
+            ${buildCspMeta({ scriptNonce: nonce, styleNonce: nonce })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>MCP Server Manager</title>
-            <style>
+            <style nonce="${nonce}">
                 body {
                     font-family: var(--vscode-font-family);
                     color: var(--vscode-foreground);
@@ -308,12 +323,17 @@ export class MCPServerManager {
                     margin-top: 0;
                     color: var(--vscode-textLink-foreground);
                 }
+                .empty-hint {
+                    text-align: center;
+                    color: var(--vscode-descriptionForeground);
+                    padding: 40px;
+                }
             </style>
         </head>
         <body>
             <div class="header">
                 <h1>MCP Server Manager</h1>
-                <button class="btn" onclick="refreshServers()">Refresh</button>
+                <button class="btn" data-action="refresh">Refresh</button>
             </div>
 
             <div class="info-section">
@@ -327,14 +347,28 @@ export class MCPServerManager {
             </div>
 
             <div id="server-container" class="server-grid">
-                <div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">
+                <div class="empty-hint">
                     Loading servers...
                 </div>
             </div>
 
-            <script>
+            <script nonce="${nonce}">
                 const vscode = acquireVsCodeApi();
                 let servers = [];
+
+                // WP-V66 (CSP): cero handlers inline — delegación única.
+                document.addEventListener('click', event => {
+                    const btn = event.target.closest('[data-action]');
+                    if (!btn) return;
+                    const serverId = btn.getAttribute('data-server-id');
+                    switch (btn.getAttribute('data-action')) {
+                        case 'refresh': refreshServers(); break;
+                        case 'start': startServer(serverId); break;
+                        case 'stop': stopServer(serverId); break;
+                        case 'test': testConnection(serverId); break;
+                        case 'logs': showLogs(serverId); break;
+                    }
+                });
 
                 function refreshServers() {
                     vscode.postMessage({ command: 'loadServers' });
@@ -361,7 +395,7 @@ export class MCPServerManager {
                     const container = document.getElementById('server-container');
                     
                     if (servers.length === 0) {
-                        container.innerHTML = '<div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">No MCP servers configured. Check your config file.</div>';
+                        container.innerHTML = '<div class="empty-hint">No MCP servers configured. Check your config file.</div>';
                         return;
                     }
                     
@@ -382,12 +416,12 @@ export class MCPServerManager {
                             </div>
                             
                             <div class="server-actions">
-                                \${server.status === 'running' ? 
-                                    \`<button class="btn danger" onclick="stopServer('\${server.id}')">Stop</button>\` :
-                                    \`<button class="btn success" onclick="startServer('\${server.id}')">Start</button>\`
+                                \${server.status === 'running' ?
+                                    \`<button class="btn danger" data-action="stop" data-server-id="\${server.id}">Stop</button>\` :
+                                    \`<button class="btn success" data-action="start" data-server-id="\${server.id}">Start</button>\`
                                 }
-                                <button class="btn" onclick="testConnection('\${server.id}')">Test</button>
-                                <button class="btn" onclick="showLogs('\${server.id}')">Logs</button>
+                                <button class="btn" data-action="test" data-server-id="\${server.id}">Test</button>
+                                <button class="btn" data-action="logs" data-server-id="\${server.id}">Logs</button>
                             </div>
                         </div>
                     \`).join('');
@@ -408,5 +442,4 @@ export class MCPServerManager {
             </script>
         </body>
         </html>`;
-    }
 }

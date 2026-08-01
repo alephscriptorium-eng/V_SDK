@@ -25,7 +25,8 @@ export const analyticsCommands: CommandEntry[] = [
                     'analytics-dashboard',
                     'AlephScript Analytics',
                     vscode.ViewColumn.One,
-                    { enableScripts: true }
+                    // WP-V66: página estática — sin scripts ni recursos locales.
+                    { enableScripts: false, localResourceRoots: [] }
                 );
 
                 panel.webview.html = generateAnalyticsDashboard(aggregation);

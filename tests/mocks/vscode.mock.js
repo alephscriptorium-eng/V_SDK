@@ -38,7 +38,15 @@ const vscode = {
         Workspace: 2,
         WorkspaceFolder: 3
     },
-    
+
+    // WP-V66: tema de color (los providers de paneles lo leen al renderizar)
+    ColorThemeKind: {
+        Light: 1,
+        Dark: 2,
+        HighContrast: 3,
+        HighContrastLight: 4
+    },
+
     // Window API
     window: {
         showInformationMessage: jest.fn().mockResolvedValue(undefined),
@@ -68,6 +76,11 @@ const vscode = {
             hide: jest.fn(),
             dispose: jest.fn()
         }),
+        // WP-V66: tema activo + listener (renderizado de paneles hacker/teatro)
+        activeColorTheme: { kind: 2 },
+        onDidChangeActiveColorTheme: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+        // WP-V66: TerminalManager (arrastrado por WebViewManager) escucha cierres
+        onDidCloseTerminal: jest.fn().mockReturnValue({ dispose: jest.fn() }),
         activeTextEditor: {
             document: {
                 uri: { fsPath: '/test/file.ts', path: '/test/file.ts' },
@@ -107,6 +120,8 @@ const vscode = {
         }),
         onDidChangeConfiguration: jest.fn(),
         onDidChangeWorkspaceFolders: jest.fn(),
+        // WP-V66: los custom editors resuelven rutas relativas al workspace
+        getWorkspaceFolder: jest.fn().mockReturnValue(undefined),
         openTextDocument: jest.fn().mockResolvedValue({
             uri: { fsPath: '/test/doc.ts' },
             getText: jest.fn().mockReturnValue('document text'),

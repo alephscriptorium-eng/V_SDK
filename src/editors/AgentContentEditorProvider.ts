@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { buildCspMeta, createNonce, escapeHtml } from '../webview/security';
 
 export class AgentContentEditorProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
@@ -30,7 +31,8 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
     ): Promise<void> {
         webviewPanel.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this.context.extensionUri]
+            // WP-V66: solo media/ — lo único que este editor carga de verdad.
+            localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')]
         };
 
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
@@ -90,10 +92,10 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+            ${buildCspMeta({ scriptNonce: nonce, styleSource: webview.cspSource })}
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link href="${styleUri}" rel="stylesheet">
-            <title>🎭 Editor de Contenido - ${agentName}</title>
+            <title>🎭 Editor de Contenido - ${escapeHtml(agentName)}</title>
         </head>
         <body>
             <div class="editor-container">
@@ -101,15 +103,15 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
                     <div class="header-info">
                         <h1>🎭 Editor de Contenido de Agente</h1>
                         <div class="agent-info">
-                            <span class="agent-name">${agentName}</span>
-                            <span class="file-path">${document.fileName}</span>
+                            <span class="agent-name">${escapeHtml(agentName)}</span>
+                            <span class="file-path">${escapeHtml(document.fileName)}</span>
                         </div>
                     </div>
                     <div class="header-actions">
                         <button id="validateBtn" class="btn btn-secondary">
                             ✅ Validar
                         </button>
-                        <button id="openConfigBtn" class="btn btn-primary" data-config-path="${configPath}">
+                        <button id="openConfigBtn" class="btn btn-primary" data-config-path="${escapeHtml(configPath)}">
                             ⚙️ Abrir Configuración
                         </button>
                         <button id="previewBtn" class="btn btn-success">
@@ -204,7 +206,7 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
                         </div>
                     </div>
 
-                    <div class="editor-preview" id="editorPreview" style="display: none;">
+                    <div class="editor-preview hidden" id="editorPreview">
                         <div class="preview-header">
                             <h3>👁️ Vista Previa</h3>
                             <button id="closePreviewBtn" class="btn btn-small">✕</button>
@@ -215,7 +217,7 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
                     </div>
                 </div>
 
-                <div class="validation-panel" id="validationPanel" style="display: none;">
+                <div class="validation-panel hidden" id="validationPanel">
                     <div class="panel-header">
                         <h3>✅ Resultados de Validación</h3>
                         <button id="closeValidationBtn" class="btn btn-small">✕</button>
@@ -310,11 +312,7 @@ export class AgentContentEditorProvider implements vscode.CustomTextEditorProvid
     }
 }
 
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+/** WP-V66: nonce criptográfico por render (helper único de seguridad). */
+function getNonce(): string {
+    return createNonce();
 }
