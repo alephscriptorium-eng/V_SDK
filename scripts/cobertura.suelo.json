@@ -2,6 +2,21 @@
   "_": [
     "SUELO DE COBERTURA DECLARADO — WP-V93, segunda vuelta.",
     "",
+    "✎ RECALIBRADO POR EL ORQUESTADOR (2026-08-01, ola 7): branches 545 → 544.",
+    "El suelo se había calibrado EN LOCAL (Windows/node 22) y CI corre Linux/node 20.",
+    "Medido: statements, functions y lines coinciden EXACTAMENTE en las dos; sólo",
+    "difiere UNA rama. El trinquete lo cazó en su PRIMERA aplicación real y tenía",
+    "razón en rechazarlo: un suelo que no es portable no es un suelo. Su mensaje",
+    "—«esto NO se arregla bajando el suelo»— también era correcto desde su punto de",
+    "vista: veía una pérdida. Lo que no podía saber es que la pérdida era de",
+    "plataforma, no de cobertura.",
+    "",
+    "REGLA QUE SALE DE AQUÍ: el suelo pertenece al ENTORNO QUE LO EXIGE. 544 es lo",
+    "que mide quien vigila. Consecuencia declarada, no escondida: una corrida LOCAL",
+    "en Windows puede reportar «SUBIÓ» por esa rama — no es una mejora, es la",
+    "plataforma. Cerrarlo del todo exige localizar la rama dependiente de plataforma",
+    "y neutralizarla → WP-V96.",
+    "",
     "Este fichero es DATO. El instrumento que lo aplica es scripts/cobertura-trinquete.mjs,",
     "y ahí está escrito el porqué de cada regla. Aquí sólo viven los números y los nombres,",
     "para que moverlos sea UNA LÍNEA DE DIFF que alguien tiene que firmar — y no cuatro",
@@ -44,7 +59,7 @@
 
   "cubiertas": {
     "statements": 1541,
-    "branches": 545,
+    "branches": 544,
     "functions": 272,
     "lines": 1519
   },
