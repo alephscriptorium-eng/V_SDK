@@ -57,9 +57,48 @@ export function createNonce(): string {
 }
 
 const EMPTY = '';
+
+/**
+ * WP-V94 · Por qué estas DOS líneas llevan exención de `no-control-regex`.
+ *
+ * Las dos regex de abajo casan caracteres de control **a propósito**: son la
+ * transcripción literal del preprocesado del parser de URL de la WHATWG, y los
+ * code points no son una elección de estilo — los fija la norma:
+ *
+ *   · «remove all ASCII tab or newline» → *ASCII tab or newline* ≡ U+0009,
+ *     U+000A y U+000D. Ni uno más (U+000B y U+000C NO entran), ni uno menos.
+ *   · «remove any leading and trailing C0 control or space» → *C0 control or
+ *     space* ≡ U+0000‥U+001F más U+0020. De ahí el rango U+0000‥U+0020.
+ *
+ * `no-control-regex` no sabe distinguir «control por descuido» de «control por
+ * norma», así que aquí acierta en el hallazgo (sí, hay caracteres de control) y
+ * falla en la conclusión (no son un defecto). Por eso se exime POR LÍNEA y con
+ * la razón al lado, en vez de apagar la regla.
+ *
+ * OJO a la trampa de lectura: en el FICHERO se lee la secuencia de escape, pero
+ * lo que recibe `RegExp` es el byte crudo — el literal de cadena ya la resolvió.
+ * Por eso la regla las ve y por eso el número de línea del error es el de aquí.
+ *
+ * POR QUÉ NO SE REESCRIBEN (medido, no supuesto — sonda en el reporte de V94):
+ * escritas como literal de regex con los escapes nominales de tabulador, salto,
+ * retorno y nulo, la regla se calla, y son equivalentes carácter a carácter
+ * (0 divergencias en U+0000‥U+02FF). Pero ese silencio lo daría la ORTOGRAFÍA,
+ * no el contenido: los MISMOS caracteres escritos con escapes hexadecimales
+ * vuelven a dar error. Comprar el verde deletreando distinto borraría del
+ * fichero todo rastro de que aquí hubo una regla, y dejaría el rango exento
+ * para siempre aunque alguien lo ensanchara después. La exención escrita
+ * envejece mejor: se ve, dice por qué, y muere con la línea que la justifica.
+ *
+ * ALCANCE: dos líneas. La regla sigue en `error` para todo el resto del repo,
+ * este fichero incluido. Lo fija `tests/unit/webview/noControlRegexVivo.test.ts`,
+ * que inyecta una regex de control nueva en ESTE mismo fichero y exige que el
+ * lint la cace.
+ */
 /** TAB, LF y CR: el parser de la WHATWG los borra en CUALQUIER posicion. */
+// eslint-disable-next-line no-control-regex -- WHATWG «ASCII tab or newline»: el control es el requisito, no el descuido (WP-V94).
 const TAB_OR_NEWLINE = new RegExp('[\u0009\u000A\u000D]', 'g');
 /** C0 y espacio en los extremos: la WHATWG tambien los recorta. */
+// eslint-disable-next-line no-control-regex -- WHATWG «C0 control or space»: el rango lo fija la norma (WP-V94).
 const EDGE_CONTROL = new RegExp('^[\u0000-\u0020]+|[\u0000-\u0020]+$', 'g');
 
 /**

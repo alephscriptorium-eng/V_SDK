@@ -977,6 +977,107 @@ describe('WP-V66 · D-1 · TAB/LF/CR se normalizan antes de clasificar', () => {
 });
 
 // ---------------------------------------------------------------------------
+// WP-V94 · Las DOS regex de `normalizeUrlForClassification`, fijadas.
+//
+// Son las que ESLint marcaba con `no-control-regex` (ahora eximidas por línea,
+// con su razón al lado). Casan caracteres de control a propósito: transcriben
+// el preprocesado del parser de URL de la WHATWG. Como son superficie de
+// SEGURIDAD —de ellas depende que `htt<TAB>ps://evil` no se cuele por
+// «relativo»— aquí queda fijado su comportamiento, no sólo callado el linter.
+//
+// Los caracteres se construyen con `String.fromCharCode` a propósito: así este
+// fichero no contiene bytes de control que un editor o una normalización de
+// fin de línea pudieran cambiar sin que nadie lo viera.
+// ---------------------------------------------------------------------------
+
+describe('WP-V94 · normalizeUrlForClassification ≡ preprocesado de URL de la WHATWG', () => {
+    const CH = (c: number) => String.fromCharCode(c);
+    const TAB = CH(0x09);
+    const LF = CH(0x0a);
+    const CR = CH(0x0d);
+    const NUL = CH(0x00);
+    const VT = CH(0x0b); // tabulación VERTICAL: es C0, pero NO es «ASCII tab or newline»
+    const FF = CH(0x0c); // form feed: idem
+    const US = CH(0x1f); // último C0
+    const SP = CH(0x20);
+
+    test('«remove all ASCII tab or newline»: los tres, en CUALQUIER posición', () => {
+        expect(normalizeUrlForClassification('htt' + TAB + 'ps://evil.example/x')).toBe('https://evil.example/x');
+        expect(normalizeUrlForClassification('htt' + LF + 'ps://evil.example/x')).toBe('https://evil.example/x');
+        expect(normalizeUrlForClassification('htt' + CR + 'ps://evil.example/x')).toBe('https://evil.example/x');
+        // varios a la vez, y en medio del host, no sólo del esquema
+        expect(normalizeUrlForClassification('h' + TAB + 'ttps://ev' + LF + 'il.exa' + CR + 'mple/x')).toBe(
+            'https://evil.example/x'
+        );
+    });
+
+    test('U+000B y U+000C NO son «ASCII tab or newline»: dentro se CONSERVAN', () => {
+        // El fallo fácil sería borrar todo el C0 en cualquier posición. La norma
+        // dice tres caracteres, y son tres. Si esto se pusiera verde borrándolos,
+        // la normalización estaría divergiendo del navegador por exceso.
+        expect(normalizeUrlForClassification('a' + VT + 'b')).toBe('a' + VT + 'b');
+        expect(normalizeUrlForClassification('a' + FF + 'b')).toBe('a' + FF + 'b');
+        // …pero en los EXTREMOS sí se recortan, porque ahí sí son «C0 or space»
+        expect(normalizeUrlForClassification(VT + 'ab' + FF)).toBe('ab');
+    });
+
+    test('«C0 control or space» sólo en los EXTREMOS: dentro se CONSERVA', () => {
+        expect(normalizeUrlForClassification(NUL + 'https://x')).toBe('https://x');
+        expect(normalizeUrlForClassification('https://x' + NUL)).toBe('https://x');
+        expect(normalizeUrlForClassification('  https://x  ')).toBe('https://x');
+        // interior: NO se toca (sólo tab/LF/CR se borran en cualquier posición)
+        expect(normalizeUrlForClassification('htt' + NUL + 'ps://x')).toBe('htt' + NUL + 'ps://x');
+        expect(normalizeUrlForClassification('htt' + US + 'ps://x')).toBe('htt' + US + 'ps://x');
+    });
+
+    test('el rango recortado es EXACTAMENTE U+0000‥U+0020, ni uno más', () => {
+        for (let c = 0x00; c <= 0x20; c++) {
+            expect(normalizeUrlForClassification(CH(c) + 'https://x' + CH(c))).toBe('https://x');
+        }
+        // U+0021 es el primero que ya NO se recorta
+        expect(normalizeUrlForClassification(CH(0x21) + 'https://x' + CH(0x21))).toBe(
+            CH(0x21) + 'https://x' + CH(0x21)
+        );
+        // y el NBSP tampoco: es espacio para un humano, no «C0 or space»
+        expect(normalizeUrlForClassification(CH(0xa0) + 'https://x')).toBe(CH(0xa0) + 'https://x');
+    });
+
+    test('el ORDEN de las dos pasadas no cambia el resultado', () => {
+        // El módulo borra tab/LF/CR y LUEGO recorta los extremos; la norma lo
+        // enuncia al revés. Da igual: como {09,0A,0D} ⊂ {00..20}, borrar antes
+        // sólo puede destapar más C0 en los bordes, que el recorte posterior se
+        // lleva. Esto lo comprueba en vez de suponerlo.
+        const recorte = new RegExp('^[' + NUL + '-' + SP + ']+|[' + NUL + '-' + SP + ']+$', 'g');
+        const tabs = new RegExp('[' + TAB + LF + CR + ']', 'g');
+        const ordenDeLaNorma = (s: string) => s.replace(recorte, '').replace(tabs, '');
+
+        const piezas = ['', NUL, TAB, LF, CR, VT, US, SP, 'a', 'https://x'];
+        let comparaciones = 0;
+        for (const p of piezas) {
+            for (const q of piezas) {
+                for (const r of piezas) {
+                    const entrada = p + q + 'https://evil.example' + r + p;
+                    expect(normalizeUrlForClassification(entrada)).toBe(ordenDeLaNorma(entrada));
+                    comparaciones++;
+                }
+            }
+        }
+        expect(comparaciones).toBe(piezas.length ** 3);
+    });
+
+    test('la consecuencia de seguridad: ningún control cuela un origen externo', () => {
+        for (const ruido of [NUL, TAB, LF, CR, VT, FF, US, SP]) {
+            // borde: se recorta o se borra, y queda un https externo → NO es recurso de la extensión
+            expect(isExtensionResourceUrl(ruido + 'https://evil.example/x')).toBe(false);
+        }
+        // el vector original del defecto D-1, con los tres borrables
+        expect(isExtensionResourceUrl('htt' + TAB + 'ps://evil.example/x')).toBe(false);
+        expect(isExtensionResourceUrl('htt' + LF + 'ps://evil.example/x')).toBe(false);
+        expect(isExtensionResourceUrl('htt' + CR + 'ps://evil.example/x')).toBe(false);
+    });
+});
+
+// ---------------------------------------------------------------------------
 // D-3 · la superficie de URLs, acotada de verdad
 // ---------------------------------------------------------------------------
 
