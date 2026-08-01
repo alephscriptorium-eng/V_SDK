@@ -17,11 +17,17 @@ migración automática: una clave vieja en tu `settings.json` queda huérfana y
 **casi siempre** la extensión marca ⏳ nombrando la clave nueva que falta.
 
 ⚠️ **Con una excepción que conviene conocer antes de probar.** Si no pones
-`aleph0.ciudad.*` **y** tienes un fichero de ópera con una UI primaria, el
-monitor de sockets **no dice ⏳**: se inventa `ws://localhost:<puerto de esa
-UI>` y lo da por bueno. Es un defecto preexistente, no lo arregla este WP
-(cae en WP-V31) y está documentado con su caso rojo en
-`plan/REPORTES/WP-V23-config-intencional.md` §11.2. Si ves el monitor
+`aleph0.ciudad.*`, el árbol de sockets **no dice ⏳**: inventa un endpoint en
+tu propia máquina y lo da por bueno. Ocurre **con o sin fichero de ópera**:
+
+- **con** fichero de ópera y una UI primaria → `ws://localhost:<puerto de esa UI>`;
+- **sin** fichero de ópera, o sin UI primaria → `localhost:3000` a secas;
+- y si generas una plantilla de configuración, ese `ws://localhost:3000`
+  **se escribe dentro del fichero generado**: el invento queda persistido.
+
+Es un defecto preexistente, no lo arregla este WP (cae en WP-V31) y está
+documentado con su caso rojo en
+`plan/REPORTES/WP-V23-config-intencional.md` §12. Si ves el monitor
 apuntando a tu propia máquina sin haberlo pedido, es esto — no es que haya
 encontrado tu Ciudad.
 
@@ -63,9 +69,11 @@ coincide con lo de arriba, el manifiesto cambió y esta guía se queda corta.
 }
 ```
 
-Vacío/`null` en ciudad/pieza/room ⇒ la UI marca ⏳ (no inventa endpoints).
-Los puertos `3010`/`3050` son los del runtime local del custodio, **no**
-defaults del schema: el schema entrega `""` / `null`.
+Vacío/`null` en ciudad/pieza/room ⇒ **casi toda** la UI marca ⏳ y nombra la
+clave que falta. ⚠️ **No toda**: el árbol de sockets y las plantillas de
+configuración inventan `localhost:3000` en vez de decir ⏳ (ver el aviso de
+arriba). Los puertos `3010`/`3050` son los del runtime local del custodio,
+**no** defaults del schema: el schema entrega `""` / `null`.
 
 ## Pasos
 

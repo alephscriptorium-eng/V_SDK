@@ -213,12 +213,21 @@ export class McpConfigurationManager {
      * decía «no inventa localhost:puerto» y la línea de abajo lo desmiente:
      * sin ajuste, si el fichero de ópera trae una UI primaria con puerto,
      * devuelve `ws://localhost:<puerto>` — un valor plausible y equivocado,
-     * sin ⏳, sin log y sin nombrar la clave que falta. Se propaga a 8 sitios
-     * (`bootstrap/assembleContext.ts:109`, `socketMonitor.ts:276-284,643`,
-     * `treeViews/configsTreeView.ts:429`, `treeViews/socketsTreeView.ts:85,232`).
+     * sin ⏳, sin log y sin nombrar la clave que falta.
+     *
+     * **6 llamadas** consumen este valor: `bootstrap/assembleContext.ts:109`,
+     * `socketMonitor.ts:280` (desde su wrapper privado homónimo de `:276`) y
+     * `socketMonitor.ts:643`, `treeViews/configsTreeView.ts:429`,
+     * `treeViews/socketsTreeView.ts:85,232`.
+     *
+     * Y devolver `''` **tampoco salva la superficie**: `socketsTreeView.ts:92`
+     * convierte el vacío en `'localhost:3000'` y `configsTreeView.ts:430` lo
+     * escribe **dentro del fichero de configuración que genera**. El invento
+     * ocurre con o sin fichero de ópera.
+     *
      * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
      * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca
-     * por número). Ver `plan/REPORTES/WP-V23-config-intencional.md` §11-D2.
+     * por número). Ver `plan/REPORTES/WP-V23-config-intencional.md` §12-DD2.
      */
     getDefaultSocketUrl(): string {
         const fromSettings = resolveMeshSocketUrl();
