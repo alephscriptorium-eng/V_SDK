@@ -9,13 +9,13 @@
 | commits | `b97151b` (obra) · `82ba4b2` (docs) · este reporte |
 | tipo(s) de WP | **estructural** (espacio de nombres) + **evidencia** (acta) — `plan/PRACTICAS.md:82-88` |
 | riesgo de revisión | **independiente** — clase contrato/configuración (`plan/PRACTICAS.md:105-116` §4.3) |
-| `VEREDICTO_REVISOR` | **DEVUELTO** (contrarrevisión adversarial, 2 bloqueantes + 4 menores) → **corregido en §11**; ⏳ pendiente de nueva contrarrevisión acotada a D1/D2 |
+| `VEREDICTO_REVISOR` | **DEVUELTO 2 veces** · 1ª: D1-D6 → §11 (D1 **aceptada**) · 2ª: DD-1…DD-6 → **§12**; ⏳ pendiente de contrarrevisión final acotada a DD-1/DD-2 |
 
-> ⚠️ **Este reporte se lee con §11 delante.** La devolución tumbó dos
+> ⚠️ **Este reporte se lee de atrás adelante: §12 manda, luego §11, luego 0-10.** La devolución tumbó dos
 > afirmaciones centrales de las secciones 1-10. **No se ha borrado nada**:
 > cada frase caída lleva marca `⛔ CAÍDA (D-n)` en su sitio y el texto
-> corregido vive en **§11 · Corrección de la devolución**. Las cifras
-> vigentes son las de §11, no las de §0.
+> corregido vive en **§11** y, lo que §11 dejó incompleto, en **§12**. Las
+> cifras y afirmaciones vigentes son las de **§12**.
 
 ---
 
@@ -397,7 +397,12 @@ exit=1   → 0 coincidencias
 ```
 
 Defaults del schema (V05 exigía vacío/null en los endpoints) — salida
-literal del volcado de `package.json`:
+literal del volcado de `package.json`.
+
+> 📌 **EVIDENCIA RANCIA (DD-5)** — este volcado es **de antes de la
+> corrección D1**: aún lista `aleph0.pieza.ollama.baseUrl` y cuenta 19
+> claves. Hoy son **18** y esa clave no existe. Volcado vigente en §11.1 y
+> §12.5. Se conserva porque es la salida que se citó, no el estado actual.
 
 ```text
 aleph0.ciudad.host                  default = ""
@@ -455,9 +460,17 @@ endpoint launcher: {"configured":false,"reason":"⏳ endpoint MCP 'launcher' sin
 room             : {"configured":false,…,"reason":"⏳ aleph0.room.id no configurado"}
 ```
 
-Lectura: **cero valores inventados, cero throw**, y una clave vieja puesta
-a mano **no revive nada** — el motivo nombra la clave nueva. Es la prueba
-directa de que la pérdida de §3 es visible, no callada.
+> 📌 **EVIDENCIA RANCIA y, en parte, VERDE VACÍO (DD-5, DD-3)** — esta
+> salida es **de antes de la corrección D1** (el campo `ollamaBaseUrl` ya no
+> existe) y sus dos líneas `endpoint launcher:` / `endpoint lineaEd.` vienen
+> de `resolveMcpEndpoint`, que es **código inalcanzable** desde la extensión
+> (`src/mcp/` no lo importa nadie fuera de `tests/`): ese mensaje **no lo ve
+> ningún usuario**. Sonda re-ejecutada y evidencia sustituida por la **viva**
+> en **§12.3**. Se conserva porque es lo que se citó.
+
+Lectura ~~**cero valores inventados, cero throw**~~ — vigente sólo en lo que
+§12.3 vuelve a probar con lectores alcanzables; y **matizada por §12.2**: en
+el árbol de sockets sí se inventa un valor.
 
 ### 5.4 · Otras verificaciones de facto
 
@@ -799,6 +812,12 @@ SONDA V23 · D2 · CASO ROJO: sustitución silenciosa por localhost
       getDefaultSocketUrl() = ""
 ```
 
+> ⛔ **BENDICIÓN RETIRADA (DD-2)** — llamar a esa rama «el camino que sí
+> cumple el contrato» es falso **en superficie**: `socketsTreeView.ts:92`
+> convierte ese `''` en `localhost:3000`, y ocurre también **sin fichero de
+> ópera**. Además `configsTreeView.ts:430` **escribe** `ws://localhost:3000`
+> en el fichero que genera. Escala real en **§12.2**.
+
 **Por qué es peor que las cuatro filas «NO» que sí declaré**: aquéllas
 degradan a **vacío** y la superficie pinta ⏳. Ésta degrada a un valor
 **plausible y equivocado**, y se propaga:
@@ -810,7 +829,9 @@ src/core/mcpConfigurationManager.ts:214     ← definición
 src/socketMonitor.ts:276,280,284,643
 src/treeViews/configsTreeView.ts:429
 src/treeViews/socketsTreeView.ts:85,232
-→ 8 sitios de consumo
+→ 8 sitios de consumo        ⛔ MAL CONTADO (DD-6): son 6 llamadas + 2
+                             definiciones (una es un wrapper homónimo).
+                             Recuento correcto en §12.6
 ```
 
 El usuario que pierde el mesh no ve un hueco: ve un monitor de sockets
@@ -888,6 +909,10 @@ src/treeViews/configsTreeView.ts:430   "ws://localhost:3000"
 
 Mi §8 H-3 decía «3 líneas, 2 ficheros». **Era incompleto por el mismo
 patrón ciego.** H-3 queda sustituido por esta lista.
+
+> ⛔ **TAMBIÉN CORTO (DD-4)** — llamé «censo real» a un patrón que sigue sin
+> cazar `hostname: 'localhost'` (`src/mcpServerManager.ts:171`). Son **7
+> sitios**, no 6. Barrido ancho y lista completa en **§12.4**.
 
 ## 11.4 · D4 — adopción y auto-escritura de un fichero que el usuario no eligió
 
@@ -1034,4 +1059,371 @@ Verificado que sigue en pie tras los commits de corrección:
 
 ---
 
-— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la devolución
+— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la 1ª devolución *(§12 corrige lo que aquí quedó incompleto)*
+
+---
+
+# 12 · Corrección de la 2ª devolución (DD-1 … DD-6)
+
+| dato | valor |
+| ---- | ----- |
+| Devolución | **2 bloqueantes (DD-1, DD-2)** + DD-3 (menor-alto) + DD-4, DD-5, DD-6 |
+| Qué **no** vuelve a revisarse | **D1 está aceptada**: demolición completa, sin huérfana nº 22, 18 claves con lector vivo trazado una a una |
+| Naturaleza de los dos bloqueantes | los dos dicen lo mismo: **declaré la corrección de D2 como completa y no lo estaba**. Uno en la línea que yo mismo edité; el otro por quedarme corto al describir el defecto que estaba denunciando |
+
+Los seis cargos son ciertos. Los verifiqué contra el código antes de tocar
+nada, y **DD-2 y DD-3 son peores de lo que yo había escrito**, no mejores.
+
+## 12.1 · DD-1 — la promesa que D2 refuta seguía viva, en mi propia línea
+
+`docs/GUIA-PRUEBA-v2.md` decía, 47 líneas por debajo del aviso que acababa
+de añadir:
+
+> «Vacío/`null` en ciudad/pieza/room ⇒ la UI marca ⏳ (**no inventa
+> endpoints**)»
+
+**Y esa línea la editó este WP** (`mesh/launcher/room` → `ciudad/pieza/room`,
+commit `82ba4b2`). Es decir: pasé por encima de la frase, la actualicé en su
+parte de nombres y **dejé intacta la parte que D2 refuta**. Añadir un aviso
+nuevo arriba no borra una promesa categórica abajo; un lector de la guía se
+encuentra las dos y se queda con la que le conviene.
+
+**Corregido** — texto vigente en la guía:
+
+> Vacío/`null` en ciudad/pieza/room ⇒ **casi toda** la UI marca ⏳ y nombra
+> la clave que falta. ⚠️ **No toda**: el árbol de sockets y las plantillas
+> de configuración inventan `localhost:3000` en vez de decir ⏳.
+
+Lección, sin adornos: **editar media frase es peor que no tocarla.** Al
+renombrar dentro de una afirmación se hereda la afirmación entera, y pasa a
+ser mía. Lo aplico al resto del diff: repasé las demás líneas de prosa que
+este WP tocó buscando promesas heredadas del mismo tipo (§12.7).
+
+## 12.2 · DD-2 — la condición sobraba, hay un sexto silencio, y uno **persiste** el invento
+
+Mi aviso decía «si no pones `aleph0.ciudad.*` **y** tienes un fichero de
+ópera con una UI primaria». **La `y` sobra.** Sonda propia, re-ejecutada:
+
+```text
+DD-2 · el invento de localhost ocurre CON y SIN fichero de ópera
+  √ CON ópera + UI primaria → ws://localhost:7777
+      getDefaultSocketUrl() = "ws://localhost:7777"
+  √ SIN UI primaria → getDefaultSocketUrl() da "" … pero la SUPERFICIE pinta localhost:3000
+      getDefaultSocketUrl() = ""            <- el contrato SÍ se cumple aquí
+      socketsTreeView pinta = "localhost:3000"   <- ...pero la superficie NO
+  √ SIN fichero de ópera en absoluto → la superficie pinta localhost:3000 igual
+      isConfigLoaded()      = false
+      socketsTreeView pinta = "localhost:3000"
+```
+
+**Retiro una bendición que di en §11.2.** Ahí escribí que la rama sin ciudad
+y sin UI primaria era «**el camino que sí cumple el contrato**». Cumple el
+contrato **del método** —devuelve `''`— y **no cumple nada en superficie**:
+`src/treeViews/socketsTreeView.ts:83-93` convierte ese `''` en
+`'localhost:3000'` porque la regex no casa con la cadena vacía y cae al
+`return 'localhost:3000'; // fallback`. Bendecir una rama mirando sólo el
+método y no la superficie es exactamente el error que la contrarrevisión me
+señaló en D3 con otro nombre.
+
+**Y hay un gemelo peor, que no pinta: escribe.**
+`src/treeViews/configsTreeView.ts:426-430`, `createFromTemplate()`:
+
+```ts
+const defaultSocketUrl = this.configManager.isConfigLoaded()
+    ? this.configManager.getDefaultSocketUrl()
+    : "ws://localhost:3000";
+```
+
+Ese valor va **dentro del fichero de configuración que la extensión genera
+para el usuario**. No es una etiqueta equivocada en un árbol: es un invento
+**persistido en disco**, que el usuario se llevará puesto.
+
+**Escala real del defecto, corregida:**
+
+| condición | qué devuelve el método | qué ve/obtiene el usuario |
+| --------- | ---------------------- | ------------------------- |
+| ciudad puesta | la URL real | correcto |
+| sin ciudad · con ópera y UI primaria | `ws://localhost:7777` | endpoint inventado en el árbol |
+| sin ciudad · con ópera sin UI primaria | `''` ✔ | **`localhost:3000`** en el árbol |
+| sin ciudad · **sin ópera** | `''` ✔ | **`localhost:3000`** en el árbol |
+| cualquiera de las anteriores + «crear desde plantilla» | — | **`ws://localhost:3000` escrito en el fichero generado** |
+
+**Corregido en las dos superficies de usuario** (guía y README): la condición
+pasa a «**con o sin fichero de ópera**», con las tres variantes y la
+persistencia dichas por su nombre. Y el docstring de `getDefaultSocketUrl()`
+añade que devolver `''` **tampoco salva la superficie**.
+
+**Sigue sin tocarse la conducta** — es de V31 —, pero el enrutado ya lleva el
+mapa completo: **H-10 ampliado** (§12.6).
+
+## 12.3 · DD-3 — mi evidencia de titular era verde sobre código muerto
+
+**El cargo es correcto y es el más incómodo de los seis**, porque es el
+mismo defecto que yo denuncié en D3, cometido por mí.
+
+```text
+$ grep -rn --include="*.ts" -E "from '[^']*\.\./mcp['/]|from '\./mcp['/]" src/ tests/ | grep -v "^src/mcp/"
+exit=1   → CERO importadores de src/mcp/ desde src/
+
+$ grep -rn --include="*.ts" "src/mcp/" tests/ | wc -l
+7        → los únicos importadores están en tests/
+```
+
+Es decir: **todo `src/mcp/` es inalcanzable desde la extensión**. El mensaje
+que puse como prueba estrella en §3.1, §4.1 y §5.3 —
+`⏳ endpoint MCP 'launcher' sin configurar — falta: aleph0.pieza.launcher.host | ZEUS_HOST …` —
+**no lo puede ver ningún usuario**. Y mi sonda lo importaba directo, así que
+daba verde sobre código muerto.
+
+**La conclusión aguanta; la evidencia no.** Las claves sobreviven por
+lectores que **sí** están cableados al arranque, y esta vez lo trazo entero
+en vez de citar el módulo más bonito:
+
+```text
+core/bootstrap/assembleContext.ts:32 → ResourceProjectionService
+    → :70  readLauncherEndpointSettings()  → launcher/settings.ts:29,37
+core/bootstrap/assembleContext.ts:30 → CatalogService → LauncherCatalogClient
+    → :42,128 readLauncherEndpointSettings() · :46,133 mensajes ⏳
+core/bootstrap/assembleContext.ts:33 → AuthorshipService
+    → :148,213 resolveLineaEditorEndpoint() → mutation/settings.ts:56
+```
+
+**Sonda re-ejecutada usando SÓLO esos lectores** (salida literal):
+
+```text
+DD-3 · hostil-omite por lectores ALCANZABLES desde el arranque
+  √ cada ⏳ nombra la clave nueva, y el lector es alcanzable
+    settings          : {"meshHost":"","meshBaseUrl":"","launcherHost":"","roomId":"","lineaEditorHost":"","repartoPath":""}
+    launcher (vivo)   : {"configured":false,"reason":"⏳ setting ausente: aleph0.pieza.launcher.port (sin inventar puerto)"}
+    lineaEditor (vivo): {"configured":false,"reason":"⏳ configure aleph0.pieza.lineaEditor.host+aleph0.pieza.lineaEditor.port o arranque launcher con linea-editor en catálogo"}
+    room (vivo)       : {"configured":false,"roomId":"","endpoint":"","reason":"⏳ aleph0.room.id no configurado"}
+```
+
+**Ésta es la evidencia vigente** de que la pérdida de §3 es ruidosa: tres
+caminos que un usuario **sí** recorre, cada uno nombrando su clave nueva.
+Las citas de `src/mcp/endpoint.ts` en §3.1 y §4.1 quedan **degradadas a
+secundarias** y marcadas; los bloques rancios llevan banner (DD-5).
+
+`src/mcp/` entero se enruta como superficie muerta: **H-14**. Tenía razón la
+devolución en que se me quedó fuera un módulo completo habiendo declarado
+H-9 y H-12 por métodos sueltos.
+
+> Nota de método: la sonda de este §12 corre con `diagnostics: false` en
+> ts-jest **sólo dentro de la sonda**, porque importar la cadena viva arrastra
+> `LauncherCatalogClient.ts:57,141`, que son **2 de los 8 errores TS
+> preexistentes** del SDK MCP. No oculta nada: `tsc --noEmit` sigue
+> contándolos aparte y sigue dando **8** (§12.8).
+
+## 12.4 · DD-4 — «censo real» exige barrido ancho: son **7**, no 6
+
+Cierto, y el fallo es de vocabulario con consecuencia: llamé «**censo real**»
+a la salida de un patrón que sigue siendo estrecho. `hostname: 'localhost'`
+no es una URL, así que ni el patrón corregido lo caza.
+
+```text
+$ grep -rn --include="*.ts" -iE "localhost|127\.0\.0\.1" src/
+src/core/mcpConfigurationManager.ts:231   ws://localhost:${port}            ← D2
+src/mcpServerManager.ts:171               hostname: 'localhost',            ← el que faltaba
+src/mcpServerManager.ts:381               http://localhost:${server.port…}
+src/treeViews/configsTreeView.ts:430      "ws://localhost:3000"             ← PERSISTIDO
+src/treeViews/socketsTreeView.ts:92       'localhost:3000'  (fallback)      ← DD-2
+src/uiManager.ts:217                      http://localhost:${ui.port}
+src/webViewManager.ts:246                 http://localhost:${config.port}
+→ 7 sitios  (+3 líneas de comentario, mías, describiendo el defecto)
+```
+
+**7 sitios.** Regla que me aplico: si escribo «censo», el barrido es ancho y
+el patrón se enseña; si es estrecho, se llama «muestra» y se dice de qué es
+ciega. H-3 queda con los 7.
+
+## 12.5 · DD-5 — evidencia rancia sin marcador
+
+Tres bloques de las secciones 5.x seguían mostrando la clave y el campo
+demolidos por D1, sin decir que eran de antes. §4.1 y §5.1 sí llevaban
+banner; éstos se me quedaron sin él. **Marcados**:
+
+| bloque | qué mostraba de más | marca puesta |
+| ------ | ------------------- | ------------ |
+| volcado de defaults del schema (§5.2) | `aleph0.pieza.ollama.baseUrl` y 19 claves | 📌 evidencia rancia · vigente en §11.1 y aquí |
+| salida de la sonda (§5.3), escenarios 1 y 2 | el campo `ollamaBaseUrl` | 📌 evidencia rancia **y** verde vacío (DD-3) |
+| lectura al pie de la sonda (§5.3) | «cero valores inventados» | ⛔ matizada por §12.2 |
+
+Volcado **vigente** (18 claves, re-ejecutado hoy):
+
+```text
+aleph0.ciudad.host                  ""      aleph0.pieza.reparto.path           ""
+aleph0.ciudad.port                  null    aleph0.mcp.configPath               ""
+aleph0.ciudad.baseUrl               ""      aleph0.superficie.statusBar.visible true
+aleph0.room.id                      ""      aleph0.logging.level                "info"
+aleph0.pieza.launcher.host          ""      aleph0.logging.enabledCategories    [8]
+aleph0.pieza.launcher.port          null    aleph0.logging.show{Timestamp,Level,Category,Source} true
+aleph0.pieza.lineaEditor.host       ""      aleph0.logging.maxEntries           10000
+aleph0.pieza.lineaEditor.port       null
+→ 18 claves · 0 fuera de `aleph0.` · 0 `ollama`
+```
+
+Regla que me aplico: **toda salida citada lleva fecha o commit**, o se
+re-ejecuta al cerrar. Una salida sin marca envejece y se convierte en una
+afirmación falsa sin que nadie la escriba.
+
+## 12.6 · DD-6 — 6 llamadas, no 8; y la definición es `:223`
+
+Conté mal por leer `grep | wc -l` como «llamadas». Las 9 líneas del grep
+son: **2 definiciones** (la del manager y un **wrapper privado homónimo** en
+`socketMonitor.ts:276`) y **7 usos**, de los cuales uno (`:284`) llama al
+wrapper, no al manager.
+
+```text
+$ grep -rn --include="*.ts" "getDefaultSocketUrl" src/
+  core/mcpConfigurationManager.ts:223   ← DEFINICIÓN (yo cité :214, que cae dentro de mi docstring)
+  socketMonitor.ts:276                  ← 2ª definición: wrapper privado homónimo
+  socketMonitor.ts:284                  ← llama al WRAPPER, no al manager
+  --- llamadas reales al método del manager: 6 ---
+  core/bootstrap/assembleContext.ts:109
+  socketMonitor.ts:280
+  socketMonitor.ts:643
+  treeViews/configsTreeView.ts:429
+  treeViews/socketsTreeView.ts:85
+  treeViews/socketsTreeView.ts:232
+```
+
+**Corregido en los dos sitios**: el docstring de `getDefaultSocketUrl()` y
+H-10. El docstring además nombra ahora los dos sitios donde el `''` tampoco
+salva (`socketsTreeView.ts:92`, `configsTreeView.ts:430`).
+
+## 12.7 · Barrido propio: ¿queda alguna otra promesa heredada?
+
+DD-1 nace de editar media frase. Revisé **todas** las líneas de prosa que
+este WP tocó, buscando afirmaciones categóricas sobre ⏳ o sobre invención
+de endpoints que hubiera heredado al renombrar:
+
+```text
+$ grep -rniE "no inventa|sin inventar|⏳ honesto|marca ⏳|nada inventado" \
+    README.md docs/ src/ --include=*.md --include=*.ts
+```
+
+| dónde | texto | veredicto |
+| ----- | ----- | --------- |
+| `docs/GUIA-PRUEBA-v2.md` | «no inventa endpoints» | ⛔ **era DD-1** → corregido (§12.1) |
+| `README.md` | «cada camino ⏳ nombra la clave nueva» | ⚠️ corregido en §12.2: lleva su excepción |
+| `src/launcher/settings.ts:29,37` | «sin inventar puerto» / «sin inventar host» | ✅ **cierto**: ese módulo no inventa (probado en §12.3) |
+| `src/processManager.ts:181` | «no se arranca launcher con puerto inventado» | ✅ **cierto**: devuelve `false` |
+| `src/mcp/endpoint.ts` | «V consume, no inventa» | ✅ cierto **pero inalcanzable** (H-14) |
+| `src/config/ziguratSettings.ts:3` | «sin inventar hosts/puertos» | ✅ cierto para ese módulo |
+| `src/core/mcpConfigurationManager.ts` | «no inventa localhost:puerto» | ⛔ era D2 → ya corregido |
+
+**Una sola promesa heredada falsa, y era DD-1.** El resto se sostiene con
+prueba. Lo dejo escrito para que la contrarrevisión no tenga que barrerlo.
+
+## 12.8 · Nada roto — re-verificación tras DD-1…DD-6
+
+| medida | base `ef86fba` | vigente |
+| ------ | -------------- | ------- |
+| claves declaradas | 26 | **18** · 0 fuera de `aleph0.` · 0 `ollama` |
+| G1 (prefijos viejos como config) | — | **`exit=1`** |
+| residuales clasificadas | — | **116 líneas / 121 ocurrencias** |
+| huérfanas de `ConfigurationService` | 21 | **21** (ninguna nueva) |
+| `servidor|servicio` en descripciones | — | **0** sobre 18 |
+| Test Suites | 1 failed / 7 passed / 8 | **1 / 7 / 8** (ver §12.11) |
+| Tests | 5 failed · 1 skipped · 111 passed · **117** | **idéntico en el conjunto determinista**; la suite además *flapea* — §12.11 |
+| `tsc --noEmit` | 8 | **8** |
+| `npm run lint` | 0 err / 159 warn | **igual** |
+| `npm run compile` · `compile:production` | exit 0 | **exit 0** |
+| `npm run probe:v08` | PASS | **PASS** |
+
+**Alcance del diff de esta corrección**: `docs/GUIA-PRUEBA-v2.md`,
+`README.md`, `src/core/mcpConfigurationManager.ts` (**sólo el docstring**) y
+este reporte. **Cero conducta**, cero logging, cero webviews.
+
+## 12.11 · Hallazgo de la propia re-verificación: la suite **flapea**
+
+No me lo pidió la devolución; salió al re-verificar, y si no lo escribo
+estoy repitiendo el pecado de DD-5 (dar por buena una medición de una sola
+corrida).
+
+**Cinco corridas consecutivas, mismo árbol, sin tocar nada entre ellas:**
+
+```text
+corrida 1: Tests: 5 failed, 1 skipped, 111 passed, 117 total
+corrida 2: Tests: 5 failed, 1 skipped, 111 passed, 117 total
+corrida 3: Tests: 5 failed, 1 skipped, 111 passed, 117 total
+corrida 4: Tests: 6 failed, 1 skipped, 110 passed, 117 total   ← flapeo
+corrida 5: Tests: 5 failed, 1 skipped, 111 passed, 117 total
+```
+
+En una tanda anterior, con la máquina más cargada, llegué a ver **8 fallos
+y 3 suites**. El sexto rojo que aparece y desaparece tiene nombre:
+
+```text
+● Jest Setup Verification › should measure performance      (tests/basic.test.ts:23-33)
+```
+
+Es una aserción de **reloj de pared**: mide un `setTimeout(10)` y exige
+`duration < 100 ms`. Bajo carga, no.
+
+**Por qué no es mío, probado y no afirmado:**
+
+```text
+$ git diff --name-only ef86fba HEAD -- tests/
+tests/integration/managerFactory.test.ts
+tests/unit/mcp/clienteMcp.test.ts
+tests/unit/mcp/endpoint.test.ts          ← los 3 únicos que toqué
+
+$ git diff --quiet ef86fba HEAD -- tests/basic.test.ts                 → IDÉNTICO a la base
+$ git diff --quiet ef86fba HEAD -- tests/performance/serviceStartup.test.ts → IDÉNTICO a la base
+```
+
+Los ficheros que flapean son **byte a byte los de la base**, y sus
+aserciones son de tiempo y memoria, sin relación con configuración:
+
+| fichero | umbral |
+| ------- | ------ |
+| `tests/basic.test.ts:32` | `duration < 100 ms` |
+| `tests/basic.test.ts:132` | crecimiento de memoria `< 10 MB` |
+| `tests/performance/serviceStartup.test.ts:17,54` | `< 100 ms`, `< 500 ms` |
+| `tests/performance/serviceStartup.test.ts:37` | memoria `< 5 MB` |
+| `tests/integration/managerFactory.test.ts:309` | `< 100 ms` |
+
+**Afirmación vigente sobre CA-7**, ya sin redondear:
+
+- **Conjunto determinista: 5 rojos**, los mismos cinco por nombre y con la
+  misma causa única, **antes y después** (§6). Eso es lo que la CA compara
+  y eso sí es idéntico.
+- **Encima de eso, la suite no es determinista**: hay ≥1 test sensible a
+  carga que entra y sale del rojo en el mismo árbol. Cualquier reporte de
+  este mundo que diga «117/5/1/111» a secas —incluido el mío hasta ahora—
+  está citando **una corrida**, no una medida.
+- Mi «idéntico» de §11.7 y §12.8 se lee con esta nota: idéntico **en el
+  conjunto determinista**; el flapeo es ruido heredado, no señal.
+
+Enrutado como **H-15** → **V48** (que ya posee los 5 rojos) y **V76**: una
+suite con umbrales de reloj no puede ser la guarda del mando de ciudad. Y
+un apunte para el gate **R7-V**: si el arnés de CI compara conteos exactos
+de jest, va a dar falsos rojos por esto.
+
+## 12.9 · Hallazgos actualizados
+
+| # | hallazgo | estado |
+| - | -------- | ------ |
+| **H-3** | hosts literales en `src/`: **7 sitios** (era «6», antes «3 líneas») | ampliado 2ª vez (DD-4) → **V31** |
+| **H-10** | `getDefaultSocketUrl()` inventa host. **6 llamadas** (no 8), definición `:223`. **Y devolver `''` no salva**: `socketsTreeView.ts:92` pinta `localhost:3000` y `configsTreeView.ts:430` lo **escribe** en el fichero generado. Ocurre **con o sin ópera** | ampliado (DD-2, DD-6) → **V31** |
+| **H-15** | **la suite jest no es determinista**: ≥1 test con umbral de reloj (`tests/basic.test.ts:32`) flapea bajo carga; ficheros idénticos a la base | **nuevo** (§12.11) → **V48 / V76**, y aviso al gate R7-V |
+| **H-14** | **`src/mcp/` entero es inalcanzable**: cero importadores desde `src/`; sus únicos consumidores están en `tests/`. Módulo completo de superficie muerta — incluida la resolución de endpoint que V28 entregó | **nuevo** (DD-3) → poda / **V28-revisita** |
+
+H-1, H-2, H-4 … H-9, H-11 … H-13 siguen como estaban.
+
+## 12.10 · Auto-revisión vigente (sustituye a §11.9)
+
+| CA | estado | dónde |
+| -- | ------ | ----- |
+| 1 · un namespace, uno solo | ✅ | §5.1 · G1 `exit=1` · 18/0 · 116 residuales clasificadas |
+| 2 · acta clave a clave + decisión sobre el usuario | ✅ | §2 + §11.1 (26 = 16+2→1+7+1 → 18) · §3 + §11.2 + **§12.2** (los silencios, ya sin subestimar) |
+| 3 · CA de V05 re-verificada de facto | ✅ **con excepción declarada** | §5.2 + §11.3 + **§12.4**: patrón ciego declarado, 7 sitios reales |
+| 4 · nombres desde la ontología | ✅ | §2.1 (segmentos con cita) · §11.5 (la raíz, por gobierno: **DV-17**) |
+| 5 · nada promete lo que no hace | ✅ | §11.1 (0 claves sin lector vivo sobre 18) · §4.2 (21 huérfanas) · **§12.1/§12.2/§12.7** (las promesas de prosa, barridas) |
+| 6 · cero contrabando | ✅ | §12.8: esta corrección toca 2 docs y **un docstring** |
+| 7 · tests antes → después | ✅ **con matiz declarado** | §12.8 (conjunto determinista idéntico: 5 rojos por nombre, misma causa) + **§12.11** (la suite flapea; medido en 5 corridas y probado que los ficheros que flapean son los de la base) |
+
+---
+
+— **V** · Aleph-0 (ℵ₀) · WP-V23 · corrección de la 2ª devolución
