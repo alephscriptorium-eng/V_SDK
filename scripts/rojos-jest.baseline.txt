@@ -38,50 +38,107 @@
 # mundo no empeore.
 # ------------------------------------------------------------------------
 #
-# MEDIDO en este árbol el 2026-08-01: diez corridas consecutivas del comando
+# MEDIDO por WP-V90 el 2026-08-01: diez corridas consecutivas del comando
 # canónico, con los workers en PARALELO (los de jest por defecto, 11 sobre 12
-# CPUs), ejecutando 375 tests cada una, dieron este mismo conjunto las diez
-# veces.
+# CPUs), ejecutando 375 tests cada una, dieron el mismo conjunto las diez veces.
+#
+# RE-MEDIDO por WP-V48 el 2026-08-01, tras cerrar los cinco: tres corridas del
+# mismo comando, también en paralelo, 375 tests cada una — el mismo cardinal que
+# midió V90, porque V48 no añadió ni quitó ni un `it`—, mismo conjunto las tres
+# veces y `jest exit=0` en las tres. Antes de V48 ese exit era 1.
 #
 # Lo que NO está aquí, y por qué: los umbrales de cobertura. Jest sale con
 # código 1 por ellos, pero en su JSON no queda ni rastro del motivo, así que
 # no tienen nombre que declarar. Por eso el comando canónico lleva
-# `--coverage=false` y la cobertura se comprueba aparte. Estado medido hoy:
-# statements 24,91 % (umbral 85), branches 24,9 % (75), lines 25,33 % (85),
-# functions 20,49 % (80). Rojo abierto y documentado desde WP-V13; NO es de
-# V90 cerrarlo, y este fichero no lo tapa: lo señala.
+# `--coverage=false` y la cobertura se comprueba aparte.
+#
+# Estado medido por V90:  statements 24,91 % · branches 24,90 % · lines 25,33 % · functions 20,49 %
+# Estado medido por V48:  statements 26,10 % · branches 25,13 % · lines 26,55 % · functions 21,51 %
+# Umbrales:                          85 %                75 %             85 %               80 %
+#
+# La subida NO es cobertura nueva: los cinco tests que morían en el constructor
+# de `TerminalManager` dejan de morir ahí, y lo que se cubre es LO QUE VIENE
+# DESPUÉS. Los +70 statements, POR FICHERO (medido con `--coverageReporters=
+# json-summary` sobre las dos versiones en el mismo árbol):
+#
+#     src/commandPaletteManager.ts        +40    src/loggingManager.ts               +2
+#     src/core/managerFactory.ts          +11    src/core/logging/structuredLog.ts   +1
+#     src/processManager.ts                +6    src/terminalManager.ts              +0  ← CERO
+#     src/core/mcpConfigurationManager.ts  +6
+#     src/webViewManager.ts                +4
+#
+# ATENCIÓN, porque aquí nació una frase FALSA que la primera entrega de V48
+# sembró en este mismo fichero y que la devolución tumbó midiendo:
+# `src/terminalManager.ts` sale **bit a bit idéntico** antes y después
+# —lines 9/97 · functions 1/14 · statements 9/99 · branches 0/27, o sea
+# 9,09 % de sentencias y 0 % de ramas en los dos lados—. La razón es fina y
+# conviene saberla: **istanbul incrementa el contador de la sentencia ANTES de
+# evaluarla**, así que las líneas del constructor YA contaban como cubiertas en
+# la corrida roja, excepción incluida. «Un rojo tapa lo que no llega a
+# ejecutarse» es cierto en general y FALSO justo para el fichero donde muere la
+# excepción.
+#
+# Corolario que no debe perderse: **ningún test asevera nada sobre terminales**,
+# y el callback que se registra en `onDidCloseTerminal` no se invoca jamás en la
+# suite. La CA «cubren ciclo de vida de terminales» NO la cierra V48.
+#
+# El rojo de umbral sigue abierto y documentado desde WP-V13; NO era de V90 ni
+# de V48 cerrarlo, y este fichero no lo tapa: lo señala.
 #
 # Las líneas que empiezan por «#» y las vacías se ignoran.
 #
 # -----------------------------------------------------------------------------
-# LOS CINCO ROJOS DETERMINISTAS, CON SU CAUSA
+# LOS CINCO ROJOS DETERMINISTAS · CERRADOS POR WP-V48 (2026-08-01)
 #
-# Los cinco comparten UNA sola causa, medida hoy leyendo los cinco mensajes de
-# fallo: los cinco lanzan exactamente
+# Aquí se declaraban cinco FALLA, todos de
+# `tests/integration/managerFactory.test.ts`:
+#
+#     … Manager Creation should create process manager
+#     … Manager Creation should create webview manager
+#     … Performance should handle concurrent manager creation
+#     … Standard Managers Creation should create all standard managers
+#     … Standard Managers Creation should have proper dependency chain in standard managers
+#
+# Los cinco compartían UNA sola causa, y la contrarrevisión la había dejado
+# escrita aquí. V48 la verificó abriendo los ficheros y corriendo la suite: los
+# cinco lanzaban exactamente
 #
 #     TypeError: vscode.window.onDidCloseTerminal is not a function
 #         at new TerminalManager (src/terminalManager.ts:24)
 #         at new ProcessManager  (src/processManager.ts:33 → :38)
 #         at ManagerFactory.createManager (src/core/managerFactory.ts:71, y :75 vía webViewManager.ts:42/:51)
 #
-# El origen NO es el mock compartido. `tests/integration/managerFactory.test.ts`
-# declara su PROPIO mock inline con `jest.mock('vscode', …)` en :9-53, que
-# desplaza al `moduleNameMapper` de jest.config.js:36-38. Ese mock inline da un
-# `window` con cuatro claves —showInformationMessage, showErrorMessage,
-# createOutputChannel, createWebviewPanel— y ninguna es `onDidCloseTerminal`
-# (`grep -n onDidCloseTerminal tests/integration/managerFactory.test.ts` → 0).
-# El mock compartido `tests/mocks/vscode.mock.js` SÍ la expone (:83) desde
-# dfddc87 (2026-07-31 19:33:29 +0200), pero a esta suite no la alcanza nunca.
+# El origen NO era el mock compartido: el fichero declaraba su PROPIO mock
+# inline `{virtual:true}` en :9-53, con un `window` de cuatro claves y ninguna
+# `onDidCloseTerminal`. El compartido `tests/mocks/vscode.mock.js` SÍ la expone
+# (:83) desde dfddc87 (WP-V66) — pero no alcanzaba a esta suite.
 #
-# Corolario para quien los arregle (V48): tocar vscode.mock.js no mueve ni uno
-# de los cinco. Lo que hay que ampliar es el mock inline de :9-53.
+# CÓMO SE CERRÓ, y por qué importa para el que lea esto dentro de tres olas:
+# no añadiendo la clave que faltaba. Ése habría sido el arreglo del SÍNTOMA: el
+# mecanismo del fallo es que este fichero mantenía una COPIA del mock que el
+# resto de la suite ya tenía completa, y las copias se quedan atrás — de hecho
+# ya se había quedado atrás una vez, cuando V66 amplió el compartido. El mock
+# inline pasa a DERIVARSE del compartido (`jest.requireActual`) y conserva sólo
+# el único trozo que aportaba algo propio: la `getConfiguration` consciente de
+# la sección `aleph0.logging`, sin la cual `LoggingManager` recibiría
+# `enabledCategories='test-value'`. `tests/mocks/vscode.mock.js` NO se tocó, así
+# que ningún otro fichero de la suite cambia de comportamiento.
+#
+# Ninguna aserción se ablandó y ningún test se saltó: el fichero sigue teniendo
+# 19 `it`, los mismos 19 nombres, y ahora los 19 en verde. MEDIDO con
+# `--gate`: al aplicar el cambio, el conjunto obtenido difería del declarado en
+# exactamente cinco líneas, las cinco en dirección «-», y ninguna «+».
+#
+# QUÉ **NO** PRUEBAN ESTOS CINCO, para que nadie lo deduzca de que estén verdes:
+# prueban que la CADENA DE CONSTRUCCIÓN de managers se completa sin lanzar. Sus
+# 29 aserciones ejecutadas son `toBeDefined`, `toHaveProperty('dispose')`,
+# `hasManager(…)` y `toHaveLength(5)`: **ninguna nombra un terminal**, y el
+# callback registrado en `onDidCloseTerminal` no se invoca nunca. Además, en la
+# corrida canónica del fichero se construye **UN SOLO `TerminalManager`** (en
+# `should create process manager`); los otros cuatro reciben los singletons
+# estáticos que dejó el primero. En aislamiento (`-t <nombre>`) los cuatro sí lo
+# construyen. El ciclo de vida de terminales sigue SIN cubrir.
 # -----------------------------------------------------------------------------
-
-FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create process manager
-FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Manager Creation should create webview manager
-FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Performance should handle concurrent manager creation
-FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should create all standard managers
-FALLA tests/integration/managerFactory.test.ts :: ManagerFactory Integration Tests Standard Managers Creation should have proper dependency chain in standard managers
 
 # -----------------------------------------------------------------------------
 # OMISIÓN DECLARADA (una)
