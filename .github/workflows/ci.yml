@@ -64,11 +64,68 @@ jobs:
       - name: Probe V08 (parser real)
         run: npm run probe:v08
 
-      # `continue-on-error`: el resultado de este paso NO condiciona el job.
-      # Declarado también en README §Qué verifica el CI.
-      - name: Test (legado — soft, no condiciona el resultado)
-        continue-on-error: true
-        run: npm test --if-present
+      # WP-V93 — aquí había UN paso blando: `npm test --if-present` con
+      # `continue-on-error: true`. Estaba declarado y documentado, y aun así no
+      # vigilaba nada, por tres motivos que se acumulaban:
+      #   · su resultado no condicionaba el job (`continue-on-error`);
+      #   · el gate de rojos por nombre NO se ejecutaba en ningún paso, o sea
+      #     que todo ese instrumento tenía fuerza sólo en la máquina de quien
+      #     se acordara de invocarlo;
+      #   · y el paso estaba permanentemente en rojo por deuda de cobertura,
+      #     con lo que su aportación real era cero.
+      # Se parte en DOS pasos que miden cosas distintas y BLOQUEAN los dos.
+      # En este flujo ya no queda ningún `continue-on-error`.
+      #
+      # También desaparece el `--if-present`: si el script `test` dejara de
+      # existir en package.json, ese flag convertiría su ausencia en un verde.
+      # Sin él, desaparecer la suite rompe el job, que es lo correcto.
+
+      # (1) EL GATE. Compara el conjunto de tests en rojo POR NOMBRE contra
+      # `scripts/rojos-jest.baseline.txt`, y falla en las DOS direcciones: un
+      # rojo nuevo y un rojo declarado que desaparece. Corre jest él mismo —no
+      # hay JSON intermedio que pueda quedarse rancio— y lo corre con
+      # `--coverage=false`, que fuerza el propio instrumento: con cobertura
+      # activa, un fallo de umbral no deja rastro CON NOMBRE en el JSON de jest
+      # y queda tapado por cualquier rojo. Por eso la cobertura se mide aparte,
+      # en el paso siguiente, con sus propios números.
+      - name: Gate · conjunto de rojos por nombre (BLOQUEA)
+        run: node scripts/rojos-jest.mjs --gate
+
+      # (2) LA SUITE INSTRUMENTADA. Segunda corrida completa —su precio en
+      # tiempo está medido en `plan/REPORTES/WP-V93-ci-vigila.md` §5—. Escribe
+      # `coverage/coverage-summary.json`, que es lo que lee el paso siguiente.
+      # OJO: desde WP-V93 este paso NO juzga la cobertura por sí solo
+      # (`jest.config.js` ya no lleva `coverageThreshold`, y allí está escrito
+      # por qué). Quien la juzga es (3).
+      - name: Suite instrumentada · escribe el informe de cobertura (BLOQUEA)
+        run: npm test
+
+      # (3) EL TRINQUETE. Compara UNIDADES CUBIERTAS ABSOLUTAS contra
+      # `scripts/cobertura.suelo.json` —no porcentajes: el denominador de este
+      # repo no es estable, y el porqué está medido en el encabezado del
+      # instrumento— y falla en las DOS direcciones: si la cobertura baja, y si
+      # sube sin que nadie registre la mejora. Comprueba además que ningún
+      # fichero de `src` haya desaparecido del mapa de cobertura sin declararse.
+      # No vuelve a correr la suite: lee el informe que acaba de dejar (2), con
+      # guarda de frescura para que un informe rancio no pase por verde.
+      - name: Trinquete de cobertura · censo + unidades cubiertas (BLOQUEA)
+        run: node scripts/cobertura-trinquete.mjs
+
+      # (4) Que no vuelva a entrar un paso blando por la puerta de atrás.
+      # Sólo cuentan las apariciones FUNCIONALES: una clave YAML empieza la
+      # línea tras la sangría, así que los comentarios (que en este fichero
+      # hablan mucho de `continue-on-error`) no disparan.
+      # LÍMITE DECLARADO: este paso no puede protegerse de que alguien marque
+      # BLANDO ESTE MISMO PASO — un paso con `continue-on-error` no puede tumbar
+      # su propio job. Convierte una regresión silenciosa en un diff visible;
+      # no la hace imposible.
+      - name: Guarda · ningún paso blando en este flujo
+        run: |
+          if grep -rnE '^[[:space:]]*continue-on-error' .github/workflows/; then
+            echo "::error::ha vuelto un paso con continue-on-error — WP-V93 lo dejó a cero"
+            exit 1
+          fi
+          echo "cero pasos con continue-on-error funcional en .github/workflows/"
 
       - name: Package v1 .vsix
         run: npm run package:v1

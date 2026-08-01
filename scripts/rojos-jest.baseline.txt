@@ -31,7 +31,15 @@
 #
 #   · esto es un .txt SIN checksum;
 #   · ninguna línea dice quién la metió, cuándo, ni por qué;
-#   · CI no lo vigila (.github/workflows/ci.yml:70 lleva continue-on-error).
+#   · CI SÍ lo vigila desde WP-V93 — pero eso no cierra el hueco de arriba.
+#     El paso «Gate · conjunto de rojos por nombre» de .github/workflows/ci.yml
+#     corre `node scripts/rojos-jest.mjs --gate` y BLOQUEA el job. Lo que CI
+#     comprueba es que el conjunto real coincida con ESTE fichero; lo que este
+#     fichero DIGA sigue siendo cosa de quien lo firme. Un rojo legalizado aquí
+#     pasa por CI en verde, por construcción.
+#     (Antes de V93 decía «CI no lo vigila (ci.yml:70 lleva continue-on-error)»,
+#      y era cierto. La línea la falsificó el diff de V93: si vuelve a cambiar,
+#      re-mídase — una cita medida por grep caduca.)
 #
 # O sea: el gate convierte «el mundo empeoró en silencio» en «alguien firmó
 # que el mundo empeoró». Eso es lo que se pedía; no es una garantía de que el
@@ -54,7 +62,13 @@
 #
 # Estado medido por V90:  statements 24,91 % · branches 24,90 % · lines 25,33 % · functions 20,49 %
 # Estado medido por V48:  statements 26,10 % · branches 25,13 % · lines 26,55 % · functions 21,51 %
-# Umbrales:                          85 %                75 %             85 %               80 %
+# Umbrales (hasta V93):              85 %                75 %             85 %               80 %
+#
+# ✎ WP-V93: esos umbrales YA NO EXISTEN. `jest.config.js` no lleva
+# `coverageThreshold` — y allí está escrito por qué: el porcentaje es una razón
+# sobre un denominador inestable (3 ficheros de src no compilan y por eso no se
+# instrumentan). El trinquete vive ahora en `scripts/cobertura-trinquete.mjs` y
+# compara UNIDADES CUBIERTAS contra `scripts/cobertura.suelo.json`.
 #
 # La subida NO es cobertura nueva: los cinco tests que morían en el constructor
 # de `TerminalManager` dejan de morir ahí, y lo que se cubre es LO QUE VIENE
@@ -82,8 +96,15 @@
 # y el callback que se registra en `onDidCloseTerminal` no se invoca jamás en la
 # suite. La CA «cubren ciclo de vida de terminales» NO la cierra V48.
 #
-# El rojo de umbral sigue abierto y documentado desde WP-V13; NO era de V90 ni
-# de V48 cerrarlo, y este fichero no lo tapa: lo señala.
+# El rojo de umbral estuvo abierto y documentado desde WP-V13; NO era de V90 ni
+# de V48 cerrarlo, y este fichero no lo tapaba: lo señalaba.
+#
+# ✎ WP-V93 lo CERRÓ, y conviene saber cómo, porque no fue cubriendo código:
+# retiró el umbral de porcentaje (inaplicable sobre denominador inestable) y lo
+# sustituyó por un trinquete sobre unidades cubiertas. La cobertura real sigue
+# en ~26 %: la deuda está CONGELADA y declarada, no reducida. `npm test` sale 0
+# desde entonces — antes salía 1 siempre, y ese rojo perpetuo era lo que tapaba
+# cualquier rojo nuevo.
 #
 # Las líneas que empiezan por «#» y las vacías se ignoran.
 #

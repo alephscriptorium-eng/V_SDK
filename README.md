@@ -122,8 +122,37 @@ dice «CI PASS» a secas afirma más de lo que el flujo sostiene.
 | `npm run lint` | `eslint` sobre `src/**/*.ts`. | **Sí** |
 | `npm run compile:production` | El bundle de esbuild se genera. | **Sí** |
 | `npm run probe:v08` | Compila `src/mutation/parseEditorInfo.ts` e importa **esa** pieza; contrato de `editor://info`. | **Sí** |
-| `npm test` | Jest del legado. Marcado `continue-on-error`. | **No** |
+| `node scripts/rojos-jest.mjs --gate` | El **conjunto de tests en rojo, por nombre**, contra [`scripts/rojos-jest.baseline.txt`](./scripts/rojos-jest.baseline.txt). Falla en las **dos** direcciones: un rojo nuevo, y un rojo declarado que desaparece. Corre jest sin cobertura. | **Sí** |
+| `npm test` | Segunda corrida de la suite, **instrumentada**: escribe el informe de cobertura. Por sí sola **no juzga** la cobertura. | **Sí** |
+| `node scripts/cobertura-trinquete.mjs` | **El trinquete.** (1) **Censo**: ningún fichero de `src` puede desaparecer del mapa de cobertura sin declararse. (2) **Unidades cubiertas** contra [`scripts/cobertura.suelo.json`](./scripts/cobertura.suelo.json). Falla si bajan **y si suben sin registrarse**. | **Sí** |
+| `grep continue-on-error` | Que no vuelva a entrar un paso blando en el flujo. | **Sí** |
 | `npm run package:v1` | `vsce package` produce el `.vsix` y se sube como artefacto. | **Sí** |
+
+**No queda ningún paso con `continue-on-error` en `ci.yml`** (WP-V93). Hasta
+ese WP había uno, sobre el único paso que corría la suite — declarado en este
+mismo README y aun así sin vigilar nada: su resultado no condicionaba el job,
+el gate de rojos no se ejecutaba en CI, y el paso estaba **permanentemente en
+rojo** por deuda de cobertura, con lo que su aportación real era cero.
+
+Sobre la cobertura: **el trinquete no mide porcentajes, mide unidades
+cubiertas** (hoy `statements 1541 · branches 545 · functions 272 ·
+lines 1519`, MEDIDO). No exige **subir** la cobertura; exige que **no baje** —
+y también que una **mejora se registre**, porque un trinquete que sólo se
+mueve a la baja es una pendiente.
+
+Por qué unidades y no porcentaje, con la medida delante: el denominador de
+este repo **no es estable**. Tres ficheros de `src` son código real que no
+compila (`TS2353`), así que no se instrumentan y sus sentencias no entran en
+el total. MEDIDO: al entrar al mapa, el denominador crece **+135 sentencias y
++67 ramas** sin que lo cubierto se mueva ni una unidad. Con un umbral de
+porcentaje eso significaba que **arreglar dos errores de tipos ponía CI en
+rojo**, y que **romper la compilación de un fichero mal cubierto subía el
+porcentaje** con la suite en verde. La meta histórica —85 %— era además deuda
+disfrazada de umbral: al no cumplirse ningún día, no vigilaba ninguno.
+
+Razonado entero, con las medidas, en [`jest.config.js`](./jest.config.js) y en
+la cabecera de
+[`scripts/cobertura-trinquete.mjs`](./scripts/cobertura-trinquete.mjs).
 
 Sobre el lint: hay ocho reglas que el legado viola (`no-explicit-any` 248,
 `no-unused-vars` 107 y seis más con 16 en total) y están en `warn` con su
@@ -133,13 +162,36 @@ el paso **puede fallar** y falla en cuanto código nuevo lo viola.
 
 ### Lo que el pipeline NO comprueba
 
-- **No arranca la extensión** en un VS Code real. Que el `.vsix` se
-  construya no dice nada de que instale ni de que funcione.
-- **No linta `tests/**` ni `scripts/**`**: solo `src`.
-- **El resultado de Jest no condiciona nada** (`continue-on-error`).
+- **No linta `tests/**` ni `scripts/**`**: solo `src`. El instrumento del
+  gate y sus 36 tests propios **no pasan por eslint en ningún paso**.
+- **El gate no juzga si un test es bueno**, solo si el conjunto de rojos
+  cambió. 410 tests en verde que no comprueben nada seguirían en verde.
+- **La cobertura no bloquea por ser baja**, solo por bajar. El ~26 % actual
+  es deuda declarada, y el trinquete no la reduce: **la congela**. Nada en el
+  pipeline empuja hacia el 85 %.
+- **El trinquete no vigila `scripts/` ni `tests/`**: `collectCoverageFrom` es
+  solo `src/**`. El propio instrumento del gate queda fuera del número.
+- **El suelo se puede bajar**: el trinquete impide que baje *sin firma*, no
+  que baje. La firma es un diff en `scripts/cobertura.suelo.json`.
+- **El trinquete no tiene tests propios**, al contrario que el gate de rojos
+  (36). Deuda dicha, no disimulada.
+- **`release.yml` no corre ni un test, ni lint, ni el gate**: `npm ci` →
+  compilar → empaquetar → publicar. Y `ci.yml` **no se dispara con tags**
+  (solo `main`, `wp/**` y PR), así que un `push` de tag ejecuta **únicamente**
+  `release.yml`. **Se puede publicar un `.vsix` de un ref cuya suite no ha
+  corrido nunca.** Es el hueco más grande que queda.
 - El smoke vivo del probe V08 contra el servidor `linea-editor` sale `⏳`
   cuando no hay servidor: en CI **nunca** lo hay.
 - No publica en ningún marketplace (deferred, DV-10).
+
+### `ci.yml` — job `exthost`
+
+Job aparte, en paralelo con `build`: descarga un VS Code real en el runner y
+carga la extensión de dos maneras —desde el fuente (`dist/`) y desde el
+`.vsix` instalado en un `extensions-dir` aislado—, bajo `xvfb`. Sus dos pasos
+**condicionan el resultado** y la suite deja acta JSON: sin acta, el lanzador
+falla. Es lo que cubre el hueco «no arranca la extensión en un VS Code real»
+que este README declaraba antes de WP-V68.
 
 ### `release.yml` — tags `v*` y `workflow_dispatch`
 
