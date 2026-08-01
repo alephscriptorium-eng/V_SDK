@@ -77,10 +77,24 @@ let TMP = '';
  */
 jest.setTimeout(60_000);
 
-/** Invoca el instrumento (o un mutante suyo) como lo invoca el mundo. */
-function correr(args: string[], guion: string = INSTRUMENTO, entorno: Record<string, string> = {}): Salida {
+/**
+ * Invoca el instrumento (o un mutante suyo) como lo invoca el mundo.
+ *
+ * `cwd` es PARÁMETRO desde WP-V95, y no por comodidad: el instrumento toma su
+ * raíz de `process.cwd()` (`scripts/rojos-jest.mjs:82`), así que el cwd de la
+ * invocación **es** la condición que separa «informe de esta raíz» de «informe
+ * de otra raíz». Mientras estuvo clavado en `RAIZ`, la única condición que esta
+ * suite sabía medir era la de la máquina donde se corriera — y así fue como un
+ * test de PORTABILIDAD pasaba aquí y caía en CI.
+ */
+function correr(
+    args: string[],
+    guion: string = INSTRUMENTO,
+    entorno: Record<string, string> = {},
+    cwd: string = RAIZ
+): Salida {
     const r = spawnSync(process.execPath, [guion, ...args], {
-        cwd: RAIZ,
+        cwd,
         encoding: 'utf8',
         windowsHide: true,
         env: { ...process.env, FORCE_COLOR: '0', ...entorno }
@@ -95,6 +109,42 @@ function correr(args: string[], guion: string = INSTRUMENTO, entorno: Record<str
 function enElArbol(rel: string): string {
     return path.join(RAIZ, rel);
 }
+
+/**
+ * ¿Viene esta ruta de OTRA raíz? Con el criterio EXACTO del instrumento
+ * (`scripts/rojos-jest.mjs:118-130`): la rama de reserva salta cuando
+ * `path.relative` no devuelve nada, o devuelve algo que empieza por «..».
+ *
+ * Existe para que la suite pueda DEMOSTRAR que su fixture es ajena en el
+ * entorno donde se la está corriendo, en lugar de suponerlo. Ésa es la lección
+ * de WP-V95, y conviene dejarla dicha aquí: **una fixture que simula «el otro
+ * entorno» deja de simular nada cuando te toca correr en el otro entorno.**
+ */
+function vieneDeOtraRaiz(raiz: string, absoluta: string): boolean {
+    let r: string;
+    try {
+        r = path.relative(raiz, absoluta);
+    } catch {
+        return true;
+    }
+    return !r || r.startsWith('..');
+}
+
+/**
+ * Una raíz ajena POR CONSTRUCCIÓN: hermana del árbol de trabajo, jamás
+ * descendiente suya, esté el checkout donde esté y sea cual sea la plataforma.
+ *
+ * Hasta WP-V95 aquí había una CONSTANTE, `/home/runner/work/V_SDK/V_SDK`, que
+ * es la ruta EXACTA donde GitHub Actions hace el checkout de este repo. En
+ * Windows era ajena; en el runner era la raíz del propio proceso. Derivarla de
+ * `RAIZ` es lo que la hace ajena en las dos plataformas a la vez.
+ *
+ * LÍMITE, dicho en voz alta: en Windows `path.relative` entre UNIDADES
+ * distintas no devuelve «..» sino la ruta absoluta de destino, así que la
+ * hermandad no bastaría si `RAIZ` viviera en otra unidad que el temporal. Por
+ * eso los tests que la usan COMPRUEBAN la ajenidad antes de aseverar nada.
+ */
+const RAIZ_AJENA = path.join(path.dirname(RAIZ), path.basename(RAIZ) + '-de-otro-checkout');
 
 /** Escribe un informe con forma de jest. `startTime` = ahora salvo que se diga. */
 function informe(nombre: string, cuerpo: Record<string, unknown>): string {
@@ -142,9 +192,10 @@ function mutante(...reemplazos: Array<[string, string]>): string {
 function elMutanteDebeCaer(
     guion: string,
     args: string[],
-    comprobar: (s: Salida) => void
+    comprobar: (s: Salida) => void,
+    cwd: string = RAIZ
 ): Salida {
-    const s = correr(args, guion);
+    const s = correr(args, guion, {}, cwd);
     let cayo = false;
     try {
         comprobar(s);
@@ -156,9 +207,13 @@ function elMutanteDebeCaer(
             'MUTANTE SUPERVIVIENTE.\n' +
             'Se ha desactivado a propósito el trozo del instrumento que este test dice vigilar,\n' +
             'y las mismas aserciones han seguido pasando. Entonces este test NO lo vigila.\n' +
-            '  argumentos : ' + args.join(' ') + '\n' +
-            '  código     : ' + s.code + '\n' +
-            '  salida     : ' + (s.todo.trim() || '(vacía)')
+            '  argumentos      : ' + args.join(' ') + '\n' +
+            // WP-V95: la raíz del proceso es parte del caso, no del decorado.
+            // Sin ella, el superviviente de CI era un mensaje que no decía en
+            // qué condición había sobrevivido.
+            '  raíz del proceso: ' + cwd + '\n' +
+            '  código          : ' + s.code + '\n' +
+            '  salida          : ' + (s.todo.trim() || '(vacía)')
         );
     }
     return s;
@@ -242,10 +297,30 @@ let fxSinMedida = '';
 let fxRancio = '';
 let fxCobertura = '';
 let fxOrden = '';
-let fxRaizAjena = '';
 let fxFuturo = '';
 let baseClonUno = '';
 let baseVacia = '';
+
+/** Un informe que dice venir de otra raíz, con la ruta que declara — WP-V95. */
+interface DeOtraRaiz {
+    /** Qué estilo de separador trae la ruta declarada. */
+    estilo: string;
+    /** La ruta ABSOLUTA que el informe pone en `testResults[].name`. */
+    declarada: string;
+    /** El JSON sintético que la contiene. */
+    json: string;
+}
+let ajenas: DeOtraRaiz[] = [];
+
+/**
+ * Una raíz de proceso con FORMA de runner de CI, que existe de verdad para
+ * poder pasarla como `cwd` — WP-V95.
+ *
+ * No hace falta ser Linux para reproducir el fallo de CI: lo que lo produce no
+ * es el sistema operativo, es que la raíz del proceso sea ANCESTRO de la ruta
+ * que el informe declara. Eso se monta en cualquier plataforma.
+ */
+let RAIZ_SIMULADA_CI = '';
 
 beforeAll(() => {
     TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'v91-instrumento-'));
@@ -369,19 +444,45 @@ beforeAll(() => {
         ]
     });
 
-    // Una ruta de CI (linux) sobre un baseline escrito en Windows: el informe
-    // viene de OTRA raíz y aun así tiene que dar la misma línea.
-    fxRaizAjena = informe('raiz-ajena.json', {
-        success: false,
-        numTotalTests: 1,
-        testResults: [
-            {
-                name: '/home/runner/work/V_SDK/V_SDK/tests/unit/ci.test.ts',
-                status: 'failed',
-                assertionResults: [{ fullName: 'V91 rojo nacido en CI', title: 'x', status: 'failed' }]
-            }
-        ]
-    });
+    // ---- WP-V95 · la raíz ajena, ajena DE VERDAD en las dos plataformas ------
+    //
+    // El informe viene de OTRA raíz y aun así tiene que dar la misma línea: es
+    // la promesa de portabilidad del instrumento, la que sostiene que un
+    // baseline escrito aquí valga para juzgar una corrida hecha en CI.
+    //
+    // Aquí había UNA constante — `/home/runner/work/V_SDK/V_SDK/tests/unit/…` —
+    // y era la ruta EXACTA del checkout de este repo en GitHub Actions. En
+    // Windows resultaba ajena y todo parecía bien; en el runner era la raíz del
+    // propio proceso, o sea que la fixture NO simulaba otra raíz: simulaba la
+    // suya. Ahora se deriva de `RAIZ`, que es lo único que la hace ajena en las
+    // dos plataformas, y va en DOS estilos de separador porque la rama de
+    // reserva parte por `[\\/]` y hasta hoy sólo se la probaba con barras.
+    RAIZ_SIMULADA_CI = path.join(TMP, 'runner', 'work', 'V_SDK', 'V_SDK');
+    fs.mkdirSync(RAIZ_SIMULADA_CI, { recursive: true });
+
+    ajenas = [
+        {
+            estilo: 'barras — un informe nacido en un runner POSIX',
+            declarada: RAIZ_AJENA.split(path.sep).join('/') + '/tests/unit/ci.test.ts'
+        },
+        {
+            estilo: 'contrabarras — un informe nacido en otro checkout Windows',
+            declarada: RAIZ_AJENA + '\\tests\\unit\\ci.test.ts'
+        }
+    ].map((x, i) => ({
+        ...x,
+        json: informe('raiz-ajena-' + (i + 1) + '.json', {
+            success: false,
+            numTotalTests: 1,
+            testResults: [
+                {
+                    name: x.declarada,
+                    status: 'failed',
+                    assertionResults: [{ fullName: 'V91 rojo nacido en CI', title: 'x', status: 'failed' }]
+                }
+            ]
+        })
+    }));
 
     fxFuturo = informe('futuro.json', {
         success: false,
@@ -618,14 +719,94 @@ describe('WP-V91 · las cuatro clases del conjunto', () => {
         );
     });
 
-    it('RAÍZ AJENA · un informe hecho en CI da la MISMA línea que uno hecho aquí', () => {
+    it('RAÍZ AJENA · un informe de OTRA raíz da la MISMA línea, corra el gate donde corra', () => {
         // El baseline se escribe en un árbol y se compara en otro. Si la ruta
         // no se normaliza igual, TODO el conjunto sale distinto y el gate se
         // vuelve inservible justo donde más falta hace. Otro superviviente.
+        //
+        // WP-V95 · LO QUE ESTE TEST TUVO QUE APRENDER. Hasta hoy la fixture era
+        // la constante `/home/runner/work/V_SDK/V_SDK/tests/unit/ci.test.ts`, o
+        // sea la ruta exacta del checkout de este repo en GitHub Actions. Aquí
+        // era ajena, la rama de reserva se ejecutaba y el mutante caía; ALLÍ era
+        // la raíz del propio proceso, `path.relative` acertaba, la rama de
+        // reserva no se ejecutaba jamás y el mutante SOBREVIVÍA. El test de
+        // portabilidad se ponía rojo exactamente en el entorno que decía
+        // vigilar. MEDIDO en CI (run 30717696234, paso «Gate · conjunto de rojos
+        // por nombre»): «+ FALLA scripts/tests/rojos-jest.test.ts :: … RAÍZ
+        // AJENA · un informe hecho en CI da la MISMA línea que uno hecho aquí».
+        //
+        // Así que ahora se miden LAS DOS condiciones, y en cualquier plataforma:
+        // lo que produce el fallo no es el sistema operativo, es que la raíz del
+        // proceso sea ANCESTRO de la ruta declarada. La raíz se pasa por `cwd`,
+        // que es de donde el instrumento saca la suya (`rojos-jest.mjs:82`).
         const comprobar = (s: Salida): void => {
             expect(s.out).toBe('FALLA tests/unit/ci.test.ts :: V91 rojo nacido en CI\n');
         };
-        pinza([fxRaizAjena], comprobar, ["const i = partes.lastIndexOf('tests');", 'const i = -1;']);
+
+        // Un solo mutante para las cuatro condiciones: el que borra la rama de
+        // reserva, que es la normalización que sólo entra cuando el informe
+        // viene de otra raíz.
+        const sinReserva = mutante(["const i = partes.lastIndexOf('tests');", 'const i = -1;']);
+
+        for (const raizDelProceso of [RAIZ, RAIZ_SIMULADA_CI]) {
+            for (const fx of ajenas) {
+                // DEMOSTRADO, no supuesto. Si esta fixture dejara de ser ajena
+                // en algún entorno, lo dice con su nombre y con las dos rutas
+                // delante, en vez de disfrazarse de «mutante superviviente» a
+                // 300 líneas de aquí — que es como se leía el fallo en CI.
+                expect({
+                    raizDelProceso,
+                    declarada: fx.declarada,
+                    esAjena: vieneDeOtraRaiz(raizDelProceso, fx.declarada)
+                }).toEqual({ raizDelProceso, declarada: fx.declarada, esAjena: true });
+
+                comprobar(correr([fx.json], INSTRUMENTO, {}, raizDelProceso));
+                elMutanteDebeCaer(sinReserva, [fx.json], comprobar, raizDelProceso);
+            }
+        }
+    });
+
+    it('RAÍZ AJENA · el vicio que cerró V95: una fixture BAJO la raíz del proceso no vigila nada', () => {
+        // El defecto de V95, escrito como test para que no vuelva a entrar por
+        // la puerta de atrás. No hay que creerse el relato: se reproduce aquí,
+        // en cualquier plataforma, corriendo el instrumento DESDE la raíz que
+        // la fixture declara como suya.
+        const bajoLaRaizDelProceso = path.join(RAIZ_SIMULADA_CI, 'tests', 'unit', 'ci.test.ts');
+        // Precondición del caso: esta ruta NO es ajena a esa raíz. Es el
+        // supuesto entero de la fixture vieja, dicho al derecho.
+        expect(vieneDeOtraRaiz(RAIZ_SIMULADA_CI, bajoLaRaizDelProceso)).toBe(false);
+
+        const fx = informe('v95-bajo-la-raiz-del-proceso.json', {
+            success: false,
+            numTotalTests: 1,
+            testResults: [
+                {
+                    name: bajoLaRaizDelProceso,
+                    status: 'failed',
+                    assertionResults: [{ fullName: 'V91 rojo nacido en CI', title: 'x', status: 'failed' }]
+                }
+            ]
+        });
+        const sinReserva = mutante(["const i = partes.lastIndexOf('tests');", 'const i = -1;']);
+
+        const real = correr([fx], INSTRUMENTO, {}, RAIZ_SIMULADA_CI);
+        const delMutante = correr([fx], sinReserva, {}, RAIZ_SIMULADA_CI);
+
+        // La línea sale bien —la normalización nativa basta—, así que un test
+        // escrito sobre esta fixture PASARÍA…
+        expect(real.out).toBe('FALLA tests/unit/ci.test.ts :: V91 rojo nacido en CI\n');
+        // …y sale IDÉNTICA con la normalización cruzada borrada. El mutante
+        // sobrevive: la fixture no vigila la rama que dice vigilar. Nada de
+        // esto se ve desde una plataforma donde la ruta sí resulte ajena.
+        expect(delMutante.out).toBe(real.out);
+
+        // Y el contraste, en esa MISMA raíz de proceso: con las fixtures de
+        // V95 el mutante sí cae. La diferencia no está en la plataforma; está
+        // en si la ruta es ajena a la raíz del proceso o no.
+        for (const fxAjena of ajenas) {
+            const conAjena = correr([fxAjena.json], sinReserva, {}, RAIZ_SIMULADA_CI);
+            expect(conAjena.out).not.toBe(real.out);
+        }
     });
 });
 
