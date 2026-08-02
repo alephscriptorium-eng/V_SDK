@@ -38,33 +38,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "aleph0.mcpSocketManager.openConfigEditor",
-        "title": "Open Config Editor",
-        "category": "MCP Manager"
-      },
-      {
-        "command": "aleph0.mcpSocketManager.startLauncher",
-        "title": "Start Launcher",
-        "category": "MCP Manager"
-      },
-      {
-        "command": "aleph0.mcpSocketManager.stopLauncher",
-        "title": "Stop Launcher",
-        "category": "MCP Manager"
-      },
-      {
         "command": "aleph0.mcpSocketManager.openSocketMonitor",
         "title": "Open Socket Monitor",
-        "category": "MCP Manager"
-      },
-      {
-        "command": "aleph0.mcpSocketManager.manageUIs",
-        "title": "Manage UIs",
-        "category": "MCP Manager"
-      },
-      {
-        "command": "aleph0.mcpSocketManager.manageMCPServers",
-        "title": "Manage MCP Servers",
         "category": "MCP Manager"
       },
       {
@@ -161,21 +136,6 @@
         "icon": "$(globe)"
       },
       {
-        "command": "aleph0.uis.start",
-        "title": "Start UI",
-        "icon": "$(play)"
-      },
-      {
-        "command": "aleph0.uis.stop",
-        "title": "Stop UI",
-        "icon": "$(stop)"
-      },
-      {
-        "command": "aleph0.uis.openBrowser",
-        "title": "Open in Browser",
-        "icon": "$(globe)"
-      },
-      {
         "command": "aleph0.demo.runAll",
         "title": "▶️ Run All Demo Servers",
         "category": "AlephScript Demo",
@@ -188,14 +148,28 @@
         "icon": "$(debug-stop)"
       },
       {
-        "command": "aleph0.showStatusPanel",
-        "title": "Show System Status Panel",
-        "category": "AlephScript"
+        "command": "aleph0.process.startLauncher",
+        "title": "Start Launcher",
+        "category": "AlephScript",
+        "icon": "$(play)"
       },
       {
-        "command": "aleph0.refreshStatus",
-        "title": "Refresh System Status",
-        "category": "AlephScript"
+        "command": "aleph0.process.stopLauncher",
+        "title": "Stop Launcher",
+        "category": "AlephScript",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "aleph0.system.showStatus",
+        "title": "Show System Status Panel",
+        "category": "AlephScript",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "aleph0.system.restart",
+        "title": "Restart Extension",
+        "category": "AlephScript",
+        "icon": "$(debug-restart)"
       },
       {
         "command": "aleph0.mcptree.refresh",
@@ -290,16 +264,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "aleph0.analytics.view",
-        "title": "Alephscript: View Analytics Dashboard",
-        "category": "Analytics"
-      },
-      {
-        "command": "aleph0.analytics.export",
-        "title": "Alephscript: Export Analytics Data",
-        "category": "Analytics"
-      },
-      {
         "command": "aleph0.ai.askAssistant",
         "title": "Alephscript: Ask AI Assistant",
         "category": "AI"
@@ -390,7 +354,7 @@
         "icon": "$(play-circle)"
       },
       {
-        "command": "aleph0.mcptree.stopAll",
+        "command": "aleph0.agents.stopAll",
         "title": ">>> Shutdown Agent Matrix",
         "category": "🤖 Agent Matrix",
         "icon": "$(debug-disconnect)"
@@ -747,21 +711,6 @@
           "command": "aleph0.mcptree.web.open",
           "when": "view == alephscript.mcptree && viewItem == web",
           "group": "inline@1"
-        },
-        {
-          "command": "aleph0.uis.start",
-          "when": "view == alephscript.uis && viewItem =~ /^ui/",
-          "group": "inline@1"
-        },
-        {
-          "command": "aleph0.uis.stop",
-          "when": "view == alephscript.uis && viewItem =~ /^ui/",
-          "group": "inline@2"
-        },
-        {
-          "command": "aleph0.uis.openBrowser",
-          "when": "view == alephscript.uis && viewItem == uiEnabled",
-          "group": "navigation@1"
         },
         {
           "command": "aleph0.sockets.joinRoom",
