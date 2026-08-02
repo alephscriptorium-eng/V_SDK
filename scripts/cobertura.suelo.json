@@ -48,28 +48,65 @@
 
   "medido": {
     "fecha": "2026-08-02",
-    "arbol": "C:/S_LAB/wt/v-v100",
+    "arbol": "C:/S_LAB/wt/v-v102",
     "so": "Windows 11 · 12 CPU",
     "node": "v22.21.1",
     "jest": "29.7.0",
-    "suite": "497 tests · 496 pass · 1 skip · 0 fail · 15 suites",
+    "suite": "507 tests · 506 pass · 1 skip · 0 fail · 16 suites",
     "porcentajes_informativos": {
-      "statements": 30.29,
-      "branches": 25.12,
-      "functions": 27.29,
-      "lines": 30.62
+      "statements": 31.04,
+      "branches": 25.34,
+      "functions": 28.1,
+      "lines": 31.36
     },
     "totales_del_dia": {
-      "statements": 6086,
+      "statements": 6081,
       "branches": 2221,
-      "functions": 1308,
-      "lines": 5903
+      "functions": 1306,
+      "lines": 5899
     }
   },
 
   "colchon": 0,
 
   "firma_del_ultimo_movimiento": [
+    "WP-V102 · 2026-08-02 · worker V, rama wp/v102-plantilla-podada.",
+    "",
+    "  statements 1844 → 1888   branches 558 → 563   functions 357 → 367   lines 1808 → 1850",
+    "",
+    "QUÉ LO MUEVE: `src/views/HackerConfigPanelProvider.ts` estaba al 10,81 % de sentencias,",
+    "con las líneas 82-359 —o sea, TODO lo que compone los grupos de configuración— sin",
+    "ejecutar jamás. Por eso el panel podía ofrecer `sample-config.json`, un fichero podado",
+    "en `f615434`, sin que ningún gate lo viera. `tests/unit/views/hackerConfigPanelActivos.test.ts`",
+    "ejecuta `_getConfigGroups()` con dos workspaces reales en disco —el repositorio y un",
+    "proyecto ajeno recién creado— y captura las rutas que llegan a `fs.existsSync`/`readdirSync`.",
+    "El fichero sube de 10,81 % a 52,83 % de sentencias.",
+    "",
+    "MEDIDO EN TRES CORRIDAS, MISMA MÁQUINA, SUITE ENTERA:",
+    "  1844/558/357/1808  ·  fuente en HEAD, sin el test nuevo → REPRODUCE EL SUELO EXACTO",
+    "  1844/558/357/1808  ·  con la fuente de este WP, sin el test nuevo",
+    "  1888/563/367/1850  ·  con las dos cosas (entrega)",
+    "",
+    "LA CORRIDA INTERMEDIA NO ES DECORATIVA, Y AQUÍ DA UN RESULTADO QUE CONVIENE LEER: es",
+    "IDÉNTICA a la de HEAD. El cambio de producto no aporta ni una unidad cubierta por su",
+    "cuenta, porque todo lo que toca vivía en código que no ejercitaba nadie. Los +44/+5/+10/+42",
+    "son, íntegros, código de producto que el test nuevo ejecuta por primera vez.",
+    "",
+    "Y UN DETALLE QUE JUSTIFICA POR QUÉ ESTE INSTRUMENTO NO USA PORCENTAJES: entre la corrida",
+    "de HEAD y la intermedia, con las MISMAS unidades cubiertas (1844), el porcentaje de",
+    "sentencias subió de 30,29 % a 30,32 %. No se cubrió nada nuevo: se BORRÓ código muerto,",
+    "y el denominador encogió (6086 → 6081 sentencias). Un umbral porcentual habría leído una",
+    "poda como una mejora de cobertura.",
+    "",
+    "NO ES UN ABLANDAMIENTO: el suelo SUBE en las cuatro métricas. Con 1888/563/367/1850",
+    "declarado, el informe de ayer (1844) se rechaza por regresión.",
+    "",
+    "NO SE TOCÓ EL CENSO: siguen siendo los mismos 9 ausentes (6 TIPOS + 3 NO-COMPILA);",
+    "96 ficheros en src · 87 en el mapa · 9 declarados. `src/mcpTypes.ts`, que este WP también",
+    "toca, sigue en TIPOS y con razón: sólo lleva interfaces y un comentario.",
+    "",
+    "--- movimiento anterior, conservado ---",
+    "",
     "WP-V100 · 2026-08-02 · worker V, rama wp/v100-defecto-que-se-movio.",
     "",
     "  statements 1816 → 1844   branches 547 → 558   functions 352 → 357   lines 1780 → 1808",
@@ -135,10 +172,10 @@
   ],
 
   "cubiertas": {
-    "statements": 1844,
-    "branches": 558,
-    "functions": 357,
-    "lines": 1808
+    "statements": 1888,
+    "branches": 563,
+    "functions": 367,
+    "lines": 1850
   },
 
   "censo": {

@@ -12,7 +12,19 @@ export interface IMcpClient {
 
 export type McpStatus = 'running' | 'stopped' | 'error';
 
-// Configuration interfaces to match sample-config.json structure
+// WP-V102 · Esta línea decía «sample-config.json», y era falso por partida
+// doble: ningún código busca ese nombre (D16, cerrado en WP-V100) y el fichero
+// no existe (lo podó WP-V13 en `f615434`). Lo que estas interfaces describen es
+// la forma del fichero que `McpConfigurationManager` carga y parsea de verdad
+// —`JSON.parse(configContent) as AlephScriptConfiguration`,
+// `src/core/mcpConfigurationManager.ts`—, cuyo nombre vive en la constante
+// OPERA_CONFIG_FILENAME de ese módulo.
+//
+// Se nombra la CONSTANTE, no su valor: es la convención de WP-V100 —un nombre
+// vivo va con la constante, uno muerto entre «comillas angulares»— y es lo que
+// impide que esta frase vuelva a divergir del fichero que se abre.
+// Configuration interfaces to match the structure of the file named by
+// OPERA_CONFIG_FILENAME
 export interface MCPServerConfig {
   port: number;
   wdir: string
