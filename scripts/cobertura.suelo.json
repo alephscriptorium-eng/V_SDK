@@ -48,32 +48,56 @@
 
   "medido": {
     "fecha": "2026-08-02",
-    "arbol": "C:/S_LAB/wt/v-v96",
+    "arbol": "C:/S_LAB/wt/v-v25",
     "so": "Windows 11 · 12 CPU",
     "node": "v22.21.1",
     "jest": "29.7.0",
-    "suite": "429 tests · 428 pass · 1 skip · 0 fail",
+    "suite": "444 tests · 443 pass · 1 skip · 0 fail",
     "porcentajes_informativos": {
-      "statements": 26.1,
-      "branches": 25.18,
-      "functions": 21.51,
-      "lines": 26.55
+      "statements": 29.81,
+      "branches": 24.65,
+      "functions": 26.75,
+      "lines": 30.12
     },
     "totales_del_dia": {
-      "statements": 5903,
-      "branches": 2168,
-      "functions": 1264,
-      "lines": 5720
+      "statements": 6081,
+      "branches": 2215,
+      "functions": 1308,
+      "lines": 5898
     }
   },
 
   "colchon": 0,
 
+  "firma_del_ultimo_movimiento": [
+    "WP-V25 · 2026-08-02 · worker V, rama wp/v25-comandos-sin-handler.",
+    "",
+    "EL SUELO SUBE, Y SUBE PORQUE HAY MÁS CÓDIGO EJERCITADO, NO PORQUE SE EXIJA MENOS:",
+    "  statements 1541 → 1813   functions 272 → 350   lines 1519 → 1777   branches 546 → 546",
+    "",
+    "QUÉ LO MOVIÓ, EN UNA FRASE: hasta hoy NINGÚN test importaba",
+    "`src/core/bootstrap/commands/` — la tabla de comandos que dejó WP-V80 llevaba desde",
+    "entonces sin una sola prueba. El gate de V25",
+    "(`tests/unit/core/bootstrap/commands/censoComandos.test.ts`) la importa entera para",
+    "censarla, y al importarla se ejecutan las declaraciones de módulo de las once tablas",
+    "y de todo lo que arrastran. De ahí +272 sentencias y +78 funciones sin que este WP",
+    "haya escrito ni un test de comportamiento nuevo sobre ese código.",
+    "",
+    "POR QUÉ NO SE MOVIERON LAS RAMAS: las tablas son literales de datos y fábricas de",
+    "handler; los CUERPOS de los handlers no se ejecutan (el test los fabrica y comprueba",
+    "que son funciones, no los invoca). Ahí es donde vive la ramificación. 546 → 546 es",
+    "consistente con eso y no con un ablandamiento.",
+    "",
+    "NO SE TOCÓ EL CENSO: los 9 ficheros ausentes siguen siendo los mismos 6 TIPOS + 3",
+    "NO-COMPILA. `src/core/bootstrap/commands/logsCommands.ts`, que este WP crea, ENTRA en",
+    "el mapa (96 ficheros en src · 87 en el mapa · 9 ausentes declarados)."
+  ],
+
   "cubiertas": {
-    "statements": 1541,
+    "statements": 1813,
     "branches": 546,
-    "functions": 272,
-    "lines": 1519
+    "functions": 350,
+    "lines": 1777
   },
 
   "censo": {
