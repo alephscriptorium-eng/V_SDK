@@ -101,7 +101,7 @@ jest.mock('@zeus/reparto-kit/tipos', () => ({
 
 /* eslint-disable import/first */
 import { commandTable, CommandDeps } from '../../../../../src/core/bootstrap/commands';
-import { CommandPaletteManager } from '../../../../../src/commandPaletteManager';
+import { CommandPaletteManager, CommandCategory } from '../../../../../src/commandPaletteManager';
 
 const RAIZ = path.resolve(__dirname, '../../../../..');
 
@@ -193,7 +193,11 @@ interface Censo {
     sinDeclarar: string[];
     /** Ids declarados más de una vez en contributes.commands. */
     duplicados: string[];
-    /** Ids registrados por DOS fuentes: VS Code revienta al activar. */
+    /**
+     * Ids registrados MÁS DE UNA VEZ, vengan de donde vengan: VS Code lanza al
+     * activar. Cubre las tres combinaciones —tabla∩paleta, tabla∩tabla y
+     * paleta∩paleta—, no sólo el cruce entre fuentes.
+     */
     colisiones: string[];
 }
 
@@ -216,13 +220,32 @@ function censar(
         vistos.add(id);
     }
 
-    const enTabla = new Set(tabla);
+    // Colisión = id que aparece más de una vez en el MULTICONJUNTO de
+    // registros. Antes se calculaba como `paleta.filter(id => enTabla.has(id))`,
+    // que sólo veía el cruce ENTRE fuentes y dejaba ciego el duplicado DENTRO
+    // de una: dos `registerCommand` con el mismo id en CommandPaletteManager
+    // hacen lanzar a VS Code igual, y el propio manager ya lo sospecha
+    // (`warn('… is already registered, overwriting')`, commandPaletteManager.ts:219).
+    const cuenta = new Map<string, number>();
+    for (const id of registrados) {
+        cuenta.set(id, (cuenta.get(id) ?? 0) + 1);
+    }
+
+    /**
+     * Un id sólo está exento de declararse si `REGISTRO_INTERNO` tiene una
+     * entrada PROPIA (no heredada del prototipo: con `in`, `toString` y
+     * `constructor` salían exentos gratis) y con MOTIVO NO VACÍO. La cabecera
+     * de este fichero exige «con motivo escrito»; esto lo hace cumplir, en vez
+     * de comprobar sólo que la llave exista.
+     */
+    const exentoConMotivo = (id: string): boolean =>
+        Object.prototype.hasOwnProperty.call(interno, id) && String(interno[id] ?? '').trim() !== '';
 
     return {
         sinHandler: declarados.filter(id => !regSet.has(id)).filter((id, i, a) => a.indexOf(id) === i),
-        sinDeclarar: [...regSet].filter(id => !declSet.has(id) && !(id in interno)),
+        sinDeclarar: [...regSet].filter(id => !declSet.has(id) && !exentoConMotivo(id)),
         duplicados,
-        colisiones: paleta.filter(id => enTabla.has(id))
+        colisiones: [...cuenta.entries()].filter(([, n]) => n > 1).map(([id]) => id)
     };
 }
 
@@ -264,15 +287,41 @@ function declaradosDePackageJson(): string[] {
     return (pkg.contributes.commands as Array<{ command: string }>).map(c => c.command);
 }
 
+/**
+ * Ids que registra `CommandPaletteManager`, MEDIDOS EN LA LLAMADA, no en su
+ * mapa interno.
+ *
+ * Aquí ponía `getAllCommands().map(c => c.id)`, y era una medida con un punto
+ * ciego: ese getter devuelve un `Map` clavado por id, así que DEDUPLICA. Un
+ * mismo id registrado dos veces salía UNA sola vez —el propio
+ * `registerCommand` avisa «is already registered, overwriting» y sigue— y
+ * cualquier comprobación de duplicados sobre esa lista era tautológica.
+ * Mientras tanto, `vscode.commands.registerCommand` SÍ se llama dos veces, y
+ * VS Code lanza al activar la extensión.
+ *
+ * Se espía la llamada, que es el hecho que importa: lo que el host ve.
+ */
 function idsDeLaPaleta(): string[] {
+    const vscode = require('vscode');
     const contextoFalso = {
         subscriptions: [] as unknown[],
         extensionUri: { fsPath: '/test', path: '/test' },
         extensionPath: '/test'
     };
-    // El constructor es quien registra: instanciarlo ES la medida.
-    const paleta = CommandPaletteManager.getInstance(contextoFalso as never);
-    return paleta.getAllCommands().map(c => c.id);
+    const llamadas: string[] = [];
+    const espia = jest
+        .spyOn(vscode.commands, 'registerCommand')
+        .mockImplementation((id: unknown) => {
+            llamadas.push(String(id));
+            return { dispose: () => undefined };
+        });
+    try {
+        // El constructor es quien registra: instanciarlo ES la medida.
+        CommandPaletteManager.getInstance(contextoFalso as never);
+    } finally {
+        espia.mockRestore();
+    }
+    return llamadas;
 }
 
 describe('WP-V25 · censo de comandos', () => {
@@ -356,6 +405,28 @@ describe('WP-V25 · censo de comandos', () => {
             expect(() => exigirCensoLimpio(c)).not.toThrow();
         });
 
+        it('DIRECCIÓN 2 · la exención exige MOTIVO, no sólo llave', () => {
+            // La cabecera promete «con motivo escrito». Estos cuatro pasaban.
+            for (const motivo of ['', '   ', undefined, null]) {
+                const c = censar(declarados, [...tabla, 'aleph0.vector.mudo'], paleta, {
+                    ...REGISTRO_INTERNO,
+                    'aleph0.vector.mudo': motivo as unknown as string
+                });
+                expect(c.sinDeclarar).toEqual(['aleph0.vector.mudo']);
+                expect(() => exigirCensoLimpio(c)).toThrow(/REGISTRADOS SIN DECLARAR/);
+            }
+        });
+
+        it('DIRECCIÓN 2 · el prototipo no regala exenciones', () => {
+            // Con `id in interno`, `toString` y `constructor` salían exentos
+            // gratis: son propiedades de Object.prototype, no motivos escritos.
+            for (const id of ['toString', 'constructor', 'hasOwnProperty']) {
+                const c = censar(declarados, [...tabla, id], paleta);
+                expect(c.sinDeclarar).toEqual([id]);
+                expect(() => exigirCensoLimpio(c)).toThrow(/REGISTRADOS SIN DECLARAR/);
+            }
+        });
+
         it('un id declarado dos veces pone rojo', () => {
             const c = censar([...declarados, declarados[0]], tabla, paleta);
             expect(c.duplicados).toEqual([declarados[0]]);
@@ -369,6 +440,70 @@ describe('WP-V25 · censo de comandos', () => {
             ]);
             expect(c.colisiones).toEqual(['aleph0.vector.doble']);
             expect(() => exigirCensoLimpio(c)).toThrow(/DOS VECES/);
+        });
+
+        it('el mismo id registrado DOS VECES DENTRO DE LA PALETA pone rojo', () => {
+            // Éste era el punto ciego: la colisión se calculaba sólo como
+            // tabla∩paleta. VS Code lanza igual.
+            const c = censar([...declarados, 'aleph0.vector.doble'], tabla, [
+                ...paleta,
+                'aleph0.vector.doble',
+                'aleph0.vector.doble'
+            ]);
+            expect(c.colisiones).toEqual(['aleph0.vector.doble']);
+            expect(() => exigirCensoLimpio(c)).toThrow(/DOS VECES/);
+        });
+
+        it('el mismo id registrado DOS VECES DENTRO DE LA TABLA pone rojo', () => {
+            const c = censar([...declarados, 'aleph0.vector.doble'], [
+                ...tabla,
+                'aleph0.vector.doble',
+                'aleph0.vector.doble'
+            ], paleta);
+            expect(c.colisiones).toEqual(['aleph0.vector.doble']);
+            expect(() => exigirCensoLimpio(c)).toThrow(/DOS VECES/);
+        });
+
+        it('la medida de la paleta NO deduplica — y aquí está la prueba', () => {
+            // Los dos tests de arriba plantan el duplicado A MANO en el array.
+            // Eso comprueba la FÓRMULA, no la MEDIDA: si `idsDeLaPaleta()`
+            // volviera a leer `getAllCommands()`, seguirían verdes y serían
+            // teatro. Esto ancla la medida a código real: se registra dos veces
+            // el mismo id por la API pública del manager y se exige ver la
+            // discrepancia exacta que hace falsa la lectura del Map.
+            const vscode = require('vscode');
+            const viva = CommandPaletteManager.getInstance();
+            const enElMapaAntes = viva.getAllCommands().length;
+
+            const llamadas: string[] = [];
+            const espia = jest
+                .spyOn(vscode.commands, 'registerCommand')
+                .mockImplementation((id: unknown) => {
+                    llamadas.push(String(id));
+                    return { dispose: () => undefined };
+                });
+            try {
+                for (let i = 0; i < 2; i++) {
+                    viva.registerCommand({
+                        id: 'aleph0.vector.doble',
+                        title: 'vector',
+                        category: CommandCategory.SYSTEM,
+                        handler: () => undefined
+                    });
+                }
+            } finally {
+                espia.mockRestore();
+            }
+
+            // El HOST ve dos registros — y lanza al activar la extensión.
+            expect(llamadas).toEqual(['aleph0.vector.doble', 'aleph0.vector.doble']);
+            // El MAPA ve uno: por eso `getAllCommands()` no sirve de medida.
+            expect(viva.getAllCommands().length).toBe(enElMapaAntes + 1);
+
+            // Y la medida real del censo es el multiconjunto de llamadas.
+            expect(paleta).toHaveLength(16);
+            expect(new Set(paleta).size).toBe(16);
+            expect(paleta).toContain('aleph0.agents.stopAll');
         });
 
         it('el gate NO se conforma con listas vacías (no es un verde de adorno)', () => {

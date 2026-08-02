@@ -12,16 +12,30 @@ import { CommandEntry } from './types';
  * WP-V25 · nombre de sala de un `SocketTreeItem`. El menú `view/item/context`
  * de `alephscript.sockets` entrega el ítem entero; el ítem lleva `roomName`
  * y, como respaldo, la etiqueta visible.
+ *
+ * También acepta un STRING pelado, porque su propia superficie lo manda:
+ * `HackerCommandPanelProvider.promptAndExecute` invoca cualquier comando como
+ * `executeCommand(commandId, [input])` con lo que el usuario teclee
+ * (`src/views/HackerCommandPanelProvider.ts:394`), y `showAllCommands` permite
+ * elegir cualquiera de la lista. `aleph0.sockets.connect` ya admitía la forma
+ * string; sus tres hermanos la rechazaban.
  */
 function nombreDeSala(item: any): string | undefined {
+    if (typeof item === 'string') {
+        return item.trim() || undefined;
+    }
     return item?.roomName || item?.label || undefined;
 }
 
 /**
  * WP-V25 · ruta del fichero de un `ConfigTreeItem`. El menú entrega el ítem
  * (con `resourceUri`); su `id` es `config-<fsPath>` y sirve de respaldo.
+ * Y el string pelado, por el mismo motivo que `nombreDeSala`.
  */
 function rutaDeConfig(item: any): string | undefined {
+    if (typeof item === 'string') {
+        return item.trim() || undefined;
+    }
     if (item?.resourceUri?.fsPath) {
         return item.resourceUri.fsPath;
     }
