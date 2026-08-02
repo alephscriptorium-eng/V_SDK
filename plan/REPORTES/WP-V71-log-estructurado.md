@@ -815,7 +815,7 @@ un VS Code de verdad. Lo cubre el arnés de V68.
    12,6% real: `npm test` falla siempre por eso. O se bajan a la realidad o se
    suben cubriendo. Candidato para V48/V68.
 5. **Tres tests de reloj de pared son flaky por diseño**:
-   `tests/performance/serviceStartup.test.ts` (`duration < 100` sobre un
+   `tests/performance/serviceStartup.test.ts` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)* (`duration < 100` sobre un
    `setTimeout(10)`; `duration < 50` sobre un bucle de 50 arrays) y
    `tests/basic.test.ts:23` (`setTimeout(10)` contra `< 100`). Bajo contención
    de workers fallan, y falla un caso **distinto** cada vez. Ensuciará cualquier CI

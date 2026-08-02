@@ -25,7 +25,7 @@
   (`npm run package:v1` → `dist/scriptorium-zigurat-0.1.0.vsix`).
 - CI actualizado + workflow **Release** (tag `v*`); marketplace **deferred**
   (DV-10) — no VS Marketplace / Open VSX.
-- Guía de prueba ≤10 pasos: `docs/GUIA-PRUEBA-v1.md` (también abajo).
+- Guía de prueba ≤10 pasos: `docs/GUIA-PRUEBA-v1.md` ⛔ *(cita rancia: retirada por V15 (`808be04`); hoy `docs/GUIA-PRUEBA-v2.md`. Se conserva porque era cierta al escribirse)* (también abajo).
 - Smoke local: install `.vsix` → `scriptorium.zigurat@0.1.0` listada;
   probes V07/V08/V09 automatizados PASS; smokes vivos V07/V08 ⏳.
 - **Aviso carril S / vigía-S:** tick de validación del `.vsix` v1 pendiente
@@ -37,7 +37,7 @@
 - `.vscodeignore` — endurecido v1
 - `.github/workflows/ci.yml` — auth NPM (nombres secret) + package v1 artifact
 - `.github/workflows/release.yml` — GitHub Release + adjunto `.vsix` (creado)
-- `docs/GUIA-PRUEBA-v1.md` — guía custodio ≤10 pasos (creado)
+- `docs/GUIA-PRUEBA-v1.md` ⛔ *(cita rancia: retirada por V15 (`808be04`); hoy `docs/GUIA-PRUEBA-v2.md`. Se conserva porque era cierta al escribirse)* — guía custodio ≤10 pasos (creado)
 - `plan/REPORTES/WP-V10-v1-release.md` — este reporte
 
 ## GUÍA DE PRUEBA (custodio · ≤10 pasos)
@@ -191,4 +191,4 @@ Release [v0.1.0](https://github.com/alephscriptorium-eng/V_SDK/releases/tag/v0.1
 ### Aviso a vigía-S (tick validación)
 `.vsix` v1 lista para probar: descargar
 `scriptorium-zigurat-0.1.0.vsix` del Release v0.1.0 + seguir
-`docs/GUIA-PRUEBA-v1.md`. Residuales runtime V07/V08 ⏳ no bloquean pack.
+`docs/GUIA-PRUEBA-v1.md` ⛔ *(cita rancia: retirada por V15 (`808be04`); hoy `docs/GUIA-PRUEBA-v2.md`. Se conserva porque era cierta al escribirse)*. Residuales runtime V07/V08 ⏳ no bloquean pack.
