@@ -48,28 +48,60 @@
 
   "medido": {
     "fecha": "2026-08-02",
-    "arbol": "C:/S_LAB/wt/v-v25",
+    "arbol": "C:/S_LAB/wt/v-v100",
     "so": "Windows 11 · 12 CPU",
     "node": "v22.21.1",
     "jest": "29.7.0",
-    "suite": "449 tests · 448 pass · 1 skip · 0 fail",
+    "suite": "497 tests · 496 pass · 1 skip · 0 fail · 15 suites",
     "porcentajes_informativos": {
-      "statements": 29.84,
-      "branches": 24.62,
-      "functions": 26.91,
-      "lines": 30.15
+      "statements": 30.29,
+      "branches": 25.12,
+      "functions": 27.29,
+      "lines": 30.62
     },
     "totales_del_dia": {
-      "statements": 6081,
-      "branches": 2215,
+      "statements": 6086,
+      "branches": 2221,
       "functions": 1308,
-      "lines": 5898
+      "lines": 5903
     }
   },
 
   "colchon": 0,
 
   "firma_del_ultimo_movimiento": [
+    "WP-V100 · 2026-08-02 · worker V, rama wp/v100-defecto-que-se-movio.",
+    "",
+    "  statements 1816 → 1844   branches 547 → 558   functions 352 → 357   lines 1780 → 1808",
+    "",
+    "QUÉ LO MUEVE: `src/core/mcpConfigurationManager.ts` NO TENÍA NINGÚN TEST. Doce ficheros",
+    "en `tests/` y ninguno lo nombraba, así que `initialize()` —la rama donde vivía D16, el",
+    "log que anunciaba «sample-config.json» mientras abría ArrakisTheater_OperaConfig.json—",
+    "no se había ejecutado JAMÁS. `tests/unit/core/mcpConfigurationManager.test.ts` la",
+    "ejecuta por primera vez, en sus dos salidas (fichero encontrado / no encontrado), y",
+    "con ella arrastra `loadConfigFromFile`, `setEmptyPendingConfiguration`,",
+    "`updateVSCodeSettings` y `getMcpServiceLauncherPort`.",
+    "",
+    "MEDIDO EN TRES CORRIDAS, MISMA MÁQUINA, SUITE ENTERA:",
+    "  1816/547/352/1780  ·  fuente en HEAD, sin el test nuevo → REPRODUCE EL SUELO EXACTO",
+    "  1817/547/352/1781  ·  con la fuente de este WP, sin el test nuevo",
+    "  1844/558/357/1808  ·  con las dos cosas (entrega)",
+    "",
+    "DE LOS +28/+11/+5/+28, UNO NO ES TEST: +1 sentencia y +1 línea son la declaración",
+    "`export const OPERA_CONFIG_FILENAME`, que se ejecuta al importar el módulo y por eso",
+    "la cuentan los tests que ya existían. La corrida intermedia está justamente para que",
+    "ese +1 no se confunda con cobertura nueva. Los otros +27/+11/+5/+27 son código de",
+    "producto que hasta hoy no ejercitaba nadie.",
+    "",
+    "NO ES UN ABLANDAMIENTO: el suelo SUBE en las cuatro métricas. Con 1844/558/357/1808",
+    "declarado, el informe de ayer (1816) se rechaza por regresión.",
+    "",
+    "NO SE TOCÓ EL CENSO: siguen siendo los mismos 9 ausentes (6 TIPOS + 3 NO-COMPILA);",
+    "96 ficheros en src · 87 en el mapa · 9 declarados. El fichero que este WP toca ya",
+    "estaba en el mapa.",
+    "",
+    "--- movimiento anterior, conservado ---",
+    "",
     "WP-V25 · 2026-08-02 · worker V, rama wp/v25-comandos-sin-handler.",
     "",
     "EL SUELO SUBE, Y SUBE PORQUE HAY MÁS CÓDIGO EJERCITADO, NO PORQUE SE EXIJA MENOS:",
@@ -103,10 +135,10 @@
   ],
 
   "cubiertas": {
-    "statements": 1816,
-    "branches": 547,
-    "functions": 352,
-    "lines": 1780
+    "statements": 1844,
+    "branches": 558,
+    "functions": 357,
+    "lines": 1808
   },
 
   "censo": {
