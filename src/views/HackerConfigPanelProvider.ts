@@ -45,9 +45,17 @@ export interface ConfigGroup {
  * `f615434`, junto con «ArrakisTheater_OperaConfig.json». Un directorio
  * enumerado no promete ningún fichero concreto, así que su ausencia es
  * descubrimiento y no mentira. Por eso los schemas ya no se nombran uno a uno:
- * se enumera el directorio, y así ningún nombre puede quedarse rancio. Es el
- * argumento de WP-V100 aplicado aquí — re-sincronizar la lista a mano deja
- * intacto el mecanismo que la desincronizó.
+ * se enumera el directorio. Es el argumento de WP-V100 aplicado aquí —
+ * re-sincronizar la lista a mano deja intacto el mecanismo que la desincronizó.
+ *
+ * HASTA DÓNDE LLEGA ESO, EXACTAMENTE. No queda **ningún nombre de fichero**
+ * codificado, que es la clase a la que pertenecía «sample-config.json». Sí
+ * quedan dos literales de ESTRUCTURA —el directorio `'schemas'` y el sufijo
+ * `'.schema.json'`—, y ésos **sí pueden quedarse rancios**: si el paquete
+ * reorganiza sus activos, dejan de casar. Lo que tapa ese hueco no es la forma
+ * del código, es **la ejecución**: §1 del test enrojece en los dos casos,
+ * porque comprueba que con un workspace ajeno el panel sigue ofreciendo activos
+ * del paquete. La estructura reduce la superficie; el rojo lo pone el test.
  */
 export type OrigenActivo = 'paquete' | 'workspace';
 
@@ -202,10 +210,24 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
                 configs: this._getExtensionSettings()
             },
             {
-                // WP-V102: el grupo «WEBVIEW CONFIGURATIONS» se retiró aquí.
-                // No desaparece ni un elemento de la interfaz: sus 3 activos
-                // reales eran los mismos schemas —misma ruta absoluta— que ya
-                // listaba este grupo, y el cuarto era un fantasma.
+                // WP-V102: el grupo «WEBVIEW CONFIGURATIONS» se retiró aquí. Sus
+                // 3 entradas de schema eran los mismos ficheros —misma ruta
+                // absoluta— que ya listaba este grupo, así que en los dos
+                // workspaces MEDIDOS (este repositorio, y un proyecto ajeno sin
+                // `sample-config.json` propio) no se pierde ningún elemento.
+                //
+                // ⚠ CUALIFICACIÓN, y va aquí a propósito porque la tesis de este
+                // WP es que la prosa que nombra ficheros es una promesa: la
+                // cuarta entrada, «sample-config.json», NO era un fantasma para
+                // un usuario que tenga ese fichero en la raíz de su workspace.
+                // Medido: en ese caso el cambio es −1 / +3, y esa entrada SE
+                // PIERDE. Se retira igualmente, y la razón no es que no exista:
+                // es que su `name`/`description` («Sample Configuration»,
+                // «Sample webview configuration template») la ofrecían como
+                // PLANTILLA DEL PRODUCTO, y este producto no tiene ninguna —
+                // WP-V13 podó las dos históricas y WP-V23 cerró la configuración
+                // en `aleph0.*`. Ofrecer un fichero ajeno bajo ese rótulo es la
+                // misma falsedad, sólo que con el fichero presente.
                 name: "SCHEMA DEFINITIONS",
                 icon: "📋",
                 description: "JSON schemas: los que envía la extensión y los del workspace",
@@ -276,7 +298,9 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
      *
      * Sin un solo nombre de fichero codificado: lo que se ofrece existe porque
      * se acaba de leer del directorio, no porque una lista lo prometa y un
-     * `existsSync` tape el fallo.
+     * `existsSync` tape el fallo. Los dos literales de estructura que quedan
+     * —`'schemas'` y `'.schema.json'`— sí pueden caducar; quien lo caza es §1
+     * del test, ejecutando, no la forma de este método.
      */
     private _getSchemaConfigs(): ConfigItem[] {
         const configs: ConfigItem[] = [];

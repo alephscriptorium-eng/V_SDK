@@ -3,6 +3,21 @@
 **Worker V** · rama `wp/v102-plantilla-podada` · árbol `C:/S_LAB/wt/v-v102`
 · base `12be68e` · 2026-08-02
 
+> **2ª vuelta, tras la devolución de la contrarrevisión.** Veredicto: entra con
+> condiciones, **cero bloqueantes**. Lo que cambió en esta vuelta es **prosa: ni
+> una línea de lógica, ni un test nuevo** — y el motivo es que la única condición
+> era que **dos frases mías eran más anchas que lo que había medido**, en un WP
+> cuya tesis entera es que la prosa que nombra ficheros es una promesa.
+>
+> | | qué | dónde |
+> | --- | --- | --- |
+> | **Condición** | «no desaparece ni un elemento… el cuarto era un fantasma» — falso con un workspace que tiene **su propio** `sample-config.json` (−1/+3). **Reproducido por mí**, no aceptado de palabra | §4.2.1 · `HackerConfigPanelProvider.ts:213-230` |
+> | **M1** | «ningún nombre puede quedarse rancio… inexpresable» — quedan 2 literales de **estructura** que sí caducan; el hueco lo tapa **§1 ejecutando** | §4.2.2 |
+> | **M2** | límite de de-dup ampliado: **caja de la unidad**, no sólo symlink/`subst`. Reproducido: 6 schemas, 3 duplicados | §10.5 |
+> | **M3** | la decisión de §3 no había barrido el producto: existe `createFromTemplate()`, viva. **La refuerza**, y faltaba nombrarla | §3.5 |
+> | **M4** | 5 reglas CSS muertas desde siempre, anotadas con su diagnóstico | §10.6 |
+> | **Límites 1 y 2** | **cerrados por la contrarrevisión**, que construyó el `.vsix` y corrió el panel contra él | §10.1, §10.2 |
+
 ---
 
 ## 0 · Identidad, antes de leer una línea de producto
@@ -72,10 +87,16 @@ Volcado literal de la corrida, caso «repositorio»:
    cinco grupos salían vacíos**, no sólo una entrada. El panel enseñaba los
    schemas **únicamente a quien desarrolla la extensión**.
 
-3. **`_getWebviewConfigs()` no aportó jamás un elemento propio.** En el único
-   caso en que devolvía algo, sus 3 resultados eran **los mismos ficheros, con
-   la misma ruta absoluta**, que ya listaba `_getSchemaConfigs()`. El cuarto era
-   el fantasma. O sea: **un fantasma y tres duplicados**, nunca otra cosa.
+3. **En los dos workspaces sondeados, `_getWebviewConfigs()` no aportó un solo
+   elemento propio.** En el único caso en que devolvía algo, sus 3 resultados
+   eran **los mismos ficheros, con la misma ruta absoluta**, que ya listaba
+   `_getSchemaConfigs()`; y el cuarto no resolvía en ninguno de los dos.
+
+   ⚠ **Acotado tras la devolución**: «nunca otra cosa» era más ancho que estas
+   dos sondas. Existe una tercera forma de workspace —usuario con **su propio**
+   `sample-config.json` en la raíz— en la que la cuarta entrada **sí** aportaba
+   un elemento. Medido y tratado en §4.2.1; no cambia el veredicto de fondo,
+   pero sí la frase.
 
 Y un cuarto, que la ficha no pedía y sale de la misma sonda:
 
@@ -168,6 +189,24 @@ pedía elegir; elijo esto y lo argumento en cuatro datos, no en preferencia:
    workspace y adoptándolo sin preguntar; eso es **WP-V32** (hallazgo H-11 de
    V23). Construir aquí una plantilla se metería en su ficha.
 
+5. **AÑADIDO EN LA DEVOLUCIÓN — y es el dato que faltaba: el producto YA tiene
+   una facilidad de plantillas, viva, y no envía ningún fichero.**
+   `configsTreeView.createFromTemplate()` (`src/treeViews/configsTreeView.ts:434`),
+   cableada en `src/core/bootstrap/commands/gamificationCommands.ts:419`, genera
+   `xplus1-config.json`, `socket-config.json` y `webrtc-ui-config.json`
+   **en línea**, con el contenido en el propio código.
+
+   Mi decisión se escribió sin haber barrido esto, y era un hueco: **una
+   decisión que afirma «el producto no debe ofrecer una plantilla» tenía que
+   nombrar la facilidad que sí las ofrece.** No la contradice — **la refuerza**,
+   porque demuestra que la forma que este producto ya eligió para dar una
+   plantilla es *generarla*, no *enviar un fichero de muestra y ofrecerlo desde
+   un panel*. Y cierra el círculo con §1: los tres ficheros que genera son
+   exactamente los que validan los tres `schemas/*.schema.json` del paquete.
+
+   ⚠ **No la edito**: `WP-V101` la está tocando ahora mismo por otro motivo.
+   Sólo se cita.
+
 **Consecuencia**: la entrada se **retira**, no se re-apunta. Y para que la
 decisión no dependa de que alguien la recuerde, se retira también **el mecanismo
 que la hizo posible** (§4).
@@ -189,33 +228,83 @@ este WP defiende y que el test impone:
 > existencia los activos del PROPIO PRODUCTO es tapar un fallo.**
 
 Ésa es la línea entre `theatrical-content/` —del usuario, puede faltar sin
-mentir— y «sample-config.json» —que el producto prometía y no tenía.
+mentir— y «sample-config.json» —que el producto ofrecía **como plantilla suya**,
+con nombre y descripción de plantilla, sin tener ninguna.
+
+**Dónde no llega la regla, dicho tras la devolución.** Esa cuarta entrada era, a
+la vez, una promesa del producto (por su rótulo) y un descubrimiento sobre el
+árbol del usuario (por su resolución). **La regla no desempata sola ese caso**:
+lo desempata la decisión de §3 —el producto no tiene plantilla—, no la regla.
+Escrita así, la regla vale para lo que vale; escrita más ancha, habría tapado
+justo el caso que la contrarrevisión encontró.
 
 ### 4.2 · Qué se hizo, en cuatro movimientos
 
-1. **`_getWebviewConfigs()` se retira entera**, con su grupo. Medido en §1: un
-   fantasma y tres duplicados; nunca aportó un elemento propio.
+1. **`_getWebviewConfigs()` se retira entera**, con su grupo. Medido en §1: en
+   los dos workspaces que sondeé, un fantasma y tres duplicados.
 
-   **No desaparece ni un elemento de la interfaz.** Con el repositorio abierto,
-   la unión de lo ofrecido es la misma (los 3 schemas, **una vez** en lugar de
-   dos). Con un workspace ajeno, se **añaden** 3 que antes no se veían nunca.
+   **CORREGIDO EN LA DEVOLUCIÓN, Y REPRODUCIDO POR MÍ.** La primera redacción
+   decía, sin cualificar, *«no desaparece ni un elemento de la interfaz… y el
+   cuarto era un fantasma»*. **Es falso en una tercera forma de workspace que no
+   había sondeado**: la de un usuario que tenga **su propio** `sample-config.json`
+   en la raíz. Reconstruí el `_getWebviewConfigs()` de `HEAD` y comparé las tres
+   formas contra la entrega:
 
-2. **`_getSchemaConfigs()` (`:281`) enumera los DOS orígenes** —el paquete vía
+   ```
+   ##### workspace ajeno CON sample-config.json propio
+     antes=1  despues=3   -1 / +3
+       PERDIDO: …\v102cr-sample-1ZiBs3\sample-config.json
+       GANADO : …\schemas\{socket,webrtc-ui,xplus1}-config.schema.json
+   ##### workspace ajeno SIN sample-config.json
+     antes=0  despues=3   -0 / +3
+   ##### workspace = este repositorio
+     antes=3  despues=3   -0 / +0
+   ```
+
+   **Para ese usuario el cuarto no era un fantasma, y su entrada se pierde.** Y
+   hay tensión real con mi propia regla —*filtrar por existencia el árbol del
+   usuario es descubrimiento*—: bajo ella, esa entrada era descubrimiento.
+
+   **La retirada se mantiene, y el argumento cambia de sitio**: no se retira
+   porque el fichero no exista, sino porque el `name` y la `description` de esa
+   entrada —«Sample Configuration», «Sample webview configuration template»— lo
+   ofrecían como **plantilla del producto**, y este producto no tiene ninguna
+   (§3). Ofrecer un fichero ajeno bajo ese rótulo es la misma falsedad, sólo que
+   con el fichero presente. Nadie lo lee: el barrido de §1 confirma que ninguna
+   ruta de código lo abre.
+
+   La frase quedaba **en un comentario de fuente, dentro del WP cuya tesis es
+   que la prosa que nombra ficheros es una promesa**. Acotada en
+   `HackerConfigPanelProvider.ts:204-221`, con la cualificación y su medida.
+
+2. **`_getSchemaConfigs()` (`:305`) enumera los DOS orígenes** —el paquete vía
    `_extensionUri` y el workspace del usuario—, de-duplicando por ruta resuelta,
    y **sin un solo nombre de fichero codificado**. Aquí está el argumento de
    WP-V100 aplicado: *re-sincronizar la lista a mano deja intacto el mecanismo
-   que la desincronizó*. Con enumeración de directorio, **un nombre no puede
-   quedarse rancio porque no hay ningún nombre**. La falsedad no se corrige: se
-   vuelve inexpresable.
+   que la desincronizó*.
+
+   **CORREGIDO EN LA DEVOLUCIÓN.** La primera redacción decía *«un nombre no
+   puede quedarse rancio porque no hay ningún nombre… la falsedad se vuelve
+   inexpresable»*. **Es más ancho que la evidencia, y el revisor lo mutó**: no
+   queda ningún **nombre de fichero** —la clase de «sample-config.json»—, pero
+   sí dos **literales de estructura**, el directorio `'schemas'` (`:313`) y el
+   sufijo `'.schema.json'` (`:324`), y ésos **sí pueden caducar** si el paquete
+   reorganiza sus activos. Mutados, **§1 enrojece en los dos casos**.
+
+   El enunciado correcto es: *la estructura elimina la clase de nombre que
+   produjo el defecto y reduce la superficie; el hueco que queda lo tapa **la
+   ejecución de §1**, no la inexpresabilidad*. Es la misma lección que V100 dejó
+   escrita — **la convención protege la prosa; la ejecución protege la
+   conducta** — y aquí me la aplico a mí.
 
    Y cuando el paquete **no** trae `schemas/`, no se filtra en silencio: se avisa
-   (`:295`), porque eso sería un defecto de empaquetado.
+   (`:319`), porque eso sería un defecto de empaquetado.
 
 3. **El origen pasa a ser dato, no suposición.** `export type OrigenActivo`
-   (`:52`) y `_raizDe()` (`:266`). Todo item de tipo `config-file` declara de
+   (`:60`) y `_raizDe()` (`:288`). Todo item de tipo `config-file` declara de
    dónde salió, y el test lo comprueba **ejecutando**.
 
-4. **`_getTheatricalConfigs()` (`:340`) pierde la entrada `src/theatrical`**,
+4. **`_getTheatricalConfigs()` (`:364`) pierde la entrada `src/theatrical`**,
    por tres razones medidas: producía cero ficheros incluso aquí (§1.4), `src/**`
    está en `.vscodeignore` así que ese directorio **no viaja en el paquete** —
    ningún usuario instalado puede tenerlo—, y ofrecía **código fuente `.ts`** bajo
@@ -223,7 +312,7 @@ mentir— y «sample-config.json» —que el producto prometía y no tenía.
    **se quedan** resueltas contra el workspace, y eso es correcto: son convención
    del usuario y siguen cableadas en `contributes.customEditors`.
 
-5. **`_getDevConfigs()` (`:384`) no se toca** salvo para declarar su origen.
+5. **`_getDevConfigs()` (`:408`) no se toca** salvo para declarar su origen.
    `package.json`, `tsconfig.json`, `jest.config.js`, `.vscode/*.json` son
    convenciones de terceros sobre el árbol del usuario: nombrarlas es legítimo, y
    el test comprueba —ejecutando— que **el árbol del producto las produce todas**.
@@ -450,18 +539,20 @@ pass, 1 skip). **+1 suite, +10 tests, 0 fallos, el mismo skip de siempre.**
 
 ## 10 · Los límites, declarados
 
-1. **El `.vsix` no se construyó.** Que `schemas/` viaja en el paquete está
-   medido por **dos vías independientes** —`.vscodeignore` no lo excluye, y
-   `contributes.jsonValidation` lo necesita con ruta relativa al paquete—, pero
-   **no empaqueté y abrí el `.vsix` para verlo dentro**. Si alguien quiere el
-   negativo cerrado del todo, ése es el paso que falta.
+1. ~~**El `.vsix` no se construyó.**~~ **CERRADO EN LA CONTRARREVISIÓN.** El
+   revisor lo empaquetó: `extension/schemas/` contiene los 3, y no viajan
+   `sample-config.json`, `ArrakisTheater_OperaConfig.json`, `theatrical-content/`
+   ni `src/`. Mis dos vías indirectas —`.vscodeignore` no lo excluye,
+   `contributes.jsonValidation` lo necesita con ruta relativa al paquete— quedan
+   confirmadas por medida directa. **El mérito es de la contrarrevisión, no mío.**
 
-2. **`_extensionUri` se comprueba en desarrollo, no instalado.** En este árbol,
-   raíz del paquete y raíz del repositorio **coinciden**. El test monta un
-   workspace ajeno para separar las dos rutas, y ahí la distinción sí se ejerce;
-   pero no he corrido la extensión instalada de verdad, donde `_extensionUri`
-   apunta a `~/.vscode/extensions/…`. **El arnés `tests/exthost` existe y no lo
-   usé.**
+2. ~~**`_extensionUri` se comprueba en desarrollo, no instalado.**~~ **CERRADO EN
+   LA CONTRARREVISIÓN.** El revisor corrió el panel con `_extensionUri` = raíz
+   del `.vsix` desempaquetado y un workspace ajeno: **3 schemas del paquete
+   donde antes había 0**. Lo que sigue abierto, más estrecho, es que **no se ha
+   corrido dentro de un Extension Host real** (`tests/exthost` existe y no lo
+   usé): lo verificado es la resolución de rutas contra el árbol del paquete de
+   verdad, no el ciclo de vida de la extensión instalada.
 
 3. **La convención «…» sigue siendo débil, y lo declaro como lo declaró V100**:
    alguien puede silenciar §5 envolviendo entre comillas angulares un nombre vivo
@@ -474,22 +565,58 @@ pass, 1 skip). **+1 suite, +10 tests, 0 fallos, el mismo skip de siempre.**
    nombre** o un fichero sin extensión. Hoy no hay ninguno de los dos en este
    panel; si aparece, la regla hay que reforzarla.
 
-5. **`_getSchemaConfigs()` de-duplica por ruta resuelta exacta.** Si el paquete y
-   el workspace fuesen el mismo directorio alcanzado por rutas distintas —un
-   symlink, un `subst`— saldrían duplicados. No lo he probado.
+5. **`_getSchemaConfigs()` de-duplica por ruta resuelta exacta**, y el límite es
+   más ancho de lo que escribí. Nombré symlink y `subst`; **la contrarrevisión
+   añadió la caja de la letra de unidad, y la reproduje**:
 
-6. **`theatrical-content/` sigue siendo una convención sin dueño resuelto.** La
+   ```
+   ext=c:\s_lab\wt\v-v102   ws=C:\S_LAB\wt\v-v102
+   schemas devueltos=6   duplicados-normalizando-caja=3
+   ```
+
+   **No es alcanzable a través de VS Code** —`_extensionUri` y
+   `workspaceFolders[0].uri` salen de la misma maquinaria de `Uri`, que
+   normaliza—, y por eso **no lo arreglo**: normalizar la caja a mano en Windows
+   y no en POSIX es una regla de plataforma metida en un panel, y el defecto que
+   evitaría no tiene camino desde el producto. Queda **declarado, no cerrado**,
+   con el dato encima para que quien discrepe decida con él.
+
+   Y anoto la ceguera de mi propio test: **§4 no lo vería**, porque pasa el
+   mismo `RAIZ` a los dos orígenes. Un test que no puede producir la divergencia
+   no la vigila.
+
+6. **Residuo preexistente, ahora demostrablemente muerto — anotado, no
+   retirado.** Las 5 reglas
+   `.config-group[data-category="extension|webview|schema|theatrical|development"]`
+   de `media/hacker-config-panel.css:359-375` **no han casado nunca**. Medido:
+   el JS escribe el atributo desde el **nombre del grupo**
+   (`media/hacker-config-panel.js:73`,
+   `group.name.toLowerCase().replace(/\s+/g,'-')`), o sea
+   `extension-settings`, `schema-definitions`, `theatrical-content`,
+   `development-configs`. Los cinco valores del CSS son los de
+   `ConfigItem.category`, que es un campo del **item**, no del grupo: el estilo
+   se escribió contra un vocabulario y se aplicó contra otro.
+
+   Consecuencia para este WP: **retirar el grupo WEBVIEW no pierde ningún
+   estilo**, porque esa regla tampoco casaba. No lo retiro —`media/` no es la
+   superficie de este encargo y el cambio no tiene test que lo cubra—, pero
+   queda medido para quien coja la ficha.
+
+7. **`theatrical-content/` sigue siendo una convención sin dueño resuelto.** La
    mantengo porque `contributes.customEditors` la cablea (§8.3). Si esa
    decisión cae, esto cae con ella. **Enrutado, no cerrado.**
 
-7. **`scripts/citas-rancias.mjs` sale FAIL con 4 rancias, y NO son mías.** Son
+8. **`scripts/citas-rancias.mjs` sale FAIL con 4 rancias, y NO son mías.** Son
    `WP-V15-espacios-nombres.md:259`, `WP-V90-jest-determinista.md:712` y
    `WP-V92-citas-rancias.md:457,556`, todas citando `package.json` por encima de
    sus 1198 líneas actuales. **Rojo preexistente**: no he tocado ni un reporte ni
-   el manifiesto. Lo dejo dicho porque un rojo heredado que nadie nombra es
-   exactamente cómo se cuela el siguiente.
+   el manifiesto — la contrarrevisión lo confirmó reproduciéndolo en `main`
+   limpio con rc real 1, y el orquestador **abrió `WP-V103`** al descubrir que
+   ese guardián no está cableado en ningún sitio. Mi reporte añade 30 citas y
+   **ninguna es rancia**. Queda fuera de mi cuenta, y dicho para que el rojo
+   heredado no siga sin nombre.
 
-8. **Suelo medido en una sola plataforma** (Windows 11 · node v22.21.1 · jest
+9. **Suelo medido en una sola plataforma** (Windows 11 · node v22.21.1 · jest
    29.7.0), y con un `npm ci` de esta máquina que el BRIEF avisa que puede estar
    incompleto. La suite salió íntegra en verde, así que no reporto ningún rojo
    local; pero **si CI discrepa en el suelo, el número de este reporte no es el
