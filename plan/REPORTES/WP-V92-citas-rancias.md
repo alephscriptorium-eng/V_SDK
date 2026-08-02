@@ -27,7 +27,8 @@ Las tres denunciadas, localizadas por contenido (las líneas habían derivado):
 | 3 | V23 «~1385-1386» | `:1385` y `:1386`, correctas ambas |
 
 Es decir: de las tres denunciadas, **una estaba mal denunciada** y el barrido lo
-demuestra en vez de discutirlo. Ver §3, clase `TRANSCRIP`.
+demuestra en vez de discutirlo: la clase `TRANSCRIP` se define en §1.2 y se
+cuenta en §3.
 
 ---
 
