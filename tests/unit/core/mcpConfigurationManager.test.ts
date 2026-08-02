@@ -212,14 +212,14 @@ describe('WP-V100 §3 · las citas de getDefaultSocketUrl() nombran lo que dicen
         { fichero: 'src/socketMonitor.ts', linea: 278, nombra: 'getDefaultSocketUrl' },
         { fichero: 'src/socketMonitor.ts', linea: 282, nombra: 'getDefaultSocketUrl' },
         { fichero: 'src/socketMonitor.ts', linea: 308, nombra: 'getDefaultSocketUrl' },
-        { fichero: 'src/treeViews/configsTreeView.ts', linea: 437, nombra: 'getDefaultSocketUrl' },
+        { fichero: 'src/treeViews/configsTreeView.ts', linea: 472, nombra: 'getDefaultSocketUrl' },
         { fichero: 'src/treeViews/socketsTreeView.ts', linea: 85, nombra: 'getDefaultSocketUrl' },
         { fichero: 'src/treeViews/socketsTreeView.ts', linea: 232, nombra: 'getDefaultSocketUrl' },
         // lo que el docstring dice sobre devolver '' — mismo rasero
         { fichero: 'src/treeViews/socketsTreeView.ts', linea: 92, nombra: "'localhost:3000'" },
-        { fichero: 'src/treeViews/configsTreeView.ts', linea: 436, nombra: 'defaultSocketUrl' },
-        { fichero: 'src/treeViews/configsTreeView.ts', linea: 447, nombra: 'defaultSocketUrl' },
-        { fichero: 'src/treeViews/configsTreeView.ts', linea: 463, nombra: 'defaultSocketUrl' },
+        { fichero: 'src/treeViews/configsTreeView.ts', linea: 474, nombra: 'defaultSocketUrl' },
+        { fichero: 'src/treeViews/configsTreeView.ts', linea: 483, nombra: 'defaultSocketUrl' },
+        { fichero: 'src/treeViews/configsTreeView.ts', linea: 499, nombra: 'defaultSocketUrl' },
     ];
 
     it.each(CITAS)('$fichero:$linea nombra $nombra', ({ fichero, linea, nombra }) => {

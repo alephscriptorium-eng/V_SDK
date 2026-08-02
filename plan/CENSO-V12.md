@@ -80,10 +80,10 @@ palabras borradas.**
 | **no** alcanzables | 19 | **7** | los 2 barriles propios (`launcher/index.ts`, `libs/index.ts`) y los 5 de `src/mcp/` |
 | comandos en `contributes.commands` | 115 en 5 prefijos | **99 en UNO**: `aleph0.` | `node -e` sobre `contributes` |
 | `contributes.chatParticipants` | 6 | **0** | ídem — DV-11 ejecutada |
-| `contributes.customEditors` | 2 | **2** | ídem — hoy en `package.json:1165` y `:1175` |
-| `contributes.jsonValidation` | 3 | **3** | ídem — **sin sustituir**, ver §0.6 |
+| `contributes.customEditors` | 2 | **2** | ídem — hoy en `package.json:1165` y `:1175` ⛔ *(RE-MEDIDO 2026-08-02 por WP-V101, **tercera vez que esta coordenada caduca**: los `viewType` viven hoy en `package.json:1110` y `package.json:1120`, y los dos selectores nombran ya la convención — `package.json:1114` y `:1124`. Ancladas por `plan/ANCLAS.json` (A1, A2, A3): a partir de ahora la deriva sale en rojo, no en silencio)* |
+| `contributes.jsonValidation` | 3 | **3** | ídem — **sin sustituir**, ver §0.6 ⛔ *(RESUELTO 2026-08-02 por WP-V101: **se quedan, y no por inercia**. Las 3 `url` viven en `package.json:969`, `:973` y `:977`. El veredicto «sustituir» presuponía legado sin lector vivo, y eso es falso — ver §0.6·2)* |
 | vistas declaradas | 13 (12 + 1 en `explorer`) | **11**, todas en el contenedor `aleph0` | ídem — D14 queda sin objeto |
-| `package.json` · líneas | ~1527 al nacer | **1248** | `wc -l` |
+| `package.json` · líneas | ~1527 al nacer | **1248** | `wc -l` ⛔ *(RE-MEDIDO 2026-08-02: **1197**. Esta cifra ya se había re-medido una vez y volvió a caducar; es el mismo mecanismo que las coordenadas de la fila `customEditors`. Un recuento de líneas no se puede anclar —cambia con cada edición legítima— y por eso `plan/ANCLAS.json` ancla HECHOS y no cifras: ver §0.6·4)* |
 | `package.json` · `license` | `SEE LICENSE IN LICENSE.md` | **`GPL-3.0-or-later`** (`package.json:7`) | lectura |
 | `package.json` · `icon` | `./media/arrakis-theater-icon.png` | **`./media/aleph-0-icon.png`** (`package.json:34`) | lectura |
 | `configuration.title` | `Arrakis Theater Configuration` | **`Aleph-0`** | lectura |
@@ -128,7 +128,7 @@ ruta; ninguna existe: `.config`, `.esbuild.config.js`,
 | `package-lock.json` | queda | vive |
 | `package.json` | re-contenido | **EJECUTADO** · 1248 líneas · 99 comandos en el único prefijo `aleph0.` · 0 `chatParticipants` |
 | `plan` | queda | vive · **59** ficheros, eran 26 |
-| `schemas` | re-contenido | ⚠️ **NO EJECUTADO** · siguen los 3 schemas legados y sus 3 `jsonValidation`. Ver §0.6 |
+| `schemas` | re-contenido | ⚠️ **NO EJECUTADO** · siguen los 3 schemas legados y sus 3 `jsonValidation`. Ver §0.6 ⛔ *(**FILA RETIRADA CON ACTA 2026-08-02 · WP-V101**: el veredicto «re-contenido» se emitió sobre una premisa que hoy es falsa. Los 3 nombres de fichero (`xplus1-config.json`, `socket-config.json`, `webrtc-ui-config.json`) **no son legado sin lector**: `src/treeViews/configsTreeView.ts` —vivo, cableado en `src/core/bootstrap/assembleContext.ts:22`— los vigila, los escanea y **los GENERA** desde plantilla. `contributes.jsonValidation` es la mitad de validación de esa función viva. **Se quedan.** Lo que sí estaba roto era otra cosa, y se arregló: la plantilla podía escribir `url: ""` y el schema que nosotros mismos empaquetamos lo rechaza. Ver §0.6·2)* |
 | `scripts` | queda | vive · 17 ficheros; los probes V07/V08/V09 siguen, y se les han sumado los de V71 y el trinquete de cobertura |
 | `src` | queda | vive · **25** módulos, eran 28 |
 | `tests` | re-contenido | **EJECUTADO** · 21 ficheros, contenido legado fuera, `setup.ts` y `mocks/` conservados como pedía D10 |
@@ -251,12 +251,78 @@ tres hallazgos se señalan con nombre y ruta, sin tocar.
    siguen en el árbol y siguen cableados en `contributes.jsonValidation`
    apuntando a `./schemas/*.schema.json`. Es la única fila *re-contenido* de la
    Tabla A que quedó sin ejecutar.
+
+   ⛔ **CERRADO 2026-08-02 · WP-V101 — y la premisa era falsa.** No es legado
+   sin lector: los tres nombres de fichero son una **convención viva del
+   workspace que escribimos nosotros**. `src/treeViews/configsTreeView.ts`
+   —cableado en `src/core/bootstrap/assembleContext.ts:22`— los vigila con
+   `createFileSystemWatcher`, los escanea, y **los genera desde plantilla** en
+   `createFromTemplate`. `contributes.jsonValidation` (`package.json:969`,
+   `:973`, `:977`) es la mitad de validación de esa función. **Decisión: se
+   quedan**, porque borrarlos dejaría sin validar unos ficheros que la propia
+   extensión sigue creando. Lo que sí estaba roto —y se arregló— es que la
+   plantilla podía persistir `url: ""` en un campo que esos mismos schemas
+   declaran `required` con `pattern: "^wss?://"`: **escribíamos un fichero que
+   nuestro propio schema marcaba en rojo al abrirlo.** Sigue abierto, y es de
+   **WP-V31**: si el ajuste trae un valor sin esquema (`localhost:7777`) el
+   schema lo rechaza igual.
 3. **Los dos `customEditors` sobrevivieron a la unificación de nombres** ⚠️ —
    V15 llevó los 99 comandos a `aleph0.`, pero sus `viewType` siguen siendo
    `alephscript.agentContentEditor` y `alephscript.agentConfigEditor`
    (`package.json:1165` y `:1175`), y el segundo selecciona por
    `**/theatrical-content/configurations/agents/*.config.json` — una convención
    cuyo directorio V13 podó del repo.
+
+   ⛔ **RE-MEDIDO Y CERRADO 2026-08-02 · WP-V101.** Dos correcciones, y la
+   segunda cambia el veredicto:
+
+   - **Las coordenadas caducaron por tercera vez.** Los `viewType` viven hoy en
+     `package.json:1110` y `package.json:1120`. Este mismo párrafo es un acta
+     escrita para arreglar la generación anterior (`:1446`/`:1456`), y caducó
+     igual. Ancladas ahora en `plan/ANCLAS.json`.
+   - **«una convención cuyo directorio V13 podó del repo» es engañoso.** Lo que
+     V13 podó fue **la copia de ejemplo que había en el repo**. La convención
+     **está viva y la escribimos nosotros**: el comando `aleph0.agents.createNew`
+     (`src/core/bootstrap/commands/agentManagementCommands.ts:46`) **crea
+     `theatrical-content/content/agents/` y
+     `theatrical-content/configurations/agents/` en el workspace del usuario** y
+     escribe los dos ficheros. Todo esto resuelve contra la carpeta abierta por
+     el usuario, nunca contra el paquete. Así que el selector **no apuntaba a
+     una ruta inexistente**: apuntaba exactamente a lo que producimos.
+
+   **El defecto real era el otro selector.** El editor de contenido decía
+   `*.agent.md` **a secas** —sin directorio—, mientras su propio código
+   (`AgentContentEditorProvider.getConfigPath`,
+   `src/editors/AgentContentEditorProvider.ts:251`) asume que el gemelo vive en
+   `theatrical-content/configurations/agents/`. Con `priority: "default"` eso
+   **sustituía al editor de texto del usuario en cualquier `*.agent.md` del
+   workspace**, incluidos los que no tienen nada que ver con la convención, y
+   les ofrecía un botón «abrir configuración» que apuntaba a un fichero que no
+   podía existir. WP-V101 lo estrecha a
+   `**/theatrical-content/content/agents/*.agent.md` (`package.json:1114`), con
+   lo que **las dos mitades del par nombran por fin la misma convención**.
+
+   **Lo que NO se toca, y por qué**: los `viewType` siguen bajo `alephscript.`.
+   No es olvido — **R-V15-7** ya lo declaró no renombrable sin coste: los
+   `workbench.editorAssociations` del usuario y el estado de editor persistido
+   cuelgan de esa cadena, y renombrarla los rompe sin migración. Un `viewType`
+   es un identificador, no una ruta: no apunta a nada que pueda no existir.
+4. **La deriva de coordenadas tiene ya instrumento** ⛔ *(nuevo, WP-V101)* — las
+   dos entradas de arriba llevan **cuatro generaciones** de la misma cita
+   caducando (`:1446`/`:1456` → `:1219` en V15 → `:1165`/`:1175` en esta acta →
+   `:1110`/`:1120` hoy), y **las cuatro resuelven**, así que
+   `scripts/citas-rancias.mjs` las aprueba todas: su ceguera declarada es que
+   comprueba que una cita apunta a algo que **existe**, no que diga la verdad, y
+   pedía «un ancla de texto guardada junto a cada cita». Eso es
+   `plan/ANCLAS.json` + `scripts/anclas-censo.mjs`: se declara el **hecho**
+   (qué token, en qué fichero, cuántas veces) y el gate **deriva la coordenada
+   de hoy**, compara con la que este censo afirma, y enrojece con la corrección
+   ya escrita. **El recuento por fichero no es decorativo**: es lo que caza la
+   deriva de *composición*, que es peor que la de línea — este censo declaraba
+   7 puntos de `theatrical-content` con 5 en `extensionBootstrap.ts`, fichero
+   que hoy tiene **cero** menciones; los 11 puntos vivos están repartidos en
+   otros cinco ficheros. Un barrido que sólo re-mide coordenadas **no lo habría
+   visto nunca**.
 
 ---
 
@@ -844,7 +910,7 @@ entrada rompe otra.
 | ------------ | ----------------------- | --------- |
 | `ArrakisTheater_OperaConfig.json` | `.vscode/settings.json:2-3`, `demo/dummy_workspace/.vscode/settings.json` y `src/core/mcpConfigurationManager.ts:58-65` | las dos primeras citan la ruta; la tercera la abre si existe en el workspace (guardada con `fs.existsSync`: degrada, no rompe) ⛔ *(ACTA: V13 ya podo. El codigo citado vive hoy en `src/core/mcpConfigurationManager.ts:42-49`)* |
 | `sample-config.json` | **nada obligatorio.** `HackerConfigPanelProvider.ts:233` la lista, pero contra el workspace y con `fs.existsSync` (D15); `src/mcpTypes.ts:15` sólo la nombra en un comentario | el borrador heredado decía que el panel «ofrecería un fichero inexistente»: **falso**, D15 |
-| `theatrical-content/` | `package.json:1446` **y** `:1456` (los dos `customEditors`), `extensionBootstrap.ts:1444,1529,1569,1610,1614`, `AgentConfigEditorProvider.ts:371`, `AgentContentEditorProvider.ts:249`, `HackerConfigPanelProvider.ts:291-293` | convención ajena que sobrevive al borrado — 7 puntos de código y 2 del manifiesto, no los 3+1 del borrador ⛔ *(ACTA: V13 ya podo `theatrical-content/`. Las coordenadas `package.json:1446` y `:1456` caducaron — el manifiesto tiene hoy 1248 lineas y los 2 `customEditors` viven en `:1165` y `:1175`)* |
+| `theatrical-content/` | `package.json:1446` **y** `:1456` (los dos `customEditors`), `extensionBootstrap.ts:1444,1529,1569,1610,1614`, `AgentConfigEditorProvider.ts:371`, `AgentContentEditorProvider.ts:249`, `HackerConfigPanelProvider.ts:291-293` | convención ajena que sobrevive al borrado — 7 puntos de código y 2 del manifiesto, no los 3+1 del borrador ⛔ *(ACTA: V13 ya podo `theatrical-content/`. Las coordenadas `package.json:1446` y `:1456` caducaron — el manifiesto tiene hoy 1248 lineas y los 2 `customEditors` viven en `:1165` y `:1175`)* ⛔ *(**RE-MEDIDO 2026-08-02 · WP-V101 — y aquí no derivaron las líneas: derivó el INVENTARIO.** Esta fila declara 7 puntos de código con 5 en `extensionBootstrap.ts`; ese fichero tiene hoy **cero** menciones de `theatrical-content`. Los puntos vivos son **11 en 5 ficheros**: `src/core/bootstrap/commands/agentManagementCommands.ts:46` (×5), `src/editors/AgentConfigEditorProvider.ts:373`, `src/editors/AgentContentEditorProvider.ts:251`, `src/views/HackerConfigPanelProvider.ts:297` (×2) y `package.json:1114` (×2, ya los dos selectores). **Ningún barrido que sólo re-mida coordenadas habría visto esto**, porque el fallo no es dónde está cada punto sino cuáles son. Anclado por composición —token + recuento por fichero— en `plan/ANCLAS.json` (A3, A5-A8). **Y el veredicto de fondo cambia**: «convención ajena» es falso, la escribe `aleph0.agents.createNew` en el workspace del usuario; ver §0.6·3)* |
 | `src/theatrical` | mover `MCPConfiguration` fuera antes: `src/mcpServerManager.ts:4`. **Y la parte viva** (`TheatricalChatManager`) está cableada en `src/core/extensionBootstrap.ts:12` (import), `:58` (campo de `ExtensionContext`) y `:118` (`new TheatricalChatManager`) | rompe la compilación en los cuatro sitios ⛔ *(ACTA: V13 ya podo la parte viva de `src/theatrical`. `src/mcpServerManager.ts:4` SIGUE siendo exacta; `extensionBootstrap.ts:12` no: son hoy 297 lineas y `:12` es el cierre del docblock)* |
 | `src/copilotLogs` | **no basta con el manifiesto.** Código vivo: `src/core/extensionBootstrap.ts:41` y `:42` (imports), `:1773` (`registerCopilotLogCommands`), `:1776-1779` (`getCopilotLogExporterService()` + `initialize().catch`), `:1781` (el log nombra «Copilot Log Exporter»). Y además `.vscode/mcp.json` (`localhost:3100`) y los 12 comandos `copilotLogs.*` de `package.json` | **rompe la compilación** de `src/core`, que es módulo «queda». El manifiesto y la config sólo quedan huérfanos ⛔ *(ACTA: V13 ya podo `src/copilotLogs`. Ninguna de las coordenadas de `extensionBootstrap.ts` vale hoy: el fichero paso a 297 lineas)* |
 | `src/mcpChatParticipant.ts` | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de `ExtensionContext`), `:115` (`new McpChatParticipant`) | rompe la compilación de `src/core` ⛔ *(ACTA: V13 ya podo `src/mcpChatParticipant.ts`. Ninguna de las tres coordenadas de `extensionBootstrap.ts` vale hoy)* |

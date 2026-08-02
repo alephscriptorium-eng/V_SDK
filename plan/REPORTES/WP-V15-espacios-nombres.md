@@ -256,9 +256,24 @@ contrarrevisión.
 `src/editors/AgentConfigEditorProvider.ts:371`,
 `src/editors/AgentContentEditorProvider.ts:249`,
 `src/views/HackerConfigPanelProvider.ts:291` y `:292`, y **1 en el
-manifiesto** (`package.json:1219`, `customEditors[1].filenamePattern`).
+manifiesto** (`package.json:1219`, `customEditors[1].filenamePattern`). ⛔ *(CADUCADA — re-medida por WP-V101 el 2026-08-02: hoy es `package.json:1124`, y `:1219` excede ya las 1197 líneas del manifiesto. Ver la anotación de abajo.)*
 Corrección a R-1: el manifiesto tiene **un** `customEditor` con esa ruta,
 no dos (el otro selecciona `*.agent.md`, sin directorio).
+
+⛔ *ANOTADO por **WP-V101** el 2026-08-02 — acta: se anota, no se corrige
+(`plan/PRACTICAS.md` §7). **Las cinco coordenadas de este párrafo han
+caducado**, y re-medidas hoy son: `src/editors/AgentConfigEditorProvider.ts:373`
+(+2), `src/editors/AgentContentEditorProvider.ts:251` (+2),
+`src/views/HackerConfigPanelProvider.ts:297` y `:298` (+6), y la del manifiesto,
+arriba. **Ésta es la 2ª de cuatro generaciones de la misma deriva** — y la única
+que un barrido de citas podía ver, porque es la única que dejó de resolver: las
+otras tres resolvían y pasaban. La corrección de fondo del párrafo —que el
+manifiesto tenía **un** `customEditor` con esa ruta y no dos— **era cierta, y lo
+siguió siendo hasta hoy**: WP-V101 la cierra haciendo que sean los dos, porque
+el que decía `*.agent.md` a secas secuestraba cualquier fichero con esa
+extensión en cualquier carpeta. El hecho queda anclado por
+`scripts/anclas-censo.mjs` (anclas A2 y A3), que fija el HECHO y **deriva** la
+coordenada en vez de fijarla.*
 
 **No se renombra ninguno, y aquí está el motivo.** `theatrical-content` no
 lleva marca vetada (ni `Zigurat` ni `Arrakis`), no es clave de settings ni

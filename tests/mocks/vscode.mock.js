@@ -129,6 +129,16 @@ const vscode = {
         }),
         saveAll: jest.fn().mockResolvedValue(true),
         findFiles: jest.fn().mockResolvedValue([]),
+        // WP-V101: `aleph0.agents.createNew` escribe la convencion
+        // `theatrical-content/**` en el workspace DEL USUARIO por esta via.
+        // El test de manifiesto la ejecuta de verdad y captura las rutas.
+        fs: {
+            createDirectory: jest.fn().mockResolvedValue(undefined),
+            writeFile: jest.fn().mockResolvedValue(undefined),
+            readFile: jest.fn().mockResolvedValue(Buffer.from('')),
+            delete: jest.fn().mockResolvedValue(undefined),
+            stat: jest.fn().mockResolvedValue({ type: 1, size: 0 })
+        },
         createFileSystemWatcher: jest.fn().mockReturnValue({
             onDidCreate: jest.fn(),
             onDidChange: jest.fn(),
