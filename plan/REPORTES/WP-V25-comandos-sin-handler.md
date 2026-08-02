@@ -22,9 +22,9 @@
 | registrados sin declarar | **5** | **2**, con motivo escrito (§4.3) |
 | ids declarados dos veces | **1** (`aleph0.analytics.export`) | **0** |
 | referencias de menús/atajos a comandos no declarados | 0 | **0** |
-| gate automático que lo vigile | **ninguno** | 15 tests, `npm test` (§4) |
-| tests de `src/core/bootstrap/commands/**` | **0** desde V80 | **15** |
-| suite jest | 429 · 428 pass · 1 skip · 0 fail | **444 · 443 pass · 1 skip · 0 fail** |
+| gate automático que lo vigile | **ninguno** | **20** tests, `npm test` (§4) |
+| tests de `src/core/bootstrap/commands/**` | **0** desde V80 | **20** |
+| suite jest | 429 · 428 pass · 1 skip · 0 fail | **449 · 448 pass · 1 skip · 0 fail** |
 | conjunto de rojos por nombre | baseline | **IDÉNTICO** (§8) |
 | arnés Extension Host (VS Code real) | «31/99 contribuidos NO registrados» (V68) | **«todos los comandos contribuidos están registrados»** · 0 fallos (§8.1) |
 
@@ -245,7 +245,7 @@ declarados 91 + REGISTRO_INTERNO 2 = 93   ✔ biyección
 
 ## 4 · El gate
 
-`tests/unit/core/bootstrap/commands/censoComandos.test.ts` — **15 tests, corre
+`tests/unit/core/bootstrap/commands/censoComandos.test.ts` — **20 tests, corre
 con `npm test`**, y por tanto en el paso que CI marca BLOQUEA.
 
 ### 4.1 · De dónde saca los datos
@@ -271,8 +271,13 @@ repo y otro de mentira para el test.
 | **dirección 1** | `aleph0.vector.fantasma` en los declarados | `sinHandler == ['aleph0.vector.fantasma']` y `exigirCensoLimpio` lanza con `/DECLARADOS SIN HANDLER \(1\)/` |
 | **dirección 2** | `aleph0.vector.mudo` en los registrados | `sinDeclarar == ['aleph0.vector.mudo']` y lanza con `/REGISTRADOS SIN DECLARAR \(1\)/` |
 | **dirección 2, excepción** | el mismo, pero listado en `REGISTRO_INTERNO` | **no** lanza |
+| **dirección 2, exención sin motivo** | el id en `REGISTRO_INTERNO` con motivo `''`, `'   '`, `undefined` o `null` | **lanza igual**: la exención pide motivo, no llave (§10 ②) |
+| **dirección 2, prototipo** | ids `toString`, `constructor`, `hasOwnProperty` | lanzan: `Object.prototype` no regala exenciones (§10 ②) |
 | duplicado | un id declarado dos veces | lanza con `/por duplicado/` |
-| colisión | mismo id registrado por tabla **y** paleta | lanza con `/DOS VECES/` (VS Code revienta al activar) |
+| colisión entre fuentes | mismo id registrado por tabla **y** paleta | lanza con `/DOS VECES/` (VS Code revienta al activar) |
+| **colisión dentro de la paleta** | mismo id dos veces en `CommandPaletteManager` | lanza (§10 ①) |
+| **colisión dentro de la tabla** | mismo id dos veces en `commandTable` | lanza |
+| **ancla de la medida** | se registra dos veces por la API pública real del manager | el **host ve 2 llamadas** y el **Map ve 1**: por eso la medida espía `registerCommand` y no lee `getAllCommands()` (§10 ①) |
 | **anti-verde-de-adorno** | `contributes.commands` **vacío** | el censo sale limpio por la dirección 1 y **aun así lanza**, porque los 93 registrados quedan sin declarar. Un gate que compara dos listas vacías no vigila nada |
 
 ### 4.3 · Dirección 2: qué decidí que pase, y por qué no es simétrica
@@ -362,7 +367,7 @@ peor que un comando muerto.
   (`systemStatus`, `sockets.quickConnect`, `logs.showMainChannel`,
   `logs.clearAndRestart` — dos con atajo) **dejan de estar rotos**. Es mejora,
   no regresión.
-- `npm run compile:production` verde. `eslint src` **0 errores** (193 avisos
+- `npm run compile:production` verde. `eslint src` **0 errores** (**192** avisos
   preexistentes de estilo; los `any` que añado siguen el idioma ya establecido
   en `mcpDomainCommands.ts` y `teatroCommands.ts` para los ítems de árbol).
 - Suite: **0 fallos**, conjunto de rojos por nombre **idéntico** al baseline.
@@ -372,13 +377,24 @@ peor que un comando muerto.
 ## 6 · Qué NO cubro (léase entero antes de aceptar)
 
 1. **La utilidad de los handlers. Vigilo el cable, no lo que hay al otro
-   lado.** Y hay un caso que conviene ver antes de celebrar nada:
-   `SocketsTreeDataProvider.connectToServer` dice literalmente *«Would use
-   SocketMonitor.connect() in real implementation»* y llama a
-   `simulateConnection()`. Los cinco comandos de sockets de la vía A ahora
-   **responden**, y lo que responden es una simulación que ya estaba escrita.
-   Eso es otra ficha. Este WP quita la mentira «no existe»; no promete que lo
-   que existe sirva.
+   lado.** Y el número exacto, porque decirlo de pasada sería el mismo vicio
+   que este WP persigue: **5 de los 20 cableados — el 25 %** — no llegan a
+   ningún socket. Son los cinco de `SocketsTreeDataProvider`, y **`socketMonitor`
+   no se invoca ni una vez en todo el fichero** (`grep 'socketMonitor\.'` →
+   cero). Cuatro llevan el sello literal *«Would use SocketMonitor.X() in real
+   implementation»*: `connectToServer` (:239, llama a `simulateConnection()`),
+   `joinRoom` (:264), `leaveRoom` (:275) y `sendTestMessage` (:292, que
+   **construye el objeto `message` y no lo usa jamás**). El quinto,
+   `disconnectFromServer`, no lleva comentario pero tampoco habla con nadie:
+   baja un campo local y anuncia «Disconnected from Socket.IO server».
+
+   **Los cinco le afirman al usuario haber hecho algo que no hicieron** —
+   «Connected to…», «Joined room:», «Test message sent to room:»— y desde V25
+   son alcanzables desde el menú contextual del árbol y, vía
+   `sockets.quickConnect`, desde **`ctrl+alt+c`**. Antes eran inalcanzables. Es
+   otra ficha, pero el saldo hay que decirlo entero: este WP cambia «no
+   responde» por «responde una simulación» en el 25 % de lo que cablea. **Los
+   otros 15 sí delegan en capacidad real**, método a método.
 2. **`src/commandPaletteManager.ts` no se toca** (fuera del ALCANCE_DIFF). Sus
    16 comandos se **miden** pero no se auditan. Que registre por su cuenta,
    fuera de la tabla que V80 creó para centralizar, es deuda estructural viva.
@@ -393,10 +409,26 @@ peor que un comando muerto.
    restantes tienen sentido de UX; sólo que apuntan a comandos declarados.
 5. **No he comprobado que cada comando haga lo que su título dice.** El gate
    comprueba que exista handler, no que el handler corresponda al título.
-6. **El arnés de Extension Host no se ha endurecido** (§4.5, F-1). Sí se ha
+6. **El único efecto DESTRUCTIVO que este WP hace alcanzable, dicho por su
+   nombre: `aleph0.configs.format`.** Estaba declarado, con fila de menú y sin
+   handler: no hacía nada. Ahora llama a
+   `ConfigsTreeDataProvider.formatConfiguration`, que hace `readFile` →
+   `JSON.parse` → `JSON.stringify(…, null, 2)` → **`writeFile` sobre el fichero
+   original, sin confirmación y sin copia** (`src/treeViews/configsTreeView.ts:420`).
+   Y el árbol escanea `**/package.json` y `**/tsconfig.json` (`:54-55`), que
+   casan el `when` del menú (`viewItem =~ /^configFile/`). O sea: reformatea el
+   `package.json` del usuario a dos espacios de un clic.
+   **No es regresión** —la capacidad y la fila de menú son anteriores a V25, y
+   §6.1 declara que no cubro la utilidad del handler— pero un reporte que
+   nombra hasta el tartamudeo de un título tiene que nombrar esto.
+   Hermano menor: `configs.backup` deja ficheros `.backup.<epoch>` sueltos
+   junto al original, sin entrada en `.gitignore`.
+   **No toco `configsTreeView.ts`**: me sacaría del alcance y abre el debate de
+   confirmación y deshacer, que es otra ficha.
+7. **El arnés de Extension Host no se ha endurecido** (§4.5, F-1). Sí se ha
    **corrido**, y sale verde con el cruce limpio (§8.1); lo que no he hecho es
    quitarle el escape `EXTHOST_STRICT`, que está fuera de mi alcance.
-7. **Sólo he corrido el arnés en modo `source`**, no `test:exthost:vsix` (que
+8. **Sólo he corrido el arnés en modo `source`**, no `test:exthost:vsix` (que
    exige empaquetar). El manifiesto es el mismo fichero en los dos modos.
 
 **Follow-ups nombrados** (no los abro yo; los dejo escritos con su cambio
@@ -420,8 +452,8 @@ mueve la cobertura, el suelo se mueve con una línea de diff que alguien firma,
 y tú lo declaras en el reporte»*.
 
 ```
-statements 1541 → 1813      functions 272 → 350
-lines      1519 → 1777      branches 546 → 546   (sin cambio)
+statements 1541 → 1816      functions 272 → 352
+lines      1519 → 1780      branches 546 → 547   (+1, explicada en §10)
 ```
 
 **Qué lo movió**: nada de lo que este WP haya escrito como test de
@@ -454,11 +486,11 @@ exige. Todos los procesos caros por `scripts/slot.sh run`.
 | # | comando | resultado |
 | - | ------- | --------- |
 | 1 | `node scripts/rojos-jest.mjs --gate` **antes de tocar nada** (HEAD `342ce5e`) | exit 0 — «conjunto de rojos IDENTICO al declarado» |
-| 2 | `jest tests/unit/core/bootstrap/commands --coverage=false` | **15/15 PASS** |
-| 3 | `eslint src --ext ts` | **0 errores**, 193 avisos (preexistentes) |
+| 2 | `jest tests/unit/core/bootstrap/commands --coverage=false` | **20/20 PASS** |
+| 3 | `eslint src --ext ts` | **0 errores**, **192** avisos (preexistentes) |
 | 4 | `npm run compile:production` | OK · `dist/extension.js` 718.1 kb |
 | 5 | `node scripts/rojos-jest.mjs --gate` **después** | exit 0 — «conjunto de rojos IDENTICO al declarado» |
-| 6 | `jest` instrumentado | **13 suites · 444 tests · 443 pass · 1 skip · 0 fail** |
+| 6 | `jest` instrumentado | **13 suites · 449 tests · 448 pass · 1 skip · 0 fail** |
 | 7 | `node scripts/cobertura-trinquete.mjs` | primero **rechazó** («la cobertura SUBIÓ y el suelo no lo recoge»); tras firmar el suelo, «censo COMPLETO y unidades cubiertas EN EL SUELO declarado» |
 | 8 | censo «antes» reproducible desde `git show HEAD:…` | 99/98 · 72 registrados · **31** sin handler · 5 sin declarar · 1 duplicado |
 | 9 | `npm run test:exthost` (VS Code 1.131.0 real) | **arnés VERDE** · 0 fallos · 1 aviso · «todos los comandos contribuidos están registrados» (§8.1) |
@@ -516,3 +548,85 @@ justo lo que F-1 (§6) deja intacto al endurecer la otra dirección.
 > registro tiene **dos fuentes**, no una: `commandTable` (56) y
 > `CommandPaletteManager` (16). Contar sólo la tabla de V80 da 56 y lleva a
 > conclusiones falsas en las dos direcciones.
+
+---
+
+## 10 · Ronda de cierre de la contrarrevisión
+
+Cuatro puntos devueltos. **Los cuatro se aceptan; ninguno se discute.** Los dos
+de código llevan **ancla de mutación**: revertir cada arreglo pone rojo un test
+concreto, y ningún otro.
+
+### ① Punto ciego paleta↔paleta — **cierto, y peor de lo que parecía**
+
+La colisión se calculaba como `paleta.filter(id => enTabla.has(id))`: sólo el
+cruce **entre** fuentes. Un id registrado dos veces **dentro** de
+`CommandPaletteManager` no lo veía nadie — y VS Code lanza al activar igual.
+
+Pero el arreglo de la fórmula, solo, habría sido teatro: la medida venía de
+`getAllCommands()`, que devuelve un `Map` clavado por id y por tanto
+**deduplica**. Cualquier comprobación de duplicados sobre esa lista era
+tautológica por construcción. Así que se arreglan **las dos cosas**:
+
+- la **medida** pasa a espiar `vscode.commands.registerCommand` — el hecho que
+  el host ve— en vez de leer el mapa interno;
+- la **fórmula** pasa a contar el multiconjunto: cubre tabla∩paleta,
+  tabla∩tabla **y** paleta∩paleta.
+
+El ancla es real, no sintética: se registra dos veces el mismo id por la API
+pública del manager y se exige ver la discrepancia exacta — `llamadas` = 2,
+`getAllCommands().length` = +1. Es la demostración de por qué la medida vieja
+no servía. Y tiene una huella medible: esa prueba ejercita **por primera vez en
+la historia del repo** la rama `if (this.commands.has(command.id))` de
+`registerCommand` (el `warn('… is already registered, overwriting')`,
+`commandPaletteManager.ts:218-220`) — de ahí las **+1 rama** del suelo (§7).
+El punto ciego no era sólo del gate: nadie había pasado nunca por ahí.
+
+### ② La puerta comprobaba la llave, no el motivo — **cierto**
+
+`!(id in interno)` tenía dos agujeros, los dos verificados con el propio
+instrumento: motivo `''`, `'   '`, `undefined` y `null` pasaban en verde
+—contra lo que la cabecera del fichero promete, «CON MOTIVO ESCRITO»— y `in`
+recorre el prototipo, así que `toString`, `constructor` y `hasOwnProperty`
+salían exentos gratis. Ahora:
+`Object.prototype.hasOwnProperty.call(interno, id) && String(interno[id] ?? '').trim() !== ''`.
+
+### Ancla de mutación de ① y ②
+
+Revertidas las dos líneas al código anterior, **caen exactamente 4 tests de
+20**, y sólo ésos:
+
+```
+× DIRECCIÓN 2 · la exención exige MOTIVO, no sólo llave
+× DIRECCIÓN 2 · el prototipo no regala exenciones
+× el mismo id registrado DOS VECES DENTRO DE LA PALETA pone rojo
+× el mismo id registrado DOS VECES DENTRO DE LA TABLA pone rojo
+Tests: 4 failed, 16 passed, 20 total
+```
+
+### ③ y ④ — las dos frases
+
+Están en su sitio, no aquí: **§6.1** (el 25 % que no llega a ningún socket, con
+los cinco nombrados y el matiz de que cuatro llevan el sello literal y el
+quinto no lo lleva pero tampoco habla con nadie) y **§6.6** (`configs.format`
+reescribiendo `package.json` sin confirmación ni copia). No toco
+`configsTreeView.ts`, como se indicó.
+
+### Enrutado
+
+- **El gate mide la tabla, no el registro.** Cierto y consta: envolver
+  `registerCommands()` en un `if` dejaría el gate verde con la paleta muerta.
+  Hoy **no lo bloquea nadie** —ni este gate ni el arnés, cuyo paso está en
+  `aviso()` salvo `EXTHOST_STRICT=1`—. Es **F-1**, fuera de alcance.
+- **Los tres comandos de sala rechazaban el string que su propia superficie les
+  manda: arreglado.** Verificado antes de tocar nada:
+  `HackerCommandPanelProvider.promptAndExecute` invoca cualquier comando como
+  `executeCommand(commandId, [input])` con lo que el usuario teclee
+  (`src/views/HackerCommandPanelProvider.ts:394`), y `showAllCommands` (`:476`)
+  deja elegir cualquiera de la lista. `nombreDeSala` acepta ya el string pelado
+  — y `rutaDeConfig` también, porque era el mismo agujero en el mismo patrón y
+  arreglar un gemelo y dejar el otro habría sido peor que no tocar ninguno.
+- **Lint: 192, no 193.** Corregido en §5.2 y §8. Re-medido tras esta ronda:
+  **192, 0 errores**.
+
+---
