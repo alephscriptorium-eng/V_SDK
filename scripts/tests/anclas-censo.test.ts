@@ -261,12 +261,84 @@ describe('§4 · un gate sin anclas no emite veredicto', () => {
 });
 
 // =============================================================================
+describe('§4.b · el ancla VACUA, que engorda el denominador sin vigilar nada', () => {
+    // `debeNombrar: [""]` casa con TODAS las líneas. Con `veces` = nº de líneas
+    // sale PASS —y suma uno al contador «anclas declaradas», que es justo lo que
+    // el instrumento vende como su mecanismo de honestidad.
+    const registroVacuo = {
+        anclas: [{
+            id: 'A-VACUA', fichero: 'src/cosa.ts', debeNombrar: [''], veces: 3,
+            citas: []
+        }]
+    };
+
+    it('un token vacío es error de USO: exit 2, sin veredicto', () => {
+        const r = correr(mundo({ anclas: registroVacuo }));
+        expect(r.code).toBe(2);
+        expect(r.todo).not.toContain('VEREDICTO');
+        expect(r.todo).toContain('casaria con TODAS las lineas');
+    });
+
+    it('`veces` no entero o < 1 también es error de uso', () => {
+        const r = correr(mundo({
+            anclas: { anclas: [{ id: 'A-CERO', fichero: 'src/cosa.ts', debeNombrar: ['MARCA_VIVA'], veces: 0 }] }
+        }));
+        expect(r.code).toBe(2);
+        expect(r.todo).toContain('entero >= 1');
+    });
+
+    it('MUTANTE · sin la validación, el ancla vacua PASA e infla el denominador', () => {
+        const m = mutante('if (invalidas.length) {', 'if (false) {');
+        const r = correr(mundo({ anclas: registroVacuo }), m);
+        expect(r.todo).toContain('VEREDICTO: PASS');
+        expect(r.todo).toContain('anclas declaradas          : 1');
+        expect(r.code).toBe(0);
+    });
+});
+
+// =============================================================================
+describe('§4.c · la ceguera «recuento correcto, sitio equivocado», declarada', () => {
+    it('el token puede cambiar de sentido sin cambiar de recuento: el gate PASA', () => {
+        // Éste es un test de CEGUERA, no de capacidad: fija lo que el gate NO
+        // ve, para que nadie lo lea como más de lo que es. Lo que sí lo caza es
+        // el test que EJECUTA (tests/unit/manifiesto/), y por eso hacen falta
+        // los dos instrumentos.
+        const r = correr(mundo({
+            fuente: 'const X = "MARCA_VIVA/carpeta-que-no-escribimos/nada";\n',
+            doc: 'El hecho vive en `src/cosa.ts:1`.\n',
+            anclas: {
+                anclas: [{
+                    id: 'A1', fichero: 'src/cosa.ts', debeNombrar: ['MARCA_VIVA'], veces: 1,
+                    citas: [{ doc: 'plan/DOC.md', dice: 'src/cosa.ts:1' }]
+                }]
+            }
+        }));
+        expect(r.todo).toContain('VEREDICTO: PASS');
+        expect(r.code).toBe(0);
+    });
+
+    it('el instrumento DECLARA esa ceguera en cada corrida', () => {
+        expect(correr(mundo({})).todo).toContain('RECUENTO CORRECTO, SITIO EQUIVOCADO');
+    });
+
+    it('y declara que anclar la CITA sí tiene coste de desplazamiento', () => {
+        expect(correr(mundo({})).todo).toContain('Anclar el HECHO es inmune a mover lineas');
+    });
+});
+
+// =============================================================================
 describe('§5 · el registro real de este repo', () => {
     it('`--anclas` lista el censo, una por línea, y todas tienen fichero y recuento', () => {
         const r = spawnSync(process.execPath, [INSTRUMENTO, '--anclas'], { encoding: 'utf8' });
         expect(r.status).toBe(0);
         const filas = (r.stdout || '').trim().split('\n').filter(Boolean);
-        expect(filas.length).toBeGreaterThan(0);
+        // SUELO DEL REGISTRO — sin esto, la forma trivial de poner el gate verde
+        // es ADELGAZAR el registro: borrando 7 de las 8 anclas la suite entera
+        // seguía en verde y el gate dejaba de cazar la regresión que este WP
+        // arregla (revertir el selector a `*.agent.md` salía PASS). Un gate cuyo
+        // alcance se puede reducir en silencio no es un gate: es un adorno.
+        // Este número sube con el registro; jamás baja sin que alguien lo firme.
+        expect(filas.length).toBeGreaterThanOrEqual(8);
         for (const f of filas) {
             const [id, fichero, token, veces] = f.split('\t');
             expect(id).toBeTruthy();

@@ -36,7 +36,7 @@
       "fichero": "package.json",
       "debeNombrar": ["\"viewType\": \"alephscript.agentContentEditor\""],
       "veces": 1,
-      "porque": "El editor de contenido de agentes. Su `viewType` sigue bajo `alephscript.` a proposito: R-V15-7 lo declaro no renombrable sin coste (los `editorAssociations` del usuario y el estado persistido cuelgan del id).",
+      "porque": "El editor de contenido de agentes. Su `viewType` sigue bajo `alephscript.` a proposito: **R-V15-7** (`plan/REPORTES/WP-V15-espacios-nombres.md:709`) declaro los 11 ids de vista y los 3 `viewType` no renombrables sin coste, y su razon literal es que **los `<viewId>.focus` de VS Code y el `globalState` del tema cuelgan de ellos** — no `editorAssociations`, que es lo que decia la primera version de esta nota y NO es lo que R-V15-7 dice.",
       "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "package.json:1110" }]
     },
     {
@@ -91,9 +91,9 @@
       "id": "A8-convencion-en-el-panel",
       "fichero": "src/views/HackerConfigPanelProvider.ts",
       "debeNombrar": ["theatrical-content"],
-      "veces": 2,
-      "porque": "El panel ofrece los mismos directorios resueltos contra el workspace y filtrados con `fs.existsSync` (censo D15: degrada, no rompe). Superficie de WP-V102: WP-V101 la ANCLA pero no la toca.",
-      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/views/HackerConfigPanelProvider.ts:297" }]
+      "veces": 3,
+      "porque": "El panel ofrece los mismos directorios resueltos contra el workspace del usuario. Superficie de WP-V102: WP-V101 la ANCLA pero no la toca. ERA `veces: 2` (`:297`, `:298`) y WP-V102 reescribio el fichero: hoy son 3 (`:352` la prosa que explica por que la convencion es del usuario, `:371` y `:372` los datos). **Esta ancla se rompio de verdad y en rojo cuando V102 entro en main** — no es un ejemplo inventado: es la primera deriva real que este instrumento caza, y la provoco otro WP corriendo en paralelo.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/views/HackerConfigPanelProvider.ts:352" }]
     }
   ]
 }

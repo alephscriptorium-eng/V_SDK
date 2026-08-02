@@ -95,7 +95,19 @@ const CEGUERA = [
     '--- LO QUE ESTE VEREDICTO NO SIGNIFICA --------------------------------------',
     'Solo cubre las anclas REGISTRADAS en plan/ANCLAS.json. No descubre hechos que',
     'nadie anclo: un ancla de menos es una deriva que nadie vera. Por eso el',
-    'denominador sale siempre. Tampoco juzga si el `porque` de un ancla es cierto.'
+    'denominador sale siempre. Tampoco juzga si el `porque` de un ancla es cierto.',
+    '',
+    'CEGUERA MEDIDA · RECUENTO CORRECTO, SITIO EQUIVOCADO. Un ancla fija QUE token',
+    'aparece y CUANTAS veces, no que diga algo sensato. Apuntar el selector a',
+    '`**/theatrical-content/CARPETA-QUE-NO-ESCRIBIMOS/*.config.json` deja el',
+    'recuento en 2 y este gate sale PASS. Eso lo caza el TEST que ejecuta',
+    '(tests/unit/manifiesto/), no este instrumento: aqui se vigila el inventario,',
+    'alli la conducta. Las dos mitades hacen falta.',
+    '',
+    'Y ANCLAR LA CITA NO ES GRATIS: la mitad `citas` compara la coordenada que el',
+    'documento vivo afirma, asi que un desplazamiento que no cambia ningun hecho',
+    'SI la enrojece. Anclar el HECHO es inmune a mover lineas; anclar la CITA no',
+    'lo es — y a cambio te escribe la correccion exacta que hay que poner.'
 ];
 
 const AYUDA = [
@@ -139,6 +151,29 @@ if (anclas.length === 0) {
     // Un gate sin anclas pasa siempre. Ese PASS no significa nada y por eso no
     // se emite: es el mismo modo de fallo que un denominador silencioso.
     process.stderr.write('anclas-censo: el registro no declara ni un ancla. Sin veredicto.\n');
+    process.exit(2);
+}
+
+// ANCLA VACUA: `debeNombrar: [""]` casa con TODAS las lineas del fichero, asi
+// que con `veces` = numero de lineas sale PASS sin vigilar nada — y de paso
+// INFLA el contador «anclas declaradas», que es justo lo que este instrumento
+// vende como su mecanismo de honestidad. Un denominador que se puede engordar
+// con anclas que no miran nada es peor que no tenerlo. Se rechaza en el
+// registro, no en el veredicto: es un error de uso, no una deuda del arbol.
+const invalidas = [];
+for (const a of anclas) {
+    const tokens = Array.isArray(a.debeNombrar) ? a.debeNombrar : [];
+    if (!a.id) invalidas.push(`(sin id) · falta \`id\``);
+    else if (!a.fichero) invalidas.push(`${a.id} · falta \`fichero\``);
+    else if (tokens.length === 0) invalidas.push(`${a.id} · \`debeNombrar\` vacio`);
+    else if (tokens.some(t => typeof t !== 'string' || t.trim() === ''))
+        invalidas.push(`${a.id} · \`debeNombrar\` trae un token vacio: casaria con TODAS las lineas`);
+    else if (!Number.isInteger(a.veces) || a.veces < 1)
+        invalidas.push(`${a.id} · \`veces\` debe ser un entero >= 1, y es ${JSON.stringify(a.veces)}`);
+}
+if (invalidas.length) {
+    process.stderr.write('anclas-censo: el registro tiene anclas invalidas. Sin veredicto.\n');
+    for (const l of invalidas) process.stderr.write('  - ' + l + '\n');
     process.exit(2);
 }
 

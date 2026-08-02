@@ -27,10 +27,25 @@
  *   En ningun caso se lee el texto de `package.json` buscando una cadena: se
  *   lee el manifiesto como DATOS y se confronta con lo que el codigo produce.
  *
- * DEPENDENCIAS TRANSITIVAS, DECLARADAS
- *   `ajv` y `minimatch` no son dependencias directas de este paquete; entran
- *   por `eslint` y por `jest`. Si un dia desaparecen, este fichero **no
- *   compila y la suite enrojece** — falla cerrado, que es como debe fallar.
+ * DEPENDENCIAS TRANSITIVAS, DECLARADAS — Y MEDIDAS, NO SUPUESTAS
+ *   Ninguna de las dos es dependencia directa de este paquete. La primera
+ *   version de este encabezado decia «entran por eslint y por jest» y ERA
+ *   FALSO en los dos casos; medido en `package-lock.json`:
+ *
+ *     · `node_modules/ajv` 8.17.1 esta marcado **`dev: false`**: lo arrastran
+ *       `@alephscript/mcp-core-sdk` y `@modelcontextprotocol/sdk`, que son
+ *       dependencias de PRODUCCION. eslint pide `^6.12.4` y se lleva su propia
+ *       copia anidada (`node_modules/eslint/node_modules/ajv`, 6.12.6).
+ *     · `node_modules/minimatch` 9.0.5 NO es el de jest: los de jest son 3.1.2
+ *       anidados. El de raiz lo sube `@typescript-eslint/parser`.
+ *
+ *   Hay **3 `ajv` y 13 `minimatch`** en el arbol. Lo que importa para este
+ *   fichero es que `require('ajv')` y `require('minimatch')` resuelven a los de
+ *   raiz, y que si desaparecen **el fichero no compila y la suite enrojece**:
+ *   falla cerrado, que es como debe fallar. No se promueven a `devDependencies`
+ *   porque tocar `package-lock.json` con un `npm ci` local incompleto arriesga
+ *   mas de lo que evita — pero **ese es el motivo, no el de la procedencia**.
+ *
  *   Se usan porque son los matchers de verdad: reimplementar el globbing o la
  *   validacion de JSON Schema aqui probaria mi reimplementacion, no VS Code.
  */
@@ -238,6 +253,68 @@ describe('WP-V101 §2 · jsonValidation: lo que la extension escribe pasa el sch
             const errores = validar(schemaDelManifiesto(fichero), JSON.parse(contenido));
             expect({ fichero, errores }).toEqual({ fichero, errores: [] });
         });
+    });
+});
+
+// =============================================================================
+describe('WP-V101 §4 · la TERCERA mitad: lo que el codigo REGISTRA y lo que el manifiesto DECLARA', () => {
+    /**
+     * Un `customEditor` tiene tres piezas y hasta ahora sólo se ataban dos:
+     *
+     *   manifiesto  <->  comando que escribe los ficheros   (§1, ya cubierto)
+     *   manifiesto  <->  registro en tiempo de arranque     (ESTO, que faltaba)
+     *
+     * Sin esta tercera, el código podía registrar un `viewType` que el
+     * manifiesto no declara —VS Code no lo casa con nada y el editor no abre
+     * jamás— y ninguna suite se enteraba. No es hipotético: este WP podó dos
+     * `static register()` muertos que registraban «theatrical.agentContentEditor»
+     * y «theatrical.agentConfigEditor», dos nombres que no existen en
+     * `contributes.customEditors`.
+     *
+     * Se comparan CONJUNTOS, no listas: sobrar es tan defecto como faltar.
+     */
+    const RUTA_REGISTRO = path.join(RAIZ, 'src', 'core', 'bootstrap', 'viewRegistry.ts');
+
+    /** Los `viewType` que el registro declara para `kind: 'customEditor'`. */
+    function viewTypesDelCodigo(): string[] {
+        const texto = fs.readFileSync(RUTA_REGISTRO, 'utf8');
+        const encontrados: string[] = [];
+        // Cada bloque `{ kind: 'customEditor', viewType: '…' }` del registro.
+        const re = /kind:\s*'customEditor'[\s\S]*?viewType:\s*'([^']+)'/g;
+        for (const m of texto.matchAll(re)) encontrados.push(m[1]);
+        return encontrados.sort();
+    }
+
+    it('el registro declara customEditors (si no, este test no vigila nada)', () => {
+        // Guarda anti-vacuidad: si el regex deja de casar, los dos conjuntos
+        // serían vacíos y la comparación pasaría sin comprobar nada.
+        expect(viewTypesDelCodigo().length).toBeGreaterThan(0);
+    });
+
+    it('los viewType del CODIGO y los del MANIFIESTO son el mismo conjunto', () => {
+        const delManifiesto = (manifiesto.contributes.customEditors as any[])
+            .map(e => e.viewType).sort();
+        expect(viewTypesDelCodigo()).toEqual(delManifiesto);
+    });
+
+    it('ningun fichero de src/editors nombra un viewType que el manifiesto no declare', () => {
+        // Cierra el agujero por el otro lado: los `static register()` muertos
+        // vivían aquí, no en el registro, así que la comparación de arriba no
+        // los habría visto.
+        const declarados = new Set((manifiesto.contributes.customEditors as any[]).map(e => e.viewType));
+        const dir = path.join(RAIZ, 'src', 'editors');
+        const intrusos: string[] = [];
+        for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.ts'))) {
+            const texto = fs.readFileSync(path.join(dir, f), 'utf8');
+            texto.split(/\r?\n/).forEach((linea, i) => {
+                // Convención de V100: «…» marca un nombre MUERTO y narrado.
+                for (const m of linea.matchAll(/'([A-Za-z0-9_]+\.agent(?:Content|Config)Editor)'/g)) {
+                    if (linea.includes(`«${m[1]}»`)) { return; }
+                    if (!declarados.has(m[1])) intrusos.push(`${f}:${i + 1}  ${m[1]}`);
+                }
+            });
+        }
+        expect(intrusos).toEqual([]);
     });
 });
 

@@ -288,10 +288,17 @@ export class McpConfigurationManager {
      *     vez las movió el WP siguiente al que las fijó. V100 declaró el coste
      *     («si alguien mueve esas líneas, el rojo aparece aquí») y se cumplió a
      *     la primera: su test enrojeció por una edición legítima que no cambió
-     *     ningún hecho. Es la quinta generación de la misma deriva. El remedio
-     *     que NO tiene ese coste es anclar el HECHO en vez de la línea —el
-     *     registro de anclas que lee `scripts/anclas-censo.mjs`—, que sobre
-     *     esta misma edición se quedó en verde porque los hechos no cambiaron.
+     *     ningún hecho. Es la quinta generación de la misma deriva.
+     *
+     *     Y AQUÍ VA EL MATIZ, PORQUE LA VERSIÓN CORTA DE ESTO ERA FALSA: el
+     *     instrumento de anclas (`scripts/anclas-censo.mjs`) **no** es inmune
+     *     al desplazamiento sin más. **Anclar el HECHO —qué token, en qué
+     *     fichero, cuántas veces— sí lo es; anclar la CITA de un documento
+     *     vivo NO lo es, y a cambio te escribe la corrección exacta.** Que
+     *     siguiera verde sobre la edición de `configsTreeView.ts` no prueba lo
+     *     primero: prueba que ningún ancla cubre ese fichero. Sobre uno que sí
+     *     cubre, un desplazamiento que no cambia ningún hecho lo pone rojo en
+     *     su mitad de citas. Medido, no supuesto.
      *     (El registro no se nombra aquí a propósito: §2 de este módulo
      *     prohíbe nombres `.json` vivos ajenos, y la convención «…» marca
      *     nombres MUERTOS — usarla para uno vivo sería mentir.)

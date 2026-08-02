@@ -303,10 +303,25 @@ tres hallazgos se señalan con nombre y ruta, sin tocar.
    lo que **las dos mitades del par nombran por fin la misma convención**.
 
    **Lo que NO se toca, y por qué**: los `viewType` siguen bajo `alephscript.`.
-   No es olvido — **R-V15-7** ya lo declaró no renombrable sin coste: los
-   `workbench.editorAssociations` del usuario y el estado de editor persistido
-   cuelgan de esa cadena, y renombrarla los rompe sin migración. Un `viewType`
-   es un identificador, no una ruta: no apunta a nada que pueda no existir.
+   No es olvido — **R-V15-7** (`plan/REPORTES/WP-V15-espacios-nombres.md:709`)
+   ya declaró los 11 ids de vista y los 3 `viewType` **no renombrables sin
+   coste**, y su razón literal es que **los `<viewId>.focus` de VS Code y el
+   `globalState` del tema cuelgan de ellos**. Un `viewType` es un identificador,
+   no una ruta: no apunta a nada que pueda no existir, así que no puede quedar
+   huérfano en el sentido de CA-1.
+
+   *(Corrección de WP-V101 a sí mismo: la primera redacción atribuía a R-V15-7
+   un argumento sobre `workbench.editorAssociations` que **R-V15-7 no hace**. El
+   razonamiento de fondo se sostiene —un identificador persistido no se renombra
+   sin migración— pero la atribución era falsa, y atribuir mal es la misma
+   familia que citar mal.)*
+
+   **Lo que sí se cerró, y era el artefacto literal del título del WP**: había
+   **dos `viewType` huérfanos de verdad**, `«theatrical.agentContentEditor»` y
+   `«theatrical.agentConfigEditor»`, en sendos `static register()` de
+   `src/editors/` **que no llamaba nadie** y que no existen en
+   `contributes.customEditors`. Podados. El registro real lo hace
+   `src/core/bootstrap/viewRegistry.ts` con los `viewType` del manifiesto.
 4. **La deriva de coordenadas tiene ya instrumento** ⛔ *(nuevo, WP-V101)* — las
    dos entradas de arriba llevan **cuatro generaciones** de la misma cita
    caducando (`:1446`/`:1456` → `:1219` en V15 → `:1165`/`:1175` en esta acta →
@@ -910,7 +925,7 @@ entrada rompe otra.
 | ------------ | ----------------------- | --------- |
 | `ArrakisTheater_OperaConfig.json` | `.vscode/settings.json:2-3`, `demo/dummy_workspace/.vscode/settings.json` y `src/core/mcpConfigurationManager.ts:58-65` | las dos primeras citan la ruta; la tercera la abre si existe en el workspace (guardada con `fs.existsSync`: degrada, no rompe) ⛔ *(ACTA: V13 ya podo. El codigo citado vive hoy en `src/core/mcpConfigurationManager.ts:42-49`)* |
 | `sample-config.json` | **nada obligatorio.** `HackerConfigPanelProvider.ts:233` la lista, pero contra el workspace y con `fs.existsSync` (D15); `src/mcpTypes.ts:15` sólo la nombra en un comentario | el borrador heredado decía que el panel «ofrecería un fichero inexistente»: **falso**, D15 |
-| `theatrical-content/` | `package.json:1446` **y** `:1456` (los dos `customEditors`), `extensionBootstrap.ts:1444,1529,1569,1610,1614`, `AgentConfigEditorProvider.ts:371`, `AgentContentEditorProvider.ts:249`, `HackerConfigPanelProvider.ts:291-293` | convención ajena que sobrevive al borrado — 7 puntos de código y 2 del manifiesto, no los 3+1 del borrador ⛔ *(ACTA: V13 ya podo `theatrical-content/`. Las coordenadas `package.json:1446` y `:1456` caducaron — el manifiesto tiene hoy 1248 lineas y los 2 `customEditors` viven en `:1165` y `:1175`)* ⛔ *(**RE-MEDIDO 2026-08-02 · WP-V101 — y aquí no derivaron las líneas: derivó el INVENTARIO.** Esta fila declara 7 puntos de código con 5 en `extensionBootstrap.ts`; ese fichero tiene hoy **cero** menciones de `theatrical-content`. Los puntos vivos son **11 en 5 ficheros**: `src/core/bootstrap/commands/agentManagementCommands.ts:46` (×5), `src/editors/AgentConfigEditorProvider.ts:373`, `src/editors/AgentContentEditorProvider.ts:251`, `src/views/HackerConfigPanelProvider.ts:297` (×2) y `package.json:1114` (×2, ya los dos selectores). **Ningún barrido que sólo re-mida coordenadas habría visto esto**, porque el fallo no es dónde está cada punto sino cuáles son. Anclado por composición —token + recuento por fichero— en `plan/ANCLAS.json` (A3, A5-A8). **Y el veredicto de fondo cambia**: «convención ajena» es falso, la escribe `aleph0.agents.createNew` en el workspace del usuario; ver §0.6·3)* |
+| `theatrical-content/` | `package.json:1446` **y** `:1456` (los dos `customEditors`), `extensionBootstrap.ts:1444,1529,1569,1610,1614`, `AgentConfigEditorProvider.ts:371`, `AgentContentEditorProvider.ts:249`, `HackerConfigPanelProvider.ts:291-293` | convención ajena que sobrevive al borrado — 7 puntos de código y 2 del manifiesto, no los 3+1 del borrador ⛔ *(ACTA: V13 ya podo `theatrical-content/`. Las coordenadas `package.json:1446` y `:1456` caducaron — el manifiesto tiene hoy 1248 lineas y los 2 `customEditors` viven en `:1165` y `:1175`)* ⛔ *(**RE-MEDIDO 2026-08-02 · WP-V101 — y aquí no derivaron las líneas: derivó el INVENTARIO.** Esta fila declara 7 puntos de código con 5 en `extensionBootstrap.ts`; ese fichero tiene hoy **cero** menciones de `theatrical-content`. Los puntos vivos son **12 en 5 ficheros**: `src/core/bootstrap/commands/agentManagementCommands.ts:46` (×5), `src/editors/AgentConfigEditorProvider.ts:373`, `src/editors/AgentContentEditorProvider.ts:251`, `src/views/HackerConfigPanelProvider.ts:352` (×3, tras la reescritura de V102) y `package.json:1114` (×2, ya los dos selectores). **Ningún barrido que sólo re-mida coordenadas habría visto esto**, porque el fallo no es dónde está cada punto sino cuáles son. Anclado por composición —token + recuento por fichero— en `plan/ANCLAS.json` (A3, A5-A8). **Y el veredicto de fondo cambia**: «convención ajena» es falso, la escribe `aleph0.agents.createNew` en el workspace del usuario; ver §0.6·3)* ⛔ *(**PRIMERA DERIVA REAL CAZADA POR EL ANCLA, 2026-08-02**: A8 declaraba `veces: 2` y `WP-V102` reescribió `HackerConfigPanelProvider.ts` **mientras V101 estaba en vuelo**, dejándolo en 3. El gate salió `FAIL (1 rotas)` y con él `npm test` y CI. Re-anclado a 3. No es un ejemplo de laboratorio: es el instrumento haciendo su trabajo contra un cambio que nadie le anunció)* |
 | `src/theatrical` | mover `MCPConfiguration` fuera antes: `src/mcpServerManager.ts:4`. **Y la parte viva** (`TheatricalChatManager`) está cableada en `src/core/extensionBootstrap.ts:12` (import), `:58` (campo de `ExtensionContext`) y `:118` (`new TheatricalChatManager`) | rompe la compilación en los cuatro sitios ⛔ *(ACTA: V13 ya podo la parte viva de `src/theatrical`. `src/mcpServerManager.ts:4` SIGUE siendo exacta; `extensionBootstrap.ts:12` no: son hoy 297 lineas y `:12` es el cierre del docblock)* |
 | `src/copilotLogs` | **no basta con el manifiesto.** Código vivo: `src/core/extensionBootstrap.ts:41` y `:42` (imports), `:1773` (`registerCopilotLogCommands`), `:1776-1779` (`getCopilotLogExporterService()` + `initialize().catch`), `:1781` (el log nombra «Copilot Log Exporter»). Y además `.vscode/mcp.json` (`localhost:3100`) y los 12 comandos `copilotLogs.*` de `package.json` | **rompe la compilación** de `src/core`, que es módulo «queda». El manifiesto y la config sólo quedan huérfanos ⛔ *(ACTA: V13 ya podo `src/copilotLogs`. Ninguna de las coordenadas de `extensionBootstrap.ts` vale hoy: el fichero paso a 297 lineas)* |
 | `src/mcpChatParticipant.ts` | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de `ExtensionContext`), `:115` (`new McpChatParticipant`) | rompe la compilación de `src/core` ⛔ *(ACTA: V13 ya podo `src/mcpChatParticipant.ts`. Ninguna de las tres coordenadas de `extensionBootstrap.ts` vale hoy)* |
