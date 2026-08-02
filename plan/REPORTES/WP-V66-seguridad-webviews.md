@@ -810,7 +810,7 @@ La suite se corrió **6 veces**. En 5 de las 6 el resultado fue exactamente
 `5 failed, 1 skipped, 198 passed`. En **una** aparecieron 2 rojos adicionales:
 
 - `Jest Setup Verification › should measure performance` (`tests/basic.test.ts`)
-- `Performance Tests › Service Initialization › should initialize services within time threshold` (`tests/performance/serviceStartup.test.ts:9`)
+- `Performance Tests › Service Initialization › should initialize services within time threshold` (`tests/performance/serviceStartup.test.ts:9` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)*)
 
 Ambos son **aserciones de reloj de pared preexistentes**: hacen
 `await setTimeout(…, 10)` y exigen `duration < 100`, es decir 90 ms de margen.

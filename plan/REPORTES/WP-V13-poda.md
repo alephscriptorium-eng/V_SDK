@@ -639,7 +639,7 @@ nombrarlo ahorra un susto.
 
 ### 11.7 · Hallazgo contra el censo ya fusionado — y contra mi propia revisión
 
-**`media/ICON_CREATION_GUIDE.md` SÍ viaja en el `.vsix`.** Está dentro del
+**`media/ICON_CREATION_GUIDE.md` ⛔ *(cita rancia: borrado por V14 (`d409e0a`). Se conserva porque era cierta al escribirse)* SÍ viaja en el `.vsix`.** Está dentro del
 paquete entregado:
 
 ```

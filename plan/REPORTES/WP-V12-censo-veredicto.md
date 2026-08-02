@@ -109,7 +109,7 @@ El borrador citaba `extensionBootstrap.ts:1444,1529,1569` y
 `AgentConfigEditorProvider.ts:371`. Faltaban
 `extensionBootstrap.ts:1610,1614` y `AgentContentEditorProvider.ts:249`.
 Y en el manifiesto no hay **un** `customEditors` sino **dos**:
-`package.json:1446` (`*.agent.md`) además del `:1456` citado. El primero
+`package.json:1446` ⛔ *(cita rancia: coordenada caducada: `package.json` tiene hoy 1248 líneas. RE-MEDIDO: el `customEditor` de `*.agent.md` vive hoy en `package.json:1165`; lo afirmado (que son dos `customEditors`) sigue siendo cierto. Se conserva porque era cierta al escribirse)* (`*.agent.md`) además del `:1456` citado. El primero
 importa porque también casa con los 5 `src/theatrical/agents/*.agent.md`.
 
 ### C4 · `src/config` — 3 consumidores contados, 7 reales
@@ -399,9 +399,9 @@ Lo que **no** dice, comprobado con
 | poda | sitios vivos que hay que editar y §8 no nombra |
 | ---- | ---------------------------------------------- |
 | `src/copilotLogs` (fila 17 · 15/15 `.ts` en el bundle) | `src/core/extensionBootstrap.ts:41`, `:42` (imports), `:1773` (`registerCopilotLogCommands`), `:1776` (`getCopilotLogExporterService`) |
-| `src/mcpChatParticipant.ts` (fila 19 · vivo) | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de interfaz), `:115` (`new McpChatParticipant`) |
+| `src/mcpChatParticipant.ts` ⛔ *(cita rancia: podado por V13 (`f6ae634`, DV-11). Se conserva porque era cierta al escribirse)* (fila 19 · vivo) | `src/core/extensionBootstrap.ts:11` (import), `:57` (campo de interfaz), `:115` (`new McpChatParticipant`) |
 | parte viva de `src/theatrical` (`TheatricalChatManager`) | `src/core/extensionBootstrap.ts:12`, `:58`, `:118` |
-| los 4 `ArrakisTheater.*` (fila 18, vía `package.json`) | `src/core/configurationCommandsService.ts:256-259` (`registerCommand` × 4) |
+| los 4 `ArrakisTheater.*` (fila 18, vía `package.json`) | `src/core/configurationCommandsService.ts:256-259` ⛔ *(cita rancia: podado por V13 (`9172d07`). Se conserva porque era cierta al escribirse)* (`registerCommand` × 4) |
 
 Son **14 puntos de edición**, todos dentro de `src/core`, un módulo cuyo
 veredicto es **queda** y del que el propio censo dice que es «el único
@@ -433,7 +433,7 @@ que la salida «poda» retira, debe nombrar el mismo cableado.
 `plan/CENSO-V12.md:451-466`. `git ls-files src | grep -v '\.ts$'` da
 **17** — lo confirmé, el número es correcto. La enumeración que sigue
 cubre 3 «esperables» + `TheatricalAgent.ts.backup` + 10 de contenido de
-agentes = **14**. Faltan `src/theatrical/core/schemas/agent.schema.json`,
+agentes = **14**. Faltan `src/theatrical/core/schemas/agent.schema.json` ⛔ *(cita rancia: podado por V13 (`c164731`). Se conserva porque era cierta al escribirse)*,
 `company.schema.json` y `play.schema.json`. Importa porque el propósito
 declarado de D18 es enumerar «material de poda que ningún documento había
 enumerado», y esos tres son exactamente eso.
@@ -441,7 +441,7 @@ enumerado», y esos tres son exactamente eso.
 ### 3 · [MENOR] La celda `.vsix` de `media` es imprecisa en 1 de 23
 
 `plan/CENSO-V12.md:129`: «**sí** — ningún patrón lo cubre». `*.md`
-(`.vscodeignore:28`) sí cubre `media/ICON_CREATION_GUIDE.md`, y no hay
+(`.vscodeignore:28`) sí cubre `media/ICON_CREATION_GUIDE.md` ⛔ *(cita rancia: borrado por V14 (`d409e0a`). Se conserva porque era cierta al escribirse)*, y no hay
 re-inclusión para él (`:29-30` sólo reinstauran README y LICENSE). Viajan
 22 de 23. La columna es informativa y está fuera de la CA por el brief;
 se anota porque V14 trabaja sobre esta fila.
@@ -558,10 +558,10 @@ heredado. `src/extension.ts` byte-idéntica ✅ (47 líneas).
 **Otras citas verificadas** (muestreo ampliado porque salían todas
 limpias): las **34 líneas de `.vscodeignore`** de la columna `.vsix`, una
 por una, sobre el fichero de 64 líneas — **34/34 correctas** salvo el
-matiz de `media` (punto 3); `package.json:1446` y `:1456` (los dos
+matiz de `media` (punto 3); `package.json:1446` ⛔ *(cita rancia: coordenada caducada: `package.json` tiene hoy 1248 líneas. RE-MEDIDO: el `customEditor` de `*.agent.md` vive hoy en `package.json:1165`; lo afirmado (que son dos `customEditors`) sigue siendo cierto. Se conserva porque era cierta al escribirse)* y `:1456` (los dos
 `customEditors`) ✅; los **7 puntos de código de `theatrical-content`** de
 C3 ✅ exactos; `LICENSE.md` termina en `Copyright © [Año] [Nombre del
-Autor]` ✅ (D19); `package.json:1494` = `"unix:code": "sh
+Autor]` ✅ (D19); `package.json:1494` ⛔ *(cita rancia: coordenada caducada y afirmación caducada. RE-MEDIDO: hoy `package.json` no declara ningún script `unix:code` (`grep -c unix:code package.json` -> 0). Se conserva porque era cierta al escribirse)* = `"unix:code": "sh
 ./setup-vscode-path"` ✅ (D13); `.vscode/settings.json:2-3` con la ruta
 `/Users/morente/…` ✅ (D12); `.vscode/mcp.json` con `localhost:3100` ✅;
 `esbuild.config` sólo en `.vscodeignore:35-36` ✅ (D6); las **11 cuentas
@@ -591,14 +591,14 @@ las cuatro ⬜ **abiertas** — el censo no cierra ninguna.
    el mapa de arrastre, no confiar en que el worker lo añada de su
    cosecha. Esto es del vigía-S, no del worker.
 2. **`tests/` engancha con lo podado, y coherentemente.**
-   `tests/DonAlvaroValidation.test.ts:11` importa
+   `tests/DonAlvaroValidation.test.ts:11` ⛔ *(cita rancia: podado por V13 (`c164731`). Se conserva porque era cierta al escribirse)* importa
    `DonAlvaroChatParticipant` (uno de los 19 muertos) y
-   `tests/unit/mcpChatParticipant.test.ts:3` importa `McpChatParticipant`
+   `tests/unit/mcpChatParticipant.test.ts:3` ⛔ *(cita rancia: podado por V13 (`f6ae634`). Se conserva porque era cierta al escribirse)* importa `McpChatParticipant`
    (poda). Ambos ficheros están en el contenido legado que se va, así que
    no hay contradicción — pero **V13 debe retirarlos en la misma pasada**
    o `tsc -p tsconfig.json` / `compile:tests` se cae. No es defecto del
    censo; es orden de ejecución que nadie ha escrito.
-3. **`src/core/configurationCommandsService.ts`** no aparece en ningún
+3. **`src/core/configurationCommandsService.ts` ⛔ *(cita rancia: podado por V13 (`9172d07`). Se conserva porque era cierta al escribirse)*** no aparece en ningún
    sitio del censo y es donde vive la fila 18. Ver punto 1.
 4. **D16 confirmado como material de WP-V16** (el reporte ya lo deriva en
    §10·12): el log que afirma haber encontrado un fichero distinto del
@@ -712,13 +712,13 @@ cubre» a **«22 de 23»**, con el patrón citado.
 
 ### Observación de orden de ejecución para V13 — anotada
 
-Verificada en el disco: `tests/DonAlvaroValidation.test.ts:11` importa
-`DonAlvaroChatParticipant` y `tests/unit/mcpChatParticipant.test.ts:3`
+Verificada en el disco: `tests/DonAlvaroValidation.test.ts:11` ⛔ *(cita rancia: podado por V13 (`c164731`). Se conserva porque era cierta al escribirse)* importa
+`DonAlvaroChatParticipant` y `tests/unit/mcpChatParticipant.test.ts:3` ⛔ *(cita rancia: podado por V13 (`f6ae634`). Se conserva porque era cierta al escribirse)*
 importa `McpChatParticipant`. Ambos van en el contenido legado que se
 poda, así que no hay contradicción, pero **la poda de esos tests debe ir
 en el mismo commit que la de su código, o antes**, o `compile:tests` se
 cae entre commits. Añadido en §8 del censo, junto con el dato adyacente
-de que `tests/integration/extensionChatIntegration.test.ts:3` importa
+de que `tests/integration/extensionChatIntegration.test.ts:3` ⛔ *(cita rancia: podado por V13 (`f6ae634`). Se conserva porque era cierta al escribirse)* importa
 `ExtensionBootstrap` y por tanto también acusa las ediciones de la tabla.
 
 ### Lo que esta corrección NO toca

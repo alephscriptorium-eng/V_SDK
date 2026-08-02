@@ -1382,8 +1382,8 @@ aserciones son de tiempo y memoria, sin relación con configuración:
 | ------- | ------ |
 | `tests/basic.test.ts:32` | `duration < 100 ms` |
 | `tests/basic.test.ts:132` | crecimiento de memoria `< 10 MB` |
-| `tests/performance/serviceStartup.test.ts:17,54` | `< 100 ms`, `< 500 ms` |
-| `tests/performance/serviceStartup.test.ts:37` | memoria `< 5 MB` |
+| `tests/performance/serviceStartup.test.ts:17,54` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)* | `< 100 ms`, `< 500 ms` |
+| `tests/performance/serviceStartup.test.ts:37` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)* | memoria `< 5 MB` |
 | `tests/integration/managerFactory.test.ts:309` | `< 100 ms` |
 
 **Afirmación vigente sobre CA-7**, ya sin redondear:

@@ -720,7 +720,7 @@ está en `webviewCsp.test.ts:257-262`. Verificado abriendo ambos.)*
 
 ### 7.5 · Lo que SÍ he borrado en la segunda vuelta, y por qué (M3)
 
-**`tests/performance/serviceStartup.test.ts` — fichero entero, cinco tests.**
+**`tests/performance/serviceStartup.test.ts` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)* — fichero entero, cinco tests.**
 
 La devolución señaló que mi frase «cada test conserva la aserción funcional que sí podía demostrar»
 era **más ancha que la evidencia**, y tenía razón: ahí no había función de producto que demostrar.
@@ -754,7 +754,7 @@ lo señalo aquí precisamente para que se vea antes de fusionar.
   o «380 total» queda rancio — y es la mejor ilustración posible de por qué el gate **no** compara
   cardinales: ninguno de esos números estaba en el baseline, y el baseline **no ha cambiado**.
 - **`WP-V66:813` queda RANCIA**: cita `Performance Tests › Service Initialization › should initialize
-  services within time threshold` (`tests/performance/serviceStartup.test.ts:9`), y ese test ya no
+  services within time threshold` (`tests/performance/serviceStartup.test.ts:9` ⛔ *(cita rancia: fichero borrado entero por V90 (`c989de8`, §7.5). Se conserva porque era cierta al escribirse)*), y ese test ya no
   existe. No he tocado ese reporte (aceptado, otro escritor); lo declaro aquí y enrutas tú.
 - `WP-V23:1375` («`git diff --quiet … → IDÉNTICO a la base`») y `WP-V23:1385-1386` (la tabla de
   umbrales) hablan de un fichero que ya no está. Misma situación.

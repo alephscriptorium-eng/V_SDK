@@ -14,7 +14,7 @@
 ## Qué se hizo
 
 Arnés Extension Host con `@vscode/test-electron` (2.5.2, devDep **ya
-declarada** en `package.json:1271` — no se añadió ninguna): descarga un
+declarada** en `package.json:1271` ⛔ *(cita rancia: coordenada caducada: `package.json` tiene hoy 1248 líneas. RE-MEDIDO: lo afirmado sigue en pie — `@vscode/test-electron` sigue siendo devDep ya declarada, hoy en `package.json:1229`, rango `^2.4.1`. Se conserva porque era cierta al escribirse)* — no se añadió ninguna): descarga un
 VS Code real (1.131.0 stable), lo lanza con perfiles aislados bajo
 `.vscode-test/` y ejecuta una suite dentro del Extension Host que prueba
 de facto: presencia, activación sin errores, manifiesto↔registro de
@@ -150,7 +150,7 @@ sin diff). Manifiesto funcional (commands/menus/engines/versión): intacto.
   la derivación del nombre del `.vsix` se REUTILIZA de `scripts/vsix.mjs`
   (spawn), no se duplica.
 - [x] Sellos con fuente: rutas y líneas citadas existen
-  (`package.json:1271`, salidas literales arriba).
+  (`package.json:1271` ⛔ *(cita rancia: coordenada caducada: `package.json` tiene hoy 1248 líneas. RE-MEDIDO: lo afirmado sigue en pie — `@vscode/test-electron` sigue siendo devDep ya declarada, hoy en `package.json:1229`, rango `^2.4.1`. Se conserva porque era cierta al escribirse)*, salidas literales arriba).
 - [x] Sin promesa de futuro sin `<pendiente>`/⏳: run verde de CI marcado
   ⏳; sabotaje de acta marcado sin verificar.
 - [x] Eje producto evidenciado: CA-2 contra el artefacto empaquetado e
