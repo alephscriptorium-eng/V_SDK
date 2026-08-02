@@ -18,6 +18,39 @@ export interface ConfigGroup {
     configs: ConfigItem[];
 }
 
+/**
+ * WP-V102 · DE DÓNDE SALE CADA ACTIVO, COMO DATO Y NO COMO SUPOSICIÓN.
+ *
+ * Hasta este WP, todos los métodos de este panel resolvían contra
+ * `workspaceFolders[0]` sin decirlo, y esa suposición callada era el defecto.
+ * MEDIDO en ejecución (`tests/unit/views/hackerConfigPanelActivos.test.ts`,
+ * §0): el extinto `_getWebviewConfigs()` ofrecía cuatro entradas contra el
+ * workspace, y tres de ellas —`schemas/*.schema.json`— son activos que viajan
+ * EN EL PAQUETE: no aparecen en `.vscodeignore` y `contributes.jsonValidation`
+ * los cablea con rutas `./schemas/*` **relativas al paquete**.
+ *
+ *   · workspace = un proyecto cualquiera → el grupo salía VACÍO. Siempre.
+ *   · workspace = este repositorio       → salían 3 schemas, y los MISMOS 3,
+ *     con la misma ruta absoluta, ya los listaba `_getSchemaConfigs()`.
+ *
+ * Es decir: aquel método no aportó jamás un elemento propio, y el panel sólo
+ * enseñaba los schemas a quien desarrolla la extensión.
+ *
+ * LA REGLA QUE QUEDA, y que el test vigila EJECUTANDO:
+ *
+ *   NOMBRAR UN FICHERO ES UNA PROMESA; ENUMERAR UN DIRECTORIO ES UNA PREGUNTA.
+ *
+ * Un nombre de fichero codificado promete algo que el árbol del producto tiene
+ * que poder producir. «sample-config.json» no podía: lo podó WP-V13 en
+ * `f615434`, junto con «ArrakisTheater_OperaConfig.json». Un directorio
+ * enumerado no promete ningún fichero concreto, así que su ausencia es
+ * descubrimiento y no mentira. Por eso los schemas ya no se nombran uno a uno:
+ * se enumera el directorio, y así ningún nombre puede quedarse rancio. Es el
+ * argumento de WP-V100 aplicado aquí — re-sincronizar la lista a mano deja
+ * intacto el mecanismo que la desincronizó.
+ */
+export type OrigenActivo = 'paquete' | 'workspace';
+
 export interface ConfigItem {
     id: string;
     name: string;
@@ -28,6 +61,8 @@ export interface ConfigItem {
     filePath?: string;
     settingKey?: string;
     category: string;
+    /** Dónde se buscó el fichero. Obligatorio en todo item `config-file`. */
+    origen?: OrigenActivo;
 }
 
 export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
@@ -167,15 +202,13 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
                 configs: this._getExtensionSettings()
             },
             {
-                name: "WEBVIEW CONFIGURATIONS",
-                icon: "🌐",
-                description: "Webview and socket configurations",
-                configs: this._getWebviewConfigs()
-            },
-            {
+                // WP-V102: el grupo «WEBVIEW CONFIGURATIONS» se retiró aquí.
+                // No desaparece ni un elemento de la interfaz: sus 3 activos
+                // reales eran los mismos schemas —misma ruta absoluta— que ya
+                // listaba este grupo, y el cuarto era un fantasma.
                 name: "SCHEMA DEFINITIONS",
                 icon: "📋",
-                description: "JSON schema validation files",
+                description: "JSON schemas: los que envía la extensión y los del workspace",
                 configs: this._getSchemaConfigs()
             },
             {
@@ -229,84 +262,96 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
         return settings;
     }
 
-    private _getWebviewConfigs(): ConfigItem[] {
-        const configs: ConfigItem[] = [];
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
-        if (!workspacePath) return configs;
-
-        const configFiles = [
-            { file: 'sample-config.json', name: 'Sample Configuration', description: 'Sample webview configuration template' },
-            { file: 'schemas/socket-config.schema.json', name: 'Socket Config Schema', description: 'Socket.io configuration validation schema' },
-            { file: 'schemas/webrtc-ui-config.schema.json', name: 'WebRTC Config Schema', description: 'WebRTC UI configuration schema' },
-            { file: 'schemas/xplus1-config.schema.json', name: 'XPlus1 Config Schema', description: 'XPlus1 gaming configuration schema' }
-        ];
-
-        configFiles.forEach(configFile => {
-            const filePath = path.join(workspacePath, configFile.file);
-            if (fs.existsSync(filePath)) {
-                configs.push({
-                    id: configFile.file,
-                    name: configFile.name,
-                    description: configFile.description,
-                    type: 'config-file',
-                    icon: '📄',
-                    filePath: filePath,
-                    category: 'webview'
-                });
-            }
-        });
-
-        return configs;
+    /** Raíz contra la que se resuelve un activo, según su origen declarado. */
+    private _raizDe(origen: OrigenActivo): string | undefined {
+        return origen === 'paquete'
+            ? this._extensionUri.fsPath
+            : vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     }
 
+    /**
+     * Los schemas de validación, enumerados en los DOS sitios donde pueden
+     * estar: el paquete —que es donde viven de verdad y de donde los toma
+     * `contributes.jsonValidation`— y el workspace del usuario.
+     *
+     * Sin un solo nombre de fichero codificado: lo que se ofrece existe porque
+     * se acaba de leer del directorio, no porque una lista lo prometa y un
+     * `existsSync` tape el fallo.
+     */
     private _getSchemaConfigs(): ConfigItem[] {
         const configs: ConfigItem[] = [];
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const vistos = new Set<string>();
 
-        if (!workspacePath) return configs;
+        for (const origen of ['paquete', 'workspace'] as OrigenActivo[]) {
+            const raiz = this._raizDe(origen);
+            if (!raiz) { continue; }
 
-        const schemaDir = path.join(workspacePath, 'schemas');
-        if (fs.existsSync(schemaDir)) {
-            const schemaFiles = fs.readdirSync(schemaDir).filter(file => file.endsWith('.schema.json'));
-            
-            schemaFiles.forEach(file => {
+            const schemaDir = path.join(raiz, 'schemas');
+            if (!fs.existsSync(schemaDir)) {
+                // El paquete SÍ los envía (`.vscodeignore` no los excluye y
+                // `contributes.jsonValidation` los necesita). Si faltan, es un
+                // defecto de empaquetado y se dice: nada de excepción silenciosa.
+                if (origen === 'paquete') {
+                    log.warn('El paquete no trae schemas/ — revisar empaquetado', { schemaDir });
+                }
+                continue;
+            }
+
+            for (const file of fs.readdirSync(schemaDir).filter(f => f.endsWith('.schema.json'))) {
                 const filePath = path.join(schemaDir, file);
+                // Quien desarrolla la extensión abre este mismo repositorio como
+                // workspace: allí paquete y workspace son el MISMO fichero, y sin
+                // esto se ofrecería dos veces —que es exactamente lo que pasaba
+                // hasta hoy, repartido entre dos grupos distintos.
+                if (vistos.has(filePath)) { continue; }
+                vistos.add(filePath);
+
+                const base = file.replace('.schema.json', '');
                 configs.push({
-                    id: file,
-                    name: file.replace('.schema.json', '').replace(/-/g, ' ').toUpperCase(),
-                    description: `JSON schema for ${file.replace('.schema.json', '')} validation`,
+                    id: `${origen}:${file}`,
+                    name: base.replace(/-/g, ' ').toUpperCase(),
+                    description: `JSON schema for ${base} validation (${origen})`,
                     type: 'config-file',
                     icon: '📋',
                     filePath: filePath,
-                    category: 'schema'
+                    category: 'schema',
+                    origen
                 });
-            });
+            }
         }
 
         return configs;
     }
 
+    /**
+     * Contenido teatral **del usuario**. Se resuelve contra el workspace y eso
+     * es correcto: `theatrical-content/` es una convención del usuario, no un
+     * activo del paquete, y sigue cableada en `contributes.customEditors`. Que
+     * un directorio falte aquí es descubrimiento, no una promesa incumplida.
+     *
+     * WP-V102 retira la tercera entrada, `src/theatrical` con patrón `*.ts`:
+     *   · MEDIDO — `readdirSync('src/theatrical')` devuelve `['core']` y el
+     *     filtro `.ts` deja CERO, porque la lectura no es recursiva. No producía
+     *     nada ni siquiera con este repositorio abierto como workspace.
+     *   · `src/**` está en `.vscodeignore`, así que ese directorio NO viaja en
+     *     el paquete: ningún usuario instalado puede tenerlo.
+     *   · Y ofrecía código fuente `.ts` bajo el rótulo «configuración».
+     */
     private _getTheatricalConfigs(): ConfigItem[] {
         const configs: ConfigItem[] = [];
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const workspacePath = this._raizDe('workspace');
 
         if (!workspacePath) return configs;
 
-        const theatricalFiles = [
-            { dir: 'theatrical-content/configurations', pattern: '*.json', name: 'Agent Configurations' },
-            { dir: 'theatrical-content/content', pattern: '*.json', name: 'Content Definitions' },
-            { dir: 'src/theatrical', pattern: '*.ts', name: 'Theatrical TypeScript' }
+        const theatricalDirs = [
+            { dir: 'theatrical-content/configurations', name: 'Agent Configurations' },
+            { dir: 'theatrical-content/content', name: 'Content Definitions' }
         ];
 
-        theatricalFiles.forEach(config => {
+        theatricalDirs.forEach(config => {
             const dirPath = path.join(workspacePath, config.dir);
             if (fs.existsSync(dirPath)) {
-                const files = fs.readdirSync(dirPath).filter(file => {
-                    if (config.pattern === '*.json') return file.endsWith('.json');
-                    if (config.pattern === '*.ts') return file.endsWith('.ts');
-                    return false;
-                });
+                const files = fs.readdirSync(dirPath).filter(file => file.endsWith('.json'));
 
                 files.forEach(file => {
                     const filePath = path.join(dirPath, file);
@@ -317,7 +362,8 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
                         type: 'config-file',
                         icon: '🎭',
                         filePath: filePath,
-                        category: 'theatrical'
+                        category: 'theatrical',
+                        origen: 'workspace'
                     });
                 });
             }
@@ -326,9 +372,18 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
         return configs;
     }
 
+    /**
+     * Ficheros de desarrollo **del usuario**. Aquí sí se nombran ficheros, y es
+     * legítimo por dos razones que conviene no confundir con el defecto que
+     * cierra este WP: (1) no son artefactos de ESTE producto sino convenciones
+     * de terceros —npm, TypeScript, jest, VS Code—, y (2) el árbol del producto
+     * los produce todos, cosa que el test comprueba EJECUTANDO. Filtrar por
+     * existencia el árbol del usuario es descubrimiento; filtrar por existencia
+     * los activos del propio producto es tapar un fallo.
+     */
     private _getDevConfigs(): ConfigItem[] {
         const configs: ConfigItem[] = [];
-        const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const workspacePath = this._raizDe('workspace');
 
         if (!workspacePath) return configs;
 
@@ -351,7 +406,8 @@ export class HackerConfigPanelProvider extends BaseHackerPanelProvider {
                     type: 'config-file',
                     icon: '🛠️',
                     filePath: filePath,
-                    category: 'development'
+                    category: 'development',
+                    origen: 'workspace'
                 });
             }
         });
