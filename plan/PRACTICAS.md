@@ -159,6 +159,34 @@ orquestador contra los CA del BRIEF.
 - Hacer que el backlog apunte aquí es acto del **orquestador**; ningún
   worker edita `plan/BACKLOG.md`.
 
+## 7 · Regla de caducidad de citas y cifras (WP-V92, 2026-08-02)
+
+> **Una cifra o una cita «medida por grep» caduca. O se re-mide al
+> citarla, o se cita el gate que la sostiene.**
+
+Su sitio es aquí y no en un reporte, porque un reporte es **acta cerrada**
+y esto es invariante viva. Nace de un barrido sobre **1 518 citas** de
+`plan/REPORTES/`, del que salieron **27 rancias** — pero también tres
+lecciones que valen más que las 27:
+
+1. **El denominador es parte del resultado.** «Arreglé tres» sin decir
+   sobre cuántas no es una medición, es una anécdota. Un barrido declara
+   qué revisó, qué falló y **qué no pudo mirar**.
+2. **Un PASS acota, no absuelve.** Existe una clase que ningún barrido
+   automático caza: la cita cuya **coordenada resuelve** y cuyo
+   **contenido es falso** — la línea existe, pero ya no dice lo que el
+   reporte afirma que dice. Un verde sobre citas significa «ninguna
+   apunta al vacío», nunca «todas dicen la verdad».
+3. **Anotar, no borrar.** Un reporte es acta: la cita rancia se conserva
+   con su marca, su re-medición y su fecha. Borrarla destruiría la
+   trazabilidad que el documento existe para dar.
+
+**Frontera que se sigue de esto**: los **reportes** son actas y sólo se
+anotan; los **documentos vivos** (censos, gobierno, prácticas) sí se
+corrigen, porque alguien planifica sobre ellos. Confundir las dos cosas
+fue justo lo que dejó un censo afirmando en presente que dos ficheros
+borrados tenían 423 y 453 líneas muertas.
+
 ---
 
 — **V** · Aleph-0 (ℵ₀) · fundación WP-V81
