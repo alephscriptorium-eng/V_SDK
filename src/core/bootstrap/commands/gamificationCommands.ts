@@ -8,6 +8,46 @@ import * as vscode from 'vscode';
 import { LogCategory } from '../../../loggingManager';
 import { CommandEntry } from './types';
 
+/**
+ * WP-V25 · nombre de sala de un `SocketTreeItem`. El menú `view/item/context`
+ * de `alephscript.sockets` entrega el ítem entero; el ítem lleva `roomName`
+ * y, como respaldo, la etiqueta visible.
+ *
+ * También acepta un STRING pelado, porque su propia superficie lo manda:
+ * `HackerCommandPanelProvider.promptAndExecute` invoca cualquier comando como
+ * `executeCommand(commandId, [input])` con lo que el usuario teclee
+ * (`src/views/HackerCommandPanelProvider.ts:394`), y `showAllCommands` permite
+ * elegir cualquiera de la lista. `aleph0.sockets.connect` ya admitía la forma
+ * string; sus tres hermanos la rechazaban.
+ */
+function nombreDeSala(item: any): string | undefined {
+    if (typeof item === 'string') {
+        return item.trim() || undefined;
+    }
+    return item?.roomName || item?.label || undefined;
+}
+
+/**
+ * WP-V25 · ruta del fichero de un `ConfigTreeItem`. El menú entrega el ítem
+ * (con `resourceUri`); su `id` es `config-<fsPath>` y sirve de respaldo.
+ * Y el string pelado, por el mismo motivo que `nombreDeSala`.
+ */
+function rutaDeConfig(item: any): string | undefined {
+    if (typeof item === 'string') {
+        return item.trim() || undefined;
+    }
+    if (item?.resourceUri?.fsPath) {
+        return item.resourceUri.fsPath;
+    }
+    if (typeof item?.fsPath === 'string') {
+        return item.fsPath;
+    }
+    if (typeof item?.id === 'string' && item.id.startsWith('config-')) {
+        return item.id.slice('config-'.length);
+    }
+    return undefined;
+}
+
 export const uisCommands: CommandEntry[] = [
     // UIs Commands
     {
@@ -65,6 +105,116 @@ export const socketCommands: CommandEntry[] = [
                 await deps.managers.errorBoundary.handleError(
                     error as Error,
                     'sockets.refresh',
+                    LogCategory.SOCKET
+                );
+            }
+        }
+    },
+    // WP-V25 · los cinco que faltaban. Estaban declarados en `package.json` y
+    // cableados al menú contextual de la vista `alephscript.sockets`, pero nadie
+    // los registraba: el usuario pulsaba «Connect to Server» y no pasaba nada.
+    // Peor: `commandPaletteManager.quickConnectSocket()` y
+    // `disconnectAllSockets()` los invocan con `executeCommand`, así que dos
+    // comandos que SÍ tenían handler —uno de ellos con atajo `ctrl+alt+c`—
+    // reventaban con «command not found». Los métodos públicos de
+    // `SocketsTreeDataProvider` ya existían; lo que faltaba era el cable.
+    {
+        id: 'aleph0.sockets.connect',
+        handler: deps => async (url?: string) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    await ctx.socketsTreeProvider.connectToServer(
+                        typeof url === 'string' ? url : undefined
+                    );
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'sockets.connect',
+                    LogCategory.SOCKET
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.sockets.disconnect',
+        handler: deps => async () => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    await ctx.socketsTreeProvider.disconnectFromServer();
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'sockets.disconnect',
+                    LogCategory.SOCKET
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.sockets.joinRoom',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const sala = nombreDeSala(item);
+                    if (!sala) {
+                        vscode.window.showErrorMessage('No room provided for join command');
+                        return;
+                    }
+                    await ctx.socketsTreeProvider.joinRoom(sala);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'sockets.joinRoom',
+                    LogCategory.SOCKET
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.sockets.leaveRoom',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const sala = nombreDeSala(item);
+                    if (!sala) {
+                        vscode.window.showErrorMessage('No room provided for leave command');
+                        return;
+                    }
+                    await ctx.socketsTreeProvider.leaveRoom(sala);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'sockets.leaveRoom',
+                    LogCategory.SOCKET
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.sockets.sendMessage',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const sala = nombreDeSala(item);
+                    if (!sala) {
+                        vscode.window.showErrorMessage('No room provided for send message command');
+                        return;
+                    }
+                    await ctx.socketsTreeProvider.sendTestMessage(sala);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'sockets.sendMessage',
                     LogCategory.SOCKET
                 );
             }
@@ -148,6 +298,152 @@ export const configsCommands: CommandEntry[] = [
                     error as Error,
                     'configs.refresh',
                     LogCategory.EXTENSION
+                );
+            }
+        }
+    },
+    // WP-V25 · los seis que faltaban. `ConfigsTreeDataProvider` ya exponía sus
+    // métodos bajo el rótulo «Public API methods for commands» — y no había
+    // comandos. `configs.openInEditor` es el más visible: el proveedor lo pone
+    // como `treeItem.command` de CADA fichero del árbol, así que un clic normal
+    // sobre una configuración levantaba «command not found».
+    {
+        id: 'aleph0.configs.openInEditor',
+        handler: deps => async (uri?: vscode.Uri) => {
+            try {
+                // El proveedor invoca con `arguments: [element.resourceUri,
+                // element.configType]`, así que el primer argumento es una Uri,
+                // NO el ítem del árbol (a diferencia de los otros cinco). El
+                // segundo (`configType`) no se usa: se ignora sin declararlo.
+                const destino = uri ?? undefined;
+                if (!destino) {
+                    vscode.window.showErrorMessage('No configuration file provided');
+                    return;
+                }
+                const doc = await vscode.workspace.openTextDocument(destino);
+                await vscode.window.showTextDocument(doc);
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.openInEditor',
+                    LogCategory.CONFIG
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.configs.validate',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const ruta = rutaDeConfig(item);
+                    if (!ruta) {
+                        vscode.window.showErrorMessage('No configuration file provided for validate');
+                        return;
+                    }
+                    await ctx.configsTreeProvider.validateConfiguration(ruta);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.validate',
+                    LogCategory.CONFIG
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.configs.format',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const ruta = rutaDeConfig(item);
+                    if (!ruta) {
+                        vscode.window.showErrorMessage('No configuration file provided for format');
+                        return;
+                    }
+                    await ctx.configsTreeProvider.formatConfiguration(ruta);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.format',
+                    LogCategory.CONFIG
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.configs.backup',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const ruta = rutaDeConfig(item);
+                    if (!ruta) {
+                        vscode.window.showErrorMessage('No configuration file provided for backup');
+                        return;
+                    }
+                    await ctx.configsTreeProvider.createBackup(ruta);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.backup',
+                    LogCategory.CONFIG
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.configs.createTemplate',
+        handler: deps => async (tipo?: string) => {
+            try {
+                const ctx = deps.getContext();
+                if (!ctx) {
+                    return;
+                }
+                // `createFromTemplate` sólo admite estas tres plantillas; la
+                // lista sale de su propia firma, no de una invención local.
+                const plantillas: Array<'xplus1' | 'socket' | 'ui'> = ['xplus1', 'socket', 'ui'];
+                const elegida = plantillas.includes(tipo as any)
+                    ? (tipo as 'xplus1' | 'socket' | 'ui')
+                    : await vscode.window.showQuickPick(plantillas, {
+                        placeHolder: 'Configuration template'
+                    }) as 'xplus1' | 'socket' | 'ui' | undefined;
+                if (!elegida) {
+                    return;
+                }
+                await ctx.configsTreeProvider.createFromTemplate(elegida);
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.createTemplate',
+                    LogCategory.CONFIG
+                );
+            }
+        }
+    },
+    {
+        id: 'aleph0.configs.reload',
+        handler: deps => async (item?: any) => {
+            try {
+                const ctx = deps.getContext();
+                if (ctx) {
+                    const ruta = rutaDeConfig(item);
+                    if (!ruta) {
+                        vscode.window.showErrorMessage('No configuration file provided for reload');
+                        return;
+                    }
+                    await ctx.configsTreeProvider.reloadConfiguration(ruta);
+                }
+            } catch (error) {
+                await deps.managers.errorBoundary.handleError(
+                    error as Error,
+                    'configs.reload',
+                    LogCategory.CONFIG
                 );
             }
         }

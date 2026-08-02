@@ -127,6 +127,24 @@ export const processCommands: CommandEntry[] = [
             deps.showSystemStatus();
         }
     },
+    // WP-V25 · `aleph0.showStatusPanel` estaba DECLARADO y sin handler, y no era
+    // decorativo: `commandPaletteManager.showSystemStatus()` lo invoca con
+    // `executeCommand` (src/commandPaletteManager.ts), de modo que
+    // `aleph0.systemStatus` —que sí tiene handler, y atajo en la paleta— moría
+    // con «command 'aleph0.showStatusPanel' not found». Mismo destino que
+    // `aleph0.system.showStatus`: dos ids para un solo panel.
+    //
+    // DEUDA DECLARADA, NO ESCONDIDA: el id sobra. Se queda porque quitarlo pide
+    // tocar `src/commandPaletteManager.ts`, que está fuera del ALCANCE_DIFF de
+    // este WP. Retirar la declaración y dejar la llamada habría cambiado un
+    // comando muerto por un error crudo — que es peor, y es justo lo que este
+    // WP persigue.
+    {
+        id: 'aleph0.showStatusPanel',
+        handler: deps => () => {
+            deps.showSystemStatus();
+        }
+    },
     {
         id: 'aleph0.system.restart',
         handler: deps => async () => {
