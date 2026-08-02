@@ -203,6 +203,90 @@ describe('WP-V71 · redact — cadenas libres', () => {
     });
 });
 
+// =============================================================================
+// WP-V96 · LA RAMA QUE MEDÍA DISTINTO EN CADA PLATAFORMA
+//
+// `homePrefixes()` (src/core/logging/redact.ts:263-274) compone el home de
+// Windows a partir de dos variables:
+//
+//     process.env.HOMEPATH && process.env.HOMEDRIVE
+//         ? `${process.env.HOMEDRIVE}${process.env.HOMEPATH}`
+//         : undefined
+//
+// Hasta este WP, NINGÚN test fijaba esas variables, así que la rama que se
+// ejercitaba era la que el entorno decidiera:
+//
+//   · en Windows `HOMEPATH` existe → el `&&` evalúa su operando DERECHO y el
+//     ternario toma el consecuente;
+//   · en Linux `HOMEPATH` no existe → el `&&` corta y el derecho NO se evalúa
+//     nunca, y el ternario toma la alternativa.
+//
+// El ternario sale empatado (una localización cubierta a cada lado), pero el
+// `&&` NO: dos localizaciones cubiertas en Windows contra una en Linux. Ésa
+// —y sólo ésa— era la rama de diferencia entre el suelo de cobertura local y
+// el de CI. MEDIDO en este árbol, misma máquina, corriendo la suite entera
+// con `HOMEPATH`/`HOMEDRIVE` presentes y ausentes:
+//
+//     con HOMEPATH:  statements 1541 · branches 545 · functions 272 · lines 1519
+//     sin HOMEPATH:  statements 1541 · branches 544 · functions 272 · lines 1519
+//
+// Reproduzco LA CONDICIÓN (que el entorno no defina `HOMEPATH`), no la
+// plataforma: no he corrido nada en Linux.
+//
+// Estos tres tests dejan de suponer el entorno y lo IMPONEN: los dos operandos
+// del `&&` y las dos ramas del ternario se ejecutan en cualquier plataforma,
+// así que la medida deja de depender de dónde se tome. De paso vigilan por
+// primera vez la composición `HOMEDRIVE+HOMEPATH`, que es código de Windows y
+// que en CI no se ejecutaba jamás.
+// =============================================================================
+describe('WP-V96 · el home compuesto (HOMEDRIVE+HOMEPATH) se mide igual en cualquier plataforma', () => {
+    const CLAVES = ['HOME', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH'] as const;
+    let guardado: Partial<Record<(typeof CLAVES)[number], string | undefined>> = {};
+
+    beforeEach(() => {
+        guardado = {};
+        for (const k of CLAVES) {
+            guardado[k] = process.env[k];
+            delete process.env[k];
+        }
+    });
+
+    afterEach(() => {
+        for (const k of CLAVES) {
+            const v = guardado[k];
+            if (v === undefined) {
+                delete process.env[k];
+            } else {
+                process.env[k] = v;
+            }
+        }
+    });
+
+    it('con HOMEDRIVE y HOMEPATH compone el home de Windows y lo tapa', () => {
+        process.env.HOMEDRIVE = 'Q:';
+        process.env.HOMEPATH = '\\Users\\v96';
+        // `&&`: operando derecho EVALUADO · ternario: consecuente.
+        expect(maskHomePath('Q:\\Users\\v96\\proyectos\\config.json')).toBe('~\\proyectos\\config.json');
+    });
+
+    it('sin HOMEPATH no compone nada, aunque HOMEDRIVE esté presente', () => {
+        process.env.HOMEDRIVE = 'Q:';
+        process.env.HOME = '/home/v96';
+        // `&&`: CORTA en el izquierdo · ternario: alternativa.
+        expect(maskHomePath('/home/v96/proyectos/config.json')).toBe('~/proyectos/config.json');
+        // Y la prueba de que no compuso: una ruta bajo `Q:` sale entera.
+        expect(maskHomePath('Q:\\Users\\v96\\config.json')).toBe('Q:\\Users\\v96\\config.json');
+    });
+
+    it('con HOMEPATH pero sin HOMEDRIVE tampoco compone: no queda medio home suelto', () => {
+        process.env.HOMEPATH = '\\Users\\v96';
+        // `&&`: operando derecho EVALUADO y falso · ternario: alternativa.
+        // Sin HOME ni USERPROFILE no hay ningún prefijo, así que el texto sale intacto.
+        expect(maskHomePath('C:\\Users\\v96\\config.json')).toBe('C:\\Users\\v96\\config.json');
+        expect(maskHomePath('\\Users\\v96\\config.json')).toBe('\\Users\\v96\\config.json');
+    });
+});
+
 describe('WP-V71 · redact — LÍMITES CONOCIDOS (declarados, no tapados)', () => {
     // Estos casos FUGAN, y se fijan por test a propósito: son el límite de
     // cualquier redactor por nombre. Si algún día se cierran, este bloque

@@ -130,6 +130,42 @@ function vieneDeOtraRaiz(raiz: string, absoluta: string): boolean {
     return !r || r.startsWith('..');
 }
 
+// --- WP-V96 · el porcentaje de `--maxWorkers`, sin suponer la máquina ---------
+//
+// `trabajadoresPedidos` (`scripts/rojos-jest.mjs:357-367`) resuelve un
+// porcentaje con `Math.floor(os.cpus().length * pct / 100)` — sin suelo de 1 —
+// y `argumentosSeriales` rechaza todo lo que dé `<= 1`. Los tests de § 3
+// clavaban porcentajes calculados a ojo, y con UNA CPU se contradecían: el
+// «porcentaje serial» y el control «holgado» resultaban ser el mismo, `100 %`.
+// Censado por WP-V95 (eje E) y no arreglado allí. Estas tres funciones ponen la
+// aritmética donde se puede recorrer, con el recuento de CPU inyectable, para
+// aseverar la condición sin necesitar la máquina.
+
+/** Procesos que jest resuelve para `--maxWorkers=<pct>%`, con la aritmética del instrumento. */
+function procesosDePorcentaje(pct: number, cpus: number = os.cpus().length): number {
+    return Math.floor((cpus * pct) / 100);
+}
+
+/** El MAYOR porcentaje que todavía deja a jest en un proceso (o menos). Siempre existe. */
+function pctQueSerializa(cpus: number = os.cpus().length): number {
+    for (let pct = 100; pct >= 1; pct--) {
+        if (procesosDePorcentaje(pct, cpus) <= 1) return pct;
+    }
+    return 1;
+}
+
+/**
+ * El MENOR porcentaje que saca a jest de un solo proceso, o `null` si no existe
+ * ninguno. `null` es el caso de 1 CPU, y no es una excusa: es que allí jest no
+ * puede paralelizar, así que rechazar cualquier porcentaje es lo correcto.
+ */
+function pctQueParaleliza(cpus: number = os.cpus().length): number | null {
+    for (let pct = 1; pct <= 100; pct++) {
+        if (procesosDePorcentaje(pct, cpus) > 1) return pct;
+    }
+    return null;
+}
+
 /**
  * Una raíz ajena POR CONSTRUCCIÓN: hermana del árbol de trabajo, jamás
  * descendiente suya, esté el checkout donde esté y sea cual sea la plataforma.
@@ -260,8 +296,33 @@ interface Mini {
     config: string;
 }
 
+/**
+ * WP-V96 · POR QUÉ LOS PROYECTOS MÍNIMOS CUELGAN DE UN SEGMENTO «tests» PROPIO.
+ *
+ * `rutaRelativa` (`scripts/rojos-jest.mjs:118-131`) no puede relativizar una
+ * ruta que viene de fuera del árbol, así que rescata **desde el último segmento
+ * llamado `tests`**, y si no hay ninguno se queda con el basename:
+ *
+ *     const i = partes.lastIndexOf('tests');
+ *     r = i >= 0 ? partes.slice(i).join('/') : partes[partes.length - 1];
+ *
+ * Hasta este WP los proyectos mínimos colgaban de `TMP` a secas, y los oráculos
+ * de § 4 decían `FALLA rojo.test.js` — el basename. Eso sólo es cierto si
+ * NINGÚN ancestro de `os.tmpdir()` se llama `tests`, cosa que nadie comprobaba.
+ * MEDIDO por WP-V95 con `TEMP`/`TMP`/`TMPDIR` = `…\tests\tmp`: **4 rojos**, y
+ * eran exactamente los cuatro tests de § 4 con oráculo escrito a mano.
+ *
+ * Colgándolos de un `tests` NUESTRO la suposición desaparece: `lastIndexOf`
+ * devuelve SIEMPRE el segmento más profundo, o sea el nuestro, haya los que
+ * haya por encima. El oráculo pasa a ser `tests/<paquete>/<fichero>` y vale
+ * literal en cualquier temporal y en cualquier plataforma. El caso del basename
+ * —la sub-rama `i < 0`— no se pierde: deja de estar cubierto «de rebote» y pasa
+ * a tener test propio con una ruta sintética sin segmento `tests` (§ 1).
+ */
+const SEGMENTO_TESTS = 'tests';
+
 function escribirMini(nombre: string, ficheros: Record<string, string>, extraConfig: Record<string, unknown> = {}): Mini {
-    const dir = path.join(TMP, nombre);
+    const dir = path.join(TMP, SEGMENTO_TESTS, nombre);
     fs.mkdirSync(dir, { recursive: true });
     for (const [f, contenido] of Object.entries(ficheros)) {
         fs.writeFileSync(path.join(dir, f), contenido);
@@ -712,6 +773,33 @@ describe('WP-V91 · las cuatro clases del conjunto', () => {
         // que esta promesa se rompe de verdad — nadie invierte un `sort` a
         // propósito, pero cambiar `a < b` por `a.localeCompare(b)` parece una
         // mejora inocente.
+        //
+        // WP-V96 · LA SUPOSICIÓN, DICHA AL DERECHO. Este mutante sólo puede
+        // caer si en ESTE node `localeCompare` ordena distinto que la unidad de
+        // código. Un node sin ICU con collation (`--without-intl`) degrada
+        // `localeCompare` a comparación por unidad de código, y entonces el
+        // mutante SOBREVIVE y el test sale rojo sin que nada esté mal — el
+        // mismo modo de fallo que cerró WP-V95, por otro eje (censado allí,
+        // eje D, y enrutado aquí). No puedo probar un node así: en esta máquina
+        // no hay ninguno, y `--without-intl` es una opción de COMPILACIÓN, no
+        // de arranque. Lo que sí puedo es que la suposición deje de ser tácita:
+        // se comprueba con los dos pares de la fixture que la sostienen, y si
+        // falla lo dice CON SU NOMBRE y con el ICU delante, en vez de aparecer
+        // treinta líneas más allá disfrazado de «MUTANTE SUPERVIVIENTE».
+        const porUnidadDeCodigo = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+        const paresQueDistinguen = [
+            ['V91 Zulu', 'V91 aaa'], // unidad de código: 'Z'(90) < 'a'(97) · locale: al revés
+            ['V91 zzz', 'V91 ñu'] //    unidad de código: 'z'(122) < 'ñ'(241) · locale: al revés
+        ].filter(([a, b]) => Math.sign(porUnidadDeCodigo(a, b)) !== Math.sign(a.localeCompare(b)));
+        const icu = (process.versions as unknown as Record<string, string | undefined>).icu;
+        expect({
+            icu: icu ?? '(este node no trae ICU)',
+            paresDeLaFixtureQueDistinguenLosDosComparadores: paresQueDistinguen.length
+        }).toEqual({
+            icu: icu ?? '(este node no trae ICU)',
+            paresDeLaFixtureQueDistinguenLosDosComparadores: 2
+        });
+
         elMutanteDebeCaer(
             mutante(['    return a < b ? -1 : a > b ? 1 : 0;', '    return a.localeCompare(b);']),
             [fxOrden],
@@ -807,6 +895,60 @@ describe('WP-V91 · las cuatro clases del conjunto', () => {
             const conAjena = correr([fxAjena.json], sinReserva, {}, RAIZ_SIMULADA_CI);
             expect(conAjena.out).not.toBe(real.out);
         }
+    });
+
+    it('SIN SEGMENTO «tests» · un informe ajeno que no trae ninguno cae al BASENAME', () => {
+        // WP-V96. La rama de reserva de `rutaRelativa` tiene DOS salidas:
+        //
+        //     r = i >= 0 ? partes.slice(i).join('/') : partes[partes.length - 1];
+        //
+        // La primera la vigila el test de RAÍZ AJENA. La segunda —el basename—
+        // no tenía test propio: la ejercitaban DE REBOTE los cuatro tests de
+        // § 4, porque sus proyectos mínimos vivían en `os.tmpdir()` y se daba
+        // por hecho que ningún ancestro del temporal se llamaba `tests`. Ese
+        // supuesto era justo el que WP-V95 midió y denunció (4 rojos con
+        // `TEMP=…\tests\tmp`). Al quitárselo a § 4 (los proyectos cuelgan ahora
+        // de un `tests` propio), la sub-rama se queda sin nadie: aquí tiene su
+        // test, y por diseño en vez de por casualidad.
+        //
+        // La ruta es SINTÉTICA a propósito: ni sale de `os.tmpdir()` ni de
+        // `RAIZ`, así que ningún entorno puede meterle un segmento `tests` por
+        // debajo. Arranca en `/`, que es absoluta en las DOS plataformas y en
+        // las dos queda fuera de cualquier raíz de checkout razonable — y aun
+        // así no se supone: se comprueba antes de aseverar nada. Los dos
+        // estilos de separador van, porque la reserva parte por `[\\/]`.
+        const declaradas = [
+            '/v96-sin-segmento/paquete/suelto.test.js',
+            '/v96-sin-segmento\\paquete\\suelto.test.js'
+        ];
+        declaradas.forEach((declarada, i) => {
+            const segmentos = declarada.split(/[\\/]/);
+            // Precondición 1: NINGÚN segmento se llama «tests».
+            expect(segmentos).not.toContain('tests');
+            // Precondición 2: es ajena a la raíz del proceso, o sea que la rama
+            // de reserva entra de verdad. DEMOSTRADO, no supuesto.
+            expect({ declarada, esAjena: vieneDeOtraRaiz(RAIZ, declarada) })
+                .toEqual({ declarada, esAjena: true });
+
+            const fx = informe('v96-sin-segmento-' + (i + 1) + '.json', {
+                success: false,
+                numTotalTests: 1,
+                testResults: [
+                    {
+                        name: declarada,
+                        status: 'failed',
+                        assertionResults: [{ fullName: 'V96 rojo sin segmento tests', title: 'x', status: 'failed' }]
+                    }
+                ]
+            });
+
+            const comprobar = (s: Salida): void => {
+                expect(s.out).toBe('FALLA suelto.test.js :: V96 rojo sin segmento tests\n');
+            };
+
+            // El mutante: quien borre el basename y devuelva la ruta entera.
+            pinza([fx], comprobar, [': partes[partes.length - 1];', ': String(absoluta);']);
+        });
     });
 });
 
@@ -1053,9 +1195,20 @@ describe('WP-V91 · cobertura, paralelismo y el instrumento mudo', () => {
             comprobar(correr(['--repetir', '2', '--', ...forma, '--config=v91-no-existe.json']));
         }
 
-        // Y las que NO serializan no se rechazan (MEDIDO: 6 procesos las tres).
-        // Sin estos controles la guarda podría cazarlo todo y parecería correcta.
-        for (const forma of [['--maxWorkers=6'], ['--maxWorkers', '4'], ['--runInBand=false'], ['--maxWorkers=50%']]) {
+        // Y las que NO serializan no se rechazan. Sin estos controles la guarda
+        // podría cazarlo todo y parecería correcta.
+        //
+        // WP-V96 · el cuarto control era `--maxWorkers=50%`, clavado. Con 12 CPU
+        // resuelve a 6 procesos, pero con UNA resuelve a CERO y la guarda lo
+        // rechaza — con razón—, de modo que el control se caía en la máquina
+        // donde el instrumento sigue siendo correcto. Ahora el porcentaje se
+        // deriva, y si la máquina no puede paralelizar el control desaparece
+        // porque allí NO ES UN CONTROL: es un caso serial más, y lo asevera el
+        // test de § 3 «un porcentaje que resuelve a un proceso».
+        const noSerializan: string[][] = [['--maxWorkers=6'], ['--maxWorkers', '4'], ['--runInBand=false']];
+        const pctParalelo = pctQueParaleliza();
+        if (pctParalelo !== null) noSerializan.push(['--maxWorkers=' + pctParalelo + '%']);
+        for (const forma of noSerializan) {
             const s = correr(['--repetir', '2', '--', ...forma, '--config=v91-no-existe.json']);
             expect(s.todo).not.toContain('estos argumentos serializan jest');
         }
@@ -1067,22 +1220,65 @@ describe('WP-V91 · cobertura, paralelismo y el instrumento mudo', () => {
         );
     });
 
+    it('PARALELISMO · la aritmética del porcentaje, en SIETE recuentos de CPU — WP-V96', () => {
+        // Reproduzco LA CONDICIÓN, no la máquina: no tengo una de 1 CPU, pero
+        // la decisión entera está en `Math.floor(cpus × pct / 100)`, y eso se
+        // puede recorrer aquí. La tabla fija los dos porcentajes de los que
+        // depende el test siguiente, y de paso deja escrito el caso que hasta
+        // hoy lo ponía rojo sin que nada estuviera mal: con 1 CPU **no existe**
+        // porcentaje que saque a jest de un proceso.
+        const tabla = [1, 2, 3, 4, 8, 12, 16].map((c) => [c, pctQueSerializa(c), pctQueParaleliza(c)]);
+        expect(tabla).toEqual([
+            [1, 100, null], //  ← una sola CPU: NINGÚN porcentaje paraleliza
+            [2, 99, 100],
+            [3, 66, 67],
+            [4, 49, 50],
+            [8, 24, 25],
+            [12, 16, 17],
+            [16, 12, 13]
+        ]);
+        // Y los cinco puntos que midió WP-V91 con 12 CPU, tal cual los anotó.
+        expect([9, 10, 20, 25, 50].map((p) => procesosDePorcentaje(p, 12))).toEqual([1, 1, 2, 3, 6]);
+    });
+
     it('PARALELISMO · un porcentaje que resuelve a un proceso también serializa', () => {
         // Esto quedó DECLARADO como hueco conocido en la primera vuelta y no
         // cerrado, con el argumento de que depende de la máquina. El argumento
         // era malo: depende de la máquina, sí, y la máquina que importa es
-        // ESTA, donde se está tomando la medida. MEDIDO con 12 CPU:
-        //   9 % → 1 proceso · 10 % → 1 · 20 % → 2 · 25 % → 3 · 50 % → 6,
-        // o sea floor(cpus × pct / 100), en cinco puntos.
-        const cpus = os.cpus().length;
-        const pctSerial = Math.max(1, Math.floor((100 * 1) / cpus)); // el mayor % que da 1
+        // ESTA, donde se está tomando la medida.
+        //
+        // WP-V96 · lo que le faltaba. El porcentaje serial se clavaba en
+        // `Math.max(1, floor(100 / cpus))`, que con UNA CPU da 100 — o sea el
+        // MISMO argumento que el control de más abajo, `--maxWorkers=100%`. En
+        // una máquina de 1 CPU este test se contradecía a sí mismo y salía rojo
+        // sin que nada estuviera mal (censado por WP-V95, eje E). Ahora los dos
+        // porcentajes se derivan de la aritmética del instrumento, y el caso de
+        // 1 CPU no se salta: se asevera lo que allí es VERDAD — que jest no
+        // puede paralelizar y la guarda tiene razón en rechazarlo todo.
+        const pctSerial = pctQueSerializa();
+        expect(procesosDePorcentaje(pctSerial)).toBeLessThanOrEqual(1); // la premisa, medida aquí
         const s = correr(['--repetir', '2', '--', '--maxWorkers=' + pctSerial + '%', '--config=v91-no-existe.json']);
         expect(s.code).toBe(2);
         expect(s.todo).toContain('estos argumentos serializan jest');
 
-        // Y un porcentaje holgado no se rechaza en ninguna máquina razonable.
-        const holgado = correr(['--repetir', '2', '--', '--maxWorkers=100%', '--config=v91-no-existe.json']);
-        expect(holgado.todo).not.toContain('estos argumentos serializan jest');
+        const pctParalelo = pctQueParaleliza();
+        const tope = correr(['--repetir', '2', '--', '--maxWorkers=100%', '--config=v91-no-existe.json']);
+        if (pctParalelo === null) {
+            // Máquina de 1 CPU. Ningún porcentaje —tampoco el 100 %— saca a
+            // jest de un proceso, así que rechazarlos TODOS es lo correcto.
+            expect(os.cpus().length).toBe(1);
+            expect(tope.code).toBe(2);
+            expect(tope.todo).toContain('estos argumentos serializan jest');
+        } else {
+            // Con dos o más CPU hay un porcentaje mínimo que ya paraleliza, y
+            // ni él ni el 100 % pueden rechazarse: sin este control la guarda
+            // podría cazarlo todo y parecería correcta.
+            const holgado = correr([
+                '--repetir', '2', '--', '--maxWorkers=' + pctParalelo + '%', '--config=v91-no-existe.json'
+            ]);
+            expect(holgado.todo).not.toContain('estos argumentos serializan jest');
+            expect(tope.todo).not.toContain('estos argumentos serializan jest');
+        }
     });
 
     it('PARALELISMO · medir en serie a petición sale 1: no vale como evidencia', () => {
@@ -1166,6 +1362,28 @@ describe('WP-V91 · cobertura, paralelismo y el instrumento mudo', () => {
 // =============================================================================
 
 describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', () => {
+    it('PRECONDICIÓN · los oráculos de § 4 no dependen de cómo se llame el temporal — WP-V96', () => {
+        // Los cuatro tests que siguen llevan el oráculo ESCRITO A MANO, con la
+        // ruta dentro. Hasta WP-V96 esa ruta era el basename, y sólo era el
+        // basename si ningún ancestro de `os.tmpdir()` se llamaba `tests`
+        // —supuesto que nadie comprobaba y que WP-V95 midió: 4 rojos con
+        // `TEMP`/`TMP`/`TMPDIR` = `…\tests\tmp`—. Ahora los proyectos cuelgan
+        // de un segmento `tests` PROPIO, y `lastIndexOf` devuelve siempre el
+        // más profundo. Este test lo deja demostrado en vez de supuesto: si
+        // alguien deshace el anidamiento, el rojo sale aquí y con su nombre, no
+        // cuatro tests más allá disfrazado de conjunto distinto.
+        for (const mini of [miniA, miniRota, miniSoloRota, miniAlterna]) {
+            const segmentos = mini.dir.split(/[\\/]/);
+            // El último segmento `tests` de la ruta es el NUESTRO: el que va
+            // justo encima del paquete. Da igual cuántos haya por encima.
+            expect(segmentos[segmentos.lastIndexOf(SEGMENTO_TESTS) + 1]).toBe(path.basename(mini.dir));
+            // Y la reserva entra de verdad: el proyecto es ajeno a la raíz del
+            // proceso, que es la condición que hace que la ruta se rescate.
+            expect({ dir: mini.dir, esAjeno: vieneDeOtraRaiz(RAIZ, mini.dir) })
+                .toEqual({ dir: mini.dir, esAjeno: true });
+        }
+    });
+
     it(
         'las clases y la multiplicidad, sobre un informe que ha escrito jest',
         () => {
@@ -1175,11 +1393,11 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
             expect(jest.code).toBe(1); // hay rojos, jest sale 1
 
             const completo = baseline('realA.base.txt', [
-                'FALLA rojo.test.js :: V91-A rojo clonado',
-                'FALLA rojo.test.js :: V91-A rojo clonado',
-                'FALLA rojo.test.js :: V91-A rojo llano',
-                'OMITE rojo.test.js :: [pending] V91-A saltado a proposito',
-                'OMITE rojo.test.js :: [todo] V91-A por escribir'
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado',
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado',
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo llano',
+                'OMITE tests/paqueteA/rojo.test.js :: [pending] V91-A saltado a proposito',
+                'OMITE tests/paqueteA/rojo.test.js :: [todo] V91-A por escribir'
             ]);
 
             // El oráculo se escribió A MANO antes de correr; si el conjunto real
@@ -1191,14 +1409,14 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
             // Y el vector B1 con jest de verdad: dos `it` homónimos en rojo, un
             // baseline que declara uno. El cardinal sube; el gate tiene que verlo.
             const soloUno = baseline('realA.base-menos.txt', [
-                'FALLA rojo.test.js :: V91-A rojo clonado',
-                'FALLA rojo.test.js :: V91-A rojo llano',
-                'OMITE rojo.test.js :: [pending] V91-A saltado a proposito',
-                'OMITE rojo.test.js :: [todo] V91-A por escribir'
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado',
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo llano',
+                'OMITE tests/paqueteA/rojo.test.js :: [pending] V91-A saltado a proposito',
+                'OMITE tests/paqueteA/rojo.test.js :: [todo] V91-A por escribir'
             ]);
             const multi = correr(['--check', soloUno, json]);
             expect(multi.code).toBe(1);
-            expect(multi.out).toContain('+ FALLA rojo.test.js :: V91-A rojo clonado   [sobran 1 de 2]');
+            expect(multi.out).toContain('+ FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado   [sobran 1 de 2]');
 
             // Frescura sobre un informe REAL: el único retoque es `startTime`,
             // que es justo lo que hace el paso del tiempo. Esperar 900 s dentro
@@ -1216,11 +1434,11 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
         'el comando canónico `--gate` corre jest él mismo y compara',
         () => {
             const completo = baseline('gateA.base.txt', [
-                'FALLA rojo.test.js :: V91-A rojo clonado',
-                'FALLA rojo.test.js :: V91-A rojo clonado',
-                'FALLA rojo.test.js :: V91-A rojo llano',
-                'OMITE rojo.test.js :: [pending] V91-A saltado a proposito',
-                'OMITE rojo.test.js :: [todo] V91-A por escribir'
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado',
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo clonado',
+                'FALLA tests/paqueteA/rojo.test.js :: V91-A rojo llano',
+                'OMITE tests/paqueteA/rojo.test.js :: [pending] V91-A saltado a proposito',
+                'OMITE tests/paqueteA/rojo.test.js :: [todo] V91-A por escribir'
             ]);
             const s = correr(['--gate', '--baseline', completo, '--', '--config=' + miniA.config]);
             expect(s.out).toContain('conjunto de rojos IDENTICO al declarado');
@@ -1236,7 +1454,7 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
             expect(s.code).toBe(0);
             // El mensaje exacto es de jest y cambia entre versiones: se asevera
             // la clase, el fichero y la causa, no la cadena entera.
-            expect(s.out).toContain('SUITE rota.test.js :: ● Test suite failed to run');
+            expect(s.out).toContain('SUITE tests/paqueteRota/rota.test.js :: ● Test suite failed to run');
             expect(s.out).toContain("Cannot find module './no_existe_en_absoluto'");
             // La cicatriz B2: el veredicto dice CUÁNTOS tests se ejecutaron.
             expect(s.out).toMatch(/las 1 corridas ejecutaron \d+ tests/);
@@ -1349,7 +1567,7 @@ describe('WP-V91 · contra jest de verdad (proyecto mínimo, no el producto)', (
                 expect(x.code).toBe(1);
                 expect(x.out).toContain('VEREDICTO: corridas discrepantes respecto de la 1: 2');
                 expect(x.out).toContain('--- diff corrida 1 -> corrida 2 ---');
-                expect(x.out).toContain('- FALLA alterna.test.js :: V91 rojo sólo en la primera corrida');
+                expect(x.out).toContain('- FALLA tests/paqueteAlterna/alterna.test.js :: V91 rojo sólo en la primera corrida');
                 expect(x.out).not.toContain('MISMO conjunto');
             };
             comprobar(s);
