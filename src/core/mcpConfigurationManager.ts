@@ -260,7 +260,7 @@ export class McpConfigurationManager {
      *
      * **6 llamadas** consumen este valor: `bootstrap/assembleContext.ts:109`,
      * `socketMonitor.ts:282` (desde su wrapper privado homónimo de `:278`) y
-     * `socketMonitor.ts:308`, `treeViews/configsTreeView.ts:437`,
+     * `socketMonitor.ts:308`, `treeViews/configsTreeView.ts:472`,
      * `treeViews/socketsTreeView.ts:85,232`.
      *
      * ⚠️ WP-V100 — LAS COORDENADAS DE ARRIBA ESTABAN MAL Y EL BARRIDO LAS
@@ -276,11 +276,37 @@ export class McpConfigurationManager {
      *
      * Y devolver `''` **tampoco salva la superficie**: `socketsTreeView.ts:92`
      * convierte el vacío en `'localhost:3000'` (y el caso de arriba lo pinta
-     * como `localhost:7777`, sin esquema). `configsTreeView.ts:436-438`
+     * como `localhost:7777`, sin esquema). `configsTreeView.ts:474`
      * **escribe** este valor en el fichero que genera, en 2 de sus 3
-     * plantillas (`:447` y `:463`): lo que persiste es el retorno de este
-     * método, y sólo cae al literal `"ws://localhost:3000"` cuando no hay
-     * config cargada. El invento ocurre con o sin fichero de ópera.
+     * plantillas (`:483` y `:499`): lo que persiste es el retorno de este
+     * método. El invento ocurre con o sin fichero de ópera.
+     *
+     * ⚠️ WP-V101 — DOS CORRECCIONES A ESTE MISMO BLOQUE, y las dos son de la
+     * familia que este fichero documenta:
+     *
+     *   · LAS COORDENADAS DE `configsTreeView.ts` VOLVIERON A DERIVAR, y esta
+     *     vez las movió el WP siguiente al que las fijó. V100 declaró el coste
+     *     («si alguien mueve esas líneas, el rojo aparece aquí») y se cumplió a
+     *     la primera: su test enrojeció por una edición legítima que no cambió
+     *     ningún hecho. Es la quinta generación de la misma deriva.
+     *
+     *     Y AQUÍ VA EL MATIZ, PORQUE LA VERSIÓN CORTA DE ESTO ERA FALSA: el
+     *     instrumento de anclas (`scripts/anclas-censo.mjs`) **no** es inmune
+     *     al desplazamiento sin más. **Anclar el HECHO —qué token, en qué
+     *     fichero, cuántas veces— sí lo es; anclar la CITA de un documento
+     *     vivo NO lo es, y a cambio te escribe la corrección exacta.** Que
+     *     siguiera verde sobre la edición de `configsTreeView.ts` no prueba lo
+     *     primero: prueba que ningún ancla cubre ese fichero. Sobre uno que sí
+     *     cubre, un desplazamiento que no cambia ningún hecho lo pone rojo en
+     *     su mitad de citas. Medido, no supuesto.
+     *     (El registro no se nombra aquí a propósito: §2 de este módulo
+     *     prohíbe nombres `.json` vivos ajenos, y la convención «…» marca
+     *     nombres MUERTOS — usarla para uno vivo sería mentir.)
+     *   · «sólo cae al literal cuando no hay config cargada» ERA VERDAD Y YA NO
+     *     LO ES. Hoy cae al literal siempre que la URL sale vacía, venga de
+     *     donde venga: `isConfigLoaded()` preguntaba «¿hay fichero de ópera?»,
+     *     no «¿tengo URL?», y el `''` acababa persistido en un campo que los
+     *     schemas empaquetados declaran `required` con `pattern: "^wss?://"`.
      *
      * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
      * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca

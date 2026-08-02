@@ -2,24 +2,24 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { buildCspMeta, createNonce, escapeHtml } from '../webview/security';
 
+/**
+ * WP-V101 · AQUÍ HABÍA UN `static register()` MUERTO CON UN `viewType` QUE NO
+ * EXISTÍA EN NINGÚN SITIO.
+ *
+ * Registraba este editor bajo «theatrical.agentConfigEditor» —un nombre que
+ * `contributes.customEditors` no declara y que VS Code, por tanto, jamás
+ * habría casado con nada—. Nadie llamaba al método: el registro real lo hace
+ * `src/core/bootstrap/viewRegistry.ts` con el `viewType` del manifiesto, sobre
+ * la instancia que arma `assembleContext.ts`. Era el defecto de este WP al
+ * revés: allí el manifiesto prometía lo que el código no cumplía; aquí el
+ * código nombraba lo que el manifiesto no promete.
+ *
+ * Se poda en vez de renombrarse porque no había nada que conservar: código
+ * inalcanzable con un identificador inexistente. Que no vuelva a entrar uno lo
+ * vigila `tests/unit/manifiesto/conveniosDelManifiesto.test.ts` §4, que exige
+ * que los `viewType` del código y los del manifiesto sean **el mismo conjunto**.
+ */
 export class AgentConfigEditorProvider implements vscode.CustomTextEditorProvider {
-    public static register(context: vscode.ExtensionContext): vscode.Disposable {
-        const provider = new AgentConfigEditorProvider(context);
-        const providerRegistration = vscode.window.registerCustomEditorProvider(
-            AgentConfigEditorProvider.viewType, 
-            provider,
-            {
-                webviewOptions: {
-                    retainContextWhenHidden: true,
-                },
-                supportsMultipleEditorsPerDocument: false,
-            }
-        );
-        return providerRegistration;
-    }
-
-    private static readonly viewType = 'theatrical.agentConfigEditor';
-
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {}

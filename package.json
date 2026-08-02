@@ -1111,7 +1111,7 @@
         "displayName": "Agent Content Editor",
         "selector": [
           {
-            "filenamePattern": "*.agent.md"
+            "filenamePattern": "**/theatrical-content/content/agents/*.agent.md"
           }
         ],
         "priority": "default"

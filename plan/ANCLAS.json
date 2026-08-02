@@ -1,0 +1,99 @@
+{
+  "$comentario": [
+    "WP-V101 · ANCLAS: el hecho, no la coordenada.",
+    "",
+    "POR QUE EXISTE ESTE FICHERO. Una misma afirmacion del censo —donde viven los",
+    "dos `customEditors`— ha derivado CUATRO veces, y la cuarta dentro del acta que",
+    "se cerro para arreglar la tercera:",
+    "  1. cuerpo del censo heredado ..... package.json:1446 y :1456",
+    "  2. WP-V15 §  ..................... package.json:1219  (y corrigio el recuento)",
+    "  3. acta ⛔ del censo ............. package.json:1165 y :1175, «1248 lineas»",
+    "  4. medido el 2026-08-02 .......... package.json:1110 y :1120, 1197 lineas",
+    "Las cuatro RESUELVEN, asi que `scripts/citas-rancias.mjs` las aprueba todas: su",
+    "ceguera declarada es que comprueba que una cita apunta a algo que EXISTE, no",
+    "que diga la verdad, y pide 'un ancla de texto guardada junto a cada cita'.",
+    "Esto es esa ancla.",
+    "",
+    "LA IDEA. Un numero de linea no es el hecho: es donde el hecho estaba ayer. Por",
+    "eso pinchar lineas no funciono NINGUNA de las cuatro veces. Aqui se declara el",
+    "HECHO —que token debe aparecer, en que fichero, cuantas veces— y el gate",
+    "DERIVA la coordenada de hoy. Enrojece cuando el hecho cambia, no cuando el",
+    "fichero se mueve; y ademas compara la coordenada que el documento vivo AFIRMA",
+    "con la que acaba de medir, que es exactamente la deriva de las 4 generaciones.",
+    "",
+    "`veces` NO es decorativo: es lo que caza la deriva de COMPOSICION. El censo",
+    "declaraba 7 puntos de codigo para `theatrical-content` incluyendo 5 en",
+    "`extensionBootstrap.ts`, fichero que hoy tiene CERO menciones. Un barrido que",
+    "re-mide coordenadas seguiria sin verlo; un recuento por fichero lo ve.",
+    "",
+    "AMBITO: solo DOCUMENTOS VIVOS (`plan/CENSO-V12.md`, gobierno). Los reportes",
+    "son actas y solo se anotan — `plan/PRACTICAS.md` §7. Por eso `citas` no",
+    "apunta jamas a `plan/REPORTES/`."
+  ],
+  "anclas": [
+    {
+      "id": "A1-customeditor-contenido",
+      "fichero": "package.json",
+      "debeNombrar": ["\"viewType\": \"alephscript.agentContentEditor\""],
+      "veces": 1,
+      "porque": "El editor de contenido de agentes. Su `viewType` sigue bajo `alephscript.` a proposito: **R-V15-7** (`plan/REPORTES/WP-V15-espacios-nombres.md:709`) declaro los 11 ids de vista y los 3 `viewType` no renombrables sin coste, y su razon literal es que **los `<viewId>.focus` de VS Code y el `globalState` del tema cuelgan de ellos** — no `editorAssociations`, que es lo que decia la primera version de esta nota y NO es lo que R-V15-7 dice.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "package.json:1110" }]
+    },
+    {
+      "id": "A2-customeditor-config",
+      "fichero": "package.json",
+      "debeNombrar": ["\"viewType\": \"alephscript.agentConfigEditor\""],
+      "veces": 1,
+      "porque": "El editor de configuracion de agentes. Mismo motivo que A1 para el prefijo.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "package.json:1120" }]
+    },
+    {
+      "id": "A3-convencion-en-el-manifiesto",
+      "fichero": "package.json",
+      "debeNombrar": ["theatrical-content/"],
+      "veces": 2,
+      "porque": "WP-V101: las DOS mitades del par de editores nombran ya la misma convencion de workspace. Antes solo una lo hacia y la otra decia `*.agent.md` a secas, secuestrando cualquier fichero con esa extension. Si esto vuelve a 1, el par volvio a ser asimetrico.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "package.json:1114" }]
+    },
+    {
+      "id": "A4-jsonvalidation-schemas",
+      "fichero": "package.json",
+      "debeNombrar": ["./schemas/"],
+      "veces": 3,
+      "porque": "Las 3 entradas de `contributes.jsonValidation`. Sus `url` son RELATIVAS AL PAQUETE y viajan en el .vsix: son la dependencia dura de `schemas/`.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "package.json:969" }]
+    },
+    {
+      "id": "A5-convencion-en-comandos",
+      "fichero": "src/core/bootstrap/commands/agentManagementCommands.ts",
+      "debeNombrar": ["theatrical-content"],
+      "veces": 5,
+      "porque": "Aqui es donde la convencion se ESCRIBE: `aleph0.agents.createNew` crea el directorio en el workspace del usuario. Es el motivo de que el manifiesto pueda nombrarla sin mentir. El censo atribuia estos puntos a `extensionBootstrap.ts`, que hoy tiene CERO.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/core/bootstrap/commands/agentManagementCommands.ts:46" }]
+    },
+    {
+      "id": "A6-convencion-editor-config",
+      "fichero": "src/editors/AgentConfigEditorProvider.ts",
+      "debeNombrar": ["theatrical-content"],
+      "veces": 1,
+      "porque": "`getContentPath`: navega al gemelo `.agent.md`. Resuelve contra el workspace del usuario, no contra el paquete.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/editors/AgentConfigEditorProvider.ts:373" }]
+    },
+    {
+      "id": "A7-convencion-editor-contenido",
+      "fichero": "src/editors/AgentContentEditorProvider.ts",
+      "debeNombrar": ["theatrical-content"],
+      "veces": 1,
+      "porque": "`getConfigPath`: navega al gemelo `.config.json`. Es el codigo que ya asumia la convencion mientras el manifiesto no la declaraba.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/editors/AgentContentEditorProvider.ts:251" }]
+    },
+    {
+      "id": "A8-convencion-en-el-panel",
+      "fichero": "src/views/HackerConfigPanelProvider.ts",
+      "debeNombrar": ["theatrical-content"],
+      "veces": 3,
+      "porque": "El panel ofrece los mismos directorios resueltos contra el workspace del usuario. Superficie de WP-V102: WP-V101 la ANCLA pero no la toca. ERA `veces: 2` (`:297`, `:298`) y WP-V102 reescribio el fichero: hoy son 3 (`:352` la prosa que explica por que la convencion es del usuario, `:371` y `:372` los datos). **Esta ancla se rompio de verdad y en rojo cuando V102 entro en main** — no es un ejemplo inventado: es la primera deriva real que este instrumento caza, y la provoco otro WP corriendo en paralelo.",
+      "citas": [{ "doc": "plan/CENSO-V12.md", "dice": "src/views/HackerConfigPanelProvider.ts:352" }]
+    }
+  ]
+}

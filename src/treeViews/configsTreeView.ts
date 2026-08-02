@@ -11,6 +11,23 @@ import { getLogger } from '../core/logging';
  */
 const log = getLogger('ConfigsTreeView', LogCategory.CONFIG);
 
+/**
+ * WP-V101 · URL de relleno de las plantillas que genera `createFromTemplate`.
+ *
+ * Estaba escrita como literal en una sola rama del ternario; ahora es la unica
+ * expresion, y por eso las dos ramas no pueden divergir. Tiene que satisfacer
+ * `pattern: "^wss?://"`, que es lo que exigen `schemas/socket-config.schema.json`
+ * (`url`, `required`) y `schemas/xplus1-config.schema.json` (`socketIO.url`) —
+ * los schemas que `contributes.jsonValidation` ata a los nombres de fichero que
+ * estas mismas plantillas escriben. Si alguien la cambia por algo sin esquema,
+ * `tests/unit/manifiesto/conveniosDelManifiesto.test.ts` §2 enrojece.
+ *
+ * NO es la URL de produccion ni pretende serlo: es el valor con el que nace un
+ * fichero de ejemplo cuando no hay ninguno configurado. Que ademas invente
+ * `localhost` es la deuda de **WP-V31**, declarada y no tocada aqui.
+ */
+export const SOCKET_URL_PLANTILLA = 'ws://localhost:3000';
+
 export interface ConfigTreeItem {
     id: string;
     label: string;
@@ -433,9 +450,28 @@ export class ConfigsTreeDataProvider implements vscode.TreeDataProvider<ConfigTr
 
     public async createFromTemplate(templateType: 'xplus1' | 'socket' | 'ui'): Promise<void> {
         // Get default socket URL from configuration
-        const defaultSocketUrl = this.configManager.isConfigLoaded() 
-            ? this.configManager.getDefaultSocketUrl() 
-            : "ws://localhost:3000";
+        //
+        // ⚠️ WP-V101 — LA RAMA DE ARRIBA PODIA ESCRIBIR `""` Y EL SCHEMA QUE
+        // NOSOTROS MISMOS EMPAQUETAMOS LO RECHAZA. `isConfigLoaded()` pregunta
+        // «¿hay fichero de opera cargado?», no «¿tengo URL?»:
+        // `getDefaultSocketUrl()` devuelve `''` cuando no hay ajuste y la UI
+        // primaria no trae puerto (`mcpConfigurationManager.ts:299`). Ese `''`
+        // se persistia en `url` / `socketIO.url`, dos campos que
+        // `schemas/socket-config.schema.json` y `schemas/xplus1-config.schema.json`
+        // declaran `required` con `pattern: "^wss?://"` — y a esos schemas los
+        // ata `contributes.jsonValidation` por NOMBRE DE FICHERO. Resultado
+        // medido: la extension escribia un fichero que su propio schema marcaba
+        // en rojo al abrirlo. Ahora el vacio cae al mismo literal que ya usaba
+        // la otra rama, asi que la conducta solo cambia en ese caso.
+        //
+        // LO QUE ESTO **NO** ARREGLA: si el ajuste trae un valor sin esquema
+        // («localhost:7777»), `getDefaultSocketUrl()` lo devuelve tal cual y el
+        // schema lo rechaza igual. Normalizar eso es cambiar que URL producimos
+        // y es **WP-V31**; aqui solo se cierra el vacio.
+        const urlConfigurada = this.configManager.isConfigLoaded()
+            ? this.configManager.getDefaultSocketUrl()
+            : '';
+        const defaultSocketUrl = urlConfigurada || SOCKET_URL_PLANTILLA;
 
         const templates = {
             xplus1: {
