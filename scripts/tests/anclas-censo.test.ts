@@ -328,16 +328,46 @@ describe('§4.c · la ceguera «recuento correcto, sitio equivocado», declarada
 
 // =============================================================================
 describe('§5 · el registro real de este repo', () => {
+    /**
+     * EL CONJUNTO DECLARADO DE ANCLAS — POR NOMBRE Y CONTENIDO, NO POR CARDINAL.
+     *
+     * Misma línea de defensa que `scripts/rojos-jest.baseline.txt`, y por la
+     * misma razón. La primera versión de esta guarda era
+     * `expect(filas.length).toBeGreaterThanOrEqual(8)`, que impide **borrar**
+     * filas pero no **vaciarlas**: la contrarrevisión dejó los 8 ids, los 8
+     * ficheros, los 8 `veces` y las 8 citas intactos y cambió UN token
+     * —`theatrical-content/` por `"filenamePattern"`— y con la regresión de
+     * producto aplicada el gate daba `PASS (0 rotas + 0 derivadas / 8 anclas)`,
+     * exit 0. También colaba sustituir una fila por otra trivial, poner un
+     * token casi universal (`"e"`, `veces: 705`) o duplicar un ancla.
+     *
+     * Fijar el cardinal protege del borrado; fijar el CONJUNTO protege del
+     * vaciado, la sustitución, la dilución y la duplicación. Mover una fila de
+     * aquí es una línea de diff que alguien tiene que firmar — que es
+     * exactamente lo que se le pide al suelo de cobertura.
+     */
+    const ANCLAS_DECLARADAS = [
+        'A1-customeditor-contenido\tpackage.json\t"viewType": "alephscript.agentContentEditor"\t1',
+        'A2-customeditor-config\tpackage.json\t"viewType": "alephscript.agentConfigEditor"\t1',
+        'A3-convencion-en-el-manifiesto\tpackage.json\ttheatrical-content/\t2',
+        'A4-jsonvalidation-schemas\tpackage.json\t./schemas/\t3',
+        'A5-convencion-en-comandos\tsrc/core/bootstrap/commands/agentManagementCommands.ts\ttheatrical-content\t5',
+        'A6-convencion-editor-config\tsrc/editors/AgentConfigEditorProvider.ts\ttheatrical-content\t1',
+        'A7-convencion-editor-contenido\tsrc/editors/AgentContentEditorProvider.ts\ttheatrical-content\t1',
+        'A8-convencion-en-el-panel\tsrc/views/HackerConfigPanelProvider.ts\ttheatrical-content\t3'
+    ];
+
+    it('el registro es EXACTAMENTE el conjunto declarado (id, fichero, token y recuento)', () => {
+        const r = spawnSync(process.execPath, [INSTRUMENTO, '--anclas'], { encoding: 'utf8' });
+        expect(r.status).toBe(0);
+        const filas = (r.stdout || '').trim().split(/\r?\n/).filter(Boolean);
+        expect(filas.sort()).toEqual([...ANCLAS_DECLARADAS].sort());
+    });
+
     it('`--anclas` lista el censo, una por línea, y todas tienen fichero y recuento', () => {
         const r = spawnSync(process.execPath, [INSTRUMENTO, '--anclas'], { encoding: 'utf8' });
         expect(r.status).toBe(0);
         const filas = (r.stdout || '').trim().split('\n').filter(Boolean);
-        // SUELO DEL REGISTRO — sin esto, la forma trivial de poner el gate verde
-        // es ADELGAZAR el registro: borrando 7 de las 8 anclas la suite entera
-        // seguía en verde y el gate dejaba de cazar la regresión que este WP
-        // arregla (revertir el selector a `*.agent.md` salía PASS). Un gate cuyo
-        // alcance se puede reducir en silencio no es un gate: es un adorno.
-        // Este número sube con el registro; jamás baja sin que alguien lo firme.
         expect(filas.length).toBeGreaterThanOrEqual(8);
         for (const f of filas) {
             const [id, fichero, token, veces] = f.split('\t');

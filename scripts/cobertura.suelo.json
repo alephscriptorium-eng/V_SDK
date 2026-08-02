@@ -52,7 +52,7 @@
     "so": "Windows 11 · 12 CPU",
     "node": "v22.21.1",
     "jest": "29.7.0",
-    "suite": "550 tests · 549 pass · 1 skip · 0 fail · 18 suites",
+    "suite": "552 tests · 551 pass · 1 skip · 0 fail · 18 suites",
     "porcentajes_informativos": {
       "statements": 32.26,
       "branches": 25.5,

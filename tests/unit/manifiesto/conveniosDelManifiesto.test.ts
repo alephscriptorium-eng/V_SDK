@@ -297,24 +297,61 @@ describe('WP-V101 §4 · la TERCERA mitad: lo que el codigo REGISTRA y lo que el
         expect(viewTypesDelCodigo()).toEqual(delManifiesto);
     });
 
-    it('ningun fichero de src/editors nombra un viewType que el manifiesto no declare', () => {
+    it('ningun identificador punteado de src/editors nombra algo que el manifiesto no declare', () => {
         // Cierra el agujero por el otro lado: los `static register()` muertos
         // vivían aquí, no en el registro, así que la comparación de arriba no
         // los habría visto.
+        //
+        // LA PRIMERA VERSIÓN DE ESTE TEST PROMETÍA EN SU NOMBRE MÁS DE LO QUE
+        // COMPROBABA, y la contrarrevisión lo demostró: su regex sólo casaba
+        // `<algo>.agent(Content|Config)Editor`, o sea EXACTAMENTE los dos
+        // nombres ya podados. Metiendo `'theatrical.agentMarkdownEditor'` en
+        // este mismo directorio —el sitio exacto del defecto— §4 NO disparaba;
+        // el único rojo venía del gate de anclas, y por el motivo equivocado
+        // (la línea insertada desplazaba una cita). Eso es «saltó OTRO
+        // guardián»: parece verificación y no lo es.
+        //
+        // Ahora la regla es de CLASE, no de lista: **cualquier literal con
+        // forma de identificador punteado** en `src/editors/` tiene que ser un
+        // `viewType` que el manifiesto declare. Medido antes de escribirla:
+        // hoy hay CERO literales punteados en este directorio, así que la regla
+        // no tiene falsos positivos y sólo puede dispararse cuando alguien
+        // introduce un nombre nuevo.
         const declarados = new Set((manifiesto.contributes.customEditors as any[]).map(e => e.viewType));
         const dir = path.join(RAIZ, 'src', 'editors');
         const intrusos: string[] = [];
         for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.ts'))) {
             const texto = fs.readFileSync(path.join(dir, f), 'utf8');
             texto.split(/\r?\n/).forEach((linea, i) => {
-                // Convención de V100: «…» marca un nombre MUERTO y narrado.
-                for (const m of linea.matchAll(/'([A-Za-z0-9_]+\.agent(?:Content|Config)Editor)'/g)) {
-                    if (linea.includes(`«${m[1]}»`)) { return; }
+                for (const m of linea.matchAll(/'([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+)'/g)) {
+                    // Convención de V100: «…» marca un nombre MUERTO y narrado.
+                    if (linea.includes(`«${m[1]}»`)) { continue; }
                     if (!declarados.has(m[1])) intrusos.push(`${f}:${i + 1}  ${m[1]}`);
                 }
             });
         }
         expect(intrusos).toEqual([]);
+    });
+
+    it('SOLO viewRegistry.ts puede registrar customEditors', () => {
+        // El otro flanco que la contrarrevisión encontró: §4 leía **sólo**
+        // `viewRegistry.ts`, así que una registración hecha desde cualquier otro
+        // fichero le era invisible — y de ahí venía justamente el defecto
+        // podado (`static register()` en `src/editors/`). Si el registro puede
+        // ocurrir en cualquier sitio, comparar conjuntos contra UN fichero no
+        // demuestra nada.
+        const ficheros: string[] = [];
+        (function recorrer(dir: string) {
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) { recorrer(p); continue; }
+                if (!e.name.endsWith('.ts')) { continue; }
+                if (fs.readFileSync(p, 'utf8').includes('registerCustomEditorProvider')) {
+                    ficheros.push(path.relative(RAIZ, p).split(path.sep).join('/'));
+                }
+            }
+        })(path.join(RAIZ, 'src'));
+        expect(ficheros.sort()).toEqual(['src/core/bootstrap/viewRegistry.ts']);
     });
 });
 

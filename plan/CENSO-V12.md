@@ -335,9 +335,19 @@ tres hallazgos se señalan con nombre y ruta, sin tocar.
    ya escrita. **El recuento por fichero no es decorativo**: es lo que caza la
    deriva de *composición*, que es peor que la de línea — este censo declaraba
    7 puntos de `theatrical-content` con 5 en `extensionBootstrap.ts`, fichero
-   que hoy tiene **cero** menciones; los 11 puntos vivos están repartidos en
-   otros cinco ficheros. Un barrido que sólo re-mide coordenadas **no lo habría
-   visto nunca**.
+   que hoy tiene **cero** menciones; los **12** puntos vivos están repartidos
+   en otros cinco ficheros. Un barrido que sólo re-mide coordenadas **no lo
+   habría visto nunca**.
+
+   *(La cifra decía **11** hasta el 2026-08-03, y era la de antes de que V102
+   reescribiera el panel: el rebase la movió a 12 en §8 y **este sitio no se
+   actualizó**, dejando el censo contradiciéndose consigo mismo por uno. Lo
+   apunto en vez de sólo corregirlo porque **es de mi propia doctrina**: una
+   cifra no se puede anclar —cambia con cada edición legítima— y por eso
+   `scripts/anclas-censo.mjs` ancla el recuento **por fichero**, donde el gate
+   sí puede verlo, y no el total, donde no puede. La misma cifra repetida en
+   dos sitios es un gemelo desincronizable, exactamente lo que V100 arregló
+   con una constante.)*
 
 ---
 

@@ -187,20 +187,36 @@ mientras el documento vivo afirma otra cosa. **Me cazó a mí**: registré
 `package.json:966` y el gate lo rechazó, porque `:966` abre el array y no nombra
 `./schemas/`.
 
-### 3.5 · **B3 · Adelgazar el registro era la forma trivial de poner el gate verde**
+### 3.5 · **B3 · Desarmar el registro era la forma trivial de poner el gate verde**
 
-La contrarrevisión borró 7 de las 8 anclas y **la suite entera siguió verde**, y
-con el registro adelgazado el gate **ya no cazaba la regresión que este WP
-arregla**. Lo declaraba en §8 pero no estaba mecanizado, y esto **es** CA-3.
-Cerrado con un suelo en §5 (`toBeGreaterThanOrEqual(8)`). Verificado:
+**Primera vuelta**: la contrarrevisión borró 7 de las 8 anclas y **la suite
+entera siguió verde**. Cerré con un cardinal (`>= 8`).
+
+**Segunda vuelta, y el cardinal no bastaba.** `>= 8` impide **borrar** filas,
+no **vaciarlas**: dejando los 8 ids, los 8 ficheros, los 8 `veces` y las 8
+citas intactos y cambiando **un token** —`theatrical-content/` por
+`"filenamePattern"`—, con la regresión de producto aplicada el gate daba
+`PASS (0 rotas + 0 derivadas / 8 anclas)`, exit 0. Igual colaban sustituir una
+fila por otra trivial, diluir con un token casi universal (`"e"`, `veces: 705`)
+o duplicar un ancla.
+
+**Cerrado fijando el CONJUNTO por nombre y contenido**, que es la línea de
+defensa que ya usa esta casa en `scripts/rojos-jest.baseline.txt` («por NOMBRE,
+no por cardinal»): §5 declara los 8 `id + fichero + token + veces` y los compara
+exactos. Mover una fila es **una línea de diff que alguien tiene que firmar**,
+igual que el suelo de cobertura. Verificado con los dos vectores del revisor:
 
 ```
-$ (registro adelgazado a 1 ancla)
-gate solo            → EXIT=0        (por eso no bastaba el gate)
-suite                → ● §5 · `--anclas` lista el censo…    Tests: 1 failed, 24 passed
+P-B3a · ancla VACIADA (mismo id/fichero/veces/cita, token cambiado)
+  ● §5 · el registro es EXACTAMENTE el conjunto declarado    Tests: 1 failed, 44 passed
+P-B3b · token casi universal ("e") con veces inflado
+  ● §5 · el registro es EXACTAMENTE el conjunto declarado    Tests: 1 failed, 44 passed
 ```
 
-Un solo test dispara: señal limpia, no un rojo global.
+**Un solo test dispara en cada uno**: señal limpia, no un rojo global. Y lo que
+bajaba la gravedad sigue siendo cierto y conviene repetirlo: lo desarmable era
+**el alcance del guardián de deriva**, nunca la cobertura del producto — el
+defecto lo seguía cazando el test que ejecuta.
 
 ### 3.6 · Corrijo una afirmación mía que era cierta como hecho y **engañosa como argumento**
 
@@ -244,14 +260,36 @@ D16 que esta casa persigue. Corregida ahí, en el censo y aquí.
 - **§2 `jsonValidation`** — corre `createFromTemplate` en 3 plantillas × 3
   condiciones de URL, captura lo escrito, busca **en el manifiesto** qué schema
   le toca a ese nombre y valida con `ajv`.
-- **§4 `manifiesto ↔ registro`** — **nueva en esta vuelta.** La contrarrevisión
-  renombró `viewRegistry.ts:92` a `alephscript.agentContentEditorV2` —el código
+- **§4 `manifiesto ↔ registro`** — la contrarrevisión renombró
+  `viewRegistry.ts:92` a `alephscript.agentContentEditorV2` —el código
   registrando lo que el manifiesto no declara— y **nadie disparó**: mis tests
   ataban manifiesto↔comando pero **nunca manifiesto↔registro**. Ahora se
   comparan **conjuntos** (sobrar es tan defecto como faltar), con guarda
-  anti-vacuidad, más un barrido de `src/editors/` que impide que vuelva un
-  `viewType` que el manifiesto no declare.
+  anti-vacuidad.
 - **§3** — cada `url` resuelve y `.vscodeignore` no excluye `schemas/`.
+
+### 4.1 · **C1 · §4 prometía en su nombre más de lo que comprobaba**
+
+Mi barrido de `src/editors/` se llamaba «ningún fichero nombra un `viewType`
+que el manifiesto no declare», pero su regex sólo casaba
+`<algo>.agent(Content|Config)Editor` — **exactamente los dos nombres que yo
+acababa de podar**. Metiendo `'theatrical.agentMarkdownEditor'` en el sitio
+exacto del defecto, **§4 no disparaba**; el único rojo venía del gate de anclas
+y **por el motivo equivocado** (la línea insertada desplazaba la cita de A7).
+Eso es «saltó OTRO guardián»: **parece verificación y no lo es**. Cazaba los dos
+nombres, no la clase.
+
+Ensanchado a regla de clase, con dos tests en vez de uno:
+
+- **cualquier literal con forma de identificador punteado** en `src/editors/`
+  tiene que ser un `viewType` que el manifiesto declare. Medido antes de
+  escribirla: **hoy hay cero literales punteados en ese directorio**, así que la
+  regla no tiene falsos positivos y sólo salta con un nombre nuevo.
+- **sólo `viewRegistry.ts` puede registrar customEditors**: se recorre `src/`
+  entero y se exige que el conjunto de ficheros con
+  `registerCustomEditorProvider` sea exactamente ése. El flanco que faltaba: §4
+  leía **un solo fichero**, así que una registración desde otro sitio —**que es
+  de donde venía el defecto podado**— le era invisible.
 
 **Detalle de método que cambió un resultado**: mi primer matcher no modelaba la
 regla de VS Code de que un patrón **sin `/` casa contra el basename**. Con esa
@@ -358,10 +396,10 @@ cobertura: censo COMPLETO y unidades cubiertas EN EL SUELO declarado
 ```
 $ ./node_modules/.bin/jest --coverage=false
 Test Suites: 18 passed, 18 total
-Tests:       1 skipped, 549 passed, 550 total
+Tests:       1 skipped, 551 passed, 552 total
 ```
 
-`main` traía 16 suites / 507. Ahora **18 / 550**: **+2 suites, +43 tests, 0
+`main` traía 16 suites / 507. Ahora **18 / 552**: **+2 suites, +45 tests, 0
 fallos**, el mismo skip de siempre. `tsc -p tsconfig.json --noEmit`: **0 errores
 en los ficheros tocados**; los que salen son los preexistentes y declarados.
 
@@ -382,11 +420,22 @@ en los ficheros tocados**; los que salen son los preexistentes y declarados.
    `@alephscript/mcp-core-sdk` y `@modelcontextprotocol/sdk`, dependencias de
    **producción**; eslint lleva su propia copia anidada `6.12.6`—, y
    `node_modules/minimatch` 9.0.5 **no es el de jest** (los de jest son `3.1.2`
-   anidados): lo sube `@typescript-eslint/parser`. Hay **3 `ajv` y 13
-   `minimatch`** en el árbol. **La decisión de no promoverlas sigue siendo la
-   misma** —tocar el lock con un `npm ci` local incompleto arriesga más de lo
-   que evita— **pero el motivo que había escrito era falso y queda reescrito.**
-   Siguen fallando cerrado: si desaparecen, el fichero no compila.
+   anidados). Hay **3 `ajv` y 13 `minimatch`** en el árbol.
+
+   *(Segunda corrección, sobre mi propia corrección: escribí que el `minimatch`
+   de raíz «lo sube `@typescript-eslint/parser`», y eso es una simplificación.
+   **Medido**: de los **26** padres que piden `minimatch`, **13 piden el rango
+   `^9`** —`@npmcli/arborist`, `@tufjs/models`, `@yeoman/conflicter`,
+   `mem-fs-editor`, `multimatch`, varios `glob`… y sí,
+   `@typescript-eslint/typescript-estree`, que es de quien cuelga `parser`, no
+   `parser` mismo—. Ninguno lo «sube» en solitario: npm iza a raíz la versión
+   que satisface a ese conjunto. Los recuentos y la corrección de fondo sobre
+   `ajv` sí eran exactos.)*
+
+   **La decisión de no promoverlas sigue siendo la misma** —tocar el lock con un
+   `npm ci` local incompleto arriesga más de lo que evita— **pero el motivo que
+   había escrito era falso y queda reescrito.** Siguen fallando cerrado: si
+   desaparecen, el fichero no compila.
 5. **El gate sólo cubre lo registrado**, y ahora además **no puede adelgazarse en
    silencio** (§3.5). Las 8 anclas cubren la superficie de este WP y la ya
    sabida derivada; **no son un censo del repo**.
@@ -414,10 +463,38 @@ en los ficheros tocados**; los que salen son los preexistentes y declarados.
    hace. Es lo que puso B1 en rojo.
 10. **Suelo medido en una sola plataforma** (Windows 11 / node v22.21.1). No
     reproduje la condición de CI; si CI discrepa, este número no es el árbitro.
-11. **No migré la tabla de coordenadas de V100 a anclas.** Con §3.6 medido, el
-    beneficio es menor de lo que la 1ª entrega sugería: la mitad `citas` tiene el
-    mismo coste de desplazamiento. Lo que sí valdría es migrar la mitad de
-    **hechos**. Queda dicho, sin venderlo de más.
+11. **No migré la tabla de coordenadas de V100 a anclas, y mi motivo era malo.**
+    Escribí que «el beneficio es menor de lo que la 1ª entrega sugería, porque la
+    mitad `citas` tiene el mismo coste de desplazamiento». **Eso no aplica a esa
+    tabla, y es medible**: `tests/unit/core/mcpConfigurationManager.test.ts`
+    pincha sus 11 coordenadas **dentro del propio test**, con **cero**
+    referencias a documento vivo —`grep -cE "plan/|\.md"` da **0**—. Migrarla
+    usaría **sólo la mitad de hechos**, que es justamente la inmune al
+    desplazamiento. O sea que el remedio que yo mismo nombraba en la frase
+    siguiente es el que aplica, y la reserva que le puse delante sobraba: **la
+    migración sí valdría la pena**, y lo que la deja fuera es el alcance —es
+    reescribir el test de otro WP—, no su beneficio. Queda enrutado como tal.
+
+---
+
+## 8.b · Los vectores de la 3ª devolución, verificados
+
+Cuatro, con el guardián propio separado de «saltó otro»:
+
+| vector | fallan | guardián propio | ¿otro? |
+| --- | --- | --- | --- |
+| **P-C1a** · `viewType` huérfano **nuevo** en `src/editors/` | **2** | §4 «identificador punteado» | sí, anclas §5 (**desplaza la cita de A7** — el coste declarado en §3.6) |
+| **P-C1b** · `registerCustomEditorProvider` **fuera** de `viewRegistry.ts` | **3** | §4 ×2 (ubicación + literal) | sí, anclas §5 (mismo desplazamiento) |
+| **P-B3a** · ancla **vaciada** (sólo cambia el token) | **1** | §5 conjunto exacto | no |
+| **P-B3b** · token casi universal con `veces` inflado | **1** | §5 conjunto exacto | no |
+
+```
+############ CONTROL · restaurado ############
+Tests:       45 passed, 45 total
+```
+
+En P-C1a y P-C1b **el guardián propio dispara**, que es la diferencia con el
+estado anterior: antes el único rojo era ajeno y por el motivo equivocado.
 
 ---
 
@@ -436,3 +513,23 @@ M8); procedencia de `ajv`/`minimatch` re-medida (§8.4); **ancla vacua** rechaza
 con exit 2 y su mutante; ceguera «sitio equivocado» con test propio y declarada
 en cada corrida (§3.7); **1197/1198** reconciliado y enrutado (§8.8); atribución
 de **R-V15-7** corregida (§1.3).
+
+---
+
+## 10 · Qué cambió en esta 3ª entrega (cero bloqueantes, tres condiciones)
+
+| condición | cierre |
+| --- | --- |
+| **C1** · §4 prometía en su nombre más de lo que comprobaba: cazaba los dos nombres podados, no la clase | Ensanchado a **regla de clase** (cualquier identificador punteado en `src/editors/`) **+ test nuevo de ubicación** (sólo `viewRegistry.ts` registra). Los dos vectores del revisor disparan ahora **su** guardián (§4.1, §8.b) |
+| **C2** · el censo se contradecía por uno (`:338` decía 11, `:928` dice 12) | Corregido a **12**, y anotado por qué pasó: **es de mi propia doctrina** — una cifra no se puede anclar, y por eso el gate ancla el recuento **por fichero** y no el total |
+| **B3 ampliado** · `>= 8` impedía borrar filas, no vaciarlas | **Conjunto exacto declarado por nombre y contenido** en §5, como `rojos-jest`. Vaciar, sustituir, diluir o duplicar una fila enrojece un solo test (§3.5) |
+
+**Menores de esta vuelta**: §8.11 reescrito — mi motivo para no migrar la tabla
+de V100 **era malo y es medible que lo era** (0 referencias a documento vivo:
+usaría sólo la mitad de hechos, la inmune); procedencia de `minimatch`
+des-simplificada (**13 padres piden `^9`**, y el de `@typescript-eslint` es
+`typescript-estree`, no `parser`).
+
+**Nota que acepto sin acción**: correr el gate «sobre `main`» sale **exit 2, «no
+hay registro»**, porque `main` no tiene `plan/ANCLAS.json`. Es la conducta
+correcta —nunca un PASS falso—, y por eso no la cambio.
