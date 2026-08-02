@@ -11,6 +11,45 @@ import {
     MCP_CONFIG_PATH_SUBKEY,
 } from '../config/ziguratSettings';
 
+/**
+ * Nombre del fichero de ópera que `initialize()` busca en la raíz del
+ * workspace **del usuario** cuando `aleph0.mcp.configPath` está vacía.
+ *
+ * WP-V100 · D16 — POR QUÉ ESTO ES UNA CONSTANTE Y NO UN LITERAL MÁS.
+ * Hasta aquí el nombre se COMPONÍA una vez (el `path.join` de `initialize()`)
+ * y se DESCRIBÍA tres veces con un nombre distinto —«sample-config.json»—: en
+ * el docstring del método, en el comentario de la rama y en el log que anuncia
+ * el hallazgo. Tres menciones muertas contra dos vivas, todas sobre la MISMA
+ * línea de código. Re-sincronizar las copias habría dejado intacto el
+ * mecanismo que las desincronizó; la constante lo quita: lo que se abre, lo
+ * que se anuncia en el log y lo que se le pide al usuario son hoy la misma
+ * expresión, no tres cadenas gemelas que alguien tiene que mantener a mano.
+ *
+ * Lo que queda a mano es la PROSA (docstring y comentario), que no puede
+ * interpolar. Ésa la vigila `tests/unit/core/mcpConfigurationManager.test.ts`:
+ * enrojece si cualquier nombre de fichero citado en este módulo deja de ser
+ * el valor de esta constante.
+ *
+ * Lo que este WP NO hace, y tiene dueño abierto: retirar la marca «Arrakis»
+ * es **WP-V47**; que el usuario elija el nombre —y que `initialize()` deje de
+ * adoptarlo y auto-escribirlo en los ajustes sin preguntar— es **WP-V32**
+ * (hallazgo H-11, `plan/REPORTES/WP-V23-config-intencional.md:1027`). Aquí
+ * sólo se hace que los nombres concuerden: cero cambio de conducta.
+ *
+ * CONVENCIÓN QUE ESTE MÓDULO SOSTIENE, y que el test vigila: un nombre de
+ * fichero MUERTO se escribe entre comillas angulares —«así»— y uno VIVO va
+ * con la constante o con su literal. Es la misma marca que ya llevan el
+ * comentario del constructor (comandos podados) y el de `launcher` (clave
+ * demolida): nombrar algo muerto está permitido si se DECLARA muerto.
+ *
+ * Los dos ficheros candidatos históricos —éste y «sample-config.json»— los
+ * podó WP-V13 en `f615434`, así que «buscar el que decía el comentario» no
+ * era opción: no existe ninguno. La búsqueda apunta al workspace del usuario,
+ * no al repo de la extensión, de modo que la poda **degrada, no rompe**
+ * (`plan/CENSO-V12.md:363`).
+ */
+export const OPERA_CONFIG_FILENAME = 'ArrakisTheater_OperaConfig.json';
+
 export class McpConfigurationManager {
     private static instance: McpConfigurationManager;
     private config: AlephScriptConfiguration | null = null;
@@ -31,7 +70,11 @@ export class McpConfigurationManager {
     }
 
     /**
-     * Initialize configuration from sample-config.json or VS Code settings
+     * Initialize configuration from `ArrakisTheater_OperaConfig.json` or VS Code settings.
+     *
+     * WP-V100: este docstring decía «sample-config.json» — un fichero que este
+     * método no ha buscado nunca. El nombre que compone la ruta es
+     * `OPERA_CONFIG_FILENAME`; ver ahí por qué el defecto era de mecanismo.
      */
     async initialize(): Promise<void> {
         try {
@@ -39,14 +82,14 @@ export class McpConfigurationManager {
             const vscodeConfig = vscode.workspace.getConfiguration(ALEPH0_SECTION);
             let configPath = vscodeConfig.get<string>(MCP_CONFIG_PATH_SUBKEY);
 
-            // If no path in settings, look for sample-config.json in workspace
+            // If no path in settings, look for ArrakisTheater_OperaConfig.json in workspace
             if (!configPath && vscode.workspace.workspaceFolders) {
                 const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-                const defaultConfigPath = path.join(workspaceRoot, 'ArrakisTheater_OperaConfig.json');
+                const defaultConfigPath = path.join(workspaceRoot, OPERA_CONFIG_FILENAME);
 
                 if (fs.existsSync(defaultConfigPath)) {
                     configPath = defaultConfigPath;
-                    this.logger.info(`Found sample-config.json at: ${configPath}`);
+                    this.logger.info(`Found ${OPERA_CONFIG_FILENAME} at: ${configPath}`);
                     // Auto-update settings to remember this path
                     await this.updateVSCodeSettings(configPath);
                 }
@@ -56,7 +99,7 @@ export class McpConfigurationManager {
                 await this.loadConfigFromFile(configPath);
             } else {
                 this.logger.warn(
-                    `${ZIGURAT_PENDING} Sin archivo Opera ni flota inventada — configure aleph0.* o cargue ArrakisTheater_OperaConfig.json`
+                    `${ZIGURAT_PENDING} Sin archivo Opera ni flota inventada — configure aleph0.* o cargue ${OPERA_CONFIG_FILENAME}`
                 );
                 this.setEmptyPendingConfiguration();
             }
@@ -216,17 +259,28 @@ export class McpConfigurationManager {
      * sin ⏳, sin log y sin nombrar la clave que falta.
      *
      * **6 llamadas** consumen este valor: `bootstrap/assembleContext.ts:109`,
-     * `socketMonitor.ts:280` (desde su wrapper privado homónimo de `:276`) y
-     * `socketMonitor.ts:643`, `treeViews/configsTreeView.ts:429`,
+     * `socketMonitor.ts:282` (desde su wrapper privado homónimo de `:278`) y
+     * `socketMonitor.ts:308`, `treeViews/configsTreeView.ts:437`,
      * `treeViews/socketsTreeView.ts:85,232`.
+     *
+     * ⚠️ WP-V100 — LAS COORDENADAS DE ARRIBA ESTABAN MAL Y EL BARRIDO LAS
+     * APROBABA. Este bloque decía `:280`/`:276`/`:643`/`:429` y `:428-430`:
+     * las cinco RESUELVEN a líneas existentes, así que un barrido que sólo
+     * comprueba que el fichero tiene esa línea las da por buenas. Cuatro
+     * llevaban deriva corta (+2, +2, +8) y una era otro sitio entero
+     * —«socketMonitor.ts:643» es JavaScript de la webview, no una llamada—.
+     * Es el MISMO mecanismo que D16 en este fichero: una cita que resuelve y
+     * miente. El conteo («6 llamadas») sí era verdadero. Re-medido y fijado
+     * por `tests/unit/core/mcpConfigurationManager.test.ts`, que enrojece si
+     * cualquiera de estas coordenadas deja de nombrar el método.
      *
      * Y devolver `''` **tampoco salva la superficie**: `socketsTreeView.ts:92`
      * convierte el vacío en `'localhost:3000'` (y el caso de arriba lo pinta
-     * como `localhost:7777`, sin esquema). `configsTreeView.ts:428-430`
+     * como `localhost:7777`, sin esquema). `configsTreeView.ts:436-438`
      * **escribe** este valor en el fichero que genera, en 2 de sus 3
-     * plantillas: lo que persiste es el retorno de este método, y sólo cae al
-     * literal `"ws://localhost:3000"` cuando no hay config cargada.
-     * El invento ocurre con o sin fichero de ópera.
+     * plantillas (`:447` y `:463`): lo que persiste es el retorno de este
+     * método, y sólo cae al literal `"ws://localhost:3000"` cuando no hay
+     * config cargada. El invento ocurre con o sin fichero de ópera.
      *
      * Aquí sólo se corrige la MENTIRA del comentario: quitar el `localhost`
      * es cambio de conducta y cae en WP-V31 (endpoints por variable, nunca
