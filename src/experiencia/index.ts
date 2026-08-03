@@ -39,3 +39,14 @@ export {
     ExperienciaHService,
     type ExperienciaRefreshInput
 } from './ExperienciaHService';
+
+export {
+    ExperienciaSession,
+    ExperienciaTreeDataProvider,
+    ExperienciaWebViewProvider,
+    buildExperienciaViewModel,
+    buildEscenaPanel,
+    isArgViewScene,
+    renderExperienciaDocument,
+    initialExperienciaSnapshot
+} from './view';

@@ -541,9 +541,10 @@ describe('WP-V25 · censo de comandos', () => {
     // -----------------------------------------------------------------------
     describe('el denominador declarado', () => {
         it('las cifras del censo son las del reporte de V25', () => {
-            expect(declarados.length).toBe(91);
-            expect(new Set(declarados).size).toBe(91);
-            expect(tabla).toHaveLength(77);
+            // RH-17 · +2 comandos experiencia (refresh, callTool)
+            expect(declarados.length).toBe(93);
+            expect(new Set(declarados).size).toBe(93);
+            expect(tabla).toHaveLength(79);
             expect(paleta).toHaveLength(16);
             expect(Object.keys(REGISTRO_INTERNO)).toHaveLength(2);
         });

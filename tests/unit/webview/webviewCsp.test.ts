@@ -83,6 +83,8 @@ import { HackerConfigPanelProvider } from '../../../src/views/HackerConfigPanelP
 import { HackerControlPanelProvider } from '../../../src/views/HackerControlPanelProvider';
 import { HackerTasksPanelProvider } from '../../../src/views/HackerTasksPanelProvider';
 import { TeatroWebViewProvider } from '../../../src/views/TeatroWebViewProvider';
+import { renderExperienciaDocument } from '../../../src/experiencia/view/renderExperienciaDocument';
+import { emptyExperienciaSnapshot } from '../../../src/experiencia/types';
 import { AgentConfigEditorProvider } from '../../../src/editors/AgentConfigEditorProvider';
 import { AgentContentEditorProvider } from '../../../src/editors/AgentContentEditorProvider';
 import {
@@ -236,7 +238,21 @@ const CENSO: CensoEntry[] = [
             return hackerPanelRender(HackerControlPanelProvider)();
         }
     },
-    { id: 'src/views/HackerTasksPanelProvider.ts::getHtmlContent', render: hackerPanelRender(HackerTasksPanelProvider) }
+    { id: 'src/views/HackerTasksPanelProvider.ts::getHtmlContent', render: hackerPanelRender(HackerTasksPanelProvider) },
+    // RH-17 · webview experiencia H (CSP/nonce; data-driven; fuera de Teatro)
+    {
+        id: 'src/experiencia/view/renderExperienciaDocument.ts::renderExperienciaDocument',
+        render: () =>
+            renderExperienciaDocument({
+                cspSource: 'https://example.vscode-cdn.net',
+                snapshot: emptyExperienciaSnapshot(
+                    'pending',
+                    'fixture censo CSP RH-17',
+                    { transportPending: true, fresh: false }
+                ),
+                tools: []
+            })
+    }
 ];
 
 const CENSO_IDS = new Set(CENSO.map(e => e.id));
@@ -382,12 +398,12 @@ describe('WP-V66 · censo derivado del AST (unidad = punto de render)', () => {
     });
 
     test('la contabilidad declarada del censo se sostiene y es derivada', () => {
-        // 25 puntos de render = 21 documentos completos + 4 cuerpos de panel
-        expect(derivedDocs.length).toBe(21);
-        expect(CENSO.length).toBe(25);
-        // repartidos en 18 ficheros productores únicos
+        // 26 puntos de render = 22 documentos completos + 4 cuerpos de panel (RH-17 +1)
+        expect(derivedDocs.length).toBe(22);
+        expect(CENSO.length).toBe(26);
+        // repartidos en 19 ficheros productores únicos
         const ficherosProductores = new Set(CENSO.map(e => e.id.split('::')[0]));
-        expect(ficherosProductores.size).toBe(18);
+        expect(ficherosProductores.size).toBe(19);
         // más los ficheros que sólo asignan HTML producido en otro sitio
         const ficherosAsignadores = new Set(
             analysis.sinks.map(s => s.file).filter(f => !ficherosProductores.has(f))
@@ -396,7 +412,8 @@ describe('WP-V66 · censo derivado del AST (unidad = punto de render)', () => {
             'src/core/bootstrap/commands/agentManagementCommands.ts',
             'src/core/bootstrap/commands/aiCommands.ts',
             'src/core/bootstrap/commands/analyticsCommands.ts',
-            'src/core/bootstrap/commands/webviewCommands.ts'
+            'src/core/bootstrap/commands/webviewCommands.ts',
+            'src/experiencia/view/ExperienciaWebViewProvider.ts'
         ]);
     });
 
@@ -1177,7 +1194,7 @@ describe('WP-V66 · D-2 · <svg>/<math> rechazados fail-closed', () => {
         expect(scanHtml('<math><mi>x</mi></math>').errors[0]).toMatch(/contenido extranjero <math>/);
     });
 
-    test('ninguno de los 25 puntos de render propios usa SVG/MathML inline', () => {
+    test('ninguno de los 26 puntos de render propios usa SVG/MathML inline', () => {
         for (const entry of CENSO) {
             expect(scanHtml(entry.render()).errors).toEqual([]);
         }

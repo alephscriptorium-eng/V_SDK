@@ -11,6 +11,7 @@ import { RoomIdentityService } from '../../../identity';
 import { ResourceProjectionService } from '../../../resources';
 import { AuthorshipService } from '../../../mutation';
 import { RepartoElencoService } from '../../../elenco';
+import { ExperienciaSession } from '../../../experiencia/view';
 import { CommandEntry } from './types';
 
 export const mcpCatalogCommands: CommandEntry[] = [
@@ -171,6 +172,48 @@ export const mcpCatalogCommands: CommandEntry[] = [
             const snap = await RepartoElencoService.getInstance().refresh();
             deps.getContext()?.elencoTreeProvider.refresh();
             vscode.window.showInformationMessage(snap.statusMessage);
+        }
+    },
+    // RH-17 · experiencia H (resources + tools MCP; no Teatro)
+    {
+        id: 'aleph0.experiencia.refresh',
+        handler: deps => async () => {
+            const snap = await ExperienciaSession.getInstance().refresh();
+            deps.getContext()?.experienciaTreeProvider.refresh();
+            vscode.window.showInformationMessage(
+                `${snap.phase}: ${snap.reason}`
+            );
+        }
+    },
+    {
+        id: 'aleph0.experiencia.callTool',
+        handler: deps => async () => {
+            const session = ExperienciaSession.getInstance();
+            await session.refresh();
+            const tools = session.getTools();
+            if (tools.length === 0) {
+                vscode.window.showWarningMessage(
+                    '⏳ sin tools MCP publicados (transport H <pendiente> o server sin tools)'
+                );
+                return;
+            }
+            const picked = await vscode.window.showQuickPick(
+                tools.map((t) => ({
+                    label: t.name,
+                    description: t.description
+                })),
+                { placeHolder: 'Tool MCP publicado (comando = tool)' }
+            );
+            if (!picked) {
+                return;
+            }
+            const result = await session.callPublishedTool(picked.label, {});
+            deps.getContext()?.experienciaTreeProvider.refresh();
+            if (result.ok) {
+                vscode.window.showInformationMessage(result.message);
+            } else {
+                vscode.window.showWarningMessage(result.message);
+            }
         }
     }
 ];

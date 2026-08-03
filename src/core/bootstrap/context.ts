@@ -32,6 +32,10 @@ import { SocketMonitor } from '../../socketMonitor';
 import { MCPWebViewManager } from '../../mcpWebViewManager';
 import { AracneBotService } from '../AracneBotService';
 import { ElencoTreeDataProvider } from '../../elenco';
+import {
+    ExperienciaTreeDataProvider,
+    ExperienciaWebViewProvider
+} from '../../experiencia/view';
 
 export interface ExtensionContext {
     managers: {
@@ -67,5 +71,9 @@ export interface ExtensionContext {
     aracneBotService: AracneBotService;
     /** WP-V09 · panel elenco (reparto/1 → cast-table); SEPARADO de ICompany */
     elencoTreeProvider: ElencoTreeDataProvider;
+    /** RH-17 · TreeView diagnóstico experiencia H (resources MCP; no Teatro) */
+    experienciaTreeProvider: ExperienciaTreeDataProvider;
+    /** RH-17 · webview experiencia H (CSP/nonce; data-driven) */
+    experienciaWebViewProvider: ExperienciaWebViewProvider;
     logger: ReturnType<typeof createLogger>;
 }
