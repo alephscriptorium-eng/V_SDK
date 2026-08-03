@@ -1,7 +1,7 @@
 /**
  * FIXTURE LOCAL DEL TEST — RH-16.
  * Servidor MCP sintético que proyecta URIs h-sdk://experiencia/* con shapes 0.1.0.
- * NO es transport de producto H (AlmacenResources in-process sigue <pendiente>).
+ * Fixture de test — el transport de producto vive en h-sdk (`bun run mcp`).
  */
 
 import * as http from 'node:http';

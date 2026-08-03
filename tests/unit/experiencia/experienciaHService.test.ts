@@ -1,10 +1,13 @@
 /**
- * RH-16 · Servicio experiencia H + fixtures MCP.
- * Transport producto H = <pendiente>; fixtures bastan para arrancar.
+ * RH-16 · Servicio experiencia H + fixtures MCP + env producto H_SDK_MCP_*.
  */
 
 import { MinimalMcpClient } from '../../../src/mcp/client';
 import { ExperienciaHService } from '../../../src/experiencia/ExperienciaHService';
+import {
+    mergeCatalogWithHEnv,
+    readHExperienceEnv
+} from '../../../src/experiencia/catalogFromEnv';
 import { discoverHExperienceServer } from '../../../src/experiencia/discover';
 import {
     URI_EXPERIENCIA_ESCENA,
@@ -40,16 +43,27 @@ describe('RH-16 · discoverHExperienceServer', () => {
 
 describe('RH-16 · ExperienciaHService', () => {
     it('sin servidor H en catálogo → connecting + transportPending', async () => {
-        const svc = new ExperienciaHService();
-        const snap = await svc.refresh({
-            catalogServers: [{ id: 'linea-editor', name: 'linea-editor', port: 3051 }],
-            host: '127.0.0.1'
-        });
-        expect(snap.phase).toBe('connecting');
-        expect(snap.transportPending).toBe(true);
-        expect(snap.reason).toContain('<pendiente>');
-        expect(snap.phase).not.toBe('connected');
-        expect(snap.phase).not.toBe('complete');
+        const prevHost = process.env.H_SDK_MCP_HOST;
+        const prevPort = process.env.H_SDK_MCP_PORT;
+        delete process.env.H_SDK_MCP_HOST;
+        delete process.env.H_SDK_MCP_PORT;
+        try {
+            const svc = new ExperienciaHService();
+            const snap = await svc.refresh({
+                catalogServers: [{ id: 'linea-editor', name: 'linea-editor', port: 3051 }],
+                host: '127.0.0.1'
+            });
+            expect(snap.phase).toBe('connecting');
+            expect(snap.transportPending).toBe(true);
+            expect(snap.reason).toMatch(/catálogo|transport ausente|H_SDK_MCP/);
+            expect(snap.phase).not.toBe('connected');
+            expect(snap.phase).not.toBe('complete');
+        } finally {
+            if (prevHost === undefined) delete process.env.H_SDK_MCP_HOST;
+            else process.env.H_SDK_MCP_HOST = prevHost;
+            if (prevPort === undefined) delete process.env.H_SDK_MCP_PORT;
+            else process.env.H_SDK_MCP_PORT = prevPort;
+        }
     });
 
     it('fixture MCP actual H → pending_external_contract (no complete)', async () => {
@@ -197,9 +211,82 @@ describe('RH-16 · contraevidencia (grep contractual en este arnés)', () => {
     });
 });
 
-describe('RH-16 · integración real H (skip-honesto)', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('skip-honesto: transport MCP producto H que proyecte AlmacenResources — <pendiente> en H (tip 9bfd7ff in-process); no se finge connected/complete', () => {
-        /* intencionadamente vacío */
+describe('RH-16 · env H_SDK_MCP_* (contrato mínimo)', () => {
+    it('readHExperienceEnv exige host+puerto (sin defaults)', () => {
+        expect(readHExperienceEnv({})).toBeUndefined();
+        expect(readHExperienceEnv({ H_SDK_MCP_HOST: '127.0.0.1' })).toBeUndefined();
+        expect(readHExperienceEnv({ H_SDK_MCP_PORT: '9' })).toBeUndefined();
+        const ep = readHExperienceEnv({
+            H_SDK_MCP_HOST: '127.0.0.1',
+            H_SDK_MCP_PORT: '9876'
+        });
+        expect(ep?.port).toBe(9876);
+        expect(ep?.entry.id).toBe('h-sdk');
+        expect(ep?.entry.capabilities).toContain('h.experiencia');
     });
+
+    it('mergeCatalogWithHEnv prioriza fila env', () => {
+        const merged = mergeCatalogWithHEnv(
+            [{ id: 'h-sdk', name: 'stale', port: 1 }],
+            { H_SDK_MCP_HOST: '10.0.0.2', H_SDK_MCP_PORT: '4444' }
+        );
+        expect(merged.fromEnv).toBe(true);
+        expect(merged.hostOverride).toBe('10.0.0.2');
+        expect(merged.servers[0]?.port).toBe(4444);
+    });
+
+    it('descubrimiento por env → proyecta fixture como producto', async () => {
+        const fixture = await startFixtureExperienciaH();
+        const prevHost = process.env.H_SDK_MCP_HOST;
+        const prevPort = process.env.H_SDK_MCP_PORT;
+        process.env.H_SDK_MCP_HOST = fixture.host;
+        process.env.H_SDK_MCP_PORT = String(fixture.port);
+        try {
+            const svc = new ExperienciaHService();
+            const snap = await svc.refresh({
+                catalogServers: [],
+                host: ''
+            });
+            expect(snap.transportPending).toBe(false);
+            expect(snap.serverId).toBe('h-sdk');
+            expect(snap.phase).toBe('pending_external_contract');
+            expect(snap.phase).not.toBe('complete');
+            expect(snap.payloads?.estado.resourceVersion).toBe('0.1.0');
+        } finally {
+            await fixture.close();
+            if (prevHost === undefined) delete process.env.H_SDK_MCP_HOST;
+            else process.env.H_SDK_MCP_HOST = prevHost;
+            if (prevPort === undefined) delete process.env.H_SDK_MCP_PORT;
+            else process.env.H_SDK_MCP_PORT = prevPort;
+        }
+    });
+});
+
+describe('RH-16 · integración producto H (env-gated)', () => {
+    const host = process.env.H_SDK_MCP_HOST;
+    const port = process.env.H_SDK_MCP_PORT;
+    const gated = !(host && port && Number(port) > 0);
+
+    (gated ? it.skip : it)(
+        'MinimalMcpClient lee resources reales del server H (H_SDK_MCP_* set)',
+        async () => {
+            const client = new MinimalMcpClient({
+                host: host as string,
+                port: Number(port)
+            });
+            const svc = new ExperienciaHService();
+            const snap = await svc.refresh({
+                catalogServers: [],
+                host: '',
+                fixtureClient: client,
+                fixtureServerId: 'h-sdk'
+            });
+            expect(snap.fresh).toBe(true);
+            expect(snap.payloads?.estado.resourceVersion).toBe('0.1.0');
+            expect(snap.phase).not.toBe('complete');
+            expect(['pending_external_contract', 'connected', 'failed', 'connecting']).toContain(
+                snap.phase
+            );
+        }
+    );
 });

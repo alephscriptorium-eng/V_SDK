@@ -4,14 +4,15 @@
  * Flujo: catálogo → descubrir server H → connect → list/read resources →
  * validar version/shape → fase connecting|connected|pending_external_contract|failed|complete.
  *
- * Transport MCP de producto H aún in-process en H → si no hay fila en
- * catálogo, fase `connecting` con `transportPending: true` (no fingir connected).
+ * Descubrimiento: launcher://catalog y/o env H_SDK_MCP_HOST+H_SDK_MCP_PORT.
+ * Sin fila ni env → `connecting` + `transportPending` (no fingir connected).
  * Cero costura teatral hardcodeada; cero import sibling del repo H.
  */
 
 import { MinimalMcpClient } from '../mcp/client';
 import type { McpEndpoint } from '../mcp/types';
 import type { CatalogServerEntry } from '../launcher/types';
+import { mergeCatalogWithHEnv } from './catalogFromEnv';
 import { discoverHExperienceServer, serverHasPort } from './discover';
 import {
     assertExperienciaUrisListed,
@@ -85,12 +86,13 @@ export class ExperienciaHService {
             );
         }
 
-        const entry = discoverHExperienceServer(input.catalogServers);
+        const merged = mergeCatalogWithHEnv(input.catalogServers);
+        const entry = discoverHExperienceServer(merged.servers);
         if (!entry) {
             return this.publish(
                 emptyExperienciaSnapshot(
                     'connecting',
-                    'servidor H no aparece en catálogo — transport MCP producto <pendiente>',
+                    'servidor H no aparece en catálogo ni env H_SDK_MCP_* — transport ausente',
                     { transportPending: true, fresh: false }
                 )
             );
@@ -99,22 +101,23 @@ export class ExperienciaHService {
             return this.publish(
                 emptyExperienciaSnapshot(
                     'connecting',
-                    `servidor H '${entry.id}' sin puerto en catálogo — transport MCP producto <pendiente>`,
+                    `servidor H '${entry.id}' sin puerto en catálogo — set H_SDK_MCP_PORT o fila launcher`,
                     { transportPending: true, serverId: entry.id, fresh: false }
                 )
             );
         }
-        if (!input.host || input.host.trim() === '') {
+        const host = (merged.hostOverride ?? input.host ?? '').trim();
+        if (!host) {
             return this.publish(
                 emptyExperienciaSnapshot(
                     'connecting',
-                    'host launcher vacío — no se inventa endpoint H',
+                    'host H vacío — set H_SDK_MCP_HOST o host launcher (no se inventa)',
                     { transportPending: true, serverId: entry.id, fresh: false }
                 )
             );
         }
 
-        const endpoint: McpEndpoint = { host: input.host, port: entry.port };
+        const endpoint: McpEndpoint = { host, port: entry.port };
         const factory = input.createClient ?? ((ep) => new MinimalMcpClient(ep));
         const client = factory(endpoint);
         return this.publish(await this.projectFromClient(client, entry.id));
