@@ -428,4 +428,27 @@ if (!cuadra) {
 }
 
 p('VEREDICTO: ' + (rancias.length ? 'FAIL' : 'PASS') + ' (' + rancias.length + ' rancias / ' + B.total + ' citas)');
+
+// WP-V103 · ESTE GUARDIÁN NO ESTÁ CABLEADO, Y POR ESO LLEVA DÍAS EN ROJO.
+// El aviso va aquí, en la salida, y no sólo en el BACKLOG: quien tropieza con
+// este rojo no abre el plan — lanza el script y se pregunta si lo ha roto él.
+// Esa pregunta cuesta una sesión y no es suya.
+//
+// Medido: `citas-rancias.mjs` no aparece ni en `package.json` ni en
+// `.github/workflows/ci.yml`; tampoco `scripts/verificacion-paridad.mjs`
+// (que además está VERDE por suerte, no por vigilancia). El mundo hermano SÍ
+// lo tiene cableado: `z-sdk/.github/workflows/ci.yml:39` lo corre como paso
+// propio. No es que nadie pensara en ello: se cableó en un mundo y no en el otro.
+//
+// El acta de WP-V99 no miente y ése es justo el punto: dice «29 tests bajo
+// `npm test`». El instrumento está PROBADO y nunca APLICADO al producto.
+// Un instrumento probado y no aplicado pasa todas las revisiones y no vigila nada.
+if (rancias.length) {
+  p('');
+  p('⚠ ESTE ROJO ES CONOCIDO Y TIENE FICHA: WP-V103 (plan/BACKLOG.md).');
+  p('  Este guardián NO está cableado — no corre en `npm test` ni en CI, así que');
+  p('  este FAIL no tumba ninguna corrida y puede llevar días aquí. NO lo has roto tú.');
+  p('  V103 cierra las dos mitades: cablearlo, y cerrar las rancias POR CONTENIDO');
+  p('  (anotarlas con ⛔ para silenciarlas es la ofensa, no el arreglo).');
+}
 process.exit(rancias.length ? 1 : 0);
