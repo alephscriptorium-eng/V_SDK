@@ -39,13 +39,13 @@ describe('RH-16 · discoverHExperienceServer', () => {
 });
 
 describe('RH-16 · ExperienciaHService', () => {
-    it('sin servidor H en catálogo → pending + transportPending', async () => {
+    it('sin servidor H en catálogo → connecting + transportPending', async () => {
         const svc = new ExperienciaHService();
         const snap = await svc.refresh({
             catalogServers: [{ id: 'linea-editor', name: 'linea-editor', port: 3051 }],
             host: '127.0.0.1'
         });
-        expect(snap.phase).toBe('pending');
+        expect(snap.phase).toBe('connecting');
         expect(snap.transportPending).toBe(true);
         expect(snap.reason).toContain('<pendiente>');
         expect(snap.phase).not.toBe('connected');
@@ -98,7 +98,7 @@ describe('RH-16 · ExperienciaHService', () => {
         }
     });
 
-    it('hostil-omite: resource omitido → error (no connected)', async () => {
+    it('hostil-omite: resource omitido → failed (no connected)', async () => {
         const fixture = await startFixtureExperienciaH({
             omitUris: [URI_EXPERIENCIA_EVIDENCIA]
         });
@@ -110,7 +110,7 @@ describe('RH-16 · ExperienciaHService', () => {
                 host: fixture.host,
                 fixtureClient: client
             });
-            expect(snap.phase).toBe('error');
+            expect(snap.phase).toBe('failed');
             expect(snap.reason).toContain('omitido');
             expect(snap.phase).not.toBe('connected');
         } finally {
@@ -118,7 +118,7 @@ describe('RH-16 · ExperienciaHService', () => {
         }
     });
 
-    it('hostil-omite: version ausente en payload → error', async () => {
+    it('hostil-omite: version ausente en payload → failed', async () => {
         const bad = {
             estado: 'idle',
             pending_external: [],
@@ -135,7 +135,7 @@ describe('RH-16 · ExperienciaHService', () => {
                 host: fixture.host,
                 fixtureClient: client
             });
-            expect(snap.phase).toBe('error');
+            expect(snap.phase).toBe('failed');
             expect(snap.reason).toContain('resourceVersion');
         } finally {
             await fixture.close();
@@ -166,13 +166,13 @@ describe('RH-16 · ExperienciaHService', () => {
         }
     });
 
-    it('servidor H sin puerto → pending transport', async () => {
+    it('servidor H sin puerto → connecting transportPending', async () => {
         const svc = new ExperienciaHService();
         const snap = await svc.refresh({
             catalogServers: [{ id: 'prueba-hm', name: 'prueba-hm' }],
             host: '127.0.0.1'
         });
-        expect(snap.phase).toBe('pending');
+        expect(snap.phase).toBe('connecting');
         expect(snap.transportPending).toBe(true);
     });
 });

@@ -2,10 +2,10 @@
  * RH-16 · Servicio de experiencia H sobre MinimalMcpClient.
  *
  * Flujo: catálogo → descubrir server H → connect → list/read resources →
- * validar version/shape → fase pending|connected|pending_external_contract|error|complete.
+ * validar version/shape → fase connecting|connected|pending_external_contract|failed|complete.
  *
  * Transport MCP de producto H aún in-process en H → si no hay fila en
- * catálogo, fase `pending` con `transportPending: true` (no fingir connected).
+ * catálogo, fase `connecting` con `transportPending: true` (no fingir connected).
  * Cero costura teatral hardcodeada; cero import sibling del repo H.
  */
 
@@ -47,8 +47,9 @@ export interface ExperienciaRefreshInput {
 
 export class ExperienciaHService {
     private snapshot: ExperienciaSnapshot = emptyExperienciaSnapshot(
-        'pending',
-        'experiencia H no refrescada aún'
+        'connecting',
+        'experiencia H no refrescada aún',
+        { transportPending: true, fresh: false }
     );
     private refreshInFlight: Promise<ExperienciaSnapshot> | undefined;
 
@@ -60,6 +61,14 @@ export class ExperienciaHService {
         if (this.refreshInFlight) {
             return this.refreshInFlight;
         }
+        // UI observa connecting antes del resultado (RH-18).
+        this.publish(
+            emptyExperienciaSnapshot('connecting', 'conectando a experiencia H…', {
+                transportPending: this.snapshot.transportPending,
+                fresh: false,
+                serverId: this.snapshot.serverId
+            })
+        );
         this.refreshInFlight = this.doRefresh(input).finally(() => {
             this.refreshInFlight = undefined;
         });
@@ -80,7 +89,7 @@ export class ExperienciaHService {
         if (!entry) {
             return this.publish(
                 emptyExperienciaSnapshot(
-                    'pending',
+                    'connecting',
                     'servidor H no aparece en catálogo — transport MCP producto <pendiente>',
                     { transportPending: true, fresh: false }
                 )
@@ -89,7 +98,7 @@ export class ExperienciaHService {
         if (!serverHasPort(entry)) {
             return this.publish(
                 emptyExperienciaSnapshot(
-                    'pending',
+                    'connecting',
                     `servidor H '${entry.id}' sin puerto en catálogo — transport MCP producto <pendiente>`,
                     { transportPending: true, serverId: entry.id, fresh: false }
                 )
@@ -98,7 +107,7 @@ export class ExperienciaHService {
         if (!input.host || input.host.trim() === '') {
             return this.publish(
                 emptyExperienciaSnapshot(
-                    'pending',
+                    'connecting',
                     'host launcher vacío — no se inventa endpoint H',
                     { transportPending: true, serverId: entry.id, fresh: false }
                 )
@@ -117,7 +126,7 @@ export class ExperienciaHService {
     ): Promise<ExperienciaSnapshot> {
         const identity = await client.connect();
         if (!identity.ok) {
-            return emptyExperienciaSnapshot('error', `connect H falló: ${identity.reason}`, {
+            return emptyExperienciaSnapshot('failed', `connect H falló: ${identity.reason}`, {
                 serverId,
                 fresh: false
             });
@@ -125,7 +134,7 @@ export class ExperienciaHService {
 
         const listed = await client.listResources();
         if (!listed.ok) {
-            return emptyExperienciaSnapshot('error', `listResources H falló: ${listed.reason}`, {
+            return emptyExperienciaSnapshot('failed', `listResources H falló: ${listed.reason}`, {
                 serverId,
                 serverName: identity.data.name,
                 serverVersion: identity.data.version,
@@ -135,7 +144,7 @@ export class ExperienciaHService {
 
         const urisOk = assertExperienciaUrisListed(listed.data.map((r) => r.uri));
         if (!urisOk.ok) {
-            return emptyExperienciaSnapshot('error', urisOk.reason, {
+            return emptyExperienciaSnapshot('failed', urisOk.reason, {
                 serverId,
                 serverName: identity.data.name,
                 serverVersion: identity.data.version,
@@ -149,21 +158,21 @@ export class ExperienciaHService {
 
         if (!estadoRaw.ok) {
             return emptyExperienciaSnapshot(
-                'error',
+                'failed',
                 `read ${URI_EXPERIENCIA_ESTADO}: ${estadoRaw.reason}`,
                 { serverId, fresh: false }
             );
         }
         if (!escenaRaw.ok) {
             return emptyExperienciaSnapshot(
-                'error',
+                'failed',
                 `read ${URI_EXPERIENCIA_ESCENA}: ${escenaRaw.reason}`,
                 { serverId, fresh: false }
             );
         }
         if (!evidenciaRaw.ok) {
             return emptyExperienciaSnapshot(
-                'error',
+                'failed',
                 `read ${URI_EXPERIENCIA_EVIDENCIA}: ${evidenciaRaw.reason}`,
                 { serverId, fresh: false }
             );
@@ -171,21 +180,21 @@ export class ExperienciaHService {
 
         const estado = parsePayloadEstado(estadoRaw.data);
         if (!estado.ok) {
-            return emptyExperienciaSnapshot('error', estado.reason, {
+            return emptyExperienciaSnapshot('failed', estado.reason, {
                 serverId,
                 fresh: false
             });
         }
         const escena = parsePayloadEscena(escenaRaw.data);
         if (!escena.ok) {
-            return emptyExperienciaSnapshot('error', escena.reason, {
+            return emptyExperienciaSnapshot('failed', escena.reason, {
                 serverId,
                 fresh: false
             });
         }
         const evidencia = parsePayloadEvidencia(evidenciaRaw.data);
         if (!evidencia.ok) {
-            return emptyExperienciaSnapshot('error', evidencia.reason, {
+            return emptyExperienciaSnapshot('failed', evidencia.reason, {
                 serverId,
                 fresh: false
             });
