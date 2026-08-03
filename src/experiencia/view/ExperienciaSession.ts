@@ -8,6 +8,7 @@ import { CatalogService } from '../../launcher/CatalogService';
 import { readLauncherEndpointSettings } from '../../launcher/settings';
 import { MinimalMcpClient } from '../../mcp/client';
 import type { McpEndpoint, McpToolDescriptor } from '../../mcp/types';
+import { mergeCatalogWithHEnv } from '../catalogFromEnv';
 import { discoverHExperienceServer, serverHasPort } from '../discover';
 import { ExperienciaHService } from '../ExperienciaHService';
 import {
@@ -116,7 +117,9 @@ export class ExperienciaSession implements vscode.Disposable {
     private async doRefresh(): Promise<ExperienciaSnapshot> {
         const catalog = CatalogService.getInstance().getSnapshot();
         const settings = readLauncherEndpointSettings();
+        const merged = mergeCatalogWithHEnv(catalog.servers);
         const host =
+            merged.hostOverride ??
             (catalog.host && catalog.host.trim() !== ''
                 ? catalog.host
                 : undefined) ??
@@ -124,7 +127,7 @@ export class ExperienciaSession implements vscode.Disposable {
             '';
 
         const snap = await this.service.refresh({
-            catalogServers: catalog.servers,
+            catalogServers: merged.servers,
             host
         });
 
@@ -147,7 +150,9 @@ export class ExperienciaSession implements vscode.Disposable {
         | { ok: false; message: string } {
         const catalog = CatalogService.getInstance().getSnapshot();
         const settings = readLauncherEndpointSettings();
+        const merged = mergeCatalogWithHEnv(catalog.servers);
         const host =
+            merged.hostOverride ??
             (catalog.host && catalog.host.trim() !== ''
                 ? catalog.host
                 : undefined) ??
@@ -157,15 +162,15 @@ export class ExperienciaSession implements vscode.Disposable {
             return {
                 ok: false,
                 message:
-                    '⏳ host launcher vacío — no se inventa endpoint H para tools'
+                    '⏳ host H vacío — set H_SDK_MCP_HOST o host launcher (no se inventa)'
             };
         }
-        const entry = discoverHExperienceServer(catalog.servers);
+        const entry = discoverHExperienceServer(merged.servers);
         if (!entry || !serverHasPort(entry)) {
             return {
                 ok: false,
                 message:
-                    '⏳ server H sin puerto en catálogo — transport MCP producto <pendiente>'
+                    '⏳ server H sin puerto — set H_SDK_MCP_PORT o fila launcher con h.experiencia'
             };
         }
         return { ok: true, endpoint: { host, port: entry.port as number } };

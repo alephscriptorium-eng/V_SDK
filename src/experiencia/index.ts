@@ -36,6 +36,14 @@ export {
 } from './discover';
 
 export {
+    H_SDK_ENV_HOST,
+    H_SDK_ENV_PORT,
+    mergeCatalogWithHEnv,
+    readHExperienceEnv,
+    type HExperienceEnvEndpoint
+} from './catalogFromEnv';
+
+export {
     ExperienciaHService,
     type ExperienciaRefreshInput
 } from './ExperienciaHService';
