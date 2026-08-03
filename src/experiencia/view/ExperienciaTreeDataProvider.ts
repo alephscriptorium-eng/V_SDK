@@ -25,10 +25,11 @@ function phaseIcon(phase: ExperienciaPhase): vscode.ThemeIcon {
             return new vscode.ThemeIcon('debug-connect');
         case 'pending_external_contract':
             return new vscode.ThemeIcon('info');
-        case 'error':
+        case 'failed':
             return new vscode.ThemeIcon('error');
+        case 'connecting':
         default:
-            return new vscode.ThemeIcon('clock');
+            return new vscode.ThemeIcon('loading~spin');
     }
 }
 

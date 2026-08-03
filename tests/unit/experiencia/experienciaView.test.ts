@@ -76,14 +76,15 @@ describe('RH-17 · buildExperienciaViewModel', () => {
         expect(model.escena.stageStatus).toMatch(/sesion/i);
     });
 
-    test('pending transport no inventa ciudades/escenas', () => {
+    test('connecting + transportPending no inventa ciudades/escenas', () => {
         const model = buildExperienciaViewModel(
-            emptyExperienciaSnapshot('pending', 'transport <pendiente>', {
+            emptyExperienciaSnapshot('connecting', 'transport <pendiente>', {
                 transportPending: true,
                 fresh: false
             })
         );
         expect(model.transportPending).toBe(true);
+        expect(model.phase).toBe('connecting');
         expect(model.surfaces.every((s) => s.status !== 'ok' || s.value.includes('⏳'))).toBe(
             true
         );
@@ -166,5 +167,37 @@ describe('RH-17 · renderExperienciaDocument', () => {
         });
         expect(html).toContain('data-phase="complete"');
         expect(findWebviewHtmlViolations(html)).toEqual([]);
+    });
+
+    test('RH-18 · cinco fases con clases CSS distintas (sin inventar éxito)', () => {
+        const phases = [
+            'connecting',
+            'connected',
+            'pending_external_contract',
+            'failed',
+            'complete'
+        ] as const;
+        const classes = new Set<string>();
+        for (const phase of phases) {
+            const html = renderExperienciaDocument({
+                cspSource: 'https://example.vscode-cdn.net',
+                nonce: 'dGVzdC1ub25jZS1yaDE4',
+                snapshot: emptyExperienciaSnapshot(phase, `fase ${phase}`, {
+                    fresh: phase === 'complete' || phase === 'connected',
+                    transportPending: phase === 'connecting',
+                    pendingExternal:
+                        phase === 'pending_external_contract' ? ['provider-E'] : []
+                })
+            });
+            expect(html).toContain(`data-phase="${phase}"`);
+            const m = html.match(/class="phase ([^"]+)"/);
+            expect(m).not.toBeNull();
+            classes.add(m![1]);
+            expect(html).not.toContain('Teatro');
+            if (phase !== 'complete') {
+                expect(html).not.toMatch(/data-phase="complete"[^]*solo fixture inventado/);
+            }
+        }
+        expect(classes.size).toBe(5);
     });
 });

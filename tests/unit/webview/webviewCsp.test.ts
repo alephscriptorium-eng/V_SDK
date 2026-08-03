@@ -246,8 +246,8 @@ const CENSO: CensoEntry[] = [
             renderExperienciaDocument({
                 cspSource: 'https://example.vscode-cdn.net',
                 snapshot: emptyExperienciaSnapshot(
-                    'pending',
-                    'fixture censo CSP RH-17',
+                    'connecting',
+                    'fixture censo CSP RH-18',
                     { transportPending: true, fresh: false }
                 ),
                 tools: []

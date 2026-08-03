@@ -21,15 +21,16 @@ export const EXPERIENCIA_URIS = [
 export type ExperienciaResourceUri = (typeof EXPERIENCIA_URIS)[number];
 
 /**
- * Fases observables en V.
- * `pending_external_contract` es distinto de `connected` / `complete`
- * (CONTRATO-ACEPTACION §3; hostil-omite).
+ * Fases observables en V (RH-18).
+ * Distinción visual obligatoria: connecting · connected ·
+ * pending_external_contract · failed · complete.
+ * `pending_external_contract` ≠ `connected` / `complete` (hostil-omite).
  */
 export type ExperienciaPhase =
-    | 'pending'
+    | 'connecting'
     | 'connected'
     | 'pending_external_contract'
-    | 'error'
+    | 'failed'
     | 'complete';
 
 export interface PayloadEstado {

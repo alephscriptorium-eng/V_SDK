@@ -20,10 +20,10 @@ export interface RenderExperienciaOptions {
 }
 
 const PHASE_CLASS: Record<string, string> = {
-    pending: 'phase-pending',
+    connecting: 'phase-connecting',
     connected: 'phase-connected',
     pending_external_contract: 'phase-external',
-    error: 'phase-error',
+    failed: 'phase-failed',
     complete: 'phase-complete'
 };
 
@@ -48,7 +48,7 @@ export function renderExperienciaDocument(opts: RenderExperienciaOptions): strin
     const nonce = opts.nonce ?? createNonce();
     const model = buildExperienciaViewModel(opts.snapshot, opts.sceneGeometry);
     const tools = opts.tools ?? [];
-    const phaseClass = PHASE_CLASS[model.phase] ?? 'phase-pending';
+    const phaseClass = PHASE_CLASS[model.phase] ?? 'phase-connecting';
 
     const surfacesHtml = model.surfaces
         .map(
@@ -104,10 +104,10 @@ body { font-family: var(--vscode-font-family, system-ui, sans-serif); font-size:
 h1 { font-size: 1.1rem; margin: 0 0 8px; font-weight: 600; }
 h2 { font-size: 0.95rem; margin: 16px 0 6px; font-weight: 600; }
 .phase { display: inline-block; padding: 2px 8px; border-radius: 2px; font-weight: 600; letter-spacing: 0.02em; }
-.phase-pending, .st-pending { background: var(--vscode-editorWarning-background, #5a4a00); }
+.phase-connecting, .st-pending { background: var(--vscode-editorWarning-background, #5a4a00); }
 .phase-connected, .st-ok { background: var(--vscode-testing-iconPassed, #2d5a2d); }
 .phase-external, .st-external { background: var(--vscode-editorInfo-background, #0e3a5a); }
-.phase-error, .st-error { background: var(--vscode-inputValidation-errorBackground, #5a1d1d); }
+.phase-failed, .st-error { background: var(--vscode-inputValidation-errorBackground, #5a1d1d); }
 .phase-complete { background: var(--vscode-testing-iconPassed, #1a4d1a); outline: 1px solid var(--vscode-focusBorder); }
 .reason { margin: 8px 0; opacity: 0.9; }
 .meta { opacity: 0.75; font-size: 0.85em; margin-bottom: 8px; }

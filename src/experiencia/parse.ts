@@ -208,7 +208,7 @@ export function collectPendingExternal(payloads: ExperienciaPayloads): string[] 
 export function deriveExperienciaPhase(
     payloads: ExperienciaPayloads,
     opts: { fresh: boolean }
-): { phase: Exclude<ExperienciaPhase, 'pending' | 'error'>; reason: string } {
+): { phase: Exclude<ExperienciaPhase, 'connecting' | 'failed'>; reason: string } {
     const pending = collectPendingExternal(payloads);
     const estadoDeclaresPending =
         payloads.estado.estado === 'pending_external_contract' ||

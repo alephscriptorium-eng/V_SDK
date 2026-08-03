@@ -130,7 +130,7 @@ export class ExperienciaSession implements vscode.Disposable {
 
         this.tools = [];
         const endpoint = this.resolveHEndpoint();
-        if (endpoint.ok && !snap.transportPending && snap.phase !== 'error') {
+        if (endpoint.ok && !snap.transportPending && snap.phase !== 'failed') {
             const client = new MinimalMcpClient(endpoint.endpoint);
             const listed = await client.listTools();
             if (listed.ok) {
@@ -175,7 +175,7 @@ export class ExperienciaSession implements vscode.Disposable {
 /** Snapshot inicial honesto para tests/UI antes del primer refresh. */
 export function initialExperienciaSnapshot(): ExperienciaSnapshot {
     return emptyExperienciaSnapshot(
-        'pending',
+        'connecting',
         'experiencia H no refrescada aún',
         { transportPending: true, fresh: false }
     );
