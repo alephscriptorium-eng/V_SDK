@@ -82,3 +82,10 @@ export interface McpResourceDescriptor {
     mimeType?: string;
     description?: string;
 }
+
+/** Descriptor de `tools/list` (MCP) — RH-17 comandos = tools publicados. */
+export interface McpToolDescriptor {
+    name: string;
+    description?: string;
+    inputSchema?: Record<string, unknown>;
+}

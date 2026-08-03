@@ -32,6 +32,11 @@ import { RoomIdentityService, IdentityStatusBar } from '../../identity';
 import { ResourceProjectionService } from '../../resources';
 import { AuthorshipService } from '../../mutation';
 import { RepartoElencoService, ElencoTreeDataProvider } from '../../elenco';
+import {
+    ExperienciaSession,
+    ExperienciaTreeDataProvider,
+    ExperienciaWebViewProvider
+} from '../../experiencia/view';
 import { ExtensionContext } from './context';
 
 export async function assembleExtensionContext(
@@ -103,6 +108,20 @@ export async function assembleExtensionContext(
     context.subscriptions.push(elencoService, elencoTreeProvider);
     void elencoService.refresh();
 
+    // RH-17: vista experiencia H (TreeView + webview); Teatro hardcodeado fuera
+    const experienciaSession = ExperienciaSession.getInstance();
+    const experienciaTreeProvider = new ExperienciaTreeDataProvider(experienciaSession);
+    const experienciaWebViewProvider = new ExperienciaWebViewProvider(
+        context.extensionUri,
+        experienciaSession
+    );
+    context.subscriptions.push(
+        experienciaSession,
+        experienciaTreeProvider,
+        experienciaWebViewProvider
+    );
+    void experienciaSession.refresh();
+
     // Initialize AracneBot - Socket.IO client for mesh communication
     const aracneBotService = AracneBotService.getInstance();
     aracneBotService.initialize({
@@ -143,6 +162,8 @@ export async function assembleExtensionContext(
         mcpWebViewManager,
         aracneBotService,
         elencoTreeProvider,
+        experienciaTreeProvider,
+        experienciaWebViewProvider,
         logger
     };
 }

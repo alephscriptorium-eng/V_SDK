@@ -23,7 +23,8 @@ import {
     McpClientResult,
     McpEndpoint,
     McpResourceDescriptor,
-    McpServerIdentity
+    McpServerIdentity,
+    McpToolDescriptor
 } from './types';
 
 /**
@@ -55,8 +56,8 @@ export interface MinimalMcpClientOptions {
 }
 
 /**
- * Cliente mínimo: conectar (initialize), listar (resources/list) y leer
- * (resources/read). Nada más — las superficies de V consumen esto.
+ * Cliente mínimo: conectar (initialize), listar/leer resources y
+ * listar/invocar tools. Superficies V consumen esto; sin inventar flota.
  */
 export class MinimalMcpClient {
     private readonly endpoint: McpEndpoint;
@@ -178,6 +179,60 @@ export class MinimalMcpClient {
                 message(err)
             );
         }
+    }
+
+    /**
+     * Lista tools publicados (`tools/list`). RH-17: comandos de la vista
+     * experiencia = estos nombres; no paneles HTML en H.
+     */
+    async listTools(): Promise<McpClientResult<McpToolDescriptor[]>> {
+        const res = await this.rpc('tools/list', {});
+        if (!res.ok) {
+            return res;
+        }
+        const r = asRecord(res.data);
+        const tools = r?.tools;
+        if (!Array.isArray(tools)) {
+            return mcpFailure(
+                'contrato_invalido',
+                'tools/list sin array `tools` (contrato MCP)'
+            );
+        }
+        const out: McpToolDescriptor[] = [];
+        for (const raw of tools) {
+            const e = asRecord(raw);
+            if (e === null || typeof e.name !== 'string') {
+                return mcpFailure(
+                    'contrato_invalido',
+                    'tools/list con entrada sin `name` string (contrato MCP)'
+                );
+            }
+            out.push({
+                name: e.name,
+                description:
+                    typeof e.description === 'string' ? e.description : undefined,
+                inputSchema:
+                    e.inputSchema !== null &&
+                    typeof e.inputSchema === 'object' &&
+                    !Array.isArray(e.inputSchema)
+                        ? (e.inputSchema as Record<string, unknown>)
+                        : undefined
+            });
+        }
+        return { ok: true, data: out };
+    }
+
+    /**
+     * Invoca un tool publicado (`tools/call`). Fallo tipado; no inventa resultado.
+     */
+    async callTool(
+        name: string,
+        args: Record<string, unknown> = {}
+    ): Promise<McpClientResult<unknown>> {
+        if (!name || name.trim() === '') {
+            return mcpFailure('contrato_invalido', 'tools/call sin name');
+        }
+        return this.rpc('tools/call', { name, arguments: args });
     }
 
     /** POST JSON-RPC único. Nunca lanza: todo camino malo → fallo tipado. */

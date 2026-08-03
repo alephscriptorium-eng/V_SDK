@@ -134,6 +134,17 @@ export const viewRegistrations: ViewRegistration[] = [
         viewId: 'alephscript.elenco',
         provider: ctx => ctx.elencoTreeProvider,
         options: TREE_VIEW_OPTIONS
+    },
+    {
+        kind: 'treeView',
+        viewId: 'alephscript.experiencia',
+        provider: ctx => ctx.experienciaTreeProvider,
+        options: TREE_VIEW_OPTIONS
+    },
+    {
+        kind: 'webviewView',
+        viewType: 'alephscript.experiencia.webview',
+        provider: ctx => ctx.experienciaWebViewProvider
     }
 ];
 

@@ -85,6 +85,18 @@
         "icon": "$(organization)"
       },
       {
+        "command": "aleph0.experiencia.refresh",
+        "title": "Refresh experiencia H (resources MCP)",
+        "category": "Aleph-0",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aleph0.experiencia.callTool",
+        "title": "Call experiencia H tool (MCP publicado)",
+        "category": "Aleph-0",
+        "icon": "$(play)"
+      },
+      {
         "command": "aleph0.teatro.refresh",
         "title": ">>> Refresh Theater Matrix",
         "icon": "$(sync)",
@@ -873,6 +885,16 @@
           "command": "aleph0.elenco.refresh",
           "when": "view == alephscript.elenco",
           "group": "navigation@1"
+        },
+        {
+          "command": "aleph0.experiencia.refresh",
+          "when": "view == alephscript.experiencia || view == alephscript.experiencia.webview",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aleph0.experiencia.callTool",
+          "when": "view == alephscript.experiencia || view == alephscript.experiencia.webview",
+          "group": "navigation@2"
         }
       ]
     },
@@ -920,6 +942,19 @@
           "id": "alephscript.elenco",
           "name": "🎭 Elenco",
           "icon": "$(organization)",
+          "when": "true"
+        },
+        {
+          "id": "alephscript.experiencia",
+          "name": "Experiencia H",
+          "icon": "$(pulse)",
+          "when": "true"
+        },
+        {
+          "id": "alephscript.experiencia.webview",
+          "type": "webview",
+          "name": "Experiencia H · vista",
+          "icon": "$(open-preview)",
           "when": "true"
         },
         {
@@ -1188,6 +1223,7 @@
   "dependencies": {
     "@alephscript/mcp-core-sdk": "1.3.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
+    "@zeus/arg-view-kit": "^0.1.0",
     "@zeus/protocol": "^0.4.1",
     "@zeus/reparto-kit": "^0.1.0",
     "express": "^5.1.0",
